@@ -3,7 +3,7 @@ let
         let
             GPS = try Excel.CurrentWorkbook(){[Name = "GPS"]}[Content][Column1]{0} otherwise "Remote",
             //C:\Users\ktkt2\OneDrive\EXE Team\
-            DRIVE = if GPS = "Remote" then "C:\Users\ktkt2\OneDrive\" else "\\10.10.1.215\dcm$\",
+            DRIVE = if GPS = "Remote" then "C:\Users\ktkt2\OneDrive\" else "\\itd-m09-fs02\dcm$\",
             //
             fBASE = if GPS = "Remote" then "Business\Hub Drive\DCM Base\" else "0 DCM Base\",
             //

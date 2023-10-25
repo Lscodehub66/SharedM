@@ -1,6 +1,6 @@
 (TableName as table) =>
     let
-        Source = TableName,
+        Source = Load("fxDataFormat")(TableName),
         PresentNoDataList = {
             "定价",
             "上市",

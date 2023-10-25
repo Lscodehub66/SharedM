@@ -24,9 +24,9 @@ let
   "币种规模", 
   each 
    if [#"发行规模(亿)"] < 1 then
-    Number.ToText ( [CN规模] ) & "万" & fxSmartClean ( [货币], "CrcySuffix" )
+    Number.ToText ( [CN规模] ) & "万" & fxSmartClean ( [货币], "货币" )
    else
-    Number.ToText ( [CN规模] ) & "亿" & fxSmartClean ( [货币], "CrcySuffix" )
+    Number.ToText ( [CN规模] ) & "亿" & fxSmartClean ( [货币], "货币" )
  ), 
  RoleCN         = Table.AddColumn ( CrcySizeCN, "角色", each fxSmartClean ( [IS_LEAD] & [BISL_ROLE] & [#"IS_B&D"], "Role" ), type text ), 
  #">>>Debug6"   = fxDebug ( RoleCN, "角色", null, List.RemoveMatchingItems ( Table.ColumnNames ( RoleCN ), Table.ColumnNames ( CrcySizeCN ) ) ), 

@@ -1,0 +1,10 @@
+ // let LoadCode = Load("Table_RMBEstimate","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
+
+let
+    Source = Load("fxDimSheet")("DOWNLOAD"),
+    Data = Source{[Item = "Tables_value"]}[Data],
+    #"Removed Other Columns" = Table.SelectColumns(Data,{"Column33", "Column34", "Column35", "Column36", "Column37", "Column38", "Column39"}),
+    Custom1 = Load("fxFindHeader")(#"Removed Other Columns","Column33","Index"),
+    #"Filtered Rows" = Table.SelectRows(Custom1, each ([Index] <> null))
+in
+    #"Filtered Rows"

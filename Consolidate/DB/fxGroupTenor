@@ -2,7 +2,7 @@
 let
     Source = TableName,
     Prefix = try Prefix otherwise "Dummy",
-    CN_Source = Table.ColumnNames(Source),
+    CN_Source = List.Buffer(Table.ColumnNames(Source)),
     HD = List.Intersect({{"年期", "发行期限(年)"}, CN_Source}),
     DuplicatedCol = Table.DuplicateColumn(Source, HD{0}, Prefix & HD{0}),
     NAToBlank = Table.ReplaceValue(  DuplicatedCol , "--", "", Replacer.ReplaceValue, {Prefix & HD{0}}),

@@ -1,0 +1,44 @@
+(TableName as table, ColName as text, NewColName as text) =>
+    let
+        Source = TableName,
+        #"Duplicated Column" = Table.DuplicateColumn( Source , ColName, ColName & "COPY"),
+        #"Changed Type" = Table.TransformColumnTypes(#"Duplicated Column", {{ColName & "COPY", type text}}),
+        #"Added SuffixDummy" = Table.AddColumn(
+            #"Changed Type",
+            "SuffixDummy",
+            each
+                if Text.Contains(Record.Field(_, ColName & "COPY"), "b") then
+                    "b"
+                else if Text.Contains(Record.Field(_, ColName & "COPY"), "m") then
+                    "m"
+                else if Text.Contains(Record.Field(_, ColName & "COPY"), "k") then
+                    "k"
+                else
+                    "",
+            type text
+        ),
+        #"Added Custom" = Table.AddColumn(
+            #"Added SuffixDummy",
+            "NumDummy",
+            each
+                if Record.Field(_, ColName & "COPY") = null or Record.Field(_, ColName & "COPY") = "--" then
+                    ""
+                else
+                    Text.Select(Record.Field(_, ColName & "COPY"), {"0".."9"} & {".", "-"}),
+            type text
+        ),
+        #"Changed Type1" = Table.TransformColumnTypes(#"Added Custom", {{"NumDummy", type number}}),
+        #"Added Text" = Table.AddColumn(
+            #"Changed Type1",
+            NewColName,
+            each
+                if [NumDummy] = null then
+                    Record.Field(_, ColName & "COPY")
+                else if [NumDummy] < 1 and [NumDummy] > -1 then
+                    Load("fxNumText2")(Number.ToText([NumDummy], "0.00%"))
+                else
+                    Number.ToText(Number.Round([NumDummy], 2)) & [SuffixDummy]
+        ),
+        RCol = Table.RemoveColumns(#"Added Text", {ColName & "COPY", "SuffixDummy", "NumDummy"})
+    in
+        RCol

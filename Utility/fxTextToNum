@@ -1,0 +1,6 @@
+(Input as nullable text) =>
+
+let
+
+Text0 = if Input = null  or Input = "--" then "" else Text.Select(Input, {"0".."9"}&{".","k","b","-"}),
+Text1 = Text.Replace(Text.Replace(Text0, "k","000"),"b","000000"),  

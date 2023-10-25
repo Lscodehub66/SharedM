@@ -51,7 +51,7 @@
         _CROSSROAD = if MorW = "W" then Load("fxUpdatorTS")(RemovedDupe) else RemovedDupe,
         // Revalidate mCurated
         
-        // Revalidate mBISL AncientDirectory
+        // Revalidate mBISL BISL_Ancient
         BISL_对帐号 =
             if List.Contains(CN_Source, "台账序号") and MorW = "M" then
                 Load("fxPRJSync")( _CROSSROAD, "台账序号", "定价日", "PRJ对账号")

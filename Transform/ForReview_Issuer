@@ -1,5 +1,5 @@
 let
-    Source = DLD_Add,
+    Source = Load("DLD_Add"),
     YmeansExcludeFIMTN = "Y",
     Filtered = Table.SelectRows(Source, each [IS_FIMTN] <> YmeansExcludeFIMTN),
     HDText = "Review_wIssuer",

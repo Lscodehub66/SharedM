@@ -1,0 +1,48 @@
+// let LoadCode = Load("Controller","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
+let
+    // Centralized Parameters
+    OVRDMonday = try Load("OVRDMonday") otherwise null,
+    //"20231001"
+    OVRDMulti = try Load("OVRDMulti") otherwise null, //"ON","OFF"
+    OVRDwFilter = try Load("OVRDwFilter") otherwise null,
+    //
+    CWB_wRemove = try CWB("RemoveFrom_DB") otherwise "--",
+    CWB_Monday =
+        try Date.From(CWB("Monday")) otherwise Date.StartOfWeek(Date.From(DateTime.FixedLocalNow()), Day.Monday),
+    CWB_Updator = try CWB("UpdatorWeekly") otherwise "--",
+    CWB_wFilter = try CWB("WeeklyFilter") otherwise "OFF",
+    CWB_MultiSource = try CWB("MultiSource") otherwise "OFF",
+    //
+    Source = List.Accumulate(
+        { {"RemoveFrom_DB", null, CWB_wRemove, type text},
+            {"Updator", null, CWB_Updator, type text},
+            {"Monday", Date.StartOfWeek(Date.From(OVRDMonday), Day.Monday), CWB_Monday, type date},
+            {"wFilter", OVRDwFilter, CWB_wFilter, type text},
+            {"Multi", OVRDMulti, CWB_MultiSource, type text}
+        },
+        #table({"Prefix"}, {{"Dummy"}}),
+        (x, y) => Table.AddColumn(x, y{0}, each if y{1} = null then y{2} else y{1}, y{3})
+    ),
+    #"Changed Type" = Table.TransformColumnTypes(Source, {{"Monday", type date}}),
+    Mon_Date = Table.Buffer(#"Changed Type")[Monday]{0},
+    ColToAdd = {
+        {"当前", Date.AddDays(Mon_Date, -3), type date},
+        {"上周", Date.AddDays(Mon_Date, -10), type date},
+        {"年初", Load("fxNextWeekDay")(Date.StartOfYear(Mon_Date)), type date},
+        {"22年初", Load("fxNextWeekDay")(Date.StartOfYear(Date.AddYears(Mon_Date, -1))), type date},
+        {"近1年", Load("fxNextWeekDay")(Date.AddYears(Mon_Date, -1)), type date},
+        {"近5年", Load("fxNextWeekDay")(Date.AddYears(Mon_Date, -5)), type date},
+        {"当前_YYW", Load("fxYYW")(Date.AddDays(Mon_Date, -3)), type text},
+        {"上周_YYW", Load("fxYYW")(Date.AddDays(Mon_Date, -10)), type text}
+    },
+    Output = List.Accumulate(ColToAdd, #"Changed Type", (x, y) => Table.AddColumn(x, y{0}, each y{1}, y{2})),
+    AddedCol = Table.AddColumn(
+        Output,
+        "wFilter_PreviousMon_Date",
+        each if [wFilter] = "ON" then Date.StartOfWeek(Date.AddDays(Mon_Date, -3), Day.Monday) else #date(
+            1991, 2, 20
+        ),
+        type date
+    )
+in
+    AddedCol

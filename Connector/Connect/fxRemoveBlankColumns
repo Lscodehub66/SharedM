@@ -21,9 +21,11 @@
 ) as table =>
 
     let
+     
         ToRemove = {null} & (if EmptStr = true then {""} else {}), // list of "blank" values 
        Ftab = Table.SelectRows(  tab, each not List.IsEmpty(List.RemoveMatchingItems(Record.FieldValues(_), {"", null}))),
-        tabDemoted = Table.DemoteHeaders(Ftab),
+    Custom2 = fx("DataFormat")(Ftab),
+        tabDemoted = Table.DemoteHeaders(Custom2),
         tabTransposed = Table.Transpose(tabDemoted),
         RowsRemoved = Table.SelectRows(
             tabTransposed, 
@@ -33,10 +35,10 @@
                     ToRemove)
                 )
             ),
-        tabTransposedAgain = Load("fxDataFormat")(Table.Transpose(RowsRemoved))
+        tabTransposedAgain =   Table.PromoteHeaders(Table.Transpose(RowsRemoved))
         
     in
-        Table.PromoteHeaders(tabTransposedAgain)
+      tabTransposedAgain
 
 /* 
 // Alternative version (performance didn't checked between versions):

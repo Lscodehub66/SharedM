@@ -1,6 +1,6 @@
 //  let LoadCode = Load("Writer_Table","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
 let
-    Source = Load("mTable"),
+    Source = Load("Indice_Table_Data"),
     #"Grouped Rows" = Table.Group(
         Table.SelectRows(Source, each [Index_Writer] <> null),
         {"Index_Writer"},

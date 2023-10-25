@@ -2,9 +2,9 @@
 
 
 let
-    Source = CWB("DLD_Conso"),
+    Source = try CWB("DLD_Conso") otherwise Load("DLD_Conso"),
    Prep =  if not List.Contains(Table.ColumnNames(Source),"BISL_ROLE") then Table.AddColumn(
-        CWB("DLD_Conso"),
+        Source ,
         "BISL_ROLE",
         each
             if Text.Contains([联席全球协调人], "BOCOM") then
@@ -16,7 +16,7 @@ let
             else
                 "--"
     ) else Source,
-    MergedQ = Load("fxMerge")(  Prep, CWB("DLD_QRC_23"), "ISIN", "ISIN", {""}, {""}),
+    MergedQ = Load("fxMerge")(  Prep, try CWB("DLD_QRC_23") otherwise Load("DLD_QRC_23"), "ISIN", "ISIN", {""}, {""}),
     Filtered = Table.SelectRows(MergedQ, each [BISL_ROLE] <> "--" or [担任角色] <> ""),
     #">>ExpandedList" = List.RemoveItems(Table.ColumnNames(MergedQ), Table.ColumnNames(  Prep)),
     Replaced = Table.ReplaceValue(
@@ -34,7 +34,7 @@ let
     BlankToNil = Table.ReplaceValue(
         Replaced, "", "nil", Replacer.ReplaceValue, List.RemoveItems(#">>ExpandedList", {"新规角色", "COVERAGE"})
     ),
-    SelectCol = Load("fxDataFormat")(Table.SelectColumns(BlankToNil,Load("Get")("wBISL"), MissingField.UseNull)),
+    SelectCol = Load("fxDataFormat")(Table.SelectColumns(BlankToNil,Get("wBISL"), MissingField.UseNull)),
     BlankToInput = Table.ReplaceValue(
         SelectCol, "", "【】", Replacer.ReplaceValue, {"PROJECT_CODE", "期数", "新规角色", "COVERAGE"}
     ),

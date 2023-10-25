@@ -1,6 +1,6 @@
 let
 Source = Excel.CurrentWorkbook(){[Name = "Monday"]}[Content][Column1]{0} ,
-OVRDMonday = Load("OVRDMonday "),
+OVRDMonday = Load("OVRDMonday"),
 Output= if OVRDMonday = "" or OVRDMonday = null  then Source else OVRDMonday,
 Try = try Output otherwise Date.ToText(Date.StartOfWeek(Date.From(DateTime.FixedLocalNow()),Day.Monday),"yyyy/MM/dd")
 in

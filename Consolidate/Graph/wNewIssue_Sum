@@ -1,0 +1,30 @@
+/// let LoadCode = Load("wNewIssue_Sum","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
+let
+    #"Removed Other Columns" = Table.Buffer(Table.SelectColumns(Load("Status"), {"当前_YYW", "上周_YYW"})),
+    #"Demoted Headers" = Table.DemoteHeaders(#"Removed Other Columns"),
+    #"Transposed Table" = Table.Transpose(#"Demoted Headers"),
+    #"Merged Queries" = Table.NestedJoin(
+        #"Transposed Table", {"Column2"}, Load("Recent_ByWeek"), {"YYW"}, "DimWeek22", JoinKind.LeftOuter
+    ),
+    #"Expanded DimWeek22" = Table.ExpandTableColumn(#"Merged Queries", "DimWeek22", {"笔数", "亿美元"}, {"笔数", "亿美元"}),
+    #"Sorted Rows" = Table.Sort(#"Expanded DimWeek22", {{"Column2", Order.Ascending}}),
+    #"Merged Columns" = Table.CombineColumns(
+        #"Sorted Rows", {"Column1", "Column2"}, Combiner.CombineTextByDelimiter("", QuoteStyle.None), "Column3"
+    ),
+    #"Replaced Value" = Table.ReplaceValue(#"Merged Columns", "当前_YYW", "上周_", Replacer.ReplaceText, {"Column3"}),
+    #"Replaced Value1" = Table.ReplaceValue(#"Replaced Value", "上周_YYW", "前一周_", Replacer.ReplaceText, {"Column3"}),
+    #"Demoted Headers1" = Table.DemoteHeaders(#"Replaced Value1"),
+    #"Transposed Table1" = Table.Transpose(#"Demoted Headers1"),
+    #"Promoted Headers" = Table.PromoteHeaders(#"Transposed Table1", [PromoteAllScalars = true]),
+    HD = Table.ColumnNames(#"Promoted Headers"),
+    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers", {{HD{1}, type number}, {HD{2}, type number}}),
+    #"Inserted Division" = Table.AddColumn(
+        #"Changed Type",
+        "环比",
+        each (Record.Field(_, HD{2}) - Record.Field(_, HD{1})) / Record.Field(_, HD{1}),
+        type number
+    ),
+    TF = Table.TransformColumns(#"Inserted Division", {{"环比", each Number.Round(_,2 )}}),
+    #"Demoted Headers2" = Table.DemoteHeaders(TF)
+in
+    #"Demoted Headers2"

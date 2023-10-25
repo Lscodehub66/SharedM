@@ -1,14 +1,22 @@
 let
- Source            = Excel.CurrentWorkbook(){[ Name = "tbl_review_shortname" ]}[Content], 
- Promoted          = Table.PromoteHeaders ( Source, [ PromoteAllScalars = true ] ), 
- Filtered          = Table.Distinct(Table.SelectRows ( Promoted, each [信用主体] <> null and [信用主体] <> "" )), 
- Renamed           = Table.RenameColumns (  Filtered , { { "IN_板块", "板块" }, { "IN.中资属性", "中资属性" }, { "SHORTNAMER", "信用主体简称" } }, MissingField.Ignore ), 
- Merged = Load("fxMerge")(Renamed   , CWB_DLDconso, "信用主体", "信用主体",ColNow_mCredit,{""}),
-Presenter = Load("fxPresentNoData") (  Merged ), 
+ Source            = CWB("tbl_review_shortname" ), 
+ DMI_Credit = fx("DimSheet")("DEALSMASTER_DMI_CREDIT"),
+ ColNow_mCredit = Table.ColumnNames(fx("DimSheet")("DEALSMASTER_mCredit")),
+ Filtered          = Table.Distinct(Table.SelectRows ( Source, each [信用主体] <> null and [信用主体] <> "" )), 
+ Renamed           = Table.RenameColumns (  Filtered , { { "IN_板块", "板块" }, { "IN.中资属性", "中资属性" }, { "SHORTNAMER", "信用主体简称" } }, MissingField.Ignore ),
+    MergedQ2 = Load("fxMerge")( Renamed ,  DMI_Credit, "信用主体", "信用主体", {"DEBUT_DATE"}, { "DEBUT_DATE"}),
+    MergedQ1 = Load("fxMerge")( MergedQ2   , CWB("DLD_Conso"), "信用主体", "信用主体",{""},{""}),
+    Replaced = Table.ReplaceValue( MergedQ1 ,
+               null,
+      each  [定价日],
+        Replacer.ReplaceValue,
+        {"DEBUT_DATE"}
+    ),
+ Presenter = fx("PresentNoData") (  Replaced  ), 
  SelectedCol       =  if Table.RowCount ( Table.SelectRows ( Source, each not List.IsEmpty ( List.RemoveMatchingItems ( Record.FieldValues ( _ ), { "", null } ) ) ) ) > 0 then
-   Table.SelectColumns ( Presenter, ColNow_mCredit, MissingField.UseNull )
+   Table.SelectColumns ( Presenter, ColNow_mCredit, MissingField.Ignore )
   else
-   Table.SelectColumns (  Table.SelectRows ( Source, each not List.IsEmpty ( List.RemoveMatchingItems ( Record.FieldValues ( _ ), { "", null } ) ) ), ColNow_mCredit, MissingField.UseNull )
-
+   Table.SelectColumns (  Table.SelectRows ( Source, each not List.IsEmpty ( List.RemoveMatchingItems ( Record.FieldValues ( _ ), { "", null } ) ) ), ColNow_mCredit, MissingField.Ignore)
+    ,ACol = Table.AddColumn(SelectedCol, "mCredit", each "Y")
 in
- SelectedCol
+ ACol

@@ -1,0 +1,7 @@
+let
+    Source = fxDimSheet("Download"),
+    Data = Source{3}[Data],
+    #"Merged Columns" = Table.CombineColumns(Data,{"穆迪", "标普", "惠誉"},Combiner.CombineTextByDelimiter("/", QuoteStyle.None),"当前主体评级"),
+    #"Extracted Text Before Delimiter" = Table.TransformColumns(#"Merged Columns", {{"当前主体评级", each Load("fxCleaner1010")(_, "评级"), type text}})
+in
+    #"Extracted Text Before Delimiter"

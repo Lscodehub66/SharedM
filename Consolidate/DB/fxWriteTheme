@@ -3,7 +3,7 @@
         //
         Source = TableName,
         Prefix = Load("Prefix"),
-        CN_Source = Table.ColumnNames(Source),
+        CN_Source = List.Buffer(Table.ColumnNames(Source)),
         //Prep
         ColumnsReferenced = {"清算地", "货币细分", "ESG", "品种主题"},
         ColumnsToAdd = {"ESG主题","主题" ,"发行品种"},

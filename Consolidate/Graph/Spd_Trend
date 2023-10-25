@@ -1,7 +1,7 @@
 let
     CWBName = "mIndice",
-    _CurrentDate = Date.From(Monday),
-    Source = Table.SelectRows(CWB(CWBName), each [Date] < _CurrentDate),
+    _CurrentDate = List.Buffer(Load("Status")[Monday]){0},
+    Source = Table.SelectRows(try CWB(CWBName) otherwise Load(CWBName), each [Date] < _CurrentDate),
     Sorted = Table.Sort(Source, {{"Date", Order.Descending}}),
     _InputCol = {"R_UST_3Y", "R_CGB_3Y"},
     // second item minus by first item

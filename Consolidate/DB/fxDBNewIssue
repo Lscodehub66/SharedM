@@ -5,8 +5,8 @@
         //
         Source = Table.Buffer(SourceTable),
         Get = Load("Get"),
-        SourceF = Table.SelectRows(Source, each [删除及隐藏] = "" and [定价日] > Date.From("2021/12/31")),
-        SourceUSDCNH = Table.SelectRows(   SourceF,            each ([货币] = "USD" or [货币] = "CNH")),
+        SourceF = Table.SelectRows(Source, each [删除及隐藏] <> "删除" and  [删除及隐藏] <> "隐藏" and [定价日] > Date.From("2021/12/31")),
+        SourceUSDCNH = Table.SelectRows(SourceF, each ([货币] = "USD" or [货币] = "CNH")),
         // ORecent
         Header0 = Get("Header_Graph_Deal_Weekly"),
         // {"Index","ISIN","定价日","信用主体(备证行)","发行评级","货币","发行规模(亿)","年期","票息","IPG","收窄基点","结构","主题","板块","地区","BOCOM_DEAL?","亿美元"  },
@@ -20,7 +20,7 @@
         Filtered2 = Table.SelectRows(SourceF, each [货币细分] = "点心债"),
         SCol2 = Table.SelectColumns(Filtered2, Header2, MissingField.UseNull),
         // 2a DimSum & FTZ
-        Filtered2a = Table.SelectRows(SourceF, each  [货币] = "CNH"),
+        Filtered2a = Table.SelectRows(SourceF, each [货币] = "CNH"),
         SCol2a = Table.SelectColumns(Filtered2a, Header2 & {"货币细分"}, MissingField.UseNull),
         // 3IGLGFV
         Header3 = Get("HeaderIGLGFV"),
@@ -38,17 +38,9 @@
         Header6 = Get("HeaderFTZ"),
         Filtered6 = Table.SelectRows(Source, each [货币细分] = "自贸债"),
         SCol6 = Table.SelectColumns(Filtered6, Header6, MissingField.UseNull),
-        // 7Graph
-        Header7 = Get("HeaderChart"),
-        //{"Index","ISIN","定价日", "信用主体", "亿美元", "评级分类", "年期分类","货币",  "货币细分", "板块", "删除及隐藏","Check" }
-        SourceGraph = Load("fxCombine")({Load("ChartPQ"), SourceF}, {"Check"}, Header7),
-        Filtered7 = Table.SelectRows(SourceGraph, each [货币] = "USD" or [货币] = "CNH"),
-        //8IPG
-        Header8 = {"Index", "ISIN", "定价日", "信用主体", "亿美元", "评级分类", "板块", "收窄基点", "Check"},
-        Filtered8 = Table.SelectRows(
-             SourceUSDCNH,
-           each not List.Contains({null, "", "--"}, [收窄基点]) 
-        ),
+        //8USDCNH_TIGHTEN
+        Header8 = {"Index", "ISIN", "定价日","信用主体简称", "信用主体", "亿美元", "评级分类","币种规模","发行品种", "板块", "收窄基点", "Check"},
+        Filtered8 = Table.SelectRows(SourceUSDCNH, each not List.Contains({null, "", "--"}, [收窄基点])),
         SCol8 = Table.SelectColumns(Filtered8, Header8, MissingField.UseNull),
         //******
         Output =
@@ -58,7 +50,11 @@
                 SCol2a
             else if Text.Contains(Key, "DIMSUM") then
                 Table.ReplaceValue(
-                    SCol2, each [主题], each if [主题] = "点心债" then "--" else Text.Replace([主题] ,"点心债","债券") , Replacer.ReplaceValue, {"主题"}
+                    SCol2,
+                    each [主题],
+                    each if [主题] = "点心债" then "--" else Text.Replace([主题], "点心债", "债券"),
+                    Replacer.ReplaceValue,
+                    {"主题"}
                 )
             else if Text.Contains(Key, "IGLGFV") then
                 SCol3
@@ -74,8 +70,8 @@
                     Replacer.ReplaceValue,
                     {"主题"}
                 )
-            else if Text.Contains(Key, "USDCNH_PIE_DATA") then
-                Filtered7
+            else if Text.Contains(Key, "USDCNH_DATA") then
+                SourceUSDCNH
             else if Text.Contains(Key, "USDCNH_TIGHTEN") then
                 Table.TransformColumnTypes(SCol8, {{"收窄基点", type number}})
             else

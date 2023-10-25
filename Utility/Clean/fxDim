@@ -37,7 +37,7 @@ let
             ),
             Dimtbl_Folder = Table.FromRows(
                 {
-                    {"Root*", "C:\Users\ktkt2\OneDrive", "\\10.10.1.215\dcm$", ""},
+                    {"Root*", "C:\Users\ktkt2\OneDrive", "\\itd-m09-fs02\dcm$", ""},
                     {"Folder_Base*", "\Business\Hub Drive\DCM Base", "\0 DCM Base", ""},
                     {"Folder_Base_4", null, null, "\4 Markets"},
                     {"Folder_Base_5_RSP", null, null, "\5 Databases\RSP Database"},

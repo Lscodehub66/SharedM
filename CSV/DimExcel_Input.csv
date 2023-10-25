@@ -1,0 +1,25 @@
+PK_Excel,PK_Folder,Excel_Key,File Name,Sheet_Key,Table_SkipNPromote,Table_FindHD,Table_FindAnchor,fxTF,RN
+DEALs MASTER,Team_DH,DEALSMASTER,DEALs MASTER,,,,,,
+1.Weekly Download,Team_AM,DOWNLOAD,1.Weekly Download,,,,,,
+1.Weekly Download,Team_AM,DOWNLOAD,1.Weekly Download,美元债一级,1,,,,
+1.Weekly Download,Team_AM,DOWNLOAD,1.Weekly Download,ECON,,Column1,Date Time,,
+2.Dynamic List Generator,Team_AM,DYNAMIC,2.Dynamic List Generator,,,,,,
+Graph,Base_4,GRAPH,Graph,,,,,,
+DEAL DIRECTORY,Base_4,DIRECTORY,DEAL DIRECTORY,,,,,,
+ESG Deal List,Team_ESG,ESG,ESG Deal List,,,,,,
+ESG Deal List,Team_ESG,ESG,ESG Deal List,External_review,,,,fxTF,
+DCM Existing KYC Master List,QRC,KYC,DCM Existing KYC Master List,,,,,,
+DCM Existing KYC Master List,QRC,KYC,DCM Existing KYC Master List,Master,,Column2,序号,fxTF,RN
+DCM台账2023,QRC,台账23,DCM台账2023,,,,,,
+DCM台账2023,QRC,台账23,DCM台账2023,合规,,Column3,团队,fxTF,RN
+DCM台账2023,QRC,台账23,DCM台账2023,收入情况2023,,Column2,Project Name,fxTF,
+美元债一级,Team_DH_DL,DMI,美元债一级,*SOLE*,1,,,fxTF,
+境外债券违约,Team_DH_DL,违约,境外债券违约,*SOLE*,1,,,fxTF,RN
+银行指标数据,Team_DH_DL,银行,银行指标数据,*SOLE*,1,,,,
+YY,Team_DH_DL,YY,YY_研究主体_20230930134600,城投,0,,,,
+YY,Team_DH_DL,YY,YY_研究主体_20230930134600,金融,0,,,,
+YY,Team_DH_DL,YY,YY_研究主体_20230930134600,产业,0,,,,
+BBGFX,Team_DH_DL,BBGFX,BBGFX,,,,,,
+BBGFX,Team_DH_DL,BBGFX,BBGFX,value,,Column1,Base Currency,,
+DCM2021年台账,QRC,台账21,DCM2021年台账,,,,,,
+DCM2022年台账,QRC,台账22,DCM2022年台账,,,,,,

@@ -1,9 +1,9 @@
 let
-    SourceFD = Table.Buffer(Load("DimFolder", "CSV")),
+    SourceFD = Table.Buffer(Load("DimFolder_Input", "CSV")),
     RCol = Table.RemoveColumns(SourceFD, if Load("GPS") <> "Remote" then {"Column2"} else {"Column3"}),
     #"Promoted Headers" = Table.PromoteHeaders(RCol, [PromoteAllScalars = true]),
     #"Removed Top Rows" = Table.Skip(#"Promoted Headers", 1),
-    Monday = Load("Monday"),
+    Monday =   Date.ToText(List.Buffer(Load("Controller")[Monday]){0},"yyyyMMdd"),
     #"Replaced Value" = Table.ReplaceValue(
         #"Removed Top Rows", "YYYYMMDD", Monday, Replacer.ReplaceText, {"Has_NumInPath"}
     ),
@@ -28,7 +28,7 @@ let
     ),
     #"Inserted Text Before Delimiter" = Table.AddColumn(
         #"Expanded Data",
-        "PK_File",
+        "PK_Excel",
         each
             Text.BeforeDelimiter(
                 Text.BeforeDelimiter(Text.BeforeDelimiter([Name], ".", {0, RelativePosition.FromEnd}), "-"), "_"
@@ -44,25 +44,31 @@ let
         )
     ),
     #"Merged Queries" = Table.NestedJoin(
-        Load("DimFile", "CSV"),
-        {"PK_Folder", "PK_File"},
+        Load("DimExcel_Input", "CSV"),
+        {"PK_Folder", "PK_Excel"},
         #"Merged Columns",
-        {"PK_Folder", "PK_File"},
+        {"PK_Folder", "PK_Excel"},
         "Data",
         JoinKind.LeftOuter
     ),
-    #"Expanded DimFolder" = Table.ExpandTableColumn(
+    #"Expanded Data1" = Table.ExpandTableColumn(
         #"Merged Queries",
         "Data",
         List.RemoveItems(Table.ColumnNames(#"Merged Queries"[Data]{0}), Table.ColumnNames(#"Merged Queries"))
     ),
-    TF = Table.TransformColumns(#"Expanded DimFolder", {{"Tab", Text.Upper, type text}}),
-    TF2 = Table.TransformColumnTypes(TF, {{"Tab_Skip", Int64.Type}}),
+    TF = Table.TransformColumns(#"Expanded Data1", {{"Sheet_Key", Text.Upper, type text}}),
+    TF2 = Table.TransformColumnTypes(TF, {{"Table_SkipNPromote", Int64.Type}}),
     A1 = Table.AddColumn(
-        TF2, "FText", each if [Tab] <> "" and [Tab] <> "0" then [FText_File] & "_" & [Tab] else [FText_File]
+        TF2, "Key", each if [Sheet_Key] <> "" and [Sheet_Key] <> "*SOLE*" then [Excel_Key] & "_" & [Sheet_Key] else [Excel_Key]
+    ),
+     A2 = Table.AddColumn(
+        A1, "fxTF_Key", each if [fxTF] <> "" then [fxTF]&"_"&[Key] else "",type text
+    ),
+        A3 = Table.AddColumn(
+        A2, "RN_Key", each if [RN] <> "" then [RN]&"_"&[Key] else "",type text
     ),
     #"Removed Other Columns1" = Table.SelectColumns(
-        A1, {"Content", "File Path", "FText", "FText_File", "Tab", "Tab_Skip", "Tab_Find", "Tab_Find_Key"}
+        A3, {"Content", "File Path", "Key", "Excel_Key", "Sheet_Key", "Table_SkipNPromote", "Table_FindHD", "Table_FindAnchor","fxTF_Key","RN_Key"}
     ),
     #"Filtered Rows1" = Table.SelectRows(#"Removed Other Columns1", each not List.Contains({"",null}, [File Path] ))
 in

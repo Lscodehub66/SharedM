@@ -1,0 +1,8 @@
+(Input as date) as text =>
+    let
+        Source = Date.From(Input),
+        Output = Text.RemoveRange(Number.ToText(Date.Year(Source)), 0, 2)
+            & "W"
+            & Number.ToText(Date.WeekOfYear(Source, Day.Monday), "00")
+    in
+        Output

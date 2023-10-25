@@ -1,0 +1,6 @@
+// Multi
+let
+    Source = if Load("OVRDMulti") =  null  then  try CWB("MultiSource") otherwise Load("OVRDMulti") else Load("OVRDMulti"),
+    Custom1 = if  Source  = "ON" then "BBG Data & QRC Records will be loaded into Data Model" else "Only DMI Data is loaded"
+in
+    Custom1

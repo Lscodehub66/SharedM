@@ -1,0 +1,11 @@
+//let LoadCode = Load("TapLookup","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+
+let
+    Source = CWB("TapLookup"),
+    #"Added Custom" = Table.AddColumn(Source, "FolderRefreshed", each DateTime.LocalNow()),
+    #"Demoted Headers" = Table.DemoteHeaders(#"Added Custom"),
+    #"Removed Top Rows" = Table.Skip(#"Demoted Headers",1),
+    #"Replaced Value" = Table.ReplaceValue(#"Removed Top Rows",null,"",Replacer.ReplaceValue,Table.ColumnNames(#"Removed Top Rows")),
+    Custom1 = try Table.ReplaceValue(#"Replaced Value","--","",Replacer.ReplaceValue,{"Column1", "Column2"}) otherwise #table({"Column3"},{{"N"}})
+in
+    Custom1

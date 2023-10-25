@@ -3,7 +3,7 @@ let
    
      DB_Name = "mBISL",
     //【Input】Eligibility to include in this database
-    Add_CN_DistinctCol = {"Check", "信用主体"},
+    Add_CN_DistinctCol = {"Check", "信用主体","Date"},
     //
     Add_From = "Below",
     //【Input】Insert New From Top or Below
@@ -15,7 +15,6 @@ let
     DB_Source = CWB(DB_Name),
     DB_Source_CN = Table.ColumnNames(DB_Source),
 DB_Source_CNCount = List.Count(DB_Source_CN ),
-    Add_HD_NoNA = List.Intersect({DB_Name, DB_Source_CN}){0},
     Add_HD = List.Intersect({Add_CN_DistinctCol, DB_Source_CN}){0},
     //
     Add_Filtered = Table.SelectRows(
@@ -48,6 +47,14 @@ DB_Source_CNCount = List.Count(DB_Source_CN ),
         Table.Sort(RDupe_Indexed, {{Add_HD, #"RDupe_Order////"}, {Prefix & "RDupeIndex", #"RDupe_Order////"}})
     ),
     RDupe_Removed = Table.Distinct(RDupe_Sorted, Add_HD),
-    ManagedDB = if Add_RowCount = 0 then fxDBManager(DB_Source, "m") else fxDBManager(RDupe_Removed, "m")
+   wRemove = Load("Controller")[RemoveFrom_DB]{0},
+    wRemove_List = List.Buffer(Table.Column(Add_Filtered, Add_HD)),
+    CrossRoad =
+        if wRemove = "Y" then
+            Table.SelectRows(DB_Source, each not List.Contains(wRemove_List, Record.Field(_, Add_HD)))
+        else if Add_RowCount = 0 then
+            fx("DBManager")(DB_Source, "m")
+        else
+            fx("DBManager")(RDupe_Removed, "m")
 in
-    ManagedDB
+    CrossRoad

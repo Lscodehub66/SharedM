@@ -1,6 +1,6 @@
-//  let LoadCode = Load("DimSum_Pie","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
+﻿//  let LoadCode = Load("DimSum_Pie","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
 let
-    Source = Table.Buffer(Load("DimSum")),
+    Source = Table.Buffer(Load("DimSum_Data")),
     Pie2 = Load("fxPie")(Source, "年", Order.Ascending, "板块", "笔数"),
     Pie3 = Load("fxPie")(Source, "年", Order.Ascending, "点心债年期分类", "笔数"),
     Pie4 = Load("fxPie")(Source, "年", Order.Ascending, "清算地", "笔数"),

@@ -1,0 +1,18 @@
+// let LoadCode = Load("SBLCBankLEAG","Code"), EVA = Expression.Evaluate(LoadCode ,#shared)  in EVA
+
+
+
+let
+    Source = Load("fxDimSheet")("DEALSMASTER_SBLCBankLEAG"),
+    #"Removed Columns" =   Table.RemoveColumns(Source,{"占比","金额排名"},MissingField.Ignore) ,
+
+AddedPt = Load("fxAddpt" )( #"Removed Columns"  ,"笔数"),
+    Custom1 = Load("fxSortNIndex")(AddedPt),
+    #"Sorted Rows" = Table.Sort(Custom1,{{"Index", Order.Ascending}})
+in
+
+
+
+
+ 
+#"Sorted Rows"

@@ -59,7 +59,7 @@ Entity_Client =
                     each [FolderPath],
                     each
                         if [FolderPath] <> "" and not Text.StartsWith([FolderPath], "\") then
-                            "\\10.10.1.215\dcm$\" & Text.AfterDelimiter([FolderPath], "\")
+                            "\\itd-m09-fs02\dcm$\" & Text.AfterDelimiter([FolderPath], "\")
                         else if
                             [FolderPath] = ""
                             and Record.Field(_, Prefix & "FolderPath") <> null

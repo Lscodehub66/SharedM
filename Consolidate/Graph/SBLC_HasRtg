@@ -1,0 +1,13 @@
+// let LoadCode = Load("SBLC_HasRtg","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
+
+let
+    Source = Load("SBLC_Data"),
+   Filtered = Table.SelectRows( Source, each [发行评级] <> "--/--/--"),
+   SCol = Table.SelectColumns(Filtered,{"定价日", "信用主体简称", "备证行", "发行评级", "货币", "发行规模(亿)", "年期", "票息"},MissingField.UseNull)
+,
+Sorted = Load("fxSortNIndex")( SCol)
+
+
+
+in
+Sorted

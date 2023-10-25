@@ -22,9 +22,9 @@
                 if Record.Field(_, CCYColumn) = null then
                     ""
                 else if Record.Field(_, SizeColumn) < 1 then
-                    "万" & fxCleaner(Record.Field(_, CCYColumn), "CrcySuffix")
+                    "万" & fxCleaner(Record.Field(_, CCYColumn), "货币")
                 else
-                    "亿" & fxCleaner(Record.Field(_, CCYColumn), "CrcySuffix"),
+                    "亿" & fxCleaner(Record.Field(_, CCYColumn), "货币"),
             type text
         ),
         CrcySizeCN = Table.AddColumn(

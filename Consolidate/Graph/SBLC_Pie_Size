@@ -1,14 +1,35 @@
 //let LoadCode = Load("SBLC_Pie_Size","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
-
 let
-    Source = Table.Buffer(Load("SBLC")) ,
-
-    Pie2 = Load("fxPie")(Source, "年", Order.Ascending, "货币", "亿美元"),
-    Pie3 = Load("fxPie")(Source, "年", Order.Ascending, "板块", "亿美元"),
-    Combined = Load("fxCombine")({  Pie2 ,Pie3}),
-    Substracted = Table.AddColumn(Combined, "变动", each Number.Round([23年占比] - [22年占比],4), Percentage.Type),
- #"Merged Queries" = Table.NestedJoin(
-        Substracted,
+    Source = Table.Buffer(Load("SBLC_Data")),
+    Pie3 = Load(
+        "fxAddpt"
+    )(
+        Table.AddColumn(
+            Table.RenameColumns(
+                Table.Group(Source, {"板块"}, {{"亿美元", each List.Sum([亿美元]), type number}}), {{"板块", "Column2"}}
+            ),
+            "Column1",
+            each "板块"
+        ),
+        "亿美元"
+    ),
+    //**Skipped**
+    Pie2 = Load(
+        "fxAddpt"
+    )(
+        Table.AddColumn(
+            Table.RenameColumns(
+                Table.Group(Source, {"货币"}, {{"亿美元", each List.Sum([亿美元]), type number}}), {{"货币", "Column2"}}
+            ),
+            "Column1",
+            each "货币"
+        ),
+        "亿美元"
+    ),
+    Combined = Load("fxCombine")({Pie2, Pie3}, {null}, {"Column1", "Column2", "亿美元", "占比"}),
+    //**Skipped**
+    #"Merged Queries" = Table.NestedJoin(
+        Pie3,
         {"Column1", "Column2"},
         Get("SortTable_Graph_SBLCPieSize"),
         {"Column1", "Column2"},
@@ -20,7 +41,7 @@ let
     List_NullToZero = List.RemoveItems(Table.ColumnNames(#"Expanded Data"), {"Column1", "Column2"}),
     #"Replaced Value" = Table.ReplaceValue(Sorted, null, 0, Replacer.ReplaceValue, List_NullToZero),
     Reordered = Table.ReorderColumns(
-        #"Replaced Value", List.Distinct({"Index"} & Table.ColumnNames(Sorted)), MissingField.Ignore
+        #"Replaced Value", {"Index", "Column1", "Column2", "亿美元", "占比"}, MissingField.Ignore
     )
 in
     Reordered

@@ -1,0 +1,17 @@
+// let LoadCode = Load("wBISL","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+
+// review_BISL
+let
+ Source      = CWB( "tbl_review_BISL" ),
+ fxCountMore = fx("CountMore"),
+    RemovedBlank = Table.SelectRows(Source, each not List.IsEmpty(List.RemoveMatchingItems(Record.FieldValues(_), {"", null}))), 
+ Filtered    = fx("Merge")  (   RemovedBlank ,CWB("DLD_Add"), "Check" ,   "Check" , {""} , {""}), 
+ FnCount     = Table.AddColumn ( Filtered, "多笔", each List.Sum ( fxCountMore ( Filtered, "信用主体", [信用主体], "ISIN" ) ), type number ), 
+ FnCount1    = Table.AddColumn ( FnCount, "多币种", each List.Sum ( fxCountMore ( FnCount, "信用主体", [信用主体], "货币" ) ), type number ), 
+ FnCount2    = Table.AddColumn ( FnCount1, "多品种", each List.Sum ( fxCountMore ( FnCount1, "信用主体", [信用主体], "品种主题" ) ), type number ), 
+ColNow_mBISL = Table.ColumnNames(fx("DimSheet")("DEALSMASTER_=mBISL")),
+ SelectedCol = if GNG = "GO" then
+Table.SelectColumns ( FnCount2, ColNow_mBISL, MissingField.UseNull ) else Table.SelectColumns ( RemovedBlank, ColNow_mBISL, MissingField.UseNull ),
+    ACol = Table.AddColumn(SelectedCol, "mBISL", each "Y")
+in
+ ACol

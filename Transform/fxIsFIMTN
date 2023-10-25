@@ -1,7 +1,7 @@
-(TableName as table, optional FilteredNum1 as number, optional SelectCNNum1 as number) =>
+(TableName as table, optional OneAsNoY_ZeroAsOnlyY as number, optional SelectCNNum1 as number) =>
     let
         Source = Load("fxDataFormat")(TableName),
-        CN_Input = {"ISIN", "定价日", "信用主体", "主题债券", "IPT_DMI", "FPG_DMI", "联席全球协调人", "牵头经办人", "行业"},
+        CN_Input = {"ISIN", "定价日", "信用主体","货币","发行规模(亿)" ,"主题债券", "IPT_DMI", "FPG_DMI", "联席全球协调人", "牵头经办人", "行业"},
         Removed = Table.RemoveColumns(Source, {"IS_FIMTN"}, MissingField.Ignore),
         Output = Table.AddColumn(
             Removed,
@@ -35,7 +35,8 @@
                 )
             else
                 Output,
-        Filtered = Table.SelectRows(Replaced, each if FilteredNum1 = 1 then [IS_FIMTN] <> "Y" else true),
+        Filtered = Table.SelectRows(Replaced, each if OneAsNoY_ZeroAsOnlyY = 0 then [IS_FIMTN] = "Y" else if  OneAsNoY_ZeroAsOnlyY = 1 
+        then [IS_FIMTN] <> "Y" else true),
         SCol =
             if SelectCNNum1 = 1 then
                 Table.SelectColumns(Filtered, CN_Input & {"IS_FIMTN"}, MissingField.UseNull)

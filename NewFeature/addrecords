@@ -1,0 +1,81 @@
+// _Base
+let
+    Source = Excel.Workbook(File.Contents("C:\Users\ktkt2\OneDrive - The University of Hong Kong\Downloads\Edge\IP_Load_2023_Dummy.xlsx"), null, true),
+    SelRows = Table.SelectRows(Source, each ([Kind] = "Sheet") and ([Hidden] = false)),
+    SelColumns = Table.SelectColumns(SelRows,{"Name", "Data"}, MissingField.UseNull),
+    #"Expanded Data" = Table.ExpandTableColumn(SelColumns, "Data", {"Column1", "Column2", "Column3", "Column4", "Column5", "Column6", "Column7", "Column8", "Column9", "Column10", "Column11", "Column12", "Column13", "Column14", "Column15", "Column16", "Column17", "Column18", "Column19", "Column20", "Column21", "Column22", "Column23", "Column24", "Column25", "Column26", "Column27", "Column28", "Column29", "Column30", "Column31", "Column32", "Column33", "Column34", "Column35", "Column36", "Column37", "Column38", "Column39", "Column40","Column41","Column42","Column43"}, {"Data.Column1", "Data.Column2", "Data.Column3", "Data.Column4", "Data.Column5", "Data.Column6", "Data.Column7", "Data.Column8", "Data.Column9", "Data.Column10", "Data.Column11", "Data.Column12", "Data.Column13", "Data.Column14", "Data.Column15", "Data.Column16", "Data.Column17", "Data.Column18", "Data.Column19", "Data.Column20", "Data.Column21", "Data.Column22", "Data.Column23", "Data.Column24", "Data.Column25", "Data.Column26", "Data.Column27", "Data.Column28", "Data.Column29", "Data.Column30", "Data.Column31", "Data.Column32", "Data.Column33", "Data.Column34", "Data.Column35", "Data.Column36", "Data.Column37", "Data.Column38", "Data.Column39", "Data.Column40","Data.Column41","Data.Column42","Data.Column43"}),
+    #"Changed Type" = Table.TransformColumnTypes(#"Expanded Data",{{"Name", type date}, {"Data.Column1", type time}}),
+    AddedIndex = Table.AddIndexColumn(#"Changed Type", "Index", 1, 1, Int64.Type),
+    AddedFields = Table.AddColumn( AddedIndex, "temp", each
+        [  
+            D1T1 = List.Select(_Therapists, (x)=> x = [Data.Column2] ){0}?, 
+            D1C1 = List.Select(_Category, (x)=> x = [Data.Column2] ){0}?,
+            D1C2 = List.Select(_Category2, (x)=> x = [Data.Column4] ){0}?,
+            D1T2 = List.Select(_Therapists, (x)=> x = [Data.Column5] ){0}?,
+            D1C1a = List.Select(_Category, (x)=> x = [Data.Column5] ){0}?,
+            D1C2a = List.Select(_Category2, (x)=> x = [Data.Column7] ){0}?,
+            D2T1 = List.Select(_Therapists, (x)=> x = [Data.Column8] ){0}?,
+            D2C1 = List.Select(_Category, (x)=> x = [Data.Column8] ){0}?,
+            D2C2 = List.Select(_Category2, (x)=> x = [Data.Column10] ){0}?,
+            D2T2 = List.Select(_Therapists, (x)=> x = [Data.Column11] ){0}?,
+            D2C1a = List.Select(_Category, (x)=> x = [Data.Column11] ){0}?,
+            D2C2a = List.Select(_Category2, (x)=> x = [Data.Column13] ){0}?,
+            D3T1 = List.Select(_Therapists, (x)=> x = [Data.Column14] ){0}?,
+            D3C1 = List.Select(_Category, (x)=> x = [Data.Column14] ){0}?,
+            D3C2 = List.Select(_Category2, (x)=> x = [Data.Column16] ){0}?,
+            D3T2 = List.Select(_Therapists, (x)=> x = [Data.Column17] ){0}?,
+            D3C1a = List.Select(_Category, (x)=> x = [Data.Column17] ){0}?,
+            D3C2a = List.Select(_Category2, (x)=> x = [Data.Column19] ){0}?,
+            D4T1 = List.Select(_Therapists, (x)=> x = [Data.Column20] ){0}?,
+            D4C1 = List.Select(_Category, (x)=> x = [Data.Column20] ){0}?,
+            D4C2 = List.Select(_Category2, (x)=> x = [Data.Column22] ){0}?,
+            D4T2 = List.Select(_Therapists, (x)=> x = [Data.Column23] ){0}?,
+            D4C1a = List.Select(_Category, (x)=> x = [Data.Column23] ){0}?,
+            D4C2a = List.Select(_Category2, (x)=> x = [Data.Column25] ){0}?,
+            D5T1 = List.Select(_Therapists, (x)=> x = [Data.Column26] ){0}?,
+            D5C1 = List.Select(_Category, (x)=> x = [Data.Column26] ){0}?,
+            D5C2 = List.Select(_Category2, (x)=> x = [Data.Column28] ){0}?,
+            D5T2 = List.Select(_Therapists, (x)=> x = [Data.Column29] ){0}?,
+            D5C1a = List.Select(_Category, (x)=> x = [Data.Column29] ){0}?,
+            D5C2a = List.Select(_Category2, (x)=> x = [Data.Column31] ){0}?,
+            D6T1 = List.Select(_Therapists, (x)=> x = [Data.Column32] ){0}?,
+            D6C1 = List.Select(_Category, (x)=> x = [Data.Column32] ){0}?,
+            D6C2 = List.Select(_Category2, (x)=> x = [Data.Column34] ){0}?,
+            D6T2 = List.Select(_Therapists, (x)=> x = [Data.Column35] ){0}?,
+            D6C1a = List.Select(_Category, (x)=> x = [Data.Column35] ){0}?,
+            D6C2a = List.Select(_Category2, (x)=> x = [Data.Column37] ){0}?,
+            D7T1 = List.Select(_Therapists, (x)=> x = [Data.Column38] ){0}?,
+            D7C1 = List.Select(_Category, (x)=> x = [Data.Column38] ){0}?,
+            D7C2 = List.Select(_Category2, (x)=> x = [Data.Column40] ){0}?,
+            D7T2 = List.Select(_Therapists, (x)=> x = [Data.Column41] ){0}?,
+            D7C1a = List.Select(_Category, (x)=> x = [Data.Column41] ){0}?,
+            D7C2a = List.Select(_Category2, (x)=> x = [Data.Column43] ){0}?
+        ]
+    ),
+    ExpandTemp = Table.ExpandRecordColumn(AddedFields, "temp", Record.FieldNames( AddedFields[temp]{0} )),
+    FillDownTherapists = Table.FillDown(ExpandTemp, List.Select( Record.FieldNames( AddedFields[temp]{0}), each Text.Start( Text.End( _, 2), 1) = "T" )),
+    RemoveCols = Table.RemoveColumns( FillDownTherapists, List.Skip( List.Select( Table.ColumnNames( FillDownTherapists ), each Text.StartsWith(_, "Data.")), 1) ),
+    #"Changed Type2" = Table.TransformColumnTypes(RemoveCols,{{"D1T1", type text}, {"D1C1", type text}, {"D1C2", type text}, {"D1T2", type text}, {"D1C1a", type text}, {"D1C2a", type text}, {"D2T1", type text}, {"D2C1", type text}, {"D2C2", type text}, {"D2T2", type text}, {"D2C1a", type text}, {"D2C2a", type text}, {"D3T1", type text}, {"D3C1", type text}, {"D3C2", type text}, {"D3T2", type text}, {"D3C1a", type text}, {"D3C2a", type text}, {"D4T1", type text}, {"D4C1", type text}, {"D4C2", type text}, {"D4T2", type text}, {"D4C1a", type text}, {"D4C2a", type text}, {"D5T1", type text}, {"D5C1", type text}, {"D5C2", type text}, {"D5T2", type text}, {"D5C1a", type text}, {"D5C2a", type text}, {"D6T1", type text}, {"D6C1", type text}, {"D6C2", type text}, {"D6T2", type text}, {"D6C1a", type text}, {"D6C2a", type text}, {"D7T1", type text}, {"D7C1", type text}, {"D7C2", type text}, {"D7T2", type text}, {"D7C1a", type text}, {"D7C2a", type text}})
+in
+    #"Changed Type2"
+
+// _Therapists
+let
+    Source = Excel.Workbook(File.Contents("C:\Users\ktkt2\OneDrive - The University of Hong Kong\Downloads\Edge\IP_Load_2023_Dummy.xlsx"), null, true),
+    Therapists = List.Buffer( Source{[Item="Therapists",Kind="DefinedName"]}[Data][Column1]? )
+in
+    Therapists
+
+// _Category
+let
+    Source = Excel.Workbook(File.Contents("C:\Users\ktkt2\OneDrive - The University of Hong Kong\Downloads\Edge\IP_Load_2023_Dummy.xlsx"), null, true),
+    Category = List.Buffer( Source{[Item="Category",Kind="DefinedName"]}[Data][Column1]? )
+in
+    Category
+
+// _Category2
+let
+    Source = Excel.Workbook(File.Contents("C:\Users\ktkt2\OneDrive - The University of Hong Kong\Downloads\Edge\IP_Load_2023_Dummy.xlsx"), null, true),
+    Category2 = List.Buffer( Source{[Item="Category2",Kind="DefinedName"]}[Data][Column1]? )
+in
+    Category2

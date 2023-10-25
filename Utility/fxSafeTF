@@ -8,7 +8,7 @@
 ) =>
     let
         Source = TableName,
-        CN_Source = Table.ColumnNames(Source),
+        CN_Source = List.Buffer(Table.ColumnNames(Source)),
         Intersected = List.Intersect({CN_Source, _PredefinedList}),
         Output = List.Accumulate(
             Intersected, Source, (s, c) =>

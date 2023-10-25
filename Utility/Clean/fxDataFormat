@@ -2,7 +2,7 @@
 (TableName as table, optional NumIndicator as nullable number) =>
     let
         Source = TableName,
-        fxSafeTF = Load("fxSafeTF"),
+        fxSafeTF = Expression.Evaluate(List.Buffer({Load("fxSafeTF", "Code")}){0}, #shared),
         //Global RenameColumns
         DBRenamed = Table.RenameColumns(
             Source,
@@ -13,7 +13,7 @@
                 {"发行价格", "发行价"},
                 {"IN.中资属性", "中资属性"},
                 {"发行结构", "发行架构"},
-                {"FEATURED", "品种主题"}
+                {"FEATURED", "品种主题"},{"ticker","TICKER"}
             },
             MissingField.Ignore
         ),
@@ -48,16 +48,17 @@
             & List.Select(CN_RNSource, each Text.Contains(_, "date", Comparer.OrdinalIgnoreCase)),
         //
         //Number ValueTyp
-        ColNum_ZeroToNull = {"Δ1周", "Δ年初至今"},
+        ColNum_ZeroToNull = {"Δ1周", "Δ年初至今","PRJ对账号"},
         ColNum_Zero = {"多笔", "多币种", "多品种", "多期限"},
         ColNum_RoundTo5 = List.Select(CN_RNSource, each Text.StartsWith(_, "R_") or Text.StartsWith(_, "C_"))
-            & ColNum_ZeroToNull,
+            & ColNum_ZeroToNull
+            & {"FX_Rate"},
         ColNum_RoundTo3 = {"亿港币", "亿美元", "亿元", "发行规模(亿)"},
         ColNum_RoundTo2 = {"投资级", "高收益级", "iTraxx Asia", "VIX"}
             & List.Select(
                 CN_RNSource, each Text.StartsWith(_, "S_") or Text.StartsWith(_, "Spd_") or Text.StartsWith(_, "I_")
             ),
-        ColNum_RoundTo0 = {"FEE", "承销费原币"},
+        ColNum_RoundTo0 = {"FEE", "承销费原币", "Relevance"},
         Num1 = {
             "IPT_YIELD",
             "定价YIELD_Num",
@@ -148,7 +149,7 @@
         //
         //Text ValueType
         Text1 = {
-            "主体",
+            "主体","mCredit","mCurated","mBISL",
             "描述",
             "SeriesCN_Indice",
             "Series_Indice",
@@ -220,6 +221,7 @@
             "发行评级",
             "台账序号",
             "境内主体评级",
+            "当前主体评级",
             "增发判定",
             "备注",
             "年期",
@@ -326,7 +328,6 @@
             "曾用名"
         }
             & List.Select(CN_RNSource, each Text.StartsWith(_, "IS_")),
-
         ColText_FillDown = List.Select(CN_RNSource, each Text.EndsWith(_, "FillDown", Comparer.OrdinalIgnoreCase)),
         //Type Transformation
         Type_Dimtbl = Table.Buffer(
@@ -355,7 +356,7 @@
                     else if [Column2] = "datetime" then
                         #datetime(1991, 1, 1, 0, 0, 0)
                     else if [Column2] = "number" then
-                        1 
+                        1
                     else
                         "A"
                 )
@@ -392,7 +393,7 @@
             "发行人名称英文*",
             "发行人名称英文"
         },
-        ColText_NoSpace = {"Check", "ISIN", "信用主体", "IPT_DMI", "IPG", "FPG_DMI", "FPG", "发行评级", "主体评级", "境内主体评级"},
+        ColText_NoSpace = {"Check", "ISIN", "IPT_DMI", "IPG", "FPG_DMI", "FPG", "发行评级", "主体评级", "境内主体评级"},
         //Rounding Transformation
         ReplacedZero = fxSafeTF(Error_Bye, ColNum_Zero, Replacer.ReplaceValue, null, 0),
         RoundedTo5 = fxSafeTF(ReplacedZero, ColNum_RoundTo5, Number.Round, 5),
@@ -418,29 +419,22 @@
         RemovedSpace = fxSafeTF(UpperedOnly, ColText_NoSpace, Text.Replace, " ", ""),
         ReplacedNA = fxSafeTF(RemovedSpace, ColText_NoNA, Replacer.ReplaceValue, "--", ""),
         // Other Transformation
-        EndComma_Removed =
-            if List.Contains(CN_RNSource, "筹款用途") then
-                Table.TransformColumns(
+        DigitSpace_Removed =
+            if List.Contains(CN_RNSource, "信用主体") then
+                Table.ReplaceValue(
                     ReplacedNA,
-                    {
-                        {
-                            "筹款用途",
-                            each
-                                if Text.EndsWith(_, "。") and _ <> null then
-                                    Text.BeforeDelimiter(_, "。", {0, RelativePosition.FromEnd})
-                                else
-                                    _,
-                            type text
-                        }
-                    }
+                    " ",
+                    each if not List.ContainsAny({"A".."Z"}, Text.Start([信用主体], 1)) then "" else " ",
+                    Replacer.ReplaceValue,
+                    {"信用主体"}
                 )
             else
                 ReplacedNA,
         CNH_Replaced =
             if List.Contains(CN_RNSource, "货币") then
-                Table.ReplaceValue(EndComma_Removed, "CNY", "CNH", Replacer.ReplaceValue, {"货币"})
+                Table.ReplaceValue(DigitSpace_Removed, "CNY", "CNH", Replacer.ReplaceValue, {"货币"})
             else
-                EndComma_Removed,
+                DigitSpace_Removed,
         // Optional
         TBC_Removed =
             if NumIndicator = 1 then

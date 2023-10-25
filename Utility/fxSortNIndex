@@ -14,7 +14,7 @@
             {List.RemoveItems({DateCol, SortCol1, SortCol2, SortCol3}, {"", null}), CN_Source}
         ),
         HD_Count = List.Count(HeaderList),
-        CN_Source = Table.ColumnNames(Source),
+        CN_Source = List.Buffer(Table.ColumnNames(Source)),
         Entity_CN = List.Select(CN_Source, each Text.Contains(_, "信用主体")),
         Entity_CN_Count = List.Count(Entity_CN),
         Entity_CN1 = List.First(Entity_CN),

@@ -7,7 +7,7 @@ Sub RefreshDataLake()
     ActiveWorkbook.Connections("Query - External_Sources").Refresh
     ActiveWorkbook.Connections("Query - wDynamic").Refresh
     ActiveWorkbook.Connections("Query - wIndice").Refresh
-    ActiveWorkbook.Connections("Query - Status").Refresh
+    ActiveWorkbook.Connections("Query - ControllerTP").Refresh
     ActiveWorkbook.Connections("Query - ESG_ExternalReview").Refresh
     ActiveWorkbook.Connections("Query - BaseDirectory_CN").Refresh
     ActiveWorkbook.Connections("Query - KYC_Load").Refresh
@@ -19,12 +19,12 @@ Sub RefreshFolderDatabase()
     '
 
     '
-    ActiveWorkbook.Connections("Query - Count").Refresh
+    ActiveWorkbook.Connections("Query - Step3_RowCount").Refresh
     ActiveWorkbook.Connections("Query - mCurated").Refresh
     ActiveWorkbook.Connections("Query - mBISL").Refresh
     ActiveWorkbook.Connections("Query - mCredit").Refresh
     ActiveWorkbook.Connections("Query - mChart").Refresh
-    ActiveWorkbook.Connections("Query - AncientDirectory").Refresh
+    ActiveWorkbook.Connections("Query - BISL_Ancient").Refresh
     ActiveWorkbook.Connections("Query - mIndice").Refresh
 
 End Sub
@@ -35,7 +35,7 @@ Sub RefreshKeyGraphLoad()
 
     '
     ActiveWorkbook.Connections("Query - deal_master").Refresh
-    ActiveWorkbook.Connections("Query - USDCNH_Pie_Data").Refresh
+    ActiveWorkbook.Connections("Query - USDCNH_Data").Refresh
     ActiveWorkbook.Connections("Query - SBLCBankLEAG").Refresh
 
 
@@ -74,5 +74,3 @@ Sub RefreshwTomb()
     ActiveWorkbook.Connections("Query - wTomb").Refresh
 
 End Sub
-
-

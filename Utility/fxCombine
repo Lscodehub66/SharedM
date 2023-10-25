@@ -1,17 +1,21 @@
-(InputTableList as list, optional DistinctHDorKeepDupeInput as nullable list, optional SCol_1or0Input as nullable list) =>
+(
+    InputTableList as list,
+    optional DistinctHDorKeepDupeInput as nullable list,
+    optional SCol_1or0Input as nullable list
+) =>
     //   SCol_1or0Input - {0} means use the first table item in the inputTableList as CN
     let
-        
         DistinctHDorKeepDupe = if DistinctHDorKeepDupeInput = null then {null} else DistinctHDorKeepDupeInput,
-          SCol_1or0 = if SCol_1or0Input = null then {null} else SCol_1or0Input,
-        
+        SCol_1or0 = if SCol_1or0Input = null then {null} else SCol_1or0Input,
         SColCN =
-            if List.ContainsAny(SCol_1or0 , {0..9}) then
-                Table.ColumnNames(InputTableList{SCol_1or0 {0}})
-            else 
-             SCol_1or0           ,
+            if SCol_1or0 = {10} then
+                List.Distinct(List.Combine(List.Transform(InputTableList, each Table.ColumnNames(_))))
+            else if List.ContainsAny(SCol_1or0, {0..9}) then
+                Table.ColumnNames(InputTableList{SCol_1or0{0}})
+            else
+                SCol_1or0,
         TableList =
-            if List.ContainsAny(SColCN, {"",null}) then
+            if List.ContainsAny(SColCN, {"", null}) then
                 InputTableList
             else
                 List.Transform(InputTableList, each Table.SelectColumns(_, SColCN, MissingField.UseNull)),
@@ -22,7 +26,7 @@
         Output =
             if DistinctHDorKeepDupe = {"Keep"} then
                 NoNull
-            else if DistinctHDorKeepDupe = {null}  then
+            else if DistinctHDorKeepDupe = {null} then
                 Table.Distinct(NoNull)
             else
                 Table.Distinct(NoNull, DistinctHDorKeepDupe)

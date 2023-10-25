@@ -1,10 +1,9 @@
 // let LoadCode = Load("DLD_Conso","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-    Source = DLD_DMI,
-    DLD_BBG_Corp = DLD_BBG_Corp,
+    Source = Load("DLD_DMI"),
+ 
     //
-    Prefix = try Prefix otherwise "Dummy",
-    Multi = try Load("Multi") otherwise "",
+    Prefix = Load("Prefix"),
     //
     Add_BISL = Table.AddColumn(
         Source,
@@ -22,52 +21,46 @@ let
     // Multisource steps
     BBG_HD = Get("Header_Exp_Dynamic_BBG"),
     BBG_HDExp = List.Transform(BBG_HD, each if _ = "计息基准" then Prefix & _ else _),
-    BBG_Merged = Load("fxMerge")(Add_BISL, DLD_BBG_Corp, "Check", "Check", BBG_HD,
-    //{"注册成立地", "发行人主上市地", "补充OMAS updates", "定价息差", "发行评级", "主体评级","ESG_Indicator","计息基准"}
+    BBG_Merged = Load("fxMerge")(Add_BISL, Load("DLD_BBG_Corp"), "Check", "Check", BBG_HD,
+   
     BBG_HDExp),
-    TBC_1 = Table.ReplaceValue(
-        BBG_Merged,
-        each [发行评级],
+ //{"注册成立地", "发行人主上市地", "补充OMAS updates", "定价息差", "发行评级", "主体评级","ESG_Indicator","计息基准"}
+    TBC_1 = List.Accumulate( 
+            {{"发行评级","债项评级"},{"主体评级","穆迪/标普"}}, 
+          BBG_Merged,
+           ( x, y ) => 
+           Table.ReplaceValue(
+        x,
+        each Record.Field(_,y{0}),
         each
-            if [发行评级] = "" and [债项评级] = "" then
+            if Record.Field(_,y{0}) = "" and Record.Field(_,y{1}) = "" then
                 "【】/【】/【】"
-            else if [债项评级] = "" then
-                "【" & [发行评级] & "】"
-            else if [发行评级] = "" or ([发行评级] = "--/--/--" and [债项评级] <> "--/--") then
-                [债项评级] & "/【】"
+            else if Record.Field(_,y{1}) = "" then
+                "【" & Record.Field(_,y{0}) & "】"
+            else if Record.Field(_,y{0}) = "" or (Record.Field(_,y{0}) = "--/--/--" and Record.Field(_,y{1}) <> "--/--") then
+                Record.Field(_,y{1}) & "/【】"
             else
-                [发行评级],
+                Record.Field(_,y{0}),
         Replacer.ReplaceValue,
-        {"发行评级"}
-    ),
+        {y{0}}
+    )),
+   
     TBC_2 = Table.ReplaceValue(
         TBC_1,
-        each [主体评级],
-        each
-            if [主体评级] = "" and [#"穆迪/标普"] = "" then
-                "【】/【】/【】"
-            else if [#"穆迪/标普"] = "" then
-                "【" & [#"穆迪/标普"] & "】"
-            else if [主体评级] = "" or ([主体评级] = "--/--/--" and [#"穆迪/标普"] <> "--/--") then
-                [#"穆迪/标普"] & "/【】"
-            else
-                [主体评级],
-        Replacer.ReplaceValue,
-        {"主体评级"}
-    ),
-    TBC_3 = Table.ReplaceValue(
-        TBC_2,
         "",
         each if Record.Field(_, Prefix & "计息基准") <> "" then Record.Field(_, Prefix & "计息基准") else "",
         Replacer.ReplaceValue,
         {"计息基准"}
     ),
     // End of MultiSource
+    #"//GNG_Multi" = if Text.Contains(Load("Controller")[Multi]{0},"BBG") or Load("Controller")[Multi]{0} = "ON" then "GO" else "NO-GO",
+
+  
     Crossroad =
-        if  not Text.Contains(Multi, "BBG")  then
+             if    #"//GNG_Multi" <> "GO"  then
             Table.RenameColumns(Add_BISL, {{"债项评级", "发行评级"}, {"穆迪/标普", "主体评级"}}, MissingField.UseNull)
         else
-            TBC_3,
+            TBC_2,
     // facilitate FIMTN Review
     Add_FIMTN = Table.TransformColumns(Load("fxIsFIMTN")(Crossroad),{{"IS_FIMTN", each if _ = "Y" then "【Y】" else _}}),
     //
@@ -76,7 +69,7 @@ let
     )(
         Add_FIMTN, CWB("DLD_Conso"), "Check", "Check", {"IS_FIMTN"}, {Prefix & "IS_FIMTN"}
     ),
-    CWBSelfJoin_Replaced = Table.ReplaceValue(
+    CWBSelfJoin_Replaced = try Table.ReplaceValue(
         CWBSelfJoin_Merged,
         each [IS_FIMTN],
         each
@@ -90,7 +83,7 @@ let
                 [IS_FIMTN],
         Replacer.ReplaceValue,
         {"IS_FIMTN"}
-    ),
+    ) otherwise Add_FIMTN,
     Checked = Load("fxCheckNDupe")(CWBSelfJoin_Replaced),
     Sorted = Load("fxSortNIndex")(Checked),
     //

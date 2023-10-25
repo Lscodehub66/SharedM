@@ -7,7 +7,7 @@
         
         DimData_Type_Code =Load("DimData_Type","Code") ,
         Rename_DB_DataFormat = Get("Rename_DB"),
-        CN_Source = Table.ColumnNames(Source),
+        CN_Source = List.Buffer(Table.ColumnNames(Source)),
         //Global RenameColumns
         GlobalRenamed = Table.RenameColumns(Source, Rename_DB_DataFormat, MissingField.Ignore),
         //  { {"IN_板块", "板块"},    {"发行人注册地", "注册成立地"},    {"FLOATER_FORMULA", "计息基准"},    {"发行价格", "发行价"},    {"IN.中资属性", "中资属性"},   {"发行结构", "发行架构"}}

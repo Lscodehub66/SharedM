@@ -1,0 +1,8 @@
+
+//let LoadCode = Load("DMI_ChangedColumn","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA 
+let
+Headers = {"Index", "地区", "Updator", "Timestamp", "Check"} &{"ticker", "首日涨跌", "认购额(亿)", "认购倍数", "亚洲占比", "基金占比"},
+   ColNow_mDMI = {"Index", "ISIN", "信用主体", "公司类型", "行业", "细分行业", "地区", "城市", "区县", "评级类型", "穆迪/标普", "主体评级展望", "债项评级", "境内主体评级", "定价日", "起息日期", "首次付息日", "兑付日", "债券简称", "发行规模(亿)", "货币", "发行期限(年)", "票息_DMI", "IPT_DMI", "FPG_DMI", "收窄幅度(bp)", "定价_DMI", "发行价", "主题债券", "发行架构", "ticker", "发行人", "担保人", "维好协议提供者", "SBLC提供者", "首日涨跌", "认购额(亿)", "认购倍数", "亚洲占比", "基金占比", "计息基准", "付息频率", "偿还顺位", "利率类型", "债券类型", "债券余额", "筹款用途", "发行场所", "特殊条款说明", "联席全球协调人", "牵头经办人", "联席账簿管理人", "Updator", "Timestamp", "Check"},
+ Source =  if List.Count( List.RemoveMatchingItems(ColNow_mDMI,(Table.ColumnNames(Load("DLD_DMI")) &   Headers ))) = 0 then {DateTime.ToText(DateTime.LocalNow(),"yy/M/d h:00"),"未检测到DMI列名有更改"} else  List.RemoveMatchingItems(ColNow_mDMI,(Table.ColumnNames(DLD_DMI) &   Headers ))
+in
+ Source

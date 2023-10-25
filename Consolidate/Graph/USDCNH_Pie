@@ -1,6 +1,6 @@
 //  let LoadCode = Load("USDCNH_Pie","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
 let
-    Source = Table.Buffer(Load("USDCNH_Pie_Data")) ,
+    Source = Table.Buffer(Load("USDCNH_Data")) ,
     Pie1 = Load("fxPie")(Source, "年", Order.Ascending, "月", "亿美元"),
     Pie2 = Load("fxPie")(Source, "年", Order.Ascending, "货币细分", "亿美元"),
     Pie3 = Load("fxPie")(Source, "年", Order.Ascending, "板块", "亿美元"),

@@ -10,7 +10,7 @@ in
     Column1
 
 // Mode
-"\\10.10.1.215\dcm$\Team Folder\Execution Team\" meta [IsParameterQuery=true, List={"\\10.10.1.215\dcm$\Team Folder\Execution Team\", "C:\Users\ktkt2\OneDrive\EXE Team\", "C:\Users\kingsley.tong\OneDrive\EXE Team\"}, DefaultValue="\\10.10.1.215\dcm$\Team Folder\Execution Team\", Type="Any", IsParameterQueryRequired=true]
+"\\itd-m09-fs02\dcm$\Team Folder\Execution Team\" meta [IsParameterQuery=true, List={"\\itd-m09-fs02\dcm$\Team Folder\Execution Team\", "C:\Users\ktkt2\OneDrive\EXE Team\", "C:\Users\kingsley.tong\OneDrive\EXE Team\"}, DefaultValue="\\itd-m09-fs02\dcm$\Team Folder\Execution Team\", Type="Any", IsParameterQueryRequired=true]
 
 // mDMI_headers
 let
@@ -39,7 +39,7 @@ in
 
 
 // Mode
-"\\10.10.1.215\dcm$\Team Folder\Execution Team\" meta [IsParameterQuery=true, List={"\\10.10.1.215\dcm$\Team Folder\Execution Team\", "C:\Users\ktkt2\OneDrive\EXE Team\", "C:\Users\kingsley.tong\OneDrive\EXE Team\"}, DefaultValue="\\10.10.1.215\dcm$\Team Folder\Execution Team\", Type="Any", IsParameterQueryRequired=true]
+"\\itd-m09-fs02\dcm$\Team Folder\Execution Team\" meta [IsParameterQuery=true, List={"\\itd-m09-fs02\dcm$\Team Folder\Execution Team\", "C:\Users\ktkt2\OneDrive\EXE Team\", "C:\Users\kingsley.tong\OneDrive\EXE Team\"}, DefaultValue="\\itd-m09-fs02\dcm$\Team Folder\Execution Team\", Type="Any", IsParameterQueryRequired=true]
 
 // mDMI_headers
 let

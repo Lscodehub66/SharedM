@@ -1,0 +1,19 @@
+// let LoadCode = Load("wCurated","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+
+
+let
+
+
+ Source      = Load("Reviewed_IssuerPQ"),
+ ColNow_mCurated = Table.ColumnNames(fx("DimSheet")("DEALSMASTER_=mCurated")),  
+    MReview = fxMerge(Source,Load("Reviewed_CuratedPQ"), "Check","Check", {""} , {""},null,1),
+     MDLD_Add     = fxMerge  (   MReview ,CWB("DLD_Add"), "Check" ,   "Check" , {""} , {""}),
+ //
+ InvokedPNum = fx("AddPriceNum")(MDLD_Add ),
+    InvokedPText = fx("AddPriceText")(InvokedPNum),         
+Custom2     = Table.ReplaceValue ( InvokedPText, "", each if Text.Contains ( [增发判定], "增发" ) and [FPG] <> "" then [FPG] else [定价], Replacer.ReplaceValue, { "定价" } ),
+
+ SelectedCol = Table.SelectColumns ( Custom2, ColNow_mCurated, MissingField.UseNull ),
+    ACol = Table.AddColumn(SelectedCol, "mCurated", each "Y")
+in
+ ACol

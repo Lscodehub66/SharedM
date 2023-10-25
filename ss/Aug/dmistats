@@ -74,7 +74,7 @@ let
  ChangedType = Table.TransformColumnTypes ( Filtered, { { "认购额(亿)", type number }, { "投资者账户数", type number } } ), 
  Division    = Table.AddColumn ( ChangedType, "超额认购倍数", each if [#"认购额(亿)"] <> null then ( [#"认购额(亿)"] / [#"发行规模(亿)"] ) else null, type number ), 
  RoundedOff  = Table.TransformColumns ( Division, { { "认购额(亿)", each Number.Round ( _, 1 ), type number }, { "超额认购倍数", each Number.Round ( _, 1 ), type number }, { "投资者账户数", each Number.Round ( _, 0 ), type number } } ), 
- AddCol      = Table.AddColumn ( RoundedOff, "认购描述", each if [#"认购额(亿)"] <> null then "认购额超" & Number.ToText ( [#"认购额(亿)"] ) & "亿" & fxSmartClean ( [货币], "CrcySuffix" ) & "，超额认购" & Number.ToText ( [超额认购倍数] ) & "倍；" else "" ), 
+ AddCol      = Table.AddColumn ( RoundedOff, "认购描述", each if [#"认购额(亿)"] <> null then "认购额超" & Number.ToText ( [#"认购额(亿)"] ) & "亿" & fxSmartClean ( [货币], "货币" ) & "，超额认购" & Number.ToText ( [超额认购倍数] ) & "倍；" else "" ), 
  AddCol1     = Table.AddColumn ( AddCol, "地区分布描述", each if [投资者分布] <> null then "地区分布：" & [投资者分布] & "；" else "" ), 
  AddCol2     = Table.AddColumn ( AddCol1, "类型分布描述", each if [投资者类型] <> null then "投资者类型：" & fxSmartClean ( [投资者类型], "InvestorType" ) else "" ), 
  Merged      = Table.AddColumn ( AddCol2, "Stats描述", each Text.Combine ( { [认购描述], [地区分布描述], [类型分布描述] }, "#(lf)" ), type text ), 

@@ -1,7 +1,6 @@
-(optional FText as nullable text) => let
-    
-    
-    主体 = {
+(optional FText as nullable text) =>
+    let
+        主体 = {
             {"（香港）", "(香港)"},
             {"（", "("},
             {"）", ")"},
@@ -19,9 +18,8 @@
             {"管理委员会", "管委会"},
             {"发展和改革委员会", "发改委"}
         },
-        
-    地区 = {{"维吾尔", ""}, {"壮族", ""}, {"回族", ""}, {"自治区", ""}, {"省", ""}, {"市", ""}, {"特别行政区", ""}}, 
-    区县 = {
+        地区 = {{"维吾尔", ""}, {"壮族", ""}, {"回族", ""}, {"自治区", ""}, {"省", ""}, {"市", ""}, {"特别行政区", ""}},
+        区县 = {
             {"（", "("},
             {"）", ")"},
             {"转型综合改革示范区", "综改区"},
@@ -34,8 +32,7 @@
             {"综合保税", "保税"},
             {"航空港经济综合实验区", "航空港实验区"}
         },
-        
-    评级 = {
+        评级 = {
             {"(P)", ""},
             {"(EXP)", ""},
             {"WD", "--"},
@@ -50,8 +47,8 @@
             {"pi", ""},
             {"WR", ""}
         },
-        
-    价格 = {
+        评级分类 = {{"投资级", "IG"}, {"高收益", "HY"}, {"违约", "D"}, {"无评级", "NR"}},
+        价格 = {
             {" ", ""},
             {"QUARTLYUS", "3m"},
             {"QUARTLY", "3m"},
@@ -79,8 +76,7 @@
             {"(THENUMBER)", ""},
             {"CT", "T"}
         },
-        
-    结构 = {
+        结构 = {
             {"SBLC+担保+维好协议", "备证+担保+维好"},
             {"维好协议+担保", "维好+担保"},
             {"维好协议+SBLC", "备证+维好"},
@@ -91,8 +87,7 @@
             {"维好协议", "维好"},
             {"SBLC", "备证"}
         },
-        
-    品种 = {
+        品种 = {
             {"Sustainable", "可持续"},
             {"Blue", "蓝色"},
             {"Green", "绿色"},
@@ -118,11 +113,17 @@
             {"债点心", "点心"},
             {"--", ""}
         },
-        
-    周几 = {{"Mon", "周一"}, {"Tue", "周二"}, {"Wed", "周三"}, {"Thu", "周四"}, {"Fri", "周五"}, {"Sat", "周六"}, {"Sun", "周日"}},
-        
-    货币 = {
-            {"MOP", "澳门元"},
+        周几 = {
+            {"Mon", "周一"},
+            {"Tue", "周二"},
+            {"Wed", "周三"},
+            {"Thu", "周四"},
+            {"Fri", "周五"},
+            {"Sat", "周六"},
+            {"Sun", "周日"}
+        },
+        货币 = {
+            {"MOP", "澳门币"},
             {"AUD", "澳元"},
             {"HKD", "港币"},
             {"USD", "美元"},
@@ -131,8 +132,7 @@
             {"SGD", "新币"},
             {"CNH", "元"}
         },
-        
-    角色 = {
+        角色 = {
             {"PA", "配售代理"},
             {"-", ""},
             {" ", ""},
@@ -150,26 +150,31 @@
             {"CoManager", "副经办人"},
             {"DM", "及交易管理人"}
         },
-        
-    投资者 = {
+        投资者 = {
             {"占比", ""},
             {"：", ""},
+            {" / ", "/"},
             {"（", ""},
             {"）", ""},
-            {"EMEA", ""},
+            {"EMEA", "欧洲、中东和非洲"},
+            {"ASIA", "亚洲"},
+            {"BANK", "银行"},
+            {"FI", "金融机构"},
             {".00%", "%"},
             {".0%", "%"},
-            {"
-", "，"},
+            {"#(lf)", "，"},
             {"资产管理公司", "资管"},
+            {"FM", "资管"},
             {"资产管理人", "资管"},
             {"基金经理", "基金"},
+            {"AM", "基金"},
             {"基金管理人", "基金"},
             {"基金管理公司", "基金"},
             {"基金管理", "基金"},
             {"保险公司", "保险"},
             {"保险机构", "保险"},
             {"私人银行", "私行"},
+            {"PB", "私行"},
             {"SSA", "主权及超主权机构"},
             {"主权、超国家金融机构和代理机构", "主权及超主权机构"},
             {"主权债务评级较高的非营利性公共部门发行的债务", "主权及超主权机构"},
@@ -179,8 +184,7 @@
             {"欧洲中东非洲", "欧洲、中东和非洲"},
             {"银行财务部门", "司库"}
         },
-        
-    一二三 = {
+        一二三 = {
             {"0", "零"},
             {"1", "一"},
             {"2", "二"},
@@ -193,8 +197,7 @@
             {"9", "九"},
             {"10", "十"}
         },
-        
-    ABC = {
+        ABC = {
             {"1", "A"},
             {"2", "B"},
             {"3", "C"},
@@ -206,11 +209,39 @@
             {"9", "I"},
             {"10", "J"}
         },
-   Source = {
+        国家城市 = {
+            {"ABUDHABI", "^AUH^", "AUH", "阿布达比"},
+            {"ASTANA", "^NQZ^", "NQZ", "阿斯塔纳"},
+            {"DUBAI", "^DXB^", "DXB", "迪拜"},
+            {"FRANKFURT", "^FRA^", "FRA", "法兰克福"},
+            {"HONGKONG", "^HK^", "HK", "香港"},
+            {"HUNGARY", "^BUD^", "BUD", "匈牙利"},
+            {"JOHANNESBURG", "^JNB^", "JNB", "约翰内斯堡"},
+            {"LONDON", "^LON^", "LON", "伦敦"},
+            {"LUXEMBOURG", "^LUX^", "LUX", "卢森堡"},
+            {"MACAU", "^MFM^", "MFM", "澳门"},
+            {"NEWYORK", "^JFK^", "JFK", "纽约"},
+            {"PARIS", "^PAR^", "PAR", "巴黎"},
+            {"SINGAPORE", "^SG^", "SG", "新加坡"},
+            {"SYDNEY", "^SYD^", "SYD", "悉尼"},
+            {"TAIPEI", "^TPE^", "TPE", "台北"},
+            {"TOKYO", "^TYO^", "TYO", "东京"},
+            {"INDONESIA", "^IND^", "IND", "印尼"},
+            {"AUSTRALIA", "^AUS^", "AUS", "澳大利亚"},
+            {"SHANGHAI", "^PVG^", "PVG", "上海"},
+            {"SYDNEY", "^SY^", "SY", "悉尼"},
+            {"SPAIN", "^SPN^", "SPN", "西班牙"},
+            {"QATAR", "^QTR^", "QTR", "卡塔尔"}
+        },
+        LOCATION = List.Zip({List.Transform(国家城市, each List.First(_)), List.Transform(国家城市, each List.Last(_))}),
+        #"LOCATION^" = List.Transform(国家城市, each List.FirstN(_, 2)),
+        LOCATIONCN = List.Transform(国家城市, each List.LastN(_, 2)),
+        Source =  {
             {"主体", 主体},
             {"地区,REGION", 地区},
             {"区县", 区县},
             {"评级,RTG", 评级},
+            {"评级分类", 评级分类},
             {"价格,FPG,FPT,FRN,IPG,IPT,IPT,PRICE", 价格},
             {"结构,STRUCTURE", 结构},
             {"品种", 品种},
@@ -219,16 +250,20 @@
             {"角色,ROLE", 角色},
             {"投资者,STATS", 投资者},
             {"一二三", 一二三},
-            {"ABC", ABC}
+            {"ABC", ABC},
+            {"LOCATION", LOCATION},
+            {"LOCATION^", #"LOCATION^"},
+            {"LOCATIONCN", LOCATIONCN}
         },
-
-       
-    Custom1 =  if FText <> null  then Table.FromRows( List.Select(Source,each  Text.Contains(_{0},FText,  Comparer.OrdinalIgnoreCase)){0}{1},{"Find", "Replace"}    )
-    else Table.TransformColumns(Table.FromRows(Source),{{"Column2", each Table.FromRows(_,{"Find","Replace"})}})
-
-   
-
-    
-        
-in
- Custom1
+        Custom1 =
+            if FText <> null then
+                Table.FromRows(
+                    List.Select(Source, each Text.Contains(_{0}, FText, Comparer.OrdinalIgnoreCase)){0}{1},
+                    {"Find", "Replace"}
+                )
+            else
+                Table.TransformColumns(
+                    Table.FromRows(Source), {{"Column2", each Table.FromRows(_, {"Find", "Replace"})}}
+                )
+    in
+        Custom1

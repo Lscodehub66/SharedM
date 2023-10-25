@@ -1,0 +1,14 @@
+let
+ Source            = deal_master,
+ Split = fxSplitRtg(Source,"发行评级","BBG"),
+SelectCol = Table.SelectColumns(Split, {"Check" ,"交易简称", "发行评级"}&List.RemoveMatchingItems(Table.ColumnNames(Split),Table.ColumnNames(Source))),
+    MergedQ = Table.NestedJoin(SelectCol, {"Check"}, DMIRtg, {"Check"}, "Data", JoinKind.LeftOuter),
+    Custom1 = Table.ExpandTableColumn (
+  MergedQ, 
+  "Data", 
+  List.RemoveMatchingItems ( Table.ColumnNames ( MergedQ[Data]{0} ), Table.ColumnNames (SelectCol) )
+ ),
+    Custom2 = Table.SelectRows(Custom1,each  [穆迪BBG] <> [穆迪DMI] or  [标普BBG] <> [标普DMI]  or  [惠誉BBG] <> [惠誉DMI] )
+
+in
+ Custom2

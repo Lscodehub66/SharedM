@@ -1,9 +1,8 @@
-//let GPS  = try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Remote",  FilePath = if GPS = "Remote" then "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM\Get" else "\\10.10.1.215\dcm$\Team Folder\Execution Team\DataHub\SharedM\Get",  LoadCode = Text.FromBinary ( Binary.Buffer ( File.Contents ( FilePath ) ) ), EVA = Expression.Evaluate ( LoadCode, #shared ) in EVA
+//let GPS  = try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Remote",  FilePath = if GPS = "Remote" then "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM\Get" else "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\SharedM\Get",  LoadCode = Text.FromBinary ( Binary.Buffer ( File.Contents ( FilePath ) ) ), EVA = Expression.Evaluate ( LoadCode, #shared ) in EVA
 let
     Source = (TextName as text) =>
         let
-            //  Parameters
-            fxConnect = Load("fxConnect"),
+            
             //
             Dimtbl_DMI_Filter = Table.FromRows(
                 {
@@ -128,7 +127,7 @@ let
             ),
             Dimtbl_Folder = Table.FromRows(
                 {
-                    {"Root*", "C:\Users\ktkt2\OneDrive", "\\10.10.1.215\dcm$", ""},
+                    {"Root*", "C:\Users\ktkt2\OneDrive", "\\itd-m09-fs02\dcm$", ""},
                     {"Folder_Base*", "\Business\Hub Drive\DCM Base", "\0 DCM Base", ""},
                     {"Folder_Base_4", null, null, "\4 Markets"},
                     {"Folder_Base_5_RSP", null, null, "\5 Databases\RSP Database"},
@@ -155,41 +154,7 @@ let
             TransformationTable_DLD_TableName = Table.FromRows(
                 {{"2023/10/06", "BBGcorp", "DLD_BBG_Corp"}}, {"Date", "From", "To"}
             ),
-            PQTable_QRC_合规台账22 = Table.FromRows(
-                Json.Document(
-                    Binary.Decompress(
-                        Binary.FromText(
-                            "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",
-                            BinaryEncoding.Base64
-                        ),
-                        Compression.Deflate
-                    )
-                ),
-                let
-                    _t = ((type nullable text) meta [Serialized.Text = true])
-                in
-                    type table [
-                        序号 = _t,
-                        团队 = _t,
-                        #"Project Name" = _t,
-                        #"项目名称（集团全称）" = _t,
-                        发行人名称中文 = _t,
-                        发行人名称英文 = _t,
-                        上会审批日 = _t,
-                        Mandate = _t,
-                        项目定价日 = _t,
-                        #"KYC Deadline" = _t,
-                        #"KYC expiry date" = _t,
-                        KYC = _t,
-                        #"Approved by RO" = _t,
-                        Worldcheck = _t,
-                        #"DD Form" = _t,
-                        #"DD Risk" = _t,
-                        #"Record Keeping" = _t,
-                        Completed = _t,
-                        公盘地址 = _t
-                    ]
-            ),
+            
             Table_DMI_HKCompany = Table.FromRows(
                 {
                     {"香港按揭证券有限公司"},
@@ -345,7 +310,26 @@ let
                 "EY"
             },
             // Header_List
-            Header_Graph_Chart = {
+            HD_RO_ECON = {
+                "Index",
+                "未来一周主要经济数据",
+                "上周主要经济数据",
+                "Date",
+                "Region",
+                "Relevance",
+                "Period",
+                "Survey",
+                "Actual",
+                "Prior",
+                "Revised",
+                "Ticker",
+                "Time",
+                "Table",
+                "Event",
+                "区间",
+                "范围"
+            },
+            Header_USDCNH_Data = {
                 "Index",
                 "ISIN",
                 "定价日",
@@ -399,6 +383,7 @@ let
                 "澳分_ROLE",
                 "Check"
             },
+            Header_R_DMI_NotInUse = {"英文简称", "发行方式", "省份", "债项初始评级", "剩余期限", "投资者账户数", "投资者类型", "投资者分布", "债券最新面值", "行权兑付日", "最新票面利率", "发行起始日", "上市日期", "是否永续债", "是否存单", "交易状态", "特殊条款", "违约日期", "发行规则"},
             Header_S_Dynamic_wCurated = {
                 "定价日",
                 "信用主体",
@@ -406,6 +391,7 @@ let
                 "IPG",
                 "FPG",
                 "收窄基点",
+                 "定价基准",
                 "定价",
                 "增发判定",
                 "货币",
@@ -413,8 +399,7 @@ let
                 "年期",
                 "票息",
                 "品种主题",
-                "上市",
-                "期限备注",
+                "上市",               
                 "亿美元",
                 "亿元",
                 "亿港币",
@@ -676,9 +661,9 @@ let
             Header_Sync_KYC = {"KYC对账号", "发行人", "KYC Status", "KYC expiry date", "信用主体"},
             //   CN = ColumnNames
             CN_BaseDirectory_Deal = Table.ColumnNames(
-                Load("fxConnect")("Directory"){[Item = "tbl_deal", Kind = "Table"]}[Data]
+                fx("DimSheet")("DIRECTORY_TBL_DEAL") 
             ),
-            CN_mChart = Table.ColumnNames(Load("fxConnect")("DataHub"){[Item = "mChart", Kind = "Table"]}[Data]),
+            CN_mChart = Table.ColumnNames( fx("DimSheet")("DEALSMASTER_MCHART") ),
             // Selection
             Key = Text.Replace(Text.Upper(Text.Trim(TextName)), "_", ""),
             CNSource =
@@ -703,8 +688,7 @@ let
                     SortTable_Graph_USDCNHPIE
                 else if Text.Contains(Key, "DLD") and Text.Contains(Key, "NAME") then
                     TransformationTable_DLD_TableName
-                else if Text.Contains(Key, "合规") and Text.Contains(Key, "22") then
-                    PQTable_QRC_合规台账22
+             
                 else if Text.Contains(Key, "DIM") and Text.Contains(Key, "FOLDER") then
                     Dimtbl_Folder
                 else if Text.Contains(Key, "DMI") and Text.Contains(Key, "FILTER") then
@@ -734,10 +718,14 @@ let
             HeaderSource =
                 if Text.Contains(Key, "WISSUER") then
                     Header_S_Dynamic_wIssuer
+else if Text.Contains(Key, "DMINOTINUSE") then
+                    Header_R_DMI_NotInUse
+                else if Text.Contains(Key, "ROECON") then
+                    HD_RO_ECON
                 else if Text.Contains(Key, "WCURATED") then
                     Header_S_Dynamic_wCurated
-                else if Text.Contains(Key, "CHART") then
-                    Header_Graph_Chart
+                else if Text.Contains(Key, "USDCNH") then
+                    Header_USDCNH_Data
                 else if Text.Contains(Key, "WBISL") then
                     Header_S_Dynamic_wBISL
                 else if Text.Contains(Key, "DYNAMIC") and Text.Contains(Key, "FIMTN") then

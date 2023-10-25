@@ -1,7 +1,7 @@
 (TableName as table) =>
     let
         Source = TableName,
-        CN_Source = Table.ColumnNames(Source),
+        CN_Source = List.Buffer(Table.ColumnNames(Source)),
         // Revalidate mCredit
         Entity_省级 =
             if List.ContainsAll(CN_Source, {"级别", "城市"}) then

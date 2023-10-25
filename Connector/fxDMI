@@ -15,14 +15,15 @@
                 DMIFiltertbl_PutFilterOutValueInColumn1
             else
                try Load("Dimtbl_DMI_Filter") otherwise Get("Dimtbl_DMI_Filter") ,
-        tblFilter_List = List.Distinct(Table.SelectRows(tblFilter, each tblFilter[Column2] <> "OFF")[Column1]),
+        tblFilter_List = List.Buffer(List.Distinct(Table.SelectRows(tblFilter, each tblFilter[Column2] <> "OFF")[Column1])),
         fxCleaner = Load("fxCleaner"),
+        Prefix = List.Buffer(Load("Controller")[Prefix]){0},
         // 【2】Data Range
         Filered_Dates = Load("fxRangeDate")(RangeStartNum, RangeEndNum, TableName, "定价日"),
         //【3】Rename Columns
         Renamed = Table.RenameColumns(
             Filered_Dates,
-            {{"定价", "定价_DMI"}, {"IPT", "IPT_DMI"}, {"FPG", "FPG_DMI"}, {"发行结构", "发行架构"}, {"票息", "票息_DMI"}},
+            {{"定价", "定价_DMI"}, {"IPT", "IPT_DMI"}, {"FPG", "FPG_DMI"}, {"发行结构", "发行架构"}, {"票息", "票息_DMI"},{"ticker","TICKER"}},
             MissingField.Ignore
         ),
         CN_RNSource = Table.ColumnNames(Renamed),
@@ -32,7 +33,7 @@
             try
                 CWB("DMI_Default")
             otherwise
-                try Load("fxDimSheet")("DEALSMASTER"){[Item = "DMI_Default"]}[Data] otherwise Load("DMI_Default","CSV"),
+                try Load("fxDimSheet")("DEALSMASTER_DMI_Default") otherwise Load("DMI_Default","CSV"),
         MergedQ =
             if List.Contains(CN_RNSource, "首次违约日") then
                 RCol
@@ -52,7 +53,7 @@
         ),
         Filtered_EXCH = Table.SelectRows(AddCol1, each not List.Contains(tblFilter_List, [IS_EXCH])),
         //Transformation Starts
-         Table_DMI_HKCompany = Get("Table_DMI_HKCompany"),
+         Table_DMI_HKCompany = Table.Buffer(Load("DMI_Entity_NonCN","CSV")),
         Filtered_HKMacau = Table.NestedJoin(Filtered_EXCH, {"信用主体"}, Table_DMI_HKCompany, {"信用主体"}, Prefix & "Data", JoinKind.LeftAnti),
         // Remove redundancy
         Filtered_ValueKey = Table.SelectRows(

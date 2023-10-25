@@ -1,9 +1,9 @@
 // let LoadCode = Load("ForReview_wCredit","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 
 let
-    Source = CWB("DLD_Conso"),
+    Source = try CWB("DLD_Conso") otherwise Load("DLD_Conso"),
     SCol = Table.SelectColumns( Source, {"信用主体","债券简称"}),
-     FromForReviewIssuer = Table.SelectColumns(Table.SelectRows(ForReview_Issuer, each Text.Contains([信用主体], "【")), {"信用主体"}),
+     FromForReviewIssuer = Table.SelectColumns(Table.SelectRows(Load("ForReview_Issuer"), each Text.Contains([信用主体], "【")), {"信用主体"}),
     Combined = Load("fxCombine")({ SCol ,FromForReviewIssuer}, {"信用主体"}),
     TFCol = Table.TransformColumns(
         Combined,
@@ -19,10 +19,8 @@ let
         }
     ),
     Replaced = Table.ReplaceValue(TFCol, null, each [信用主体], Replacer.ReplaceValue, {"债券简称"}),
-    //
-    PQmCredit = Load("fxConnect")("DataHub"){[Item = "mCredit", Kind = "Table"]}[Data],
-    MergedQ = Load("fxMerge")(Replaced ,  PQmCredit, "信用主体","信用主体", {""},{""}),
-    Function = Table.AddColumn(RemovedDupe, "SHORTNAMER", each fxSNBankCorp([债券简称])),
+    MergedQ = Table.NestedJoin(Replaced, {"信用主体"}, fx("DimSheet")("DEALSMASTER_mCredit"), {"信用主体"}, Prefix & "Data", JoinKind.LeftAnti),
+    Function = Table.AddColumn(MergedQ, "SHORTNAMER", each fx("SNBankCorp")([债券简称])),
     RemovedCol = Table.SelectColumns(Function, {"信用主体", "SHORTNAMER", "中资属性", "板块"}, MissingField.UseNull),
     BlankToInput = Table.ReplaceValue(RemovedCol, null, "【】", Replacer.ReplaceValue, {"中资属性", "板块"})
 in

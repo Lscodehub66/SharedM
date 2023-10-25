@@ -5,7 +5,7 @@ let
     //
     Source =CWB("mIndice"),  
     //
-     CN_Source = Table.ColumnNames(Source),
+     CN_Source = List.Buffer(Table.ColumnNames(Source)),
     MondayDate =if OVRDSpd_Monday = "" or OVRDSpd_Monday = null  then Status[Monday]{0} else OVRDSpd_Monday,
      _InputCurves = {"UST", "CGB"},    // second item minus by first item
         CurveHD = List.Select(

@@ -1,30 +1,21 @@
-
-
-//let LoadCode = Load("QwTomb","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+//let LoadCode = Load("wTomb","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
     Source = CWB("Directory"),
-    MondayDate = Date.From(Monday),
-    fxtblTomb_R2R3 = Load("fxtblTomb_R2R3"),
-    fxtblTomb_R4R1 = Load("fxtblTomb_R4R1"),
-    fxtblTomb_Transpose = Load("fxtblTomb_Transpose"),
+    InnerJoined = Table.Buffer(Table.NestedJoin(Source, {"YYW"}, Status, {"当前_YYW"}, "Status", JoinKind.Inner)),
     //
-    Filtered = Table.SelectRows(
-        Source, each Date.Year([定价日]) = Date.Year(MondayDate) and Date.WeekOfYear([定价日]) = Date.WeekOfYear(
-            MondayDate 
-        ) -1
-    ),
-    //
-    TombWriter = fxtblTomb_R4R1(fxtblTomb_R2R3(Filtered), Filtered),
+    TombWriter = Load("fxtblTomb_R4R1")(Load("fxtblTomb_R2R3")(InnerJoined), InnerJoined),
     BlankTable =
-        if Table.RowCount(Filtered) = 0 then
-            Table.FromRows({{Monday, "本周无新增", ""}} & List.Repeat({{"", "", ""}}, 9), Table.ColumnNames(TombWriter))
+        if Table.RowCount(InnerJoined) = 0 then
+            Table.FromRows(
+                {{"", Date.ToText(Status[当前_Monday]{0},"M月d日")&"一周无新增", ""}} & List.Repeat({{"", "", ""}}, 9), Table.ColumnNames(TombWriter)
+            )
         else
             Table.FromRows(
-                List.Repeat({{null, "", ""}}, 10 - Table.RowCount(Filtered)), Table.ColumnNames(TombWriter)
+                List.Repeat({{null, "", ""}}, 10 - Table.RowCount(InnerJoined)), Table.ColumnNames(TombWriter)
             ),
     Combined = Table.Combine(
         {TombWriter, Table.SelectColumns(BlankTable, Table.ColumnNames(TombWriter), MissingField.UseNull)}
     ),
-    TransposedTomb = fxtblTomb_Transpose(Combined)
+    TransposedTomb = Load("fxtblTomb_Transpose")(Combined)
 in
     TransposedTomb

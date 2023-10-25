@@ -1,0 +1,7 @@
+// DLD_AddTap
+let
+    Source = CWB("AddTapLoad"),
+    #"Transposed Table" = Table.Transpose(Source),
+    #"Promoted Headers" = fx("DataFormat")(Table.PromoteHeaders(#"Transposed Table", [PromoteAllScalars=true]))
+in
+    #"Promoted Headers"

@@ -1,13 +1,20 @@
-( TableNmae as table ) =>
+( TableName as table, KeyColList as list ) =>
  let
-  Source       = TableNmae, 
-  SelectedCol  = Table.SelectColumns ( Source, { "定价日", "信用主体", "COMPARER" } ), 
-  RemovedDupe  = Table.Distinct ( SelectedCol, { "COMPARER" } ), 
-  Sorted       = Table.Buffer ( Table.Sort ( RemovedDupe, { { "定价日", Order.Ascending } } ) ), 
-  InstanceGp1  = Table.Group ( Sorted, { "信用主体" }, { { "Data", each _, type table [ 定价日 = date, COMPARER = text ] } } ), 
+
+ // KeyColList = { "YYMMDD", "信用主体"},
+  Source       = Table.Buffer(TableName), 
+     Prefix = List.Buffer(Load("Controller")[Prefix]){0},
+  SelectedCol  = Table.SelectColumns ( Source,  KeyColList ), 
+  RemovedDupe  = Table.Distinct ( SelectedCol,  KeyColList ), 
+  Sorted       = Table.Buffer ( Table.Sort ( RemovedDupe, { {  KeyColList{0}, Order.Ascending } } ) ), 
+  InstanceGp1  = Table.Group ( Sorted, { KeyColList{1} }, { { "Data", each _, type table} } ), 
   IGCustom1    = Table.AddColumn ( InstanceGp1, "Custom", each Table.AddIndexColumn ( [Data], "第N次担任", 1 ) ), 
   IGRemoved1   = Table.SelectColumns ( IGCustom1, { "Custom" } ), 
   IGExpanded1  = Table.ExpandTableColumn ( IGRemoved1, "Custom", Table.ColumnNames ( IGRemoved1[Custom]{0} ) ), 
-  SelectedCol1 = Table.SelectColumns ( IGExpanded1, { "COMPARER", "第N次担任" } )
+  List2 = List.Transform( KeyColList, each _&Prefix),
+  #"Renamed Columns" = Table.RenameColumns(IGExpanded1 , List.Zip( {KeyColList,List2})),
+    Custom2 = Table.Join(Source,KeyColList,#"Renamed Columns",List2,
+                JoinKind.LeftOuter)
+    
  in
-  SelectedCol1
+  Custom2 

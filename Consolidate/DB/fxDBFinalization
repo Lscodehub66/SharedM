@@ -1,9 +1,9 @@
 (TableName as table) =>
     let
         //
-        Source = TableName,
-        Prefix = try Prefix otherwise "Dummy",
-        CN_Source = Table.ColumnNames(Source),
+        Source = Table.Buffer(TableName),
+        Prefix = Load("Prefix"),
+        CN_Source = List.Buffer(Table.ColumnNames(Source)),
         //Prep
         DataType = Load("fxDataFormat")(Source),
         RemovedCol = Table.RemoveColumns(
@@ -21,7 +21,7 @@
                         if [FolderPath] = "" then
                             ""
                         else
-                            "\\10.10.1.215\dcm$\Deals\Completed\"
+                            "\\itd-m09-fs02\dcm$\Deals\Completed\"
                                 & Date.ToText([定价日], "yyyy")
                                 & " Completed\"
                                 & [FolderPath],

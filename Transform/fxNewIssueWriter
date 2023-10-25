@@ -134,8 +134,7 @@
             type text
         ),
         AddedCol = Table.AddColumn(#"Added Suffix", "Writer", each if [总述] <> "" then [总述] & "#(lf)" & [描述] else [描述]),
-        SCol = Table.SelectColumns(AddedCol, {"信用主体及评级", "板块", "货币", "Writer"}, MissingField.UseNull),
-        Sorted = Load("fxSortNIndex")(SCol),
-        Output = Table.Sort(Sorted, {{"板块", Order.Descending}})
+        SCol = Table.SelectColumns(AddedCol, {"信用主体及评级", "板块", "货币", "Writer"}, MissingField.UseNull)
+     
     in
-        Output
+       SCol 

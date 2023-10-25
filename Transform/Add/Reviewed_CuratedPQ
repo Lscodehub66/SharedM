@@ -1,0 +1,21 @@
+//let LoadCode = Load("Reviewed_CuratedPQ","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    CWBName = "tbl_review",
+    Source = try CWB(CWBName) otherwise fx("DimSheet")("DYNAMIC_" & CWBName),
+    Filtered = Table.SelectRows(Source, each ([定价日] <> null) and [ISIN] <> null),
+    Replaced = Table.ReplaceValue(
+        Filtered,
+        "【】",
+        each if [IPG] <> "" and [定价] <> "" and [定价] <> "【】" then [定价] else [票息],
+        Replacer.ReplaceValue,
+        {"FPG"}
+    ),
+    Replaced1 = Table.ReplaceValue(
+           Replaced ," ","", Replacer.ReplaceText,  {"IPG", "FPG","票息","定价" }),
+    Renamed = Table.RenameColumns(
+        Replaced1, {{"IPG", "IPT_DMI"}, {"FPG", "FPG_DMI"}, {"定价", "定价_DMI"}, {"收窄基点", "收窄"}}, MissingField.Ignore
+    ),
+    ACol = Table.AddColumn(Renamed, "计息基准", each if Text.Contains([票息], "+") then [票息] else "", type text),
+    #"Removed Columns" = if GNG = "GO" then Table.RemoveColumns(ACol, {"票息"}) else Source
+in
+    #"Removed Columns"

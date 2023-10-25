@@ -1,0 +1,36 @@
+// let LoadCode = Load("AddTapISIN","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    ColList = List.Select(
+        Table.ColumnNames(CWB("AddTapISIN")), each not Text.Contains(_, "Column", Comparer.OrdinalIgnoreCase)
+    ),
+    TapLookup = Table.Buffer(Load("TapLookup")),
+    deal_master = Table.Buffer(Load("deal_master")),
+    GetISIN = TapLookup[Column1]{0},
+    FilteredText = TapLookup[Column2]{0},
+    Source = Table.FromList({[ISIN = TapLookup[Column1]{0}]}, Record.FieldValues, {"ISIN"}),
+    mDeal1 = Table.SelectColumns(
+        Table.SelectRows(
+            deal_master, each Text.Contains([ISIN], GetISIN) and not Text.Contains([#"信用主体(备证行)"], "*")
+        ),
+        ColList,
+        MissingField.UseNull
+    ),
+    Replaced =
+        if Table.RowCount(mDeal1) = 0 then
+            Table.Combine({mDeal1, Table.AddColumn(Source, "信用主体(备证行)", each "【无此ISIN】")})
+        else
+            mDeal,
+    mDeal = Table.SelectColumns(
+        Table.SelectRows(
+            deal_master,
+            each
+                (Text.Contains([#"信用主体(备证行)"], FilteredText) or Text.Contains([信用主体], FilteredText))
+                and not Text.Contains([#"信用主体(备证行)"], "*")
+        ),
+        ColList,
+        MissingField.UseNull
+    ),
+    Appended = if GetISIN = "" then mDeal else Table.Combine({Replaced, mDeal}),
+    KeptRows = Table.SelectColumns(Table.FirstN(Table.Distinct(Appended), 10), ColList, MissingField.Ignore)
+in
+    KeptRows

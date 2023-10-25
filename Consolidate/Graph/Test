@@ -19,7 +19,7 @@ let
     _HD_Trend = "Trend",
     //
     Source = Table.SelectRows(Table, each [Date] < _CurrentDate),
-    CN_Source = Table.ColumnNames(Source),
+    CN_Source = List.Buffer(Table.ColumnNames(Source)),
     Sorted = Table.Sort(Source, {{"Date", Order.Descending}}),
     ACol = Table.AddColumn(
         Sorted,

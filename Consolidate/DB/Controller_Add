@@ -1,0 +1,66 @@
+// let LoadCode = Load("mCurated","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+   fxController_Add = ("mCurated")
+   PK_List =  {"Check", "信用主体","Date"},
+   Name = "mCurated",
+   Addtbl = wDynamicPQ,
+   Added  =List.Accumulate({ {"Name",Name,type text},{"CWB",CWB(Name),type table},{"CN", List.Buffer(Table.ColumnNames(CWB(Name))),type list}, {"Add",Addtbl, type table}}, 
+   {"PK",List.Intersect({PK_List, DB_Source_CN}){0}},#table({"RemoveFrom_DB"}, {{CWB("RemoveFrom_DB")}}),
+     (x,y) => Table.AddColumn(x, y{0},each y{1}, y{2})),
+     
+     
+    //【Input】Eligibility to include in this database
+     =,
+    Source = CWB(Name)
+    Add_From = {"Below","LIFO"},
+    //【Input】Insert New From Top or Below
+    RDupe_Method = ,
+    //【Input】LIFO or FIFO
+    Add_Source = 
+    //【Input】PQ//
+    DB_Source = CWB(Name),
+    DB_Source_CN = ,
+    DB_Source_CNCount = List.Count(DB_Source_CN),
+    Add_HD_NoNA = List.Intersect({Name, DB_Source_CN}){0},
+    Add_HD = 
+    //
+    Add_Filtered = Table.SelectRows(Add_Source, each Record.Field(_, Name) = "Y"),
+    Add_RowCount = Table.RowCount(Add_Filtered),
+    #"Add_From_Result////" = if Add_From = "Top" then {Add_Filtered, DB_Source} else {DB_Source, Add_Filtered},
+    Combined = Load("fxCombine")(#"Add_From_Result////", {"Keep"}, DB_Source_CN),
+    #">>ShowDupe" = Table.Distinct(
+        Table.Buffer(
+            Table.Sort(
+                Load("fxShowDupe")(Combined, {Add_HD}), {{Add_HD, Order.Descending}, {"Timestamp", Order.Descending}}
+            )
+        ),
+        {Add_HD}
+    ),
+    RDupe_Checked =
+        if Add_HD = "Check" then
+            Table.ReplaceValue(
+                Combined,
+                each [Check],
+                each Load("fxCheck")([定价日], "yyMMdd", [ISIN], "Y"),
+                Replacer.ReplaceValue,
+                {"Check"}
+            )
+        else
+            Combined,
+    RDupe_Indexed = Table.AddIndexColumn(Combined, Prefix & "RDupeIndex", 1, 1),
+    #"RDupe_Order////" = if RDupe_Method <> "FIFO" then Order.Ascending else Order.Descending,
+    RDupe_Sorted = Table.Buffer(
+        Table.Sort(RDupe_Indexed, {{Add_HD, #"RDupe_Order////"}, {Prefix & "RDupeIndex", #"RDupe_Order////"}})
+    ),
+    RDupe_Removed = Table.Distinct(RDupe_Sorted, Add_HD),
+    wRemove = Load("Controller")[RemoveFrom_DB]{0},
+    wRemove_List = List.Buffer(Table.Column(Add_Filtered, Add_HD)),
+    CrossRoad =
+        if wRemove = "Y" then
+            Table.SelectRows(DB_Source, each not List.Contains(wRemove_List, Record.Field(_, Add_HD)))
+        else if Add_RowCount = 0 then
+            fx("DBManager")(DB_Source, "m")
+        else
+            fx("DBManager")(RDupe_Removed, "m")
+in
+    CrossRoad

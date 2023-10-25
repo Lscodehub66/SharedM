@@ -1,12 +1,16 @@
-
-//  let LoadCode = Load("CNH_Pie","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
+﻿//  let LoadCode = Load("CNH_Pie","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
 let
-    Source = Table.Buffer(Load("CNH")),
+    Source = Table.Buffer(Load("CNH_Data")),
     Pie1 = Load("fxPieCount")(Source, "年", Order.Ascending, "货币细分", "发行规模(亿)", "笔数"),
     Pie2 = Load("fxPieCount")(Source, "年月", Order.Ascending, "货币细分", "发行规模(亿)", "笔数"),
     Combined = Load("fxCombine")({Pie1, Pie2}),
     #"Replaced Value" = Table.ReplaceValue(
         Combined, null, 0, Replacer.ReplaceValue, {"点心债_发行规模(亿)", "点心债_笔数", "自贸债_发行规模(亿)", "自贸债_笔数"}
+    ),
+    #"Sorted Rows" = Table.Sort(#"Replaced Value", {{"Column1", Order.Ascending}, {"Column2", Order.Ascending}}),
+    #"Added Index" = Table.AddIndexColumn(#"Sorted Rows", "Index", 1, 1, Int64.Type),
+    Reordered = Table.ReorderColumns(
+        #"Added Index", List.Distinct({"Index"} & Table.ColumnNames(#"Sorted Rows")), MissingField.Ignore
     )
 in
-    #"Replaced Value"
+    Reordered

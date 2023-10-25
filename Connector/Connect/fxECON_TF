@@ -1,8 +1,11 @@
 (TableName as table, optional FTextToIndicateFuture as nullable text) =>
     let
         Source = TableName,
+        RlvLvl = Load("RlvLvl"),
+        US_addon=Load("US_addon"),
         Sheet = Source{[Item = "ECON", Kind = "Sheet"]}[Data],
         Found = Load("fxFindHeader")(Sheet, "Column1", "Date Time"),
+        Monday = List.Buffer(Load("Status")[Monday]){0},
         RCol = Table.RemoveColumns(Found, {"Column3", "Column4"}, MissingField.Ignore),
         #"Inserted Text After Delimiter" = Table.AddColumn(
             RCol,
@@ -23,16 +26,13 @@
             #"Changed Type2", {{"Relevance", each Number.Round(_, 0), type number}}
         ),
         #"Filtered Rows1" = Table.SelectRows(
-            #"Rounded Off",
-            each
-                [Date] >= Date.AddDays(Date.FromText(Monday), -7)
-                and [Date] < Date.AddDays(Date.FromText(Monday), 7)
+            #"Rounded Off", each [Date] >= Date.AddDays(Monday, -7) and [Date] < Date.AddDays(Monday, 7)
         ),
         #"Filtered Rows" = Table.SelectRows(
             #"Filtered Rows1", each if [Region] = "US" then [Relevance] > RlvLvl + US_addon else [Relevance] > RlvLvl
         ),
         #"Added Conditional Column" = Table.AddColumn(
-            #"Filtered Rows", "Table", each if [Date] < Date.FromText(Monday) then "ECON" else "FUTURE"
+            #"Filtered Rows", "Table", each if [Date] < Monday then "ECON" else "FUTURE"
         ),
         #"Uppercased Text" = Table.TransformColumns(
             Table.TransformColumnTypes(#"Added Conditional Column", {{"Period", type text}}, "en-US"),
@@ -105,6 +105,13 @@
         FTextCN = if FText = "FUTURE" then "未来一周主要经济数据" else "上周主要经济数据",
         FRows = Table.SelectRows(#"Inserted Merged Column", each [Table] = FText),
         Sorted0 = Table.Sort(FRows, {{"Region", Order.Ascending}, {"Relevance", Order.Descending}}),
-        Renamed = Table.RenameColumns(Sorted0, {{"事件", FTextCN}})
+        Renamed = Table.RenameColumns(Sorted0, {{"事件", FTextCN}}),
+        #"Added Index1" = Table.AddIndexColumn(Renamed, "Index", 1, 1, Int64.Type),
+        RemoveColumns = Table.RemoveColumns(
+            #"Added Index1",
+            List.Select(Table.ColumnNames(#"Added Index1"), each Text.Contains(_, "Column")),
+            MissingField.Ignore
+        ),
+        #"Reordered Columns" = Table.ReorderColumns(RemoveColumns, Get("ROECON"), MissingField.Ignore)
     in
-        Renamed
+        #"Reordered Columns"
