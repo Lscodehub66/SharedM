@@ -1,0 +1,7 @@
+let
+    Source = fx("Source")("Download_文档Deals"),
+    #"Removed Top Rows" = Table.Skip(Source,1),
+    #"Transposed Table" = Table.Transpose(#"Removed Top Rows"),
+    #"Changed Type" = Table.TransformColumnTypes(#"Transposed Table",{{"Column1", type text}})
+in
+    #"Changed Type"

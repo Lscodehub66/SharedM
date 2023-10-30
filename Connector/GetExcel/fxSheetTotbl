@@ -1,0 +1,54 @@
+(InputTable as table, InputList3Items as list) as table =>
+    let
+        // InputTable = fx("Source")("DOWNLOAD"){[Item = "美元债一级"]}[Data],
+        // InputList3Items = {"Column1", "信用主体", ""},
+        ColName = InputList3Items{0},
+        AnchorValue = InputList3Items{1},
+        IsRBlankCol = try InputList3Items{2} otherwise null,
+        Anchor_RowNum =
+            let
+                #"Added Index" = Table.AddIndexColumn(InputTable, "Index", 1, 1, Int64.Type),
+                #"Changed Type" = Table.TransformColumnTypes(#"Added Index", {{ColName, type text}}),
+                #"Filtered Rows" = Table.SelectRows(
+                    #"Changed Type", each (Text.Lower(Record.Field(_, ColName)) = Text.Lower(AnchorValue))
+                ){
+                    0
+                }[Index]
+            in
+                #"Filtered Rows",
+        SkipRows =
+            if List.Contains({0..9}, ColName) then
+                Table.Skip(InputTable, ColName)
+            else
+                Table.Skip(InputTable, Anchor_RowNum - 1),
+        Crossroad_NoEmptyRows = Table.SelectRows(
+            SkipRows, each not List.IsEmpty(List.RemoveMatchingItems(Record.FieldValues(_), {"", null}))
+        ),
+        Filtered = if not List.Contains({0..9}, ColName) then Table.SelectRows(Crossroad_NoEmptyRows, each Record.Field(_, ColName) <> null) else  Crossroad_NoEmptyRows ,
+        // RemoveNullColumns
+        BlankValueList = {null},
+        tabTransposed = Table.Transpose(    Filtered),
+        RowsRemoved = Table.SelectRows(
+            tabTransposed,
+            each
+                not List.IsEmpty(
+                    List.RemoveMatchingItems(Record.FieldValues(Record.RemoveFields(_, "Column1")), BlankValueList)
+                )
+        ),
+        tabTransposedAgain =
+            if not List.Contains({null, ""}, IsRBlankCol) then
+                Table.PromoteHeaders(Crossroad_NoEmptyRows)
+            else
+                Table.PromoteHeaders(Table.Transpose(RowsRemoved)),
+        RemoveDefaultColumn =
+            if IsRBlankCol = "Column" then
+                Table.RemoveColumns(
+                    tabTransposedAgain,
+                    List.Select(Table.ColumnNames(tabTransposedAgain), each Text.StartsWith(_, "Column")),
+                    MissingField.Ignore
+                )
+            else
+                tabTransposedAgain,
+        Output = fx("DataFormat")(RemoveDefaultColumn)
+    in
+        Output

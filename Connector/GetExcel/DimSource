@@ -1,0 +1,73 @@
+// Dimsourcetbl
+let
+    //Has_NumInPath Parameters - create here then add to Folder Step
+    YYYYMMDD = Text.Replace(Load("MondayText"), "/", "") & "\",
+    // Adjust here to override
+    // Folder
+    Root = {"C:\Users\ktkt2\OneDrive\EXE Team\DataHub\", "\\itd-m09-fs02\dcm$\"},
+    Fd_Source = Table.Buffer(
+        Table.FromRows(
+            {
+                {"PK_Folder2", "FolderInput", "FolderInput"},
+                {"Base_4", Root{0} & "Backup\", Root{1} & "0 DCM Base\4 Markets\"},
+                {"Team_DH", Root{0}, Root{1} & "Team Folder\Execution Team\DataHub\"},  {"Team_DH_B", Root{0} & "Backup\", Root{1} & "Team Folder\Execution Team\DataHub\"},
+                {"Team_DH_DL", Root{0} & "DataLake\", Root{1} & "Team Folder\Execution Team\DataHub\DataLake\"},
+                {
+                    "Team_AM",
+                    Root{0} & "Backup\Weekly AM\" & YYYYMMDD &"Data\",
+                    Root{1} & "Team Folder\Execution Team\Weekly AM\" & YYYYMMDD &"Data\"
+                },
+                {
+                    "Team_ESG",
+                    Root{0} & "Backup\",
+                    Root{1} & "Team Folder\Execution Team\Rating & Advisory\7. ESG\Pitch book\"
+                },
+                {"QRC", "C:\Users\ktkt2\OneDrive\EXE Team\QRC\", Root{1} & "【QRC】DCM项目情况表\"}
+            },
+            {"Column1", "Column2", "Column3"}
+        )
+    ),
+    #"GPS Removal" = Table.RemoveColumns(Fd_Source, if Load("GPS") <> "Remote" then {"Column2"} else {"Column3"}),
+    DimFolder = Table.PromoteHeaders(#"GPS Removal", [PromoteAllScalars = true]),
+    // SOURCE
+    Excel_Source = Load("temp", "CSV"),
+    AddedIndex = Table.AddIndexColumn(Excel_Source, "Index", 1, 1),
+    Joined_FD = Table.Join(AddedIndex, {"PK_Folder"}, DimFolder, {"PK_Folder2"}, JoinKind.LeftOuter),
+    Sheet_Source = Table.Buffer(
+        Table.FromRows(
+            {
+                {"美元债一级", {1, "", "Column"}},
+                {"ECON", {"Column1", "Date Time"}},
+                {"MASTER", {"Column2", "序号"}},
+                {"合规", {"Column3", "团队"}},
+                {"收入情况2023", {"Column2", "Project Name"}},
+                {"*SOLE*DMI", {1}},
+                {"*SOLE*违约", {1}},
+                {"*SOLE*银行", {1}},
+                {"城投", {0}},
+                {"金融", {0}},
+                {"产业", {0}},
+                {"VALUE", {"Column1", "Base Currency"}}
+            },
+            {"PK_Sheet2", "fxSheet_Input"}
+        )
+    ),
+    Joined_Sheet = Table.Join(Joined_FD, "PK_Sheet", Sheet_Source, "PK_Sheet2", JoinKind.LeftOuter),
+    TF = Table.TransformColumns(Joined_Sheet, {{"PK_Sheet", Text.Upper, type text}}),
+    A1 = Table.AddColumn(
+        TF,
+        "Key",
+        each
+            if [PK_Sheet] <> "" and not Text.StartsWith([PK_Sheet], "*") then
+                [Excel_Key] & "_" & [PK_Sheet]
+            else
+                [Excel_Key]
+    ),
+    #"Removed Other Columns1" = Table.SelectColumns(
+        TF, {"Index",
+        // "Key",
+        "Excel_Key", "PK_Sheet", "fxSheet_Input", "FolderInput", "PK_Excel"}, MissingField.UseNull
+    ),
+    Sorted = Table.Sort(#"Removed Other Columns1", {{"Index", Order.Ascending}})
+in
+    Sorted

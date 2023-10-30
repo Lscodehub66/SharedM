@@ -1,5 +1,5 @@
 let
-    Source = Load("fxDimSheet")("BBGFX_value"),
+    Source = fx("Source")("BBGFX_value"),
     DimDate = Table.Buffer(Load("fxDimDate")(20130101,null)),
     USDUSD = Load("fxCombine")({Source, Table.FromColumns({{"USD"}, {"USD"}}, {"Base Currency", "Term Currency"})}),
     #"Replaced Value" = Table.ReplaceValue(

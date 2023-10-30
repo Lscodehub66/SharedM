@@ -1,0 +1,38 @@
+//let Code = Load("Directory","Code"), EVA = Expression.Evaluate(Code ,#shared) in EVA
+let
+     #"Buffered Ancient" = Table.Buffer(CWB("BISL_Ancient")),
+    #"Buffered mDeal" = Table.Buffer(deal_master),
+    CN_Base = List.Buffer(CWB("BaseDirectory_CN")),
+    CN_CWB = List.Buffer(Table.ColumnNames(CWB("Directory"))),
+    //
+    Ancient_Merged = Load("fxDBMerger")(#"Buffered Ancient"),
+    Ancient_Finalized = Load("fxDBFinalization")(Ancient_Merged),
+    deal_masterFiltered = Table.SelectRows(#"Buffered mDeal", each [BISL_ROLE] <> "" and [BISL_ROLE] <> "--"),
+    Combined = Load("fxCombine")({Ancient_Finalized, deal_masterFiltered}, null, {1}),
+    Checked = Load("fxCheckNDupe")(Combined),
+    MergedQ = Load("fxMerge")(Checked, CWB("Table_PRJMerge"), "COMPARER", "COMPARER", {"承销费原币"}, {""}),
+    NthMandate = fx("NthMandated")(MergedQ, {"YYMMDD", "信用主体"}),
+    #"Count Multi-Tranche" = fx("AddMultiCount")(NthMandate),
+    ExeTime =
+        if Table.HasColumns(#"Count Multi-Tranche", "Date_Onboarded") then
+            Table.AddColumn(
+                #"Count Multi-Tranche",
+                "执行周期",
+                each
+                    if not List.Contains({[定价日], [Date_Onboarded]}, null) and [定价日] >= [Date_Onboarded] then
+                        Duration.Days([定价日] - [Date_Onboarded])
+                    else
+                        null,
+                type number
+            )
+        else
+            #"Count Multi-Tranche",
+    Sorted = Load("fxSortNIndex")(ExeTime),
+    ReplacedCCY = Table.ReplaceValue(Sorted, "美元债", "", Replacer.ReplaceValue, {"货币细分"}),
+    Reordered = Table.ReorderColumns(
+        ReplacedCCY,
+        CN_Base & List.RemoveItems(CN_CWB, CN_Base),
+        MissingField.Ignore
+    )
+in
+    Reordered

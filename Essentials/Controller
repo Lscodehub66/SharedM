@@ -1,6 +1,6 @@
 // let LoadCode = Load("Controller","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
 let
-    // Centralized Parameters
+    // Set All Parameters to be Text
     OVRDMonday = try Load("OVRDMonday") otherwise null,
     //"20231001"
     OVRDMulti = try Load("OVRDMulti") otherwise null, //"ON","OFF"

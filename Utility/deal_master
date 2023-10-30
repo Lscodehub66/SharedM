@@ -1,5 +1,5 @@
   let
-  Source = Load("fxDimSheet")("DEALSMASTER_DEAL_MASTER")
+  Source = fx("Source")("DEALSMASTER_DEAL_MASTER")
   in
   Source
   

@@ -1,0 +1,48 @@
+// let LoadCode = Load("DLD_Add","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    Source = try CWB("DLD_Conso") otherwise Load("DLD_Conso"),
+    CN_Source = List.Buffer(Table.ColumnNames(Source)),
+    fxCleaner = Load("fxCleaner"),
+    //
+    Clean_TBC =
+        if List.Contains(CN_Source, "IS_FIMTN") then
+            Table.TransformColumns(Source, {{"IS_FIMTN", each fxCleaner(_, "RTBC")}})
+        else
+            Source,
+    Clean_Structure = Table.AddColumn(Clean_TBC, "结构", each fxCleaner([发行架构], "结构")),
+    Clean_SBLC = Table.AddColumn(Clean_Structure, "备证行", each fx("SNBankCorp")([SBLC提供者])),
+        Add_Tap = Table.AddColumn(Clean_SBLC , "增发判定", each if [起息日期] = null then "" else if [定价日] > [起息日期] then "[增发]" else "", type text),
+    
+    Added= List.Accumulate( 
+            {"Exchange","BankBranch","BBGFX","Stats","BCM","PriceNum","PriceText","Tenor","ESGMore"}, 
+           Add_Tap,
+           ( x, y ) => 
+            fx("Add"& y)(x)),
+                      
+    #">>HD_S" = {"Check", "ISIN", "定价日", "信用主体", "票息", "IPG", "FPG", "定价", "定价基准", "收窄基点"},
+    #">>HD_R" = {
+        "浮息_SPD",
+        "浮息_BMK",
+        "IPT",
+        "IPT_SPD",
+        "IPT_YIELD",
+        "FPT1",
+        "WPIR",
+        "FPT2",
+        "FPT_SPD",
+        "FPT_SPD上限",
+        "FPT_SPD假设窄端",
+        "FPT_YIELD",
+        "FPT_YIELD上限",
+        "IPT_BMK",
+        "FPT_BMK",
+        "定价YIELD_Num",
+        "FPG1", "票息100DMI"
+    },
+     #">>SCol" = Table.RemoveColumns(Added,#">>HD_R", MissingField.Ignore),
+   
+    //
+    Checked = fx("CheckNDupe")(  #">>SCol"),
+    Sorted = fx("SortNIndex")(Checked)
+in
+    Sorted

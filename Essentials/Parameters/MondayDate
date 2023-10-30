@@ -1,0 +1,8 @@
+let
+    OVRDMonday_Text = try Load("OVRDMonday") otherwise null,
+    OVRDMonday_Date = Date.StartOfWeek(Date.From(OVRDMonday_Text), Day.Monday),
+    CWB_Monday_Date =
+        try Date.From(CWB("Monday")) otherwise Date.StartOfWeek(Date.From(DateTime.FixedLocalNow()), Day.Monday),
+    Output = if OVRDMonday_Text = null then CWB_Monday_Date else OVRDMonday_Date
+in
+    Output

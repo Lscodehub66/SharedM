@@ -17,7 +17,9 @@
         Delimeter = if OptionalDelimeter = null then "" else OptionalDelimeter,
         IsDateFirst = if OptionalIsDateFirst = null then "Y" else OptionalIsDateFirst,
         Source = TableName,
+        // *Remove DummyCol*
          RCol = Table.RemoveColumns(Source, List.Select(Table.ColumnNames(Source), each Text.Contains(_, Prefix)),MissingField.Ignore),
+         //
         DateType = Table.TransformColumnTypes(  RCol, {{TextSource, type text}, {DateSource, type date}}),
         NoSpace = Table.ReplaceValue(DateType, " ", "", Replacer.ReplaceText, {TextSource}),
         Removed = Table.RemoveColumns(NoSpace, {NewColName}, MissingField.Ignore),

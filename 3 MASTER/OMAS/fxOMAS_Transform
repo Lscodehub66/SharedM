@@ -1,0 +1,11 @@
+let
+   LodeCode = Load("OMAS_Transform", "Code"), 
+   ToFn =    "(BinaryName as binary) =>let Source = BinaryName,"
+            & Text.AfterDelimiter(LodeCode,"//**"),
+   
+    EVA = Expression.Evaluate(  ToFn,
+     
+        #shared
+    )
+in
+    EVA

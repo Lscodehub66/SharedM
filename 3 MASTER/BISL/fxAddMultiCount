@@ -1,0 +1,31 @@
+// fxAddMultiCount
+(TableName as table) =>
+    let
+        Source = TableName,
+        Referenced = {"定价日","PROJECT_NAME","货币","Check","发行品种"},
+        ToAdd = {"多笔", "多币种", "多品种"},
+        Prep = Table.RemoveColumns(Source, ToAdd, MissingField.Ignore),
+        #"Added Custom" = Table.AddColumn(
+            Prep, "DummyComp", each Date.ToText([定价日], "yyMMdd") & Text.Upper(Text.Remove([PROJECT_NAME], " "))
+        ),
+        Added = List.Accumulate(
+            {{"Check", "多笔"}, {"货币", "多币种"}, {"发行品种", "多品种"}},
+            #"Added Custom",
+            (x, y) =>
+                Table.Join(
+                    x,
+                    {"DummyComp"},
+                    Table.RenameColumns(
+                        Table.Group(
+                            x,
+                            {"DummyComp"},
+                            {{y{1}, each Table.RowCount(List.Distinct(Table.Column(_, y{0}))), Int64.Type}}
+                        ),
+                        {{"DummyComp", "Dummy" & y{0}}}
+                    ),
+                    {"Dummy" & y{0}}
+                )
+        ),
+      RCol = if Table.HasColumns(Source, Referenced) then fx("RemoveCol")(Added) else Source
+    in
+       RCol

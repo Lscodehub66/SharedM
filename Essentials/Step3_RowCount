@@ -1,6 +1,0 @@
-let
-    CWBSource = CWB("Step3_RowCount"),
-    #"Replaced Value" = Table.ReplaceValue(CWBSource,each [更新前],each [更新后],Replacer.ReplaceValue,{"更新前"}),
-    #"Removed Other Columns1" = Table.SelectColumns(#"Replaced Value",{"Name", "更新前"})
-in
-    #"Removed Other Columns1"

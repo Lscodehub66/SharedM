@@ -1,0 +1,26 @@
+PK_Excel,Excel_Key,PK_Folder,PK_Sheet
+DEALs MASTER,DEALSMASTER,Team_DH,
+DEALs MASTER,DEALSMASTER,Team_DH_B,
+1.Weekly Download,DOWNLOAD,Team_AM,美元债一级
+1.Weekly Download,DOWNLOAD,Team_AM,ECON
+1.Weekly Download,DOWNLOAD,Team_AM,
+2.Dynamic List Generator,DYNAMIC,Team_AM,
+Graph,GRAPH,Base_4,
+DEAL DIRECTORY,DIRECTORY,Base_4,
+ESG Deal List,ESG,Team_ESG,EXTERNAL_REVIEW
+ESG Deal List,ESG,Team_ESG,
+DCM Existing KYC Master List,KYC,QRC,MASTER
+DCM Existing KYC Master List,KYC,QRC,
+DCM台账2023,台账23,QRC,合规
+DCM台账2023,台账23,QRC,收入情况2023
+DCM台账2023,台账23,QRC,
+美元债一级,DMI,Team_DH_DL,*SOLE*DMI
+境外债券违约,违约,Team_DH_DL,*SOLE*违约
+银行指标数据,银行,Team_DH_DL,*SOLE*银行
+YY,YY,Team_DH_DL,城投
+YY,YY,Team_DH_DL,金融
+YY,YY,Team_DH_DL,产业
+BBGFX,BBGFX,Team_DH_DL,VALUE
+BBGFX,BBGFX,Team_DH_DL,
+DCM2021年台账,台账21,QRC,
+DCM2022年台账,台账22,QRC,

@@ -1,0 +1,20 @@
+// let LoadCode = Load("SBLCFinancials","Code"), EVA = Expression.Evaluate(LoadCode ,#shared)  in EVA
+
+let
+
+    DMIBank = Load("fxDMIBank"),
+    //
+    Source = Table.SelectRows(CWB("BankUniverse"), each [IS_SBLC] = "Y"),
+    Merged = Load("fxMerge")(Source, DMIBank, "信用主体", "发行人全称", {"描述"}, {""}),
+    #"Filtered Rows" = Table.SelectRows(Merged, each ([描述] <> "")),
+  Merged1 = Load("fxMerge")(    #"Filtered Rows",  Load("SBLC_Rtg"),  "信用主体简称","Entity", {"当前主体评级"},{""}),
+    Sorted = Table.Sort(    Merged1   , {{"SortValue", Order.Ascending}}),
+    AddedIndex = Table.AddIndexColumn(Sorted, "Index", 1, 1, Int64.Type),
+    SCol = Table.SelectColumns(
+        AddedIndex,
+        List.Distinct({"Index"} & List.RemoveItems(Table.ColumnNames(AddedIndex), {"SortValue"})),
+        MissingField.UseNull
+    ),
+    #"Reordered Columns" = Table.ReorderColumns(SCol,{"Index", "信用主体", "信用主体简称", "当前主体评级",  "板块三级", "板块标签", "描述", "上市类型", "IS_ISSUER", "IS_SBLC"},MissingField.Ignore)
+in
+    #"Reordered Columns"

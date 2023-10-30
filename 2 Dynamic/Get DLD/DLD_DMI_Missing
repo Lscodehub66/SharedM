@@ -1,0 +1,24 @@
+// let LoadCode = Load("DLD_DMI_Missing","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+ Source = fx("Source")("DOWNLOAD_美元债一级"), 
+ Filtered = Table.SelectRows ( Source, each [ISIN] <> null and [信用主体] <> null and [定价日] <> null and [债券简称] = null and [货币] = null ), 
+ #"//GNG" = if Table.RowCount ( Table.SelectRows (Filtered, each not List.IsEmpty ( List.RemoveMatchingItems ( Record.FieldValues ( _ ), { "", null } ) ) ) ) > 0 then "GO" else "NO-GO", 
+ #"//IDHeaders" = {"ISIN","定价日","信用主体"},
+ SelectedCol =  Table.SelectColumns ( Filtered, #"//IDHeaders"  ),
+ MergedQ = fxMerge (  SelectedCol , Load("DLD_BBG_Corp"), "ISIN", "ISIN", { "" }, { "" } ), 
+  #"//BBGHeaders" =List.RemoveItems(Table.ColumnNames ( MergedQ), #"//IDHeaders"),
+ MergedQ1 = fxMerge ( MergedQ, fx("Source")("DEALSMASTER_DMI_Credit"), "信用主体", "信用主体", { "" }, { "" } ), 
+   #"//DMICrHeaders" =List.RemoveItems(Table.ColumnNames ( MergedQ1),   #"//BBGHeaders" ),
+ SelectedCol1 = Table.SelectColumns ( MergedQ1, List.Distinct(#"//IDHeaders"&  #"//DMICrHeaders"&{"主题债券","发行架构" ,"IPT","FPG","联席全球协调人"}&#"//BBGHeaders" ), MissingField.UseNull), 
+ AddedCol = Table.AddColumn ( SelectedCol1, "DataSource", each "BBG" ), 
+ TFColumns = 
+  if #"//GNG" = "GO" then
+    Table.TransformColumns (
+    AddedCol, 
+    { { "IPT", each if _ = null then "【】" else _ }, { "FPG", each if _ = null then "【】" else _ }, { "发行架构", each if _ = null then "【】" else _ }, { "主题债券", each if _ = null then "【】" else _ } ,{"联席全球协调人", each if _ = null then  "【】" else _ }}
+   )
+  else
+   Table.SelectRows ( Filtered, each not List.IsEmpty ( List.RemoveMatchingItems ( Record.FieldValues ( _ ), { "", null } ) ) ),
+    Custom1 = fx("DataFormat")(TFColumns)
+in
+    Custom1

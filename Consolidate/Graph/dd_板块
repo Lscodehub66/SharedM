@@ -1,6 +1,0 @@
-
-// dd_板块
-let
-    Source = Load("fxDimSheet")("DEALSMASTER_dd_板块")
-in
-    Source

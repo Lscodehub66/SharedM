@@ -1,0 +1,22 @@
+let
+    Monday = try Monday otherwise CWB("Monday"),
+    Source = fx("Source")("Dynamic"),
+    Table_FIMTN = Table.SelectRows(Table.SelectRows(Source, each [Item] = "DLD_Add"){0}[Data], each [IS_FIMTN] = "Y"),
+    Table_FIMTN2 = Table.RenameColumns(
+        Table.TransformColumns(Table_FIMTN, {{"IS_FIMTN", each if _ = "Y" then "FIMTN" else _}}),
+        {{"IS_FIMTN", "删除及隐藏"}},
+        MissingField.Ignore
+    ),
+    Table1 = Table.SelectRows(Source, each [Item] = "wCurated"){0}[Data],
+    Table2 = Table.SelectRows(Source, each [Item] = "wBISL"){0}[Data],
+    Table3 = Table.SelectRows(Source, each [Item] = "wCredit"){0}[Data],
+    Merged = fxMerge(Table1, Table2, "Check", "Check", {""}, {""},null,1),
+    Merged1 = fxMerge(Merged, Table3, "信用主体", "信用主体", {""}, {""},null,1),
+    Combined = Load(
+        "fxCombine"
+    )(
+        {Merged1, Table_FIMTN2}, null, List.Distinct({"Index", "删除及隐藏"} & Table.ColumnNames(Merged1))
+    ),
+    ManagedDB = fx("DBManager")(Combined, "w", "LIFO")
+in
+    ManagedDB

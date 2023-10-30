@@ -5,7 +5,7 @@
         US_addon=Load("US_addon"),
         Sheet = Source{[Item = "ECON", Kind = "Sheet"]}[Data],
         Found = Load("fxFindHeader")(Sheet, "Column1", "Date Time"),
-        Monday = List.Buffer(Load("Status")[Monday]){0},
+        Monday = List.Buffer(Load("Controller")[Monday]){0},
         RCol = Table.RemoveColumns(Found, {"Column3", "Column4"}, MissingField.Ignore),
         #"Inserted Text After Delimiter" = Table.AddColumn(
             RCol,

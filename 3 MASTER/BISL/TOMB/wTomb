@@ -1,0 +1,21 @@
+//let LoadCode = Load("wTomb","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    Source = CWB("Directory"),
+    InnerJoined = Table.Buffer(Table.NestedJoin(Source, {"YYW"},Load("Controller"), {"当前_YYW"}, "Status", JoinKind.Inner)),
+    //
+    TombWriter = Load("fxtblTomb_R4R1")(Load("fxtblTomb_R2R3")(InnerJoined), InnerJoined),
+    BlankTable =
+        if Table.RowCount(InnerJoined) = 0 then
+            Table.FromRows(
+                {{"", Date.ToText(Load("Controller")[当前_Monday]{0},"M月d日")&"一周无新增", ""}} & List.Repeat({{"", "", ""}}, 9), Table.ColumnNames(TombWriter)
+            )
+        else
+            Table.FromRows(
+                List.Repeat({{null, "", ""}}, 10 - Table.RowCount(InnerJoined)), Table.ColumnNames(TombWriter)
+            ),
+    Combined = Table.Combine(
+        {TombWriter, Table.SelectColumns(BlankTable, Table.ColumnNames(TombWriter), MissingField.UseNull)}
+    ),
+    TransposedTomb = Load("fxtblTomb_Transpose")(Combined)
+in
+    TransposedTomb

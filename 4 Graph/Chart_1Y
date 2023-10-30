@@ -1,0 +1,11 @@
+//  let LoadCode = Load("Chart_1Y","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
+let
+
+    Source = fx("Source")("DEALSMASTER_MINDICE"),
+    KeyDate = List.Buffer(Load("Controller")[近1年]){0},
+    Filtered = Table.SelectRows(Source, each [Date] >= KeyDate),
+    CN_Indice = List.Buffer(Table.SelectRows(Load("Dimtbl_Indice"), each ([IS_1Y] <> ""))[PK]),
+    SelectedCol = Table.SelectColumns(Filtered, {"Date"} & CN_Indice),
+    Sorted = Load("fxSortNIndex")(SelectedCol, "Date", null, null, null, "Y")
+in
+    Sorted

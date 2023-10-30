@@ -1,0 +1,9 @@
+let
+
+    SourceFI =fx("Source")("YY_金融"),
+    SourceIndustrial =fx("Source")("YY_产业"),
+    SourceLGFV =fx("Source")("YY_城投"),
+    Combined = fx("Combine")({SourceFI, SourceLGFV, SourceIndustrial},null),
+    Fn = fx("Connect_YY")( Combined)
+in
+Fn

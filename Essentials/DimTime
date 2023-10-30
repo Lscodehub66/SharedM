@@ -1,0 +1,75 @@
+let
+    Source = List.Times(#time(0, 0, 0), 1440, #duration(0, 0, 1, 0)),
+    TableFromList = Table.FromList(Source, Splitter.SplitByNothing()),
+    ChangedType = Table.TransformColumnTypes(TableFromList, {{"Column1", type time}}),
+    RenamedColumns = Table.RenameColumns(ChangedType, {{"Column1", "Time"}}),
+    InsertHour = Table.AddColumn(RenamedColumns, "Hour", each Time.StartOfHour([Time]), type time),
+    InsertMinute = Table.AddColumn(InsertHour, "Minute Number", each Time.Minute([Time]), Int64.Type),
+    InsertQuarterHour = Table.AddColumn(
+        InsertMinute,
+        "Quarter Hour",
+        each
+            if [Minute Number] < 15 then
+                [Hour]
+            else if [Minute Number] < 30 then
+                Value.Add([Hour], #duration(0, 0, 15, 0))
+            else if [Minute Number] < 45 then
+                Value.Add([Hour], #duration(0, 0, 30, 0))
+            else
+                Value.Add([Hour], #duration(0, 0, 45, 0)),
+        type time
+    ),
+    InsertHourNumber = Table.AddColumn(InsertQuarterHour, "Hour Number", each Time.Hour([Time]), Int64.Type),
+    InsertNextHour = Table.AddColumn(
+        InsertHourNumber, "Next Hour", each Value.Add([Hour], #duration(0, 1, 0, 0)), type time
+    ),
+    InsertNextQuarterHour = Table.AddColumn(
+        InsertNextHour, "Next Quarter Hour", each Value.Add([Quarter Hour], #duration(0, 0, 15, 0)), type time
+    ),
+    InsertWorkingHours = Table.AddColumn(
+        InsertNextQuarterHour,
+        "Working Hours",
+        each
+            if [Hour Number] >= 8 and [Hour Number] < 17 then
+                "Standard"
+            else if [Hour Number] >= 17 and [Hour Number] < 21 then
+                "Overtime"
+            else
+                null,
+        type text
+    ),
+    InsertPeriod = Table.AddColumn(
+        InsertWorkingHours,
+        "DayPeriod",
+        each
+            if [Hour Number] >= 0 and [Hour Number] < 8 then
+                "午夜后"
+            else if [Hour Number] >= 8 and [Hour Number] < 12 then
+                "上午"
+            else if [Hour Number] >= 12 and [Hour Number] < 18 then
+                "下午"
+            else if [Hour Number] >= 18 and [Hour Number] < 21 then
+                "晚上"
+            else
+                "深夜",
+        type text
+    ),
+    InsertPeriodSort = Table.AddColumn(
+        InsertPeriod,
+        "PeriodOfDaySort",
+        each
+            if [Hour Number] >= 0 and [Hour Number] < 8 then
+                0
+            else if [Hour Number] >= 8 and [Hour Number] < 12 then
+                1
+            else if [Hour Number] >= 12 and [Hour Number] < 18 then
+                2
+            else if [Hour Number] >= 18 and [Hour Number] < 21 then
+                3
+            else
+                4,
+        Int64.Type
+    ),
+    InsertTimeKey = Table.AddColumn(InsertPeriodSort, "TimeKey", each Time.ToText([Time], "HHmm"), type text)
+in
+    InsertTimeKey

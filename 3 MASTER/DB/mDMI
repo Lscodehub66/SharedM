@@ -1,0 +1,13 @@
+// mDMI
+let
+ Source        = CWB_mDMI, 
+ #">>ShowDupe" = Load("fxShowDupe")( Source, { "Check" } ), 
+ ManagedDB     = fx("DBManager") ( Source, "m", "LIFO" ), 
+ Custom1       = Load("fxMerge") ( ManagedDB, DMI_all, "Check", "Check", { "临时isin", "发行方式" }, { "" } ), 
+ SyncedDMI     = 
+  if List.Contains ( Table.ColumnNames ( Custom1 ), "IsInDMI" ) then
+   Table.ReplaceValue ( Custom1, each [IsInDMI], each if [临时isin] = null then "N" else "", Replacer.ReplaceValue, { "IsInDMI" } )
+  else
+   Table.AddColumn ( Custom1, "IsInDMI", each if [临时isin] = null then "N" else "" )
+in
+ SyncedDMI

@@ -1,0 +1,16 @@
+// let LoadCode = Load("mChart","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    AddCode = Load("fxAddToDB", "Code"),
+    ManagerCode = Load("fxDBManager", "Code"),
+    DB = "mChart",
+    DB_Source = CWB(DB),
+    Parameter = Load("Controller")[RemoveFrom_DB]{0} ?? "",
+    Added = fx("AddToDB")(DB, wDynamicPQ, Parameter),
+    Managed = if Text.Contains(Parameter, "Stop") then fx("DBManager")(DB_Source, "m") else fx(
+        "DBManager"
+    )(
+        Added, "m"
+    ),
+    #"Filtered Rows" = Table.SelectRows(Managed, each [货币] = "USD" or [货币] = "CNH")
+in
+    #"Filtered Rows"

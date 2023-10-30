@@ -1,0 +1,46 @@
+Column0,From,Is_Dummy
+IDENTIFIER,【PROJECT_CODE】 期数,Y
+视图,Others,
+COVERAGE,【COVERAGE】,W
+PROJECT_CODE,【PROJECT_CODE】,
+PROJECT_CN,金投国际点心债项目,
+期数,期数,W
+BISL_ROLE,JGC,W
+牵头行,BISL,Y
+新规角色,SCMI(Level II),W
+委任函模板,Issuer模板,Y
+委任方式,我司电邮Issuer确认,Y
+BOCOM意向订单,自营,Y
+订单量及进展,自营3m,Y
+分行介绍渠道,山东分行投行部,Y
+EXE_Team,【COVERAGE】👨🏻‍💼KT,Y
+EXE,👨🏻‍💼KT,
+信用主体简称,*EXE预设*,
+KYC_Category,中国内地公司,Y
+DD_Risk,中,Y
+IssuerNotice,⚠️ 未发送,Y
+委任进度,⚠️ 未过会,Y
+CP_FL,CP,Y
+SA支付时限,10d after closing,Y
+Settlement,Gross,
+项目来源,带单入团,
+BOCOM下单量,66,
+BOCOM分配量,6,
+IS_LEAD,Sole,W
+是否合名,角色不分层,W
+创建人,Tong,Y
+最后编辑人,Tong,Y
+交行及独家订单,Sample【交行】(6),
+委任函法审,⚠️未法审,Y
+发售评估,【发售评估】,Y
+定价会日期时间,11/1/1991 12:00:00 AM,
+定价会拨入,腾讯(录音存档),Y
+BBG_Page,BIHL -> BISL,Y
+路演形式,中债登宣介会,Y
+BBG_Msg,Mandate+IPG,Y
+是否首次品种,不是,Y
+项目亮点,首笔绿色美元债券,
+项目执行团队,【项目执行团队】、童富涵,Y
+Pricing,11月1日,Y
+创建时间,11/1/2023 12:34:00 PM,Y
+Date_Onboarded,11/1/2023,

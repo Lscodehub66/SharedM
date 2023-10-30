@@ -21,7 +21,7 @@
             "区县",
             "城市",
             "发行人主上市地",
-            "行业二级",
+       
             "细分行业",
             "板块二级",
             "板块三级",
@@ -36,8 +36,8 @@
             "备证分类",
             "外部评审机构",
             "外部评审方式",
-            "上市类型",
-            "YY类型"
+            "上市类型"
+       
         },
         ListToPresentNoData = List.Intersect({Table.ColumnNames(Source), PresentNoDataList}),
         ReplaceNull = Table.ReplaceValue(Source, null, "--", Replacer.ReplaceValue, ListToPresentNoData),

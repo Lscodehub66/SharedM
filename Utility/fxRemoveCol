@@ -1,9 +1,9 @@
-(TableName as table) =>
-    let
-        Source = TableName,
-        Prefix = Load("Prefix"),
-        RCol = Table.RemoveColumns(
-            Source, List.Select(Table.ColumnNames(Source), each Text.Contains(_, Prefix)), MissingField.Ignore
-        )
-    in
-        RCol
+    (TableName as table, optional KeyInput as  nullable text)  =>   
+         // *Remove DummyCol*
+         let
+         Source = TableName,
+         Key = if KeyInput = null then Load("Prefix") else KeyInput,
+         CN_Source = List.Buffer(Table.ColumnNames(Source)),
+         RCol = Table.RemoveColumns(    Source   , List.Select(CN_Source, each Text.Contains(_,  Key )),MissingField.Ignore)
+         in
+         RCol

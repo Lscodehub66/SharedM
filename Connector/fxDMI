@@ -33,7 +33,7 @@
             try
                 CWB("DMI_Default")
             otherwise
-                try Load("fxDimSheet")("DEALSMASTER_DMI_Default") otherwise Load("DMI_Default","CSV"),
+                try fx("Source")("DEALSMASTER_DMI_Default") otherwise Load("DMI_Default","CSV"),
         MergedQ =
             if List.Contains(CN_RNSource, "首次违约日") then
                 RCol
@@ -98,7 +98,7 @@
         ),
         Clean_TF_Rtg = Table.TransformColumns(
             Clean_TF_Entity,
-            List.Transform(List.Intersect({CN_RNSource, {"穆迪/标普", "债项评级"}}), each {_, each fxCleaner(_, "评级")})
+            List.Transform(List.Intersect({CN_RNSource, {"穆迪/标普", "债项评级","境内主体评级"}}), each {_, each fxCleaner(_, "评级")})
         ),
         Clean_ACol = Table.AddColumn(
             Table.RemoveColumns(Clean_TF_Rtg, {"地区"}, MissingField.Ignore), "地区", each fxCleaner([省份], "地区")

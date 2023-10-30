@@ -1,0 +1,66 @@
+// DimFolderExcel
+let
+    //Has_NumInPath Parameters - create here then add to Folder Step
+    YYYYMMDD = Text.Replace(Load("MondayText"), "/", "") & "\",
+    // Adjust here to override
+    // Folder
+    Root = {"C:\Users\ktkt2\OneDrive\EXE Team\DataHub\", "\\itd-m09-fs02\dcm$\"},
+    Fd_Source = Table.Buffer(
+        Table.FromRows(
+            {
+                {"PK_Folder_fd", "FDPath", "FDPath"},
+                {"Base_4", Root{0} & "Backup\", Root{1} & "0 DCM Base\4 Markets\"},
+                {"Team_DH", Root{0}, Root{1} & "Team Folder\Execution Team\DataHub\"},
+                {"Team_DH_B", Root{0} & "Backup\", Root{1} & "Team Folder\Execution Team\DataHub\"},
+                {"Team_DH_DL", Root{0} & "DataLake\", Root{1} & "Team Folder\Execution Team\DataHub\DataLake\"},
+                {
+                    "Team_AM",
+                    Root{0} & "Backup\Weekly AM\" & YYYYMMDD & "Data\",
+                    Root{1} & "Team Folder\Execution Team\Weekly AM\" & YYYYMMDD & "Data\"
+                },
+                {
+                    "Team_ESG",
+                    Root{0} & "Backup\",
+                    Root{1} & "Team Folder\Execution Team\Rating & Advisory\7. ESG\Pitch book\"
+                },
+                {"QRC", "C:\Users\ktkt2\OneDrive\EXE Team\QRC\", Root{1} & "【QRC】DCM项目情况表\"}
+            },
+            {"Column1", "Column2", "Column3"}
+        )
+    ),
+    #"GPS Removal" = Table.RemoveColumns(Fd_Source, if Load("GPS") <> "Remote" then {"Column2"} else {"Column3"}),
+    DimFolder = Table.PromoteHeaders(#"GPS Removal", [PromoteAllScalars = true]),
+    // SOURCE
+    Excel_Source = Table.FromRows(
+        {
+            {"DEALs MASTER", "DEALSMASTER", "Team_DH"},
+            {"DEALs MASTER", "DEALSMASTER", "Team_DH_B"},
+            {"1.Weekly Download", "DOWNLOAD", "Team_AM"},
+            {"2.Dynamic List Generator", "DYNAMIC", "Team_AM"},
+            {"Graph", "GRAPH", "Base_4"},
+            {"DEAL DIRECTORY", "DIRECTORY", "Base_4"},
+            {"ESG Deal List", "ESG", "Team_ESG"},
+            {"DCM Existing KYC Master List", "KYC", "QRC"},
+            {"DCM台账2023", "台账23", "QRC"},
+            {"美元债一级", "DMI", "Team_DH_DL"},
+            {"境外债券违约", "违约", "Team_DH_DL"},
+            {"银行指标数据", "银行", "Team_DH_DL"},
+            {"YY", "YY", "Team_DH_DL"},
+            {"BBGFX", "BBGFX", "Team_DH_DL"},
+            {"DCM2021年台账", "台账21", "QRC"},
+            {"DCM2022年台账", "台账22", "QRC"}
+        },
+        {"FileName", "Excel_Key", "PK_Folder"}
+    ),
+    AddedIndex = Table.AddIndexColumn(Excel_Source, "Index", 1, 1),
+    Joined_FD = Table.Join(AddedIndex, {"PK_Folder"}, DimFolder, {"PK_Folder_fd"}, JoinKind.LeftOuter),
+    #"Removed Other Columns1" = Table.SelectColumns(
+        Joined_FD, {"Index",
+        // "Key",
+        "Excel_Key",
+        // "PK_Sheet", "fxSheet_Input",
+        "FDPath", "FileName"}, MissingField.UseNull
+    ),
+    Sorted = Table.Sort(#"Removed Other Columns1", {{"Index", Order.Ascending}})
+in
+    Sorted

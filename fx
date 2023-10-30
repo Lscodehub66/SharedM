@@ -1,10 +1,10 @@
-// let GPS  = try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Remote",  FilePath = if GPS = "Remote" then "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM\fx" else "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\SharedM\fx",  Code = Text.FromBinary ( Binary.Buffer ( File.Contents ( FilePath ) ) ), EVA = Expression.Evaluate ( Code, #shared ) in EVA
+// let Name = "fx",Path  = if (try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Remote" ) = "Remote" then "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM\" else "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\SharedM\",  EVA = Expression.Evaluate ( Text.FromBinary ( Binary.Buffer ( File.Contents ( Path&Name ) ) ) ,#shared )in    EVA//
 //
 (NameInput as text) =>
     let
         //NameInput = "", PathInput = null,
         GPS = try Table.Buffer(Excel.CurrentWorkbook(){[Name = "GPS"]}[Content])[Column1]{0} otherwise "Remote",
-        Name_File = "fx" & NameInput,
+        Name_File = if not Text.StartsWith(NameInput,"fx") then "fx" & NameInput else NameInput,
         //
         FolderPath =
             if GPS = "Remote" then

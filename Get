@@ -1,8 +1,7 @@
-//let GPS  = try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Remote",  FilePath = if GPS = "Remote" then "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM\Get" else "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\SharedM\Get",  LoadCode = Text.FromBinary ( Binary.Buffer ( File.Contents ( FilePath ) ) ), EVA = Expression.Evaluate ( LoadCode, #shared ) in EVA
+//let Name = "Get",Path  = if (try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Remote" ) = "Remote" then "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM\" else "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\SharedM\",  EVA = Expression.Evaluate ( Text.FromBinary ( Binary.Buffer ( File.Contents ( Path&Name ) ) ) ,#shared )in    EVA//
 let
     Source = (TextName as text) =>
         let
-            
             //
             Dimtbl_DMI_Filter = Table.FromRows(
                 {
@@ -154,7 +153,6 @@ let
             TransformationTable_DLD_TableName = Table.FromRows(
                 {{"2023/10/06", "BBGcorp", "DLD_BBG_Corp"}}, {"Date", "From", "To"}
             ),
-            
             Table_DMI_HKCompany = Table.FromRows(
                 {
                     {"香港按揭证券有限公司"},
@@ -302,9 +300,12 @@ let
             Sort_ESG_ReviewParty = {
                 "HKQAA",
                 "S&P",
-                "Sustainable Fitch",
                 "Moody's",
-                "中诚信绿金科技",
+                "Sustainable Fitch",
+                "惠誉常青",
+                "联合绿色发展",
+                "中诚信绿金国际",
+                "中财绿融",
                 "Sustainalytics",
                 "CECEPEC",
                 "EY"
@@ -383,7 +384,27 @@ let
                 "澳分_ROLE",
                 "Check"
             },
-            Header_R_DMI_NotInUse = {"英文简称", "发行方式", "省份", "债项初始评级", "剩余期限", "投资者账户数", "投资者类型", "投资者分布", "债券最新面值", "行权兑付日", "最新票面利率", "发行起始日", "上市日期", "是否永续债", "是否存单", "交易状态", "特殊条款", "违约日期", "发行规则"},
+            Header_R_DMI_NotInUse = {
+                "英文简称",
+                "发行方式",
+                "省份",
+                "债项初始评级",
+                "剩余期限",
+                "投资者账户数",
+                "投资者类型",
+                "投资者分布",
+                "债券最新面值",
+                "行权兑付日",
+                "最新票面利率",
+                "发行起始日",
+                "上市日期",
+                "是否永续债",
+                "是否存单",
+                "交易状态",
+                "特殊条款",
+                "违约日期",
+                "发行规则"
+            },
             Header_S_Dynamic_wCurated = {
                 "定价日",
                 "信用主体",
@@ -391,7 +412,7 @@ let
                 "IPG",
                 "FPG",
                 "收窄基点",
-                 "定价基准",
+                "定价基准",
                 "定价",
                 "增发判定",
                 "货币",
@@ -399,7 +420,7 @@ let
                 "年期",
                 "票息",
                 "品种主题",
-                "上市",               
+                "上市",
                 "亿美元",
                 "亿元",
                 "亿港币",
@@ -660,10 +681,8 @@ let
             Header_MergeRemoval = {"Timestamp", "Updator", "曾用名", "主体备注", "Index", "公司类型", "上市类型", "系"},
             Header_Sync_KYC = {"KYC对账号", "发行人", "KYC Status", "KYC expiry date", "信用主体"},
             //   CN = ColumnNames
-            CN_BaseDirectory_Deal = Table.ColumnNames(
-                fx("DimSheet")("DIRECTORY_TBL_DEAL") 
-            ),
-            CN_mChart = Table.ColumnNames( fx("DimSheet")("DEALSMASTER_MCHART") ),
+            CN_BaseDirectory_Deal = Table.ColumnNames(fx("Source")("DIRECTORY_TBL_DEAL")),
+            CN_mChart = Table.ColumnNames(fx("Source")("DEALSMASTER_MCHART")),
             // Selection
             Key = Text.Replace(Text.Upper(Text.Trim(TextName)), "_", ""),
             CNSource =
@@ -688,7 +707,6 @@ let
                     SortTable_Graph_USDCNHPIE
                 else if Text.Contains(Key, "DLD") and Text.Contains(Key, "NAME") then
                     TransformationTable_DLD_TableName
-             
                 else if Text.Contains(Key, "DIM") and Text.Contains(Key, "FOLDER") then
                     Dimtbl_Folder
                 else if Text.Contains(Key, "DMI") and Text.Contains(Key, "FILTER") then
@@ -718,7 +736,7 @@ let
             HeaderSource =
                 if Text.Contains(Key, "WISSUER") then
                     Header_S_Dynamic_wIssuer
-else if Text.Contains(Key, "DMINOTINUSE") then
+                else if Text.Contains(Key, "DMINOTINUSE") then
                     Header_R_DMI_NotInUse
                 else if Text.Contains(Key, "ROECON") then
                     HD_RO_ECON

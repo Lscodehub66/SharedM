@@ -1,0 +1,127 @@
+let
+    Source = (InputKey as nullable text) =>
+        let
+            Input = Text.Upper(InputKey),
+            Input_ExcelKey = Text.BeforeDelimiter(Input, "_"),
+            Input_SheetKey = Text.AfterDelimiter(Input, "_"),
+            //
+            DimExcel = Table.Buffer(Load("DimExcel")),
+            Code = List.Buffer({Load("fxExcelWB", "1"), Load("fxSheet", "1")}),
+            fxExcelWB = Expression.Evaluate(Code{0}, #shared),
+            fxSheet = Expression.Evaluate(Code{1}, #shared),
+            //
+            #"Excel Selected" = Table.SelectRows(
+                DimExcel, each if Input = null then true else Input_ExcelKey = [Excel_Key]
+            ),
+            #"Sheet_Key FilterOrReplace" =
+                if Input = null then
+                    #"Excel Selected"
+                else if List.Contains(#"Excel Selected"[Sheet_Key], Input_SheetKey) then
+                    Table.SelectRows(#"Excel Selected", each [Sheet_Key] = Input_SheetKey)
+                else
+                    Table.ReplaceValue(#"Excel Selected", "", Input_SheetKey, Replacer.ReplaceValue, {"Sheet_Key"}),
+            //**
+            #"Sheet Selected" =
+                if Text.StartsWith(Input_SheetKey, "=") then
+                    Table.AddColumn(
+                        #"Sheet_Key FilterOrReplace",
+                        "Sheet",
+                        each
+                            if [Sheet_Key] = "" then
+                                fxExcelWB([Content])
+                            else if Text.StartsWith([Sheet_Key], "*") then
+                                Table.First(fxExcelWB([Content]))[Data]
+                            else
+                                Table.SelectRows(
+                                    fxExcelWB([Content]), (Magic) => "=" & Text.Upper(Magic[Item]) = [Sheet_Key]
+                                ){
+                                    0
+                                }[Data]
+                    )
+                else
+                    Table.AddColumn(
+                        #"Sheet_Key FilterOrReplace",
+                        "Sheet",
+                        each
+                            if [Sheet_Key] = "" then
+                                fxExcelWB([Content])
+                            else if Text.StartsWith([Sheet_Key], "*") then
+                                Table.First(fxExcelWB([Content]))[Data]
+                            else
+                                Table.SelectRows(
+                                    fxExcelWB([Content]),
+                                    (Magic) => Text.Contains(Magic[Item], [Sheet_Key], Comparer.OrdinalIgnoreCase)
+                                ){
+                                    0
+                                }[Data]
+                    ),
+            #"Table Transformed" = Table.AddColumn(
+                #"Sheet Selected",
+                "Table",
+                each
+                    if [Sheet_Key] = "" and not List.Contains({null, ""}, Input) then
+                        [Sheet]
+                    else
+                        fxSheet([Sheet], [Table_SkipNPromote], [Table_FindHD], [Table_FindAnchor])
+            ),
+            //***
+            #"ErrorRows Removed" =
+                if Text.Contains(
+                    #"Table Transformed"[File Path]{0}, "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\DEALs MASTER"
+                ) then
+                    Table.RemoveRowsWithErrors(#"Table Transformed", {"Table"})
+                else
+                    #"Table Transformed",
+            Distincted = Table.Distinct(#"ErrorRows Removed", {"Key"}),
+            CN_ColumnToExpand = Table.ColumnNames(Distincted[Table]{0}),
+            #"Table Column Expanded" =
+                if Input = null then
+                    #"ErrorRows Removed"
+                else if List.ContainsAll(CN_ColumnToExpand, {"Item", "Data"}) then
+                    Load(
+                        "fxDataFormat"
+                    )(
+                        Table.ExpandTableColumn(
+                            Table.SelectColumns(Distincted, {"Table", "File Path"}), "Table", CN_ColumnToExpand
+                        )
+                    )
+                else
+                    Load("fxDataFormat")(Distincted{0}[Table])
+        in
+            #"Table Column Expanded",
+    //
+    fnType = type function (
+        InputKey as (
+            type text meta [
+                Documentation.AllowedValues = {
+                    "DEALSMASTER",
+                    "DIRECTORY",
+                    "DOWNLOAD",
+                    "DYNAMIC",
+                    "GRAPH",
+                    "DMI",
+                    "违约",
+                    "银行",
+                    "YY_城投",
+                    "YY_金融",
+                    "YY_产业",
+                    "BBGFX",
+                    "BBGFX_VALUE",
+                    "ESG",
+                    "ESG_EXTERNAL_REVIEW",
+                    "KYC",
+                    "KYC_MASTER",
+                    "台账21",
+                    "台账22",
+                    "台账23",
+                    "台账23_合规",
+                    "台账23_收入情况2023"
+                }
+            ]
+        )
+    ) as list meta [
+        Documentation.Name = "fxDimSheet",
+        Documentation.Description = "Get Data from DataHub Excels & their sheets & tables inside"
+    ]
+in
+    Value.ReplaceType(Source, fnType)

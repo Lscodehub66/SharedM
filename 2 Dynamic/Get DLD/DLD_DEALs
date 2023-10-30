@@ -1,0 +1,20 @@
+let
+    SourceTF = Load("TFtbl_DEALs","CSV"),
+    #"Filtered Rows" = Table.SelectRows(SourceTF, each ([Is_Dummy] = "")),
+    #"Merged Queries" = Table.NestedJoin(#"Filtered Rows", {"From"}, Load("DLD_DEALs_Sheet"), {"Column1"}, "Data", JoinKind.LeftOuter),
+    #"Expanded Data" = Table.ExpandTableColumn(#"Merged Queries", "Data", Table.ColumnNames(#"Merged Queries"[Data]{0})),
+    #"Removed Columns" = Table.RemoveColumns(#"Expanded Data",{"From", "Is_Dummy", "Column1"},MissingField.Ignore),
+    #"Transposed Table1" = Table.Transpose(#"Removed Columns"),
+    Fn = fx("SheetTotbl")( #"Transposed Table1",{"Column2","PROJECT_CODE",null}),
+    #"Filtered Rows1" = Table.SelectRows(Fn, each ([视图] = "Closing" or [视图] = "Completed")),
+    #"Extracted Last Characters" = Table.TransformColumns(#"Filtered Rows1", {{"EXE", each Text.End(_, 2), type text}}),
+    RepalceValue = List.Accumulate({"无","n/a","n/a(挂名)","--","[Input]"},#"Extracted Last Characters", (x,y) => Table.ReplaceValue(x, y,"",Replacer.ReplaceValue,Table.ColumnNames(#"Extracted Last Characters"))),
+    ReplaceText = List.Accumulate({{"交行","","交行及独家订单"},{",","；"&"#(lf)","项目亮点"}}, RepalceValue, (x,y) => Table.ReplaceValue(x,y{0},y{1},Replacer.ReplaceText,{y{2}})),
+    DataType = fx("DataFormat")(ReplaceText),
+      #"Inserted Time" = Table.AddColumn(    DataType, "定价会时间", each DateTime.Time([定价会日期时间]) , type time),
+    #"Merged Queries1" = Table.NestedJoin(#"Inserted Time", {"定价会时间"}, Load("DimTime"), {"Time"}, "Data", JoinKind.LeftOuter),
+    #"Expanded DimTime" = Table.ExpandTableColumn(#"Merged Queries1", "Data", {"DayPeriod"}, {"定价会时段"}),
+    #"Inserted Date" = Table.AddColumn(#"Expanded DimTime", "定价日", each if [定价会时段] = "午夜后" then Date.AddDays(DateTime.Date([定价会日期时间]),-1) else DateTime.Date([定价会日期时间]), type date),
+    Custom1 = Table.AddColumn( #"Inserted Date", "Comparer", each fx("Comparer")("Y",[PROJECT_CODE],[定价日],"yyMMdd"))
+in
+    Custom1

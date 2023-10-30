@@ -1,6 +1,6 @@
 // let LoadCode = Load("QDMIHKMacau","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-    Source = Load("fxConnect")("DMI"),
+    Source = fx("Source")("DMI"),
 SelectedCol = Table.SelectRows(Table.SelectColumns(Source, {"信用主体","省份"}), each Text.Contains([省份],"香港") or Text.Contains([省份],"澳门") or Text.Contains([省份],"其他")),
 Sorted = Table.Buffer(Table.Sort(SelectedCol,{{"省份", Order.Ascending},{"信用主体",Order.Descending}})),
 Distincted = Table.SelectRows(Table.Distinct(Sorted,{"信用主体"}), each not List.Contains(mCredit[信用主体],[信用主体]))

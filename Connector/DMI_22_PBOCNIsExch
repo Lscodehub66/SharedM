@@ -1,7 +1,7 @@
 // DMI_22_PBOCNIsExch
 let
     FilterSource = Table.SelectRows(Get("Dimtbl_DMI_Filter"), each not List.Contains({3, 4, 9}, [Index])),
-    Source = Load("fxDMI")(Load("fxConnect")("DMI"), null, 2022, 2022, FilterSource),
+    Source = Load("fxDMI")(fx("Source")("DMI"), null, 2022, 2022, FilterSource),
     FilteredRows = Table.SelectRows(Source, each ([IS_EXCH] = "Y" or [信用主体] = "中国人民银行")),
     Custom1 = Load("fxAddFX")(FilteredRows, "USD"),
     Custom2 = Table.SelectColumns(Custom1, Table.ColumnNames(CWB("DMI_22_PBOCNIsExch")), MissingField.Ignore)

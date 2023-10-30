@@ -1,0 +1,88 @@
+
+    let
+        Source =  fx("Source")("银行")  ,
+        //Ref
+        AddCol = Table.AddColumn(Source, "信用主体简称", each fx("SNBankCorp")([发行人全称])),
+        SelectedCol = Table.SelectColumns(
+            AddCol,
+            {
+                "信用主体简称",
+                "银行类型",
+                "穆迪/标普",
+                "上市类型",
+                "报告期",
+                "总资产(亿)",
+                "营业收入(亿)",
+                "净利润(亿)",
+                "资本充足率(%)",
+                "不良贷款率(%)",
+                "拨备覆盖率(%)",
+                "发行人全称"
+            },
+            MissingField.Ignore
+        ),
+        ChangedType = Table.TransformColumnTypes(
+            SelectedCol,
+            {
+                {"报告期", type date},
+                {"总资产(亿)", type number},
+                {"营业收入(亿)", type number},
+                {"净利润(亿)", type number},
+                {"资本充足率(%)", type number},
+                {"不良贷款率(%)", type number},
+                {"拨备覆盖率(%)", type number}
+            }
+        ),
+        Filtered = Table.SelectRows(
+            ChangedType,
+            each
+                [#"总资产(亿)"] <> null
+                and [#"营业收入(亿)"] <> null
+                and [#"净利润(亿)"] <> null
+                and [#"资本充足率(%)"] <> null
+                and [#"不良贷款率(%)"] <> null
+                and [#"拨备覆盖率(%)"] <> null
+        ),
+        Rounded = Table.TransformColumns(
+            Filtered,
+            {
+                {"总资产(亿)", each Number.Round(_, 0), type number},
+                {"营业收入(亿)", each Number.Round(_, 1), type number},
+                {"净利润(亿)", each Number.Round(_, 1), type number},
+                {"资本充足率(%)", each Number.Round(_, 2), type number},
+                {"不良贷款率(%)", each Number.Round(_, 2), type number},
+                {"拨备覆盖率(%)", each Number.Round(_, 0), type number}
+            }
+        ),
+        AddCol1 = Table.AddColumn(
+            Rounded,
+            "描述",
+            each
+                "截至"
+                    & Date.ToText([报告期], "yyyy年M月d日")
+                    & "，"
+                    & [信用主体简称]
+                    & "总资产约"
+                    & "人民币"
+                    & Number.ToText([#"总资产(亿)"], "0")
+                    & "亿元，"
+                    & "营业收入约"
+                    & "人民币"
+                    & Number.ToText([#"营业收入(亿)"], "0.0")
+                    & "亿元，"
+                    & "净利润约"
+                    & "人民币"
+                    & Number.ToText([#"净利润(亿)"], "0.0")
+                    & "亿元，"
+                    & "资本充足率约"
+                    & Number.ToText([#"资本充足率(%)"])
+                    & "%，"
+                    & "不良贷款率约"
+                    & Number.ToText([#"不良贷款率(%)"])
+                    & "%，"
+                    & "拨备覆盖率约"
+                    & Number.ToText([#"拨备覆盖率(%)"])
+                    & "%。"
+        )
+    in
+        AddCol1

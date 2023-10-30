@@ -1,0 +1,12 @@
+// Sync_产业板块YY行业
+let
+    Source = try CWB("mCredit") otherwise fx("Source")("DEALSMASTER_mcredit"),
+    #"Removed Other Columns" = Table.SelectColumns(Source, {"信用主体", "板块", "板块二级"}),
+    #"Filtered Rows1" = Table.SelectRows(#"Removed Other Columns", each ([板块] = "产业")),
+    #"Merged Queries" = Table.NestedJoin(
+        #"Filtered Rows1", {"信用主体", "板块"}, Load("YY"), {"YY_主体", "YY_主体类型"}, "Data", JoinKind.Inner
+    ),
+    #"Expanded Queries" = Table.ExpandTableColumn(#"Merged Queries", "Data", {"YY_行业"}),
+    #"Filtered Rows" = Table.SelectRows(#"Expanded Queries", each [板块二级] <> [YY_行业])
+in
+    #"Filtered Rows"

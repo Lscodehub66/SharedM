@@ -1,0 +1,53 @@
+//let LoadCode = Load("QOMAS_Transform","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+
+let
+    Source = fx("Source")("OMAS")[Content]{0},
+    //**
+    fxOMAS_Check = Load("fxOMAS_Check"),
+    CSV = Csv.Document(Source, [Delimiter = ",", Columns = 15, Encoding = 65001, QuoteStyle = QuoteStyle.None]),
+    #"Removed Other Columns" = Table.SelectColumns(
+        CSV,
+        {
+            "Column2",
+            "Column3",
+            "Column4",
+            "Column5",
+            "Column6",
+            "Column7",
+            "Column8",
+            "Column9",
+            "Column10",
+            "Column11",
+            "Column12",
+            "Column13",
+            "Column14"
+        }
+    ),
+    FnFormat = Load("fxDataFormat")(Table.PromoteHeaders(#"Removed Other Columns", [PromoteAllScalars = true])),
+    #"Filtered Rows" = Table.SelectRows(
+        FnFormat,
+        each
+            not Text.Contains([Type], "Live")
+            and [Name] <> "Asian Infrastructure Investment Bank"
+            and [Name] <> "New Development Bank"
+    ),
+    Custom1 = Table.AddColumn(
+        #"Filtered Rows",
+        "票息NUM",
+        each if Text.Contains([Bond Details], "FRN") then "10" else Text.BeforeDelimiter([Bond Details], " ")
+    ),
+    #"Changed Type" = Table.TransformColumnTypes(Custom1, {{"票息NUM", type number}}),
+    RoundedOff = Table.TransformColumns(#"Changed Type", {{"票息NUM", each Number.Round(_ * 10000, 0), type number}}),
+    AddedCustom = Table.AddColumn(
+        RoundedOff,
+        "CheckOMAS",
+        each
+            Date.ToText([Date], "yyMMdd")
+                & [CCY]
+                & Number.ToText([#"Size (MM)"])
+                & Text.End([Bond Details], 4)
+                & Number.ToText([票息NUM])
+    ),
+    FnMerger = Load("fxMerge")(AddedCustom,  fxOMAS_Check(CWB("deal_master")),  "CheckOMAS", "CheckOMAS", {"Check"}, {"Check"})
+in
+    FnMerger

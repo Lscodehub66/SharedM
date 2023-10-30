@@ -1,0 +1,134 @@
+let
+    // Folder
+    Root = {"C:\Users\ktkt2\OneDrive\EXE Team\DataHub", "\\itd-m09-fs02\dcm$"},
+    SourceFD = Table.Buffer(
+        Table.FromRows(
+            {
+                {"PK_Folder", "Folder_Path", "Folder_Path", "Has_NumInPath"},
+                {"Base_4", Root{0} & "\Backup", Root{1} & "\0 DCM Base\4 Markets", ""},
+                {"Team_DH", Root{0} & "\Backup", Root{1} & "\Team Folder\Execution Team\DataHub", ""},
+                {"Team_DH_DL", Root{0} & "\DataLake", Root{1} & "\Team Folder\Execution Team\DataHub\DataLake", ""},
+                {
+                    "Team_AM",
+                    Root{0} & "\Backup\Weekly AM",
+                    Root{1} & "\Team Folder\Execution Team\Weekly AM",
+                    "YYYYMMDD"
+                },
+                {
+                    "Team_ESG",
+                    Root{0} & "\Backup",
+                    Root{1} & "\Team Folder\Execution Team\Rating & Advisory\7. ESG\Pitch book",
+                    ""
+                },
+                {"QRC", "C:\Users\ktkt2\OneDrive\EXE Team\QRC", Root{1} & "\【QRC】DCM项目情况表", ""}
+            },
+            {"Column1", "Column2", "Column3", "Column4"}
+        )
+    ),
+    RCol = Table.RemoveColumns(SourceFD, if Load("GPS") <> "Remote" then {"Column2"} else {"Column3"}),
+    #"Promoted Headers" = Table.PromoteHeaders(RCol, [PromoteAllScalars = true]),
+    Monday = Date.ToText(List.Buffer(Load("Controller")[Monday]){0}, "yyyyMMdd"),
+    #"Replaced Value" = Table.ReplaceValue(
+        #"Promoted Headers", "YYYYMMDD", Monday, Replacer.ReplaceText, {"Has_NumInPath"}
+    ),
+    #"Added Custom" = Table.AddColumn(
+        #"Replaced Value",
+        "Path",
+        each
+            if List.Contains({null, "", "--"}, [Has_NumInPath]) then
+                [Folder_Path]
+            else
+                [Folder_Path] & "\" & Text.Replace([Has_NumInPath], "/", "")
+    ),
+    #"Filtered Rows" = Table.SelectRows(#"Added Custom", each ([Folder_Path] <> "")),
+    #"Invoked Custom Function" = Table.AddColumn(#"Filtered Rows", "Data", each Load("fxFolder")([Path], ".xls")),
+    #"Removed Other Columns" = Table.SelectColumns(#"Invoked Custom Function", {"Data", "PK_Folder"}),
+    #"Expanded Data" = Table.ExpandTableColumn(
+        #"Removed Other Columns",
+        "Data",
+        List.RemoveItems(
+            Table.ColumnNames(#"Removed Other Columns"[Data]{0}), Table.ColumnNames(#"Removed Other Columns")
+        )
+    ),
+    #"Inserted Text Before Delimiter" = Table.AddColumn(
+        #"Expanded Data",
+        "PK_Excel",
+        each
+            Text.BeforeDelimiter(
+                Text.BeforeDelimiter(Text.BeforeDelimiter([Name], ".", {0, RelativePosition.FromEnd}), "-"), "_"
+            ),
+        type text
+    ),
+    #"Merged Columns" = Table.Buffer(
+        Table.CombineColumns(
+            #"Inserted Text Before Delimiter",
+            {"Folder Path", "Name"},
+            Combiner.CombineTextByDelimiter("", QuoteStyle.None),
+            "File Path"
+        )
+    ),
+    // SOURCE
+    Source = Load("DimExcel_Input", "CSV"),
+    AddedIndex = Table.AddIndexColumn(Source, "Index", 1, 1),
+    #"Merged Queries" = Table.NestedJoin(
+        AddedIndex, {"PK_Folder", "PK_Excel"}, #"Merged Columns", {"PK_Folder", "PK_Excel"}, "Data",
+        JoinKind.LeftOuter
+    ),
+    #"Expanded Data1" = Table.ExpandTableColumn(
+        #"Merged Queries",
+        "Data",
+        List.RemoveItems(Table.ColumnNames(#"Merged Queries"[Data]{0}), Table.ColumnNames(#"Merged Queries"))
+    ),
+    TF = Table.TransformColumns(#"Expanded Data1", {{"Sheet_Key", Text.Upper, type text}}),
+    TF2 = Table.TransformColumnTypes(TF, {{"Table_SkipNPromote", Int64.Type}}),
+    A1 = Table.AddColumn(
+        TF2,
+        "Key",
+        each if [Sheet_Key] <> "" and not Text.StartsWith([Sheet_Key], "*") then [Excel_Key] & "_" & [Sheet_Key] else [Excel_Key]
+    ),
+    A2 = Table.AddColumn(A1, "fxTF_Key", each if [fxTF] <> "" then [fxTF] & "_" & [Key] else "", type text),
+    A3 = Table.AddColumn(A2, "RN_Key", each if [RN] <> "" then [RN] & "_" & [Key] else "", type text),
+    DimSheettbl = Table.Buffer(
+        Table.FromRows(
+            {
+                {"1", {1, "", "Column"}},
+                {"2", {"Column1", "Date Time"}},
+                {"3", {"Column2", "序号"}},
+                {"4", {"Column3", "团队"}},
+                {"5", {"Column2", "Project Name"}},
+                {"6", {1}},
+                {"7", {1}},
+                {"8", {1}},
+                {"9", {0}},
+                {"10", {0}},
+                {"11", {0}},
+                {"12", {"Column1", "Base Currency"}}
+            },
+            {"fxSheet_Input_Index2", "fxSheet_Input"}
+        )
+    ),
+    Custom2 = Table.Join(A3, "fxSheet_Input_Index", DimSheettbl, "fxSheet_Input_Index2", JoinKind.LeftOuter),
+    
+    #"Removed Other Columns1" = Table.SelectColumns(
+        Custom2,
+        {
+            "Content",
+            "File Path",
+            "Index",
+            "Key",
+            "Excel_Key",
+            "Sheet_Key",
+            "Table_SkipNPromote",
+            "Table_FindHD",
+            "Table_FindAnchor",
+            "Table_SkipRBlankCol",
+            "fxSheet_Input",
+            "fxTF_Key",
+            "RN_Key"
+        },
+        MissingField.UseNull 
+    ),
+    #"Filtered Rows1" = Table.SelectRows(#"Removed Other Columns1", each not List.Contains({"", null}, [File Path])),
+    Sorted = Table.Sort( #"Filtered Rows1", {{"Index", Order.Ascending}})
+in
+       Sorted

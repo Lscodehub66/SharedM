@@ -1,0 +1,14 @@
+//let LoadCode = Load("DMIHeaders","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+
+
+let
+    Source = fx("Source")("DOWNLOAD_美元债一级"),
+    CWBtbl = try CWB("DMIHeaders") otherwise fx("Source")("DYNAMIC_DMIHeaders"),
+    Table = Table.FromList(Table.ColumnNames(Source), Splitter.SplitByNothing(), null, null, ExtraValues.Error),
+    CWBSource = fx("Merge")(Table, CWBtbl, "Column1", "DMI字段", {""}, {""}),
+    #"Removed Columns" = Table.RemoveColumns(CWBSource, {"Column1"}, MissingField.Ignore),
+    #"Removed Blank Rows" = Table.SelectRows(
+        #"Removed Columns", each not List.IsEmpty(List.RemoveMatchingItems(Record.FieldValues(_), {"", null}))
+    )
+in
+    #"Removed Blank Rows"

@@ -1,8 +1,8 @@
 
 //let LoadCode = Load("DMI_Default","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-    Source = Load("fxDimSheet")("违约"),
-    SourceDMI = Load("fxConnect")("DMI"),
+    Source = fx("Source")("违约"),
+    SourceDMI = fx("Source")("DMI"),
     Header_DMI违约 = Get("DMIDefault"),
     Rename_DMI违约 = Get("Rename_DMIDefault"),
     SCol = Table.SelectColumns(Source, Header_DMI违约, MissingField.UseNull),

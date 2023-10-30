@@ -1,0 +1,10 @@
+// Sync_YY类型
+let
+    Source = try CWB("mCredit") otherwise fx("Source")("DEALSMASTER_mcredit"),
+    #"Removed Other Columns" = Table.SelectColumns(Source,{"信用主体", "DMI行业"}),
+    #"Merged Queries" = Table.NestedJoin(#"Removed Other Columns", {"信用主体"}, try CWB("DMI_Credit") otherwise Load("DMI_Credit"), {"信用主体"}, "Data", JoinKind.LeftOuter),
+    #"Expanded Queries" = Table.ExpandTableColumn(#"Merged Queries", "Data", {"行业"}),
+    #"Filtered Rows" = Table.SelectRows(#"Expanded Queries" , each [DMI行业] <> [行业] ),
+    #"Replaced null" = Table.ReplaceValue(#"Filtered Rows",null,"N" ,Replacer.ReplaceValue,{"行业"})
+in
+    #"Replaced null"

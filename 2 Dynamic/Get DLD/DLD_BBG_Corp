@@ -1,0 +1,36 @@
+// let LoadCode = Load("DLD_BBG_Corp","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    Source = fx("Source")("DOWNLOAD_tbl_dmi_isin"),
+    RCol = Table.RemoveColumns(Source, {"Index"}, MissingField.Ignore),
+    FBlank = Table.SelectRows(
+        RCol, each not List.IsEmpty(List.RemoveMatchingItems(Record.FieldValues(_), {"", null}))
+    ),
+    FormattedData = Load("fxDataFormat")(FBlank),
+    TFCols = Table.TransformColumns(
+        FormattedData, {{"发行评级", each fxCleaner(_, "Rtg")}, {"主体评级", each fx("Cleaner")(_, "Rtg")}}
+    ),
+    JoinAddTap =
+        if Load("TapLookup")[Column3]{0} = "N" then
+            fx("ByeAllErrors")(TFCols)
+        else
+            Table.Combine(
+                {
+                    fx("ByeAllErrors")(TFCols),
+                    Table.SelectColumns(Load("DLD_AddTap"), Table.ColumnNames(TFCols), MissingField.UseNull)
+                }
+            ),
+    TBC_Replaced = Table.TransformColumns(
+        JoinAddTap,
+        {
+            {"发行评级", each Text.Combine(List.ReplaceValue(Text.Split(_, "/"), "", "【】", Replacer.ReplaceValue), "/")},
+            {"主体评级", each Text.Combine(List.ReplaceValue(Text.Split(_, "/"), "", "【】", Replacer.ReplaceValue), "/")}
+        }
+    ),
+    #"//GNG_Multi" = if Text.Contains(Load("Controller")[Multi]{0},"BBG") or Load("Controller")[Multi]{0} = "ON" then "GO" else "NO-GO",
+    Crossroad =
+        if    #"//GNG_Multi" <> "GO" then
+          try  CWB("DLD_BBG_Corp") otherwise  fx("CheckNDupe")(TBC_Replaced)
+        else
+            Load("fxCheckNDupe")(TBC_Replaced)
+in
+    Crossroad

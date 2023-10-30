@@ -1,0 +1,15 @@
+// let LoadCode = Load("mBISL","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    AddCode = Load("fxAddToDB", "Code"),
+    ManagerCode = Load("fxDBManager", "Code"),
+    DB = "mBISL",
+    DB_Source = CWB(DB),
+    Parameter = Load("Controller")[RemoveFrom_DB]{0} ?? "",
+    Added = fx("AddToDB")(DB, wDynamicPQ, Parameter),
+    Managed = if Text.Contains(Parameter, "Stop") then fx("DBManager")(DB_Source, "m") else fx(
+        "DBManager"
+    )(
+        Added, "m"
+    )
+in
+    Managed
