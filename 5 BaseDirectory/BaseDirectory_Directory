@@ -4,7 +4,7 @@
 let
 
     Source = fx("Source")("DEALSMASTER"){[Item = "Directory"]}[Data],
-    #"Replaced Value" = Table.ReplaceValue( Load("fxDataFormat")(Source) ,"--",null,Replacer.ReplaceValue,{"收窄基点"}),
+    #"Replaced Value" = Table.ReplaceValue( fx("Data")(Source) ,"--",null,Replacer.ReplaceValue,{"收窄基点"}),
     #"Changed Type" = Table.TransformColumnTypes(#"Replaced Value",{{"收窄基点", type number}})
     
 in

@@ -1,7 +1,7 @@
 // // let  LoadCode = Load("Dimtbl_Indice","Code"), EVA = Expression.Evaluate(LoadCode ,#shared)in EVA
 let
-    Source = Table.Buffer(Load("fxDataFormat")(Load("Dimtbl_Indice_Input", "CSV"))),
-    Source1 = Table.Buffer(Load("fxDataFormat")(Load("DimTextFormat", "CSV"))),
+    Source = Table.Buffer(fx("Data")(Load("Dimtbl_Indice_Input", "CSV"))),
+    Source1 = Table.Buffer(fx("Data")(Load("DimTextFormat", "CSV"))),
     #"Merged Columns" = Table.CombineColumns(
         Source,
         {"Series_FillDown", "Series_Indice"},

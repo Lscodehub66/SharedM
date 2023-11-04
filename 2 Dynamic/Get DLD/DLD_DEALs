@@ -10,7 +10,7 @@ let
     #"Extracted Last Characters" = Table.TransformColumns(#"Filtered Rows1", {{"EXE", each Text.End(_, 2), type text}}),
     RepalceValue = List.Accumulate({"无","n/a","n/a(挂名)","--","[Input]"},#"Extracted Last Characters", (x,y) => Table.ReplaceValue(x, y,"",Replacer.ReplaceValue,Table.ColumnNames(#"Extracted Last Characters"))),
     ReplaceText = List.Accumulate({{"交行","","交行及独家订单"},{",","；"&"#(lf)","项目亮点"}}, RepalceValue, (x,y) => Table.ReplaceValue(x,y{0},y{1},Replacer.ReplaceText,{y{2}})),
-    DataType = fx("DataFormat")(ReplaceText),
+    DataType = fx("Data")(ReplaceText),
       #"Inserted Time" = Table.AddColumn(    DataType, "定价会时间", each DateTime.Time([定价会日期时间]) , type time),
     #"Merged Queries1" = Table.NestedJoin(#"Inserted Time", {"定价会时间"}, Load("DimTime"), {"Time"}, "Data", JoinKind.LeftOuter),
     #"Expanded DimTime" = Table.ExpandTableColumn(#"Merged Queries1", "Data", {"DayPeriod"}, {"定价会时段"}),

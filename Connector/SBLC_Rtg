@@ -9,7 +9,7 @@ List.LastN(Table.ColumnNames(#"Removed Other Columns"), 3),
 #"Removed Other Columns",
 (x, y) => Table.TransformColumns(x, {{y, each fx("Cleaner")(_, "评级")}})
 ),
-Custom1 = fx("FindHD")(Cleaned, {"Column61", "Index", null}),
+Custom1 = fx("SheetTotbl")(Cleaned, {"Column61", "Index", null}),
 
     #"Merged Columns" = Table.CombineColumns(Custom1 ,{"Moody's", "SP", "FITCH"},Combiner.CombineTextByDelimiter("/", QuoteStyle.None),"当前主体评级")
    

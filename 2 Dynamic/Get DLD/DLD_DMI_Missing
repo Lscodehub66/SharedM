@@ -19,6 +19,6 @@ let
    )
   else
    Table.SelectRows ( Filtered, each not List.IsEmpty ( List.RemoveMatchingItems ( Record.FieldValues ( _ ), { "", null } ) ) ),
-    Custom1 = fx("DataFormat")(TFColumns)
+    Custom1 = fx("Data")(TFColumns)
 in
     Custom1

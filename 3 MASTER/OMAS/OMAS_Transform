@@ -23,7 +23,7 @@ let
             "Column14"
         }
     ),
-    FnFormat = Load("fxDataFormat")(Table.PromoteHeaders(#"Removed Other Columns", [PromoteAllScalars = true])),
+    FnFormat = fx("Data")(Table.PromoteHeaders(#"Removed Other Columns", [PromoteAllScalars = true])),
     #"Filtered Rows" = Table.SelectRows(
         FnFormat,
         each

@@ -445,9 +445,9 @@ let
             },
             Header_Sync_Directory = {"PROJECT_NAME", "COVERAGE", "定价日", "交易简称", "Check", "币种规模", "票息", "期限", "ISIN"},
             Header_Connect_DMI违约 = {"ISIN码", "发行人名称", "违约日期", "违约类型", "地区"},
-            Header_DMI_Credit = {"信用主体", "债券简称", "穆迪/标普", "公司类型", "行业", "细分行业", "省份", "城市", "区县", "定价日"},
+            Header_DMI_Credit = {"信用主体", "债券简称", "穆迪/标普", "公司类型", "DMI行业", "细分行业", "省份", "城市", "区县", "定价日"},
             Header_CF = {"序号", "团队", "发行人名称英文", "Mandate", "项目定价日", "KYC", "DD Risk"},
-            Header_DirectoryToFormalities = {"ISIN", "PROJECT_NAME", "定价日", "新规角色", "信用主体(备证行)", "注册成立地"},
+            Header_DirectoryToFormalities = {"ISIN", "PROJECT_NAME", "定价日", "新规角色",  "IS_KYC_DONE", "信用主体(备证行)", "注册成立地"},
             Header_DirectoryToTombsWriter = {"定价日", "年月", "首次违约日"} & {"备证行", "信用主体简称", "通过分行", "角色"},
             Header_S_ToDo = {
                 "PRJ对账号",

@@ -1,0 +1,39 @@
+// fxReplacer
+let
+    Source = (TableToClean as table, TableToCleanColumn as list, _key as nullable text) =>
+        let
+            Clntbl = Table.Buffer(Load("Replacetbl")),
+            #"Cln Selected" = Table.FromRows(
+                Table.SelectRows(Clntbl, each Text.Contains([Column1], (_key ?? "")))[Column2]{0}, {
+                    "Find",
+                    "Replace"
+                }
+            ),
+            ReplacerTable = Table.Buffer(#"Cln Selected"),
+            FindReplaceList = Table.ToRows(ReplacerTable),
+            Counter = Table.RowCount(ReplacerTable),
+            BulkReplaceValues = (TableToCleanTemp, n) =>
+                let
+                    ReplaceTable = Table.ReplaceValue(
+                        TableToCleanTemp,
+                        if FindReplaceList{n}{0} = null then
+                            ""
+                        else
+                            FindReplaceList{n}{0},
+                        if FindReplaceList{n}{1} = null then
+                            ""
+                        else
+                            FindReplaceList{n}{1},
+                        Replacer.ReplaceText,
+                        TableToCleanColumn
+                    )
+                in
+                    if n = Counter - 1 then
+                        ReplaceTable
+                    else
+                        @BulkReplaceValues(ReplaceTable, n + 1),
+            Output = BulkReplaceValues(TableToClean, 0)
+        in
+            Output
+in
+    Source

@@ -2,7 +2,7 @@
 
   (TableName as table, optional FTextUSDCNHHKD as text) =>
         let
-            Source = Load("fxDataFormat")(TableName),
+            Source = fx("Data")(TableName),
             fxSmartFX = Load("fxSmartFX"),
             AddedCol = {"YYQQ","亿美元", "亿元", "亿港币"},
             Prep = Table.RemoveColumns(Source, AddedCol, MissingField.Ignore),
@@ -23,9 +23,11 @@
                         each if [货币] = y{0} then 1 * [#"发行规模(亿)"] else Record.Field(_,y{0}  ) * [#"发行规模(亿)"],
                         type number
                     )
-           else x )
+           else x ),
+
+           ReplacedNull = fx("ReplaceMissingFX")( AddedFX )
            in
-           AddedFX
+         ReplacedNull 
 
 
            

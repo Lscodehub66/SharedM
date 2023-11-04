@@ -1,5 +1,5 @@
 letExcel
-    Source = Load("fxDataFormat")(.CurrentWorkbook(){[Name = "Directory"]}[Content]),
+    Source = fx("Data")(.CurrentWorkbook(){[Name = "Directory"]}[Content]),
 
  SelectedRows = Table.SelectRows(Source, each ([BISL_ROLE] <> "Dealer" and [BISL_ROLE] <> "PA") and 
  ext.StartsWith([YYMMDD],"21") or  Text.StartsWith([YYMMDD],"22") or Text.StartsWith([YYMMDD],"23") ),

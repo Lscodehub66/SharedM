@@ -7,7 +7,7 @@
     optional IsReversedIndex as nullable text
 ) =>
     let
-        Source = Load("fxDataFormat")(TableName),
+        Source = fx("Data")(TableName),
         Order = if IsReversedIndex <> "N" then Order.Ascending else Order.Descending,
            Prep  = Table.RemoveColumns(Source, {"Index"}, MissingField.Ignore),
         HeaderList = List.Intersect(
@@ -27,7 +27,7 @@
             else if List.Contains(CN_Source, "定价日") and Entity_CN_Count > 0 then
                 Table.Sort(    RCol , {{"定价日", Order}, {Entity_CN1, Order}})
             else if List.ContainsAll(CN_Source, {"DEBUT_DATE","Timestamp"}) and Entity_CN_Count > 0 then
-                Table.Sort(    RCol , {{"Timestamp", Order}, {"DEBUT_DATE", Order}, {Entity_CN1, Order}})
+                Table.Sort(    RCol , {{"DEBUT_DATE", Order},{"Timestamp", Order},  {Entity_CN1, Order}})
                 else if List.ContainsAll(CN_Source, {"Date","Timestamp"})  then
                 Table.Sort(    RCol , {{"Timestamp", Order}, {"Date", Order}})
             else

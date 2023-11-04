@@ -2,7 +2,7 @@
 let
  Source = (TableName as table, optional FTextUSDCNHHKD as text) =>
   let
-       Source = Load("fxDataFormat")(TableName),
+       Source = fx("Data")(TableName),
        fxSmartFX = Load("fxSmartFX"),
        FText = if FTextUSDCNHHKD = null then "USDCNHHKD" else FTextUSDCNHHKD,
         FX_0 = if Text.Contains(FText,"USD")  then Table.AddColumn(

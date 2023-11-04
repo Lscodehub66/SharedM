@@ -6,7 +6,7 @@ let
     SourceFI = fxConnect("YY_金融"),
     SourceIndustrial = fxConnect("YY_产业"),
     SourceLGFV = fxConnect("YY_城投"),
-    Combined = Load("fxDataFormat")(Table.Combine({SourceFI, SourceLGFV, SourceIndustrial})),
+    Combined = fx("Data")(Table.Combine({SourceFI, SourceLGFV, SourceIndustrial})),
     SelectedCol = Table.SelectColumns(Combined, {"主体", "主体类型", "大股东持股", "是否上市公司"}, MissingField.UseNull),
     ABDelimiter = Table.AddColumn(
         SelectedCol,

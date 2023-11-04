@@ -1,14 +1,6 @@
-Entity_Client =
-            if List.Contains(CN_Source, "IS_CLIENT") then
-                Table.ReplaceValue(
-                  Source,
-                    "",
-                    each if List.Contains(CWB("Directory")[信用主体], [信用主体]) then "Y" else "",
-                    Replacer.ReplaceValue,
-                    {"IS_CLIENT"}
-                )
-            else
-                 Source,
+
+
+
         
         
         Entity_地区 =

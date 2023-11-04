@@ -19,7 +19,7 @@
                 InputTableList
             else
                 List.Transform(InputTableList, each Table.SelectColumns(_, SColCN, MissingField.UseNull)),
-        Source = Load("fxDataFormat")(Table.Combine(TableList)),
+        Source = fx("Data")(Table.Combine(TableList)),
         NoNull = Table.SelectRows(
             Source, each not List.IsEmpty(List.RemoveMatchingItems(Record.FieldValues(_), {"", null}))
         ),

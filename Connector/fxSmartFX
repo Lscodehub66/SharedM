@@ -3,7 +3,7 @@
 let
  Source = ( ToCurrency as text, FromCurrency as text, Valuedate as date ) =>
   let
-    FromCurrency1 = if Valuedate < Date.From("2018/1/1") and FromCurrency = "CNH" then "CNY" else FromCurrency,
+  FromCurrency1 = if Valuedate < Date.From("2018/1/1") and FromCurrency = "CNH" then "CNY" else FromCurrency,
    FXWeb       = "https://www.xe.com/currencytables/?from=" & ToCurrency & "&date=" & Date.ToText ( Valuedate, "yyyy-MM-dd" ), 
    Source      = Web.Page ( Web.Contents ( FXWeb & "#table-section" ) ), 
    Data        = Source{0}[Data], 

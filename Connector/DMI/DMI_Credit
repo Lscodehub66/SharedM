@@ -4,7 +4,7 @@ let
     //References
     CWB_DMI_Credit = CWB("DMI_Credit"),
     Header_DMI_Credit = Get("DMI_Credit"),
-    // {"信用主体", "债券简称", "穆迪/标普", "公司类型", "行业", "细分行业", "省份", "城市", "区县", "定价日"}
+    // {"信用主体", "债券简称", "穆迪/标普", "公司类型", "DMI行业", "细分行业", "省份", "城市", "区县", "定价日"}
     // Function
     SCol = Table.SelectColumns(Source, Header_DMI_Credit, MissingField.UseNull),
     Sorted = Table.Buffer(Table.Sort(SCol, {{"定价日", Order.Ascending}})),

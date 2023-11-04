@@ -71,6 +71,6 @@
                 Source
             else
                 Sorted,
-        FormattedData = Load("fxDataFormat")(Removed, DataFormatNumIndicator)
+        FormattedData = fx("Data")(Removed, DataFormatNumIndicator)
     in
         FormattedData

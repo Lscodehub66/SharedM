@@ -45,7 +45,7 @@ let
         Peak_Date, _TrendCol & "_Is_Peak", each if [Date] <> [Date_Peak] then "已收窄" else "达到最高值", type text
     ),
     Range = Table.AddColumn(Peak_IsPeak, "Duration", each Duration.Days([Date] - [Date_Min]), type duration),
-    Custom2 = fxDataFormat(Range),
+    Custom2 = fx("Data")(Range),
     Writer = Table.AddColumn(
         Custom2,
         "描述",

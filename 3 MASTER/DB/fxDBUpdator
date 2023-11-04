@@ -1,0 +1,27 @@
+(TableName as table) =>
+    let
+        Source = TableName,
+        CN_Source = List.Buffer(Table.ColumnNames(Source)),
+        Fn = List.Accumulate(
+            {
+                {"IS_CLIENT", List.Buffer(CWB("Directory")[信用主体]), "信用主体"},
+                {"IS_SBLC", List.Buffer(CWB("deal_master")[备证行]), "信用主体简称"},
+                {"IS_DEFAULT", List.Buffer(CWB("DMI_Default")[发行人名称]), "信用主体"},
+                {"IS_ISSUER", List.Buffer(CWB("deal_master")[信用主体]), "信用主体"},
+                {"IS_KYC_DONE", List.Buffer(Table.SelectRows(Load("合规_23_22"), each [KYC] = "Y")[PRJ对账号]), "PRJ对账号"}
+            },
+            Source,
+            (x, y) =>
+                if List.Contains(CN_Source, y{0}) then
+                    Table.ReplaceValue(
+                        x,
+                        "",
+                        each if List.Contains(y{1}, Record.Field(_, y{2})) then "Y" else "",
+                        Replacer.ReplaceValue,
+                        {y{0}}
+                    )
+                else
+                    x
+        )
+    in
+        Fn

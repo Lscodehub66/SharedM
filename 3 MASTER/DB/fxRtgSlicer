@@ -1,0 +1,43 @@
+(TableName as table, ColName as text, NewColName as text, optional ENoutputIndicator as nullable text) =>
+    let
+        Source = TableName,
+        AddedCol = Table.AddColumn(
+            Source,
+            "DummyCol",
+            each if List.Contains({"", "--", "n/a",null}, Record.Field(_, ColName) ) then "--" else
+                fx(
+                    "Cleaner"
+                )(
+                    Text.Select(Record.Field(_, ColName) ?? "", {"A", "B", "C", "D", "a", "/"}),
+                    null,
+                    {"Baa", "BBB", "Ba"},
+                    {"A", "A", "BB"}
+                ),
+            type text
+        ),
+        Output = Table.AddColumn(
+            AddedCol,
+            NewColName,
+            each
+                if [DummyCol] = "--" then
+                    "--"
+                else if [DummyCol] = "//" or [DummyCol] = "/" then
+                    "无评级"
+                else if Text.Contains([DummyCol], "D") then
+                    "违约"
+                else if Text.Contains([DummyCol], "C") then
+                    "高收益"
+                else if Text.Contains([DummyCol], "A") and not Text.Contains([DummyCol], "B") then
+                    "投资级"
+                else
+                    "高收益",
+            type text
+        ),
+        RCol = fx("RemoveCol")(Output),
+        Optional =
+            if ENoutputIndicator = "EN" then
+               fx("Replace")(RCol, {NewColName},"评级分类") 
+            else
+                RCol
+    in
+        Optional

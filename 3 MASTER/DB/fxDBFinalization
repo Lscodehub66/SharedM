@@ -5,7 +5,7 @@
         Prefix = Load("Prefix"),
         CN_Source = List.Buffer(Table.ColumnNames(Source)),
         //Prep
-        DataType = Load("fxDataFormat")(Source),
+        DataType = fx("Data")(Source),
         RemovedCol = Table.RemoveColumns(
             DataType,
             {"是否IG", "是否首发", "美元规模分类", "评级分类", "主体评级分类", "结构分类", "货币细分", "上市分类", "BOCOM_DEAL?", "期限"},
@@ -53,13 +53,13 @@
                 Slicer_Size,
         Slicer_BondRtg =
             if Table.HasColumns(Source, "发行评级") then
-                Table.AddColumn(Slicer_Tenor, "评级分类", each Load("fxGroupRtg")([发行评级]))
+                fx("RtgSlicer")(Slicer_Tenor, "发行评级", "评级分类") 
             else
                 Slicer_Tenor,
         //
         Calculated_CCY =
             if Table.HasColumns(Source, {"ISIN", "货币"}) then
-                Table.AddColumn(
+               fx("Replace")( Table.AddColumn(
                     Slicer_BondRtg,
                     "货币细分",
                     each
@@ -70,9 +70,9 @@
                         else if Text.Contains([货币], "CNH") then
                             "点心债"
                         else
-                            fxCleaner([货币], "货币")&"债",
+                            [货币] &"债",
                     type text
-                )
+                ), {"货币细分"},"货币")
             else
                 Slicer_BondRtg,
         Calculated_Clearing =
@@ -101,9 +101,7 @@
         /////////////////////////
         Junction_Start = Calculated_Clearing,
         /////////////////////////
-        Slicer_EntityRtg = Table.AddColumn(
-            Junction_Start, "主体评级分类", each fxCleaner(Load("fxGroupRtg")([主体评级]), "评级分类")
-        ),
+        Slicer_EntityRtg =          fx("RtgSlicer")(   Junction_Start, "主体评级", "主体评级分类","EN") ,
         Slicer_IsIG = Table.AddColumn(
             Slicer_EntityRtg,
             "是否IG",
@@ -161,9 +159,9 @@
         ),
         Written_CCYSize = Load("fxWriteCCYSize")(Written_Tenor, "发行规模(亿)", "货币", "增发判定"),
         Written_Theme = Load("fxWriteTheme")(Written_CCYSize),
-        Written_BISLRole = Table.AddColumn(
-            Written_Theme, "角色", each fxCleaner([IS_LEAD] & [BISL_ROLE] & [#"IS_B&D"], "Role"), type text
-        ),
+        Written_BISLRole = fx("Replace")(Table.AddColumn(
+            Written_Theme, "角色", each [IS_LEAD] & [BISL_ROLE] & [#"IS_B&D"], type text
+        ),{"角色"},"ROLE"),
         //
         CombinedName = Load("fxNameCombiner")(Written_BISLRole),
         // Add Comparer

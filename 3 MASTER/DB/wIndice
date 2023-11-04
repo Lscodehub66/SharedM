@@ -13,7 +13,7 @@ let
         List.Sort(List.RemoveItems(Table.ColumnNames(#"Promoted Headers"), {"Date"}), Order.Ascending),
         MissingField.Ignore
     ),
-    Type = fxDataFormat(   Reordered ),
+    Type = fx("Data")(   Reordered ),
     #">>FilteredMonday>>" = Table.SelectRows(Type, each [Date] <= Controller1{0} and [Date] > Controller2{0}),
   ManagedDB = fx("DBManager")(   #">>FilteredMonday>>","w"),
     #"Changed Type" = Table.TransformColumnTypes(ManagedDB,{{"Date", type text}}),

@@ -11,9 +11,9 @@
         // Filter out blank rows & invoke dataformat
         NullOut =
             if HD_Count = 0 then
-                Load("fxDataFormat")(SourceDB)
+                fx("Data")(SourceDB)
             else
-                Load("fxDataFormat")(
+                fx("Data")(
                     Table.SelectRows(
                         SourceDB,
                         each

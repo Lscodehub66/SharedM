@@ -38,10 +38,10 @@
         FRN_Spd = Table.AddColumn(
             Prep2, "浮息_SPD", each Text.AfterDelimiter(Text.Select([计息基准], {"0".."9", "+", "."}), "+"), type text
         ),
-        FRN_Bmk = Table.AddColumn(
-            FRN_Spd, "浮息_BMK", each fxCleaner(Text.BeforeDelimiter([计息基准], "+"), "价格"), type text
-        ),
-        AIPT_Clean = Table.AddColumn(
+        FRN_Bmk = fx("Replace")(Table.AddColumn(
+            FRN_Spd, "浮息_BMK", each Text.BeforeDelimiter([计息基准], "+"), type text
+        ),{ "浮息_BMK"}, "价格"),
+        AIPT_Clean = fx("Replace")(Table.AddColumn(
             Table.TransformColumns(
                 FRN_Bmk,
                 {
@@ -57,11 +57,10 @@
             ),
             "IPT",
             each
-                fxCleaner(
-                    Text.BeforeDelimiter(Text.BeforeDelimiter(Text.BeforeDelimiter([IPT_DMI], "，"), "区域+"), "（"),
-                    "价格"
-                )
-        ),
+              
+                    Text.BeforeDelimiter(Text.BeforeDelimiter(Text.BeforeDelimiter([IPT_DMI], "，"), "区域+"), "（")
+                
+        ),{"IPT"}, "价格"),
         TF_IPT = Table.TransformColumns(
             AIPT_Clean,
             {
@@ -98,16 +97,16 @@
             FPTText, "", each if [IPT_DMI] <> "" then "【】" else "", Replacer.ReplaceValue, {"FPG_DMI"}
         ),
 
-        AFPT_Clean = Table.AddColumn(
+        AFPT_Clean = fx("Replace")(Table.AddColumn(
             RFPTMissing,
             "FPT1",
             each
                 if Text.Contains([FPG_DMI], "%/") or Text.Contains([FPG_DMI], "|") then
-                    "【" & fxCleaner(Text.BeforeDelimiter([FPG_DMI], "，"), "价格") & "】"
+                    "【" & Text.BeforeDelimiter([FPG_DMI], "，") & "】"
                 else
-                    fxCleaner(Text.BeforeDelimiter([FPG_DMI], "，"), "价格"),
+                    Text.BeforeDelimiter([FPG_DMI], "，"),
             type text
-        ),
+        ),{"FPT1"},"价格"),
         AWPIR = Table.AddColumn(
             AFPT_Clean, "WPIR", each Text.Select(Text.AfterDelimiter([FPT1], "+/-"), {"0".."9", "-", "."}), type text
         ),
@@ -127,7 +126,7 @@
             type text
         ),
         NumFPT_Spd下限 = Table.AddColumn(
-            Load("fxDataFormat")(AFPT_Spd上限),
+            fx("Data")(AFPT_Spd上限),
             "FPT_SPD假设窄端",
             each
                 if [FPT_SPD] <> null and [WPIR] <> null then

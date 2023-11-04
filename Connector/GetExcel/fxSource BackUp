@@ -59,13 +59,13 @@
                 Table.RemoveColumns(#"ErrorRows Removed", {"Sheet", "ExcelWB"}, MissingField.Ignore)
             else if List.ContainsAll(CN_ColumnToExpand, {"Item", "Data"}) then
                 
-                    fx("DataFormat")
+                    fx("Data")
                 (
                     Table.ExpandTableColumn(
                         Table.SelectColumns(#"ErrorRows Removed", {"Table", "File Path"}), "Table", CN_ColumnToExpand
                     )
                 )
             else
-                  fx("DataFormat")(#"ErrorRows Removed"{0}[Table])
+                  fx("Data")(#"ErrorRows Removed"{0}[Table])
     in
         #"Table Column Expanded"

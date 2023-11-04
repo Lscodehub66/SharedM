@@ -15,18 +15,18 @@
                     Number.Round(Record.Field(_, SizeColumn), 3),
             type number
         ),
-        CrcyCN = Table.AddColumn(
+        CrcyCN = fx("Replace")(Table.AddColumn(
             SizeCN,
             "币种单位",
             each
                 if Record.Field(_, CCYColumn) = null then
                     ""
                 else if Record.Field(_, SizeColumn) < 1 then
-                    "万" & fxCleaner(Record.Field(_, CCYColumn), "货币")
+                    "万" & Record.Field(_, CCYColumn)
                 else
-                    "亿" & fxCleaner(Record.Field(_, CCYColumn), "货币"),
+                    "亿" & Record.Field(_, CCYColumn),
             type text
-        ),
+        ),{"币种单位"},"货币"),
         CrcySizeCN = Table.AddColumn(
             CrcyCN,
             "币种规模",
@@ -44,7 +44,7 @@
                 Table.ReplaceValue(
                     CrcySizeCN,
                     each [币种规模],
-                    each fxCleaner(Record.Field(_, IsTapColumn), null, {"[", "]"}, {"", ""}) & [币种规模],
+                    each Text.Remove(Text.Remove(Record.Field(_, IsTapColumn), "["),"]") & [币种规模],
                     Replacer.ReplaceValue,
                     {"币种规模"}
                 ),

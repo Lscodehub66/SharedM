@@ -2,7 +2,7 @@ let
     Source2 = Excel.Workbook(
         File.Contents("C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM\Zss\DEALs MASTER.xlsm"), null, true
     ),
-    Table = fxDataFormat(Source2{[Item = "mIndice", Kind = "Table"]}[Data]),
+    Table = fx("Data")(Source2{[Item = "mIndice", Kind = "Table"]}[Data]),
     _CurrentDate = Date.From(Monday),
     _InputCurves = {"UST", "CGB"},
     // second item minus by first item
@@ -79,7 +79,7 @@ let
         Peak_Date, _HD_Trend & "_Is_Peak", each if [Date] <> [Date_Peak] then "已收窄" else "达到最高值", type text
     ),
     Range = Table.AddColumn(Peak_IsPeak, "Duration", each Duration.Days([Date] - [Date_Min]), type duration),
-    Custom2 = fxDataFormat(Range),
+    Custom2 = fx("Data")(Range),
     Writer = Table.AddColumn(
         Custom2,
         "描述",

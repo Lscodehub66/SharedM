@@ -20,6 +20,6 @@ let
    )
   else
    Table.SelectRows ( Promoted, each not List.IsEmpty ( List.RemoveMatchingItems ( Record.FieldValues ( _ ), { "", null } ) ) ),
-    Custom1 = Load("fxDataFormat")(TFColumns)
+    Custom1 = fx("Data")(TFColumns)
 in
  Custom1

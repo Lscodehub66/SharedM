@@ -17,7 +17,7 @@
   NCProject = Table.AddColumn (
    RemovedCol, 
    "PROJECT_NAME", 
-   each if [BISL_ROLE] = "" then "" else Load("fxRemoveRepeated") ( fxCleaner ( Text.Combine ( { [PROJECT_CODE], [期数], [增发判定] }, " " ),null, { "增发", " (" }, { "Tap", "(" } ), " " ), 
+   each if [BISL_ROLE] = "" then "" else Text.Replace(Text.Replace(fx("PowerTrim") ( Text.Combine ( { [PROJECT_CODE], [期数], [增发判定] }, " " )), "增发","Tap")," (" ,"(" ),
    type text
   ), 
   //信用主体(备证行) 合成
@@ -33,10 +33,7 @@
     else
      [信用主体简称] & "(" & Text.BeforeDelimiter ( [备证行], "(" ) & ")" & [增发判定]
   ), 
-  TFEntity = Table.TransformColumns (
-   NCEntity, 
-   { { "信用主体(备证行)", each fxCleaner ( _,null, { "香港分行", "新加坡分行", "伦敦分行", "纽约分行", "澳门分行", "(--)", ")", "增发", "[]", "[*]", "()" }, { "港分", "新分", "伦分", "纽分", "澳分", "", ")", "*", "", "*", "" } ) } }
-  ), 
+  TFEntity = fx("Replace")(NCEntity, { "信用主体(备证行)"},"分行简称") , 
   //交易简称命名
   SecEntity = Table.AddColumn (
    TFEntity, 

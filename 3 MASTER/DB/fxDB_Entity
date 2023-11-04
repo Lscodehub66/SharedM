@@ -15,7 +15,7 @@
                 Table.ReplaceValue(
                     Entity_省级,
                     "",
-                    each if [中资属性] <> "地方国企" then "--" else if [IS_DEFAULT] <> "" then "" else "【】",
+                    each if [板块] = "地方平台" then "【】" else if [中资属性] <> "地方国企" then "--" else "",
                     Replacer.ReplaceValue,
                     {"级别"}
                 )

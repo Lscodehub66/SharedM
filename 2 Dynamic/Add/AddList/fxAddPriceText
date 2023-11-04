@@ -75,7 +75,7 @@
             {"定价息差"}
         ),
         ToPercent = Table.TransformColumns(
-            Load("fxDataFormat")(RP_SpdFPT),
+            fx("Data")(RP_SpdFPT),
             {{"IPT_YIELD", each _ / 100, type number}, {"FPT_YIELD", each _ / 100, type number}}
         ),
         ToPercent_DMI100 = Table.AddColumn(ToPercent, "票息100DMI", each [票息_DMI] / 100, type number),

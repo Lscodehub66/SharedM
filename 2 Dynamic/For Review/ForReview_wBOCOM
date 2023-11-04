@@ -34,7 +34,7 @@ let
     BlankToNil = Table.ReplaceValue(
         Replaced, "", "nil", Replacer.ReplaceValue, List.RemoveItems(#">>ExpandedList", {"新规角色", "COVERAGE"})
     ),
-    SelectCol = Load("fxDataFormat")(Table.SelectColumns(BlankToNil,Get("wBISL"), MissingField.UseNull)),
+    SelectCol = fx("Data")(Table.SelectColumns(BlankToNil,Get("wBISL"), MissingField.UseNull)),
     BlankToInput = Table.ReplaceValue(
         SelectCol, "", "【】", Replacer.ReplaceValue, {"PROJECT_CODE", "期数", "新规角色", "COVERAGE"}
     ),

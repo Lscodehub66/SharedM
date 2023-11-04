@@ -6,7 +6,7 @@
         CurrentWorkbook = Excel.CurrentWorkbook(){[Name = InputName]}[Content],
         FText = Text.Replace(Text.Upper(Text.Trim(InputName)), "_", ""),
         FnFText = if InputFnText = null then "" else InputFnText,
-        Source = if InputFnText = "1" then Load("fxDataFormat")(CurrentWorkbook, 1) else Load("fxDataFormat")(CurrentWorkbook),
+        Source = if InputFnText = "1" then fx("Data")(CurrentWorkbook, 1) else fx("Data")(CurrentWorkbook),
         DefinedNames =
             if List.Contains(
                 {"MONDAY", "UPDATORWEEKLY","REMOVEFROMDB" ,"澳门FILTER", "香港FILTER", "WEEKLYFILTER", "IS_EXCH_FILTER", "MULTISOURCE","GPS"},

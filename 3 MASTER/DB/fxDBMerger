@@ -2,7 +2,7 @@
     let
         Source = TableName,
         //Merge tables ESGExternal Review & DMI UOP is seperated as steps in deal_master
-        mCreditB = Table.Buffer(CWB("mCredit","1")),
+        mCreditB = try Table.Buffer(CWB("mCredit","1")) otherwise Table.Buffer(fx("Source")("DEALSMASTER_=MCREDIT")),
         JoinSBLC = Load("fxMerge")(Source, mCreditB, "备证行", "信用主体简称", {"板块三级", "板块标签"}, {"备证分类", "备证行标签"}),
         SBLCTag = Table.ReplaceValue(
             JoinSBLC,

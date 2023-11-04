@@ -5,7 +5,7 @@ let
     FBlank = Table.SelectRows(
         RCol, each not List.IsEmpty(List.RemoveMatchingItems(Record.FieldValues(_), {"", null}))
     ),
-    FormattedData = Load("fxDataFormat")(FBlank),
+    FormattedData = fx("Data")(FBlank),
     TFCols = Table.TransformColumns(
         FormattedData, {{"发行评级", each fxCleaner(_, "Rtg")}, {"主体评级", each fx("Cleaner")(_, "Rtg")}}
     ),

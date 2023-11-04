@@ -7,7 +7,7 @@ Updator =Load("Controller")[Updator]{0} ,
     #"Removed Columns" = Table.RemoveColumns(Source,{"Index"},MissingField.Ignore),
     #"Transposed Table" = Table.Transpose(#"Removed Columns"),
     #"Promoted Headers" = Table.PromoteHeaders(#"Transposed Table", [PromoteAllScalars=true]),
-    Filtered = Table.SelectRows( fxDataFormat(#"Promoted Headers"), each [Date] <  Date.From(DateTime.FixedLocalNow())),
+    Filtered = Table.SelectRows( fx("Data")(#"Promoted Headers"), each [Date] <  Date.From(DateTime.FixedLocalNow())),
     Added = Table.AddColumn(Filtered,"mIndice", each "mIndice",type text),
     UpdatorNTime = Load("fxUpdatorTS")(Added )
  in

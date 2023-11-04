@@ -9,7 +9,7 @@
         ColumnsToAdd = {"ESG主题","主题" ,"发行品种"},
         Prep1 = Table.RemoveColumns(Source, ColumnsToAdd, MissingField.Ignore),
         Theme_Dummy1 = Table.DuplicateColumn(Prep1, "ESG", "ESG主题"),
-        Theme_Dummy2 = Table.AddColumn(Theme_Dummy1, Prefix & "2", each fxCleaner([品种主题], "品种"), type text),
+        Theme_Dummy2 = fx("Replace")(Table.AddColumn(Theme_Dummy1, Prefix & "2", each [品种主题], type text),{Prefix & "2"},"品种"),
         Theme_Dummy3 = Table.AddColumn(
             Theme_Dummy2,
             Prefix & "3",

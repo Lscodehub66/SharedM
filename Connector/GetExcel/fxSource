@@ -111,13 +111,13 @@
                 )
             else if List.ContainsAll(CN_ColumnToExpand, {"Item", "Data"}) then
                 fx(
-                    "DataFormat"
+                    "Data"
                 )(
                     Table.ExpandTableColumn(
                         Table.SelectColumns(#"Removed Errors", {"Table", "File Path"}), "Table", CN_ColumnToExpand
                     )
                 )
             else
-                fx("DataFormat")(#"Removed Errors"{0}[Table])
+                fx("Data")(#"Removed Errors"{0}[Table])
     in
         Output
