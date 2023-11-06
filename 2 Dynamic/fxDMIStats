@@ -9,15 +9,15 @@
    { { "认购额(亿)", each Number.Round ( _, 1 ), type number }, { "超额认购倍数", each Number.Round ( _, 1 ), type number }, { "投资者账户数", each Number.Round ( _, 0 ), type number } }
   ), 
   AddCol0 = Table.AddColumn ( RoundedOff, "账户描述", each if [投资者账户数] <> null then "超" & Number.ToText ( [投资者账户数] ) & "个账户参与，" else "" ), 
-  AddCol = Table.AddColumn (
+  AddCol = fx("Replace")(Table.AddColumn (
    AddCol0, 
    "认购额描述", 
-   each if [#"认购额(亿)"] <> null then "认购额超" & Number.ToText ( [#"认购额(亿)"] ) & "亿" & fxCleaner ( [货币], "CrcySuffix" ) & "，超额认购约" & Number.ToText ( [超额认购倍数] ) & "倍；" else ""
-  ), 
-  Merged1 = Table.TransformColumns ( Table.CombineColumns ( AddCol, { "账户描述", "认购额描述" }, Combiner.CombineTextByDelimiter ( "", QuoteStyle.None ), "认购描述" ), {{"认购描述", each fxCleaner(_,null,{ ".0倍", "0倍" }, { "倍", "倍" })}}), 
-  AddCol1 = Table.AddColumn ( Merged1, "地区分布描述", each if [投资者分布] <> "" then "地区分布：" & fxCleaner ( [投资者分布], "Stats" ) & "；" else "" ), 
-  AddCol2 = Table.AddColumn ( AddCol1, "类型分布描述", each if [投资者类型] <> "" then "类型分布：" & fxCleaner ( [投资者类型], "Stats" ) else "" ), 
-  Merged = Table.AddColumn ( AddCol2, "Stats", each Load("fxRemoveRepeated") ( Text.Combine ( { [认购描述], [地区分布描述], [类型分布描述] }, "#(lf)" ), "#(lf)" ), type text ), 
+   each if [#"认购额(亿)"] <> null then "认购额超" & Number.ToText ( [#"认购额(亿)"] ) & "亿" &  [货币] & "，超额认购约" & Number.ToText ( [超额认购倍数] ) & "倍；" else ""
+  ), {"认购额描述"},"CrcySuffix"),
+  Merged1 = Table.TransformColumns ( Table.CombineColumns ( AddCol, { "账户描述", "认购额描述" }, Combiner.CombineTextByDelimiter ( "", QuoteStyle.None ), "认购描述" ), {{"认购描述", each Text.Replace(Text.Replace(_, ".0倍", "倍"),"0倍" ,  "倍") }}), 
+  AddCol1 = Table.AddColumn ( Merged1, "地区分布描述", each if [投资者分布] <> "" then "地区分布：" & [投资者分布] & "；" else "" ), 
+  AddCol2 =  fx("Replace")(Table.AddColumn ( AddCol1, "类型分布描述", each if [投资者类型] <> "" then "类型分布：" &  [投资者类型] else "" ), {"地区分布描述","类型分布描述"},"Stats" ),
+  Merged = Table.AddColumn ( AddCol2, "Stats", each fx("PowerTrim") ( Text.Combine ( { [认购描述], [地区分布描述], [类型分布描述] }, "#(lf)" ), "#(lf)" ), type text ), 
   RemovedEnd = Table.TransformColumns ( Merged, { { "Stats", each if Text.EndsWith ( _, "；" ) then Text.BeforeDelimiter ( _, "；", { 0, RelativePosition.FromEnd } ) else _, type text } } ), 
   SelectedCol = Table.SelectColumns ( RemovedEnd, List.Distinct ( Table.ColumnNames ( Source ) & { "Stats" } ) )
  in

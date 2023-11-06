@@ -22,6 +22,33 @@
                     )
                 else
                     x
-        )
+        ),
+        Merged = fx("Merge")(Fn, Load("合规_23_22"), "PRJ对账号", "PRJ对账号", {"公盘地址"}, {"公盘地址"}),
+        Replaced = Table.ReplaceValue(
+            Merged,
+            "",
+            each if [公盘地址] <> "" then Text.AfterDelimiter([公盘地址], "\", {1, RelativePosition.FromEnd}) else "",
+            Replacer.ReplaceValue,
+            {"FolderPath"}
+        ),
+        Removed =
+            if List.Contains(CN_Source, "FolderPath") then
+                Table.RemoveColumns(Replaced, {"公盘地址"}, MissingField.Ignore)
+            else
+                Fn,
+                Merged1 = fx("Merge")(Removed , try CWB("DMI_Default") otherwise Load("DMI_Default"), "信用主体", "发行人名称", {"首次违约日"}, {"违约日"}),
+        Replaced1 = Table.ReplaceValue(
+            Merged1,
+            null,
+            each if [违约日] <> null then [违约日] else null,
+            Replacer.ReplaceValue,
+            {"首次违约日"}
+        ),
+        Removed1 =
+            if List.Contains(CN_Source, "首次违约日") then
+                Table.RemoveColumns(Replaced1, {"违约日"}, MissingField.Ignore)
+            else
+                  Removed
+
     in
-        Fn
+        Removed1

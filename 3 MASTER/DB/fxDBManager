@@ -60,13 +60,15 @@
         //  **Referenced Dummy Step ** This step is referenced by the conditional mCredit Manager step as Source !
         DB_Entity = if List.Contains(HD, "板块二级") and MorW = "M" then Load("fxDB_Entity")(BISL_对帐号) else BISL_对帐号,
         //  **Referenced Dummy Step ** This step is referenced by the conditional sort step - better not to change it !
-        PresentedNull = Load("fxPresentNoData")(DB_Entity),
+        FnDBUpdated = if MorW = "M" then fx("DBUpdator")(DB_Entity) else DB_Entity,
+     
+        PresentedNull =  fx("PresentNoData")(  FnDBUpdated ),
         //Sort as last step
         RCol = Table.RemoveColumns(
             PresentedNull,
             List.Select(Table.ColumnNames(PresentedNull), each Text.Contains(_, Prefix)),
             MissingField.Ignore
         ),
-        Sorted = Load("fxSortNIndex")(RCol)
+        Sorted = fx("SortNIndex")(RCol)
     in
         Sorted

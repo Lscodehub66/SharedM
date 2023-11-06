@@ -1,6 +1,6 @@
 let
     Source = fx("Source")("BBGFX_value"),
-    DimDate = Table.Buffer(Load("fxDimDate")(20130101,null)),
+    DimDate = Table.Buffer(Load("fxDimDate")(20130101, null)),
     USDUSD = Load("fxCombine")({Source, Table.FromColumns({{"USD"}, {"USD"}}, {"Base Currency", "Term Currency"})}),
     #"Replaced Value" = Table.ReplaceValue(
         USDUSD,
@@ -13,10 +13,34 @@ let
         #"Replaced Value", each ([Term Currency] = "CNH" or [Term Currency] = "HKD" or [Term Currency] = "USD")
     ),
     #"Removed Duplicates" = Table.Distinct(#"Filtered Rows", {"Base Currency", "Term Currency"}),
-    #"Unpivoted Other Columns1" = Table.UnpivotOtherColumns(
-        #"Removed Duplicates", {"Base Currency", "Term Currency"}, "YYQQ_Value", "FX_Rate"
+    #"JPY TF" = List.Accumulate(
+        List.RemoveItems(Table.ColumnNames(#"Removed Duplicates"), {"Base Currency", "Term Currency"}),
+        #"Removed Duplicates",
+        (x, y) =>
+            Table.ReplaceValue(
+                x,
+                each Record.Field(_, y),
+                each
+                    if
+                        [Base Currency] = "JPY"
+                        and List.Contains({"CNH", "HKD", "EUR", "SGD", "GBP", "AUD"}, [Term Currency])
+                    then
+                        Record.Field(_, y) / 100
+                    else
+                        Record.Field(_, y),
+                Replacer.ReplaceValue,
+                {y}
+            )
     ),
-    #"Pivoted Column" = Table.Pivot(#"Unpivoted Other Columns1", List.Distinct(#"Unpivoted Other Columns1"[#"Term Currency"]), "Term Currency", "FX_Rate"),
+    #"Unpivoted Other Columns1" = Table.UnpivotOtherColumns(
+        #"JPY TF", {"Base Currency", "Term Currency"}, "YYQQ_Value", "FX_Rate"
+    ),
+    #"Pivoted Column" = Table.Pivot(
+        #"Unpivoted Other Columns1",
+        List.Distinct(#"Unpivoted Other Columns1"[#"Term Currency"]),
+        "Term Currency",
+        "FX_Rate"
+    ),
     MergedQ = Load(
         "fxMerge"
     )(
@@ -32,12 +56,13 @@ let
     MergedQ1 = Load("fxMerge")(#"Added Custom", DimDate, "Date_StartNextQ", "A_Date", {"YYQQ"}, {"YYQQ"}),
     #"Removed Columns" = Table.RemoveColumns(MergedQ1, {"YYQQ_Value", "Date_StartNextQ"}, MissingField.Ignore),
     #"Sorted Rows" = Table.Sort(
-        #"Removed Columns",
-        {{"YYQQ", Order.Descending},  {"Base Currency", Order.Descending}}
+        #"Removed Columns", {{"YYQQ", Order.Descending}, {"Base Currency", Order.Descending}}
     ),
     #"Reordered Columns" = Table.ReorderColumns(
         #"Sorted Rows", {"YYQQ", "Base Currency", "FX_Rate", "Date_FX"}, MissingField.Ignore
     ),
-    #"Reordered Columns1" = Table.ReorderColumns(#"Reordered Columns",{"YYQQ", "Base Currency", "USD", "CNH", "HKD", "Date_FX"},MissingField.Ignore)
+    #"Reordered Columns1" = Table.ReorderColumns(
+        #"Reordered Columns", {"YYQQ", "Base Currency", "USD", "CNH", "HKD", "Date_FX"}, MissingField.Ignore
+    )
 in
     #"Reordered Columns1"

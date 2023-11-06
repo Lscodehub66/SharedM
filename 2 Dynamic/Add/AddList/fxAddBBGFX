@@ -1,33 +1,31 @@
 //fxAddFX
-
-  (TableName as table, optional FTextUSDCNHHKD as text) =>
-        let
-            Source = fx("Data")(TableName),
-            fxSmartFX = Load("fxSmartFX"),
-            AddedCol = {"YYQQ","亿美元", "亿元", "亿港币"},
-            Prep = Table.RemoveColumns(Source, AddedCol, MissingField.Ignore),
-            FText = if FTextUSDCNHHKD = null then "USDCNHHKD" else FTextUSDCNHHKD,
-            AddedYYQQ =  fx("Merge")(Prep, Load("DimDate"),"定价日","A_Date",{"YYQQ"},{"YYQQ"}),
-      
-            
-    #"Merged Queries" = Table.NestedJoin( AddedYYQQ, {"YYQQ", "货币"}, Load("DimFX","CSV"), {"YYQQ", "Base Currency"}, "DimFX", JoinKind.LeftOuter),
-    #"Expanded DimFX" = Table.ExpandTableColumn(#"Merged Queries", "DimFX", {"USD", "CNH", "HKD"}),
-     #"Changed Type" = Table.TransformColumnTypes(#"Expanded DimFX",{{"USD", type number}, {"CNH", type number}, {"HKD", type number}, {"发行规模(亿)", type number}}),
-            AddedFX = List.Accumulate( 
-            {{"USD","亿美元"},{"CNH","亿元"},{"HKD","亿港币"}}, 
-          #"Changed Type",
-           ( x, y ) => 
-             if Text.Contains(FText,y{0}) then Table.AddColumn(
-                       x,
+(TableName as table, optional FTextUSDCNHHKD as text) =>
+    let
+        Source = fx("Data")(TableName),
+        AddedCol = {"YYQQ", "亿美元", "亿元", "亿港币"},
+        Prep = Table.RemoveColumns(Source, AddedCol, MissingField.Ignore),
+        AddedYYQQ = fx("Merge")(Prep, Load("DimDate"), "定价日", "A_Date", {"YYQQ"}, {"YYQQ"}),
+        #"Merged Queries" = Table.NestedJoin(
+            AddedYYQQ, {"YYQQ", "货币"}, Load("DimFX", "CSV"), {"YYQQ", "Base Currency"}, "DimFX", JoinKind.LeftOuter
+        ),
+        #"Expanded DimFX" = Table.ExpandTableColumn(#"Merged Queries", "DimFX", {"USD", "CNH", "HKD"}),
+        #"Changed Type" = Table.TransformColumnTypes(
+            #"Expanded DimFX",
+            {{"USD", type number}, {"CNH", type number}, {"HKD", type number}, {"发行规模(亿)", type number}}
+        ),
+        AddedFX = List.Accumulate(
+            {{"USD", "亿美元"}, {"CNH", "亿元"}, {"HKD", "亿港币"}},
+            #"Changed Type",
+            (x, y) =>
+                if Text.Contains((FTextUSDCNHHKD ?? "USDCNHHKD"), y{0}) then
+                    Table.AddColumn(
+                        x,
                         y{1},
-                        each if [货币] = y{0} then 1 * [#"发行规模(亿)"] else Record.Field(_,y{0}  ) * [#"发行规模(亿)"],
+                        each if [货币] = y{0} then 1 * [#"发行规模(亿)"] else Record.Field(_, y{0}) * [#"发行规模(亿)"],
                         type number
                     )
-           else x ),
-
-           ReplacedNull = fx("ReplaceMissingFX")( AddedFX )
-           in
-         ReplacedNull 
-
-
-           
+                else
+                    x
+        )
+    in
+        AddedFX

@@ -1,0 +1,29 @@
+//SampleTF = Table.TransformColumns(Source, List.Transform(Table.ColumnNames(Source),each {_, each fxCleaner(_,null, {"【", "】"}, {"", ""})})),
+//SampleSmartClean = Table.AddColumn(Source, "【】", each fxCleaner([Column],"主体")),
+(InputText as text, FinderList as list, ReplacerList as list) =>
+    let
+        // Bulk replace
+        ReplacerTable = Table.Buffer(Table.FromColumns({FinderList, ReplacerList}, {"Find", "Replace"})),
+        FindReplaceList = Table.ToRows(ReplacerTable),
+        Counter = Table.RowCount(ReplacerTable),
+        BulkReplaceValues = (TextToReplaceTemp, n) =>
+            let
+                ReplacedText = Text.Replace(
+                    TextToReplaceTemp,
+                    if FindReplaceList{n}{0} = null then
+                        ""
+                    else
+                        FindReplaceList{n}{0},
+                    if FindReplaceList{n}{1} = null then
+                        ""
+                    else
+                        FindReplaceList{n}{1}
+                )
+            in
+                if n = Counter - 1 then
+                    ReplacedText
+                else
+                    @BulkReplaceValues(ReplacedText, n + 1),
+        Output = BulkReplaceValues((InputText ?? ""), 0)
+    in
+        Output

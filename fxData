@@ -53,7 +53,7 @@
         Num0ToNull = {"Δ1周", "Δ年初至今", "PRJ对账号"},
         Num5 = List.Select(CN_RNSource, each Text.StartsWith(_, "R_") or Text.StartsWith(_, "C_"))
             & Num0ToNull
-            & {"FX_Rate", "USD", "CNH", "HKD", "EUR", "SGD", "MOP", "GBP", "AUD", "NZD", "CAD", "JPY"},
+            & {"FX_Rate", "USD", "CNH", "HKD", "EUR", "SGD", "MOP", "GBP", "AUD", "NZD", "CAD"},
         Num3 = {"亿港币", "亿美元", "亿元", "发行规模(亿)"},
         Num2 = {"投资级", "高收益级", "iTraxx Asia", "VIX", "BOCOM下单量", "BOCOM分配量"}
             & List.Select(

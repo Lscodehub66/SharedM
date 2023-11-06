@@ -7,7 +7,7 @@ let
     DB_Source_CN = List.Buffer(Table.ColumnNames(DB_Source)),
     Parameter = Load("Controller")[RemoveFrom_DB]{0} ?? "",
     Added = fx("AddToDB")(DB, wIndicePQ, Parameter),
-    Managed = if Text.Contains(Parameter, "Stop") then fx("DBManager")(DB_Source, "m") else fx(
+    Managed =  fx(
         "DBManager"
     )(
         Added, "m"

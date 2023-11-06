@@ -1,7 +1,7 @@
 let
     Source = DLD_Add,
-    YmeansExcludeFIMTN = "Y",
-    Filtered = Table.SelectRows(Source, each [IS_FIMTN] <> YmeansExcludeFIMTN),
+
+    Filtered = Table.SelectRows(Source, each [IS_FIMTN] <> "Y" and  [IS_FIMTN] <> "【Y】"),
     HDText = "Review_wCurated",
     HD = Get("Header_S_Dynamic_" & HDText),
     //   {"定价日", "信用主体", "ESG", "IPG", "FPG", "收窄基点", "定价", "增发判定", "货币", "发行规模(亿)", "年期", "票息", "品种主题", "上市", "期限备注", "亿美元", "亿元", "亿港币", "ISIN", "Check"}
