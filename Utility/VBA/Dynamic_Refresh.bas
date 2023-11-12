@@ -1,10 +1,10 @@
-Attribute VB_Name = "Module1"
 Sub RefreshDownload()
     '
     ' RefreshDownload Macro
     '
 
     '
+    ActiveWorkbook.Connections("Query - DimMonday").Refresh
     ActiveWorkbook.Connections("Query - DLD_DMI").Refresh
     ActiveWorkbook.Connections("Query - DLD_BBG_Corp").Refresh
     ActiveWorkbook.Connections("Query - DLD_QRC_23").Refresh
@@ -29,5 +29,39 @@ Sub RefreshDLDForReview()
     ActiveWorkbook.Connections("Query - ForReview_wBOCOM").Refresh
 
 End Sub
+
+Sub RefreshISINSearch()
+    '
+    ' RefreshISINSearch Macro
+    '
+
+    '
+    ActiveWorkbook.Connections("Query - ISIN_Search").Refresh
+
+
+End Sub
+
+Sub RefreshwAddTap()
+    '
+    ' RefreshwAddTap Macro
+    '
+
+    '
+    ActiveWorkbook.Connections("Query - wAddTap").Refresh
+
+
+End Sub
+
+Sub RefreshAll()
+    '
+    ' RefreshAll Macro
+    '
+
+    '
+    ActiveWorkbook.RefreshAll
+
+
+End Sub
+
 
 

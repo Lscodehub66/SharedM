@@ -20,7 +20,7 @@
                 DistinctedSCol
             else
                 Table.RenameColumns(DistinctedSCol, {{_Dependent, _IndirectName}}),
-        MergedQ = fxMerge(
+        MergedQ = fx("Merge")(
             IfThenRename, CWBQryLoad , _IndirectName, _IndirectName, {"SortValue"}, {"SortValue"}, {_Dependent}
         ),
         NoBlank = Table.SelectRows(

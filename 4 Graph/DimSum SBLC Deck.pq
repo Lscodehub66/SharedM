@@ -65,7 +65,7 @@ let
     Pie3 = Load("fxPie")(Source, "年", Order.Ascending, "点心债年期分类", "笔数"),
     Pie4 = Load("fxPie")(Source, "年", Order.Ascending, "清算地", "笔数"),
     Pie5 = Load("fxPie")(Source, "年", Order.Ascending, "上市分类", "笔数"),
-    Combined = Load("fxCombine")({  Pie2 ,Pie3, Pie4, Pie5}),
+    Combined = fx("Combine")({  Pie2 ,Pie3, Pie4, Pie5}),
     Substracted = Table.AddColumn(Combined, "变动", each [23年笔数占比] - [22年笔数占比], Percentage.Type),
     Reordered = Table.ReorderColumns(
         Substracted, List.Distinct({"Index"} & Table.ColumnNames(Substracted)), MissingField.Ignore
@@ -84,7 +84,7 @@ let
 
     Pie2 = Load("fxPie")(Source, "年", Order.Ascending, "货币", "亿美元"),
     Pie3 = Load("fxPie")(Source, "年", Order.Ascending, "板块", "亿美元"),
-    Combined = Load("fxCombine")({  Pie2 ,Pie3}),
+    Combined = fx("Combine")({  Pie2 ,Pie3}),
     Substracted = Table.AddColumn(Combined, "变动", each [23年占比] - [22年占比], Percentage.Type),
     Reordered = Table.ReorderColumns(
         Substracted, List.Distinct({"Index"} & Table.ColumnNames(Substracted)), MissingField.Ignore
@@ -105,7 +105,7 @@ Pie1= Load("fxPie")(deal_master, "年", Order.Ascending, "结构分类", "笔数
     Pie2 = Load("fxPie")(Source, "年", Order.Ascending, "结构", "笔数"),
     Pie3 = Load("fxPie")(Source, "年", Order.Ascending, "备证年期分类", "笔数"),
 
-    Combined = Load("fxCombine")({ Pie1, Pie2 ,Pie3}),
+    Combined = fx("Combine")({ Pie1, Pie2 ,Pie3}),
     Substracted = Table.AddColumn(Combined, "变动", each [23年笔数占比] - [22年笔数占比], Percentage.Type),
     Reordered = Table.ReorderColumns(
         Substracted, List.Distinct({"Index"} & Table.ColumnNames(Substracted)), MissingField.Ignore

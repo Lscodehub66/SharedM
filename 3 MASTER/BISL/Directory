@@ -8,9 +8,9 @@ let
     Ancient_Merged = Load("fxDBMerger")(#"Buffered Ancient"),
     Ancient_Finalized = Load("fxDBFinalization")(Ancient_Merged),
     deal_masterFiltered = Table.SelectRows(#"Buffered mDeal", each [BISL_ROLE] <> "" and [BISL_ROLE] <> "--"),
-    Combined = Load("fxCombine")({Ancient_Finalized, deal_masterFiltered}, null, {1}),
+    Combined = fx("Combine")({Ancient_Finalized, deal_masterFiltered}, null, {1}),
     Checked = Load("fxCheckNDupe")(Combined),
-    MergedQ = Load("fxMerge")(Checked, CWB("Table_PRJMerge"), "COMPARER", "COMPARER", {"承销费原币"}, {""}),
+    MergedQ = fx("Merge")(Checked, CWB("Table_PRJMerge"), "COMPARER", "COMPARER", {"承销费原币"}, {""}),
     NthMandate = fx("NthMandated")(MergedQ, {"YYMMDD", "信用主体"}),
     #"Count Multi-Tranche" = fx("AddMultiCount")(NthMandate),
     ExeTime =

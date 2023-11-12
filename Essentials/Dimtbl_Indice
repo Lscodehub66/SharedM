@@ -41,7 +41,7 @@ let
             & {"RESIDENCE"}
     ),
     SCol = Table.SelectColumns(#"Renamed Columns", CN, MissingField.Ignore),
-    Custom2 = Load("fxMerge")(SCol, Source1, "Column1", "Column1", {""}, {""}),
+    Custom2 = fx("Merge")(SCol, Source1, "Column1", "Column1", {""}, {""}),
     #"Inserted Merged Column" = Table.AddColumn(
         Custom2, "PK", each Text.Combine({[Prefix], [KEY_INDICE]}, "_"), type text
     )

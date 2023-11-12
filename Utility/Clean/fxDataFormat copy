@@ -20,7 +20,7 @@
             {List.Select(CN_Source, each Text.Contains(_, "Key", Comparer.OrdinalIgnoreCase)), {"text"}}
         ),
         DataTypeTable = Table.FillDown(
-            Load("fxCombine")({Output, Data_Type_TextAuto, DimData_Type}, {"Column1"}), {"Column2"}
+            fx("Combine")({Output, Data_Type_TextAuto, DimData_Type}, {"Column1"}), {"Column2"}
         ),
         // ValueType Transform
         TransposedTable = Table.Transpose(DataTypeTable),

@@ -22,31 +22,6 @@ Private Sub Worksheet_Change(Byval Target As Range)
         Application.Goto Reference:="tbl_review_shortname"
         Selection.ClearContents
 
-        Sheet9.Activate
-        Application.Goto Reference:="input_econ"
-        Selection.ClearContents
-        Application.Goto Reference:="ECON"
-        Selection.ClearContents
-
-        Sheet8.Activate
-        Application.Goto Reference:="input_future"
-        Selection.ClearContents
-        Application.Goto Reference:="FUTURE"
-        Selection.ClearContents
-
-        Sheet1.Activate
-        Application.Goto Reference:="LastCharts"
-        Selection.ClearContents
-        Application.Goto Reference:="charts"
-        Selection.ClearContents
-        Application.Goto Reference:="LastNIM"
-        Selection.ClearContents
-        Application.Goto Reference:="Table_graph_weeklydeal"
-        Selection.ClearContents
-
-        Sheet4.Activate
-        Application.Goto Reference:="SmartWriter"
-        Selection.ClearContents
 
         Sheet5.Activate
         Application.Goto Reference:="ForReview_Issuer"
@@ -58,13 +33,23 @@ Private Sub Worksheet_Change(Byval Target As Range)
         Application.Goto Reference:="ForReview_wCredit"
         Selection.ClearContents
 
+        Sheet17.Activate
+        Application.Goto Reference:="wNews_Input_ToClear"
+        Selection.ClearContents
+
         Sheet3.Activate
         Application.Goto Reference:="DLD_Conso"
+        Selection.ClearContents
+        Application.Goto Reference:="DLD_QRC_23"
+        Selection.ClearContents
+
+        Sheet18.Activate
+        Application.Goto Reference:="ISIN_Search_ToClear"
         Selection.ClearContents
 
 
         Sheets("DOWNLOAD").Select
-        Range("A14").Select
+        Range("C6").Select
 
     End If
 End Sub

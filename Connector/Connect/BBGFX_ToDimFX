@@ -1,7 +1,7 @@
 let
     Source = fx("Source")("BBGFX_value"),
     DimDate = Table.Buffer(Load("fxDimDate")(20130101, null)),
-    USDUSD = Load("fxCombine")({Source, Table.FromColumns({{"USD"}, {"USD"}}, {"Base Currency", "Term Currency"})}),
+    USDUSD = fx("Combine")({Source, Table.FromColumns({{"USD"}, {"USD"}}, {"Base Currency", "Term Currency"})}),
     #"Replaced Value" = Table.ReplaceValue(
         USDUSD,
         null,
@@ -41,9 +41,7 @@ let
         "Term Currency",
         "FX_Rate"
     ),
-    MergedQ = Load(
-        "fxMerge"
-    )(
+    MergedQ = fx("Merge")(
         #"Pivoted Column",
         DimDate,
         "YYQQ_Value",
@@ -53,7 +51,7 @@ let
         {"Base Currency", "Term Currency", "YYQQ_Value"}
     ),
     #"Added Custom" = Table.AddColumn(MergedQ, "Date_StartNextQ", each Date.AddDays([Date_FX], 1)),
-    MergedQ1 = Load("fxMerge")(#"Added Custom", DimDate, "Date_StartNextQ", "A_Date", {"YYQQ"}, {"YYQQ"}),
+    MergedQ1 = fx("Merge")(#"Added Custom", DimDate, "Date_StartNextQ", "A_Date", {"YYQQ"}, {"YYQQ"}),
     #"Removed Columns" = Table.RemoveColumns(MergedQ1, {"YYQQ_Value", "Date_StartNextQ"}, MissingField.Ignore),
     #"Sorted Rows" = Table.Sort(
         #"Removed Columns", {{"YYQQ", Order.Descending}, {"Base Currency", Order.Descending}}

@@ -5,7 +5,7 @@ let
     MergeSource =  CWB("Directory"),
  //**   
     Header_DirectoryToTombsWriter = Get("Header_DirectoryToTombsWriter"),
-    MergedQ = Load("fxMerge")(Source, CWB("Directory"), "COMPARER", "COMPARER", Header_DirectoryToTombsWriter,null,{"COMPARER"}),
+    MergedQ = fx("Merge")(Source, CWB("Directory"), "COMPARER", "COMPARER", Header_DirectoryToTombsWriter,null,{"COMPARER"}),
     // { "定价日", "年月", "首次违约日" } & { "备证行", "信用主体简称", "通过分行", "角色" }
     AddedR1 = Table.AddColumn(
         MergedQ,

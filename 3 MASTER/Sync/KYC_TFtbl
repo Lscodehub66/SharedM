@@ -1,20 +1,18 @@
 // let LoadCode = Load("KYC_TFtbl","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
-
 let
     Source = CWB("KYC_Master"),
- TFtbl_QRC_ClientName = Get("TFtbl_QRC_ClientName"),
-    SCol = Table.Distinct(Table.SelectColumns(Source,{ "序号","项目名称（集团全称）" }),{"项目名称（集团全称）"}),
- TF = Table.TransformColumns(
-            SCol,
-            {
-                {
-                    "项目名称（集团全称）",
-                    each fxCleaner(fxCleaner(_, "主体"), null, TFtbl_QRC_ClientName[From], TFtbl_QRC_ClientName[To])
-                }
-            }
-        ),
-LeftAntiMerged = Table.NestedJoin(TF, { "项目名称（集团全称）" }, CWB("Directory"), {"信用主体"}, "Data", JoinKind.LeftAnti),
-Renamed = Table.SelectColumns(Table.RenameColumns(LeftAntiMerged, {{"项目名称（集团全称）" ,"From"}}),Table.ColumnNames(TFtbl_QRC_ClientName ),MissingField.UseNull),
-Combined = Load("fxCombine")({Renamed,  TFtbl_QRC_ClientName} )
+    TFtbl_QRC_ClientName = Get("TFtbl_QRC_ClientName"),
+    SCol = Table.Distinct(Table.SelectColumns(Source, {"序号", "项目名称（集团全称）"}), {"项目名称（集团全称）"}),
+    CleanedName = fx("Replace")(SCol, {"项目名称（集团全称）"}, "主体"),
+    TF = Table.TransformColumns(
+        CleanedName, {{"项目名称（集团全称）", each fx("Clean")(_, TFtbl_QRC_ClientName[From], TFtbl_QRC_ClientName[To])}}
+    ),
+    LeftAntiMerged = Table.NestedJoin(TF, {"项目名称（集团全称）"}, CWB("Directory"), {"信用主体"}, "Data", JoinKind.LeftAnti),
+    Renamed = Table.SelectColumns(
+        Table.RenameColumns(LeftAntiMerged, {{"项目名称（集团全称）", "From"}}),
+        Table.ColumnNames(TFtbl_QRC_ClientName),
+        MissingField.UseNull
+    ),
+    Combined = fx("Combine")({Renamed, TFtbl_QRC_ClientName})
 in
-Combined
+    Combined

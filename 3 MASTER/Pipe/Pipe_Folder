@@ -11,7 +11,7 @@ let
     ),
     SCol = Table.SelectColumns(Replaced, {"Name", "Data"}, MissingField.Ignore),
     Expanded = Table.ExpandTableColumn(SCol, "Data", Table.ColumnNames(SCol[Data]{0})),
-    CWB_combined = Load("fxCombine")({Expanded, CWB_tbl}, {"简称"}),
+    CWB_combined = fx("Combine")({Expanded, CWB_tbl}, {"简称"}),
     Output = try CWB_combined otherwise try Expanded otherwise CWB_tbl
 in
     Output

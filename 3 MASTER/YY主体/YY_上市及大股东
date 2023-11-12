@@ -18,13 +18,11 @@ let
         type text
     ),
     ABDelimiter1 = Table.AddColumn(
-        ABDelimiter,
-        "大股东",
-        each fxCleaner(Text.BeforeDelimiter([大股东持股], "（", {0, RelativePosition.FromEnd}), "主体"),
-        type text
+        ABDelimiter, "大股东", each Text.BeforeDelimiter([大股东持股], "（", {0, RelativePosition.FromEnd}), type text
     ),
+    Cleaned1 = fx("Replace")(ABDelimiter1, {"大股东"}, "主体"),
     ACol = Table.AddColumn(
-        ABDelimiter1,
+        Cleaned1,
         "大股东政府机构",
         each
             if
@@ -51,7 +49,7 @@ let
         each [主体] <> null and [主体] <> "" and not Text.Contains([主体], "数据来源") and ([大股东持股] <> "" or [是否上市公司] <> "")
     ),
     ChangedType = Table.TransformColumnTypes(Filtered, {{"大股东股份占比", type number}}),
-    Merged = Load("fxMerge")(ChangedType, CWB("mCredit"), "主体", "信用主体", {"Index", "系"}, {"Index", "系"}),
+    Merged = fx("Merge")(ChangedType, CWB("mCredit"), "主体", "信用主体", {"Index", "系"}, {"Index", "系"}),
     Filtered1 = Table.SelectRows(Merged, each [Index] <> null),
     SelectedCol1 = Table.SelectColumns(Filtered1, {"主体", "大股东企业", "系", "大股东政府机构", "大股东股份占比", "是否上市公司"})
 in

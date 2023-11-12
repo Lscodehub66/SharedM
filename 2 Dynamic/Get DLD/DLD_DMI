@@ -1,23 +1,19 @@
 //let LoadCode = Load("DLD_DMI","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-    
     Source = fx("Source")("DOWNLOAD_美元债一级"),
     wRangeStart = List.Buffer(Load("Controller")[wFilter_PreviousMon_Date]){0},
-    ACol = Table.AddColumn(  Source, "DataSource", each "DMI"),
+    ACol = Table.AddColumn(Source, "DataSource", each "DMI"),
     CN_ACol = Table.ColumnNames(ACol),
-    Appended =
-        if Load("TapLookup")[Column3]{0} = "N" then
-            ACol
+    #"//GNG_Multi" =
+        if Text.Contains(Load("Controller")[Multi]{0}, "BBG") or Load("Controller")[Multi]{0} = "ON" then
+            "GO"
         else
-            Load("fxCombine")({ACol, Table.SelectColumns(Load("DLD_AddTap"), CN_ACol, MissingField.UseNull)}),
-     #"//GNG_Multi" = if Text.Contains(Load("Controller")[Multi]{0},"BBG") or Load("Controller")[Multi]{0} = "ON" then "GO" else "NO-GO",
-
-       
-    Appended1 =
-       if    #"//GNG_Multi" <> "GO" then 
-            Appended
-        else
-            Load("fxCombine")({Appended, Table.SelectColumns(Load("DLD_DMI_Missing"), CN_ACol, MissingField.UseNull)}),
+            "NO-GO",
+    Appended1 = if #"//GNG_Multi" <> "GO" then ACol else fx(
+        "Combine"
+    )(
+        {ACol, Load("DLD_DMI_Missing")}, {null}, CN_ACol
+    ),
     Code1 = Load("fxDMI", "Code"),
     EVA1 = Expression.Evaluate(Code1, #shared)(Appended1, "Y"),
     Filtered = Table.SelectRows(EVA1, each [定价日] >= wRangeStart and [债券简称] <> null)

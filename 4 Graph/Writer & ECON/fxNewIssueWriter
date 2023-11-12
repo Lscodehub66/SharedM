@@ -5,12 +5,11 @@
         NewCols = {"多笔", "信用主体及评级", "多笔主体", "描述", "描述2", "总述"} & {Col1, Col2, Col3, Col4, Col5, Col6},
         RColprep = Table.RemoveColumns(Source, NewCols, MissingField.Ignore),
         //
-        FnCount = Table.AddColumn(
-            RColprep, "多笔", each List.Sum(Load("fxCountMore")(RColprep, "信用主体简称", [信用主体简称], "ISIN")), type number
-        ),
-        ddd = Table.AddColumn(FnCount, Col1, each fxCleaner(Date.ToText([定价日], "ddd"), "DDDCN")),
+        FnCount = fx("AddMultiCount")(RColprep ,"信用主体简称"),
+        ddd = Table.AddColumn(FnCount, Col1, each Date.ToText([定价日], "ddd"), type text),
+        dddcn = fx("Replace")(ddd, {Col1}, "DDDCN"),
         EntityWRtg = Table.AddColumn(
-            ddd,
+            dddcn,
             "信用主体及评级",
             each if Text.Length(Text.Select([主体评级], {"A".."Z"})) > 0 then [信用主体简称] & "（" & [主体评级] & "）" else [信用主体简称],
             type text
@@ -87,9 +86,8 @@
             Bocom,
             "描述",
             each
-                Load(
-                    "fxRemoveRepeated"
-                )(
+                fx("PowerTrim")
+                (
                     Record.Field(_, Col1)
                         & "，"
                         & Record.Field(_, Col2)
@@ -123,18 +121,20 @@
                 "增发判定"
             }
         ),
+        MultiTrancheCN = fx(
+            "Replace"
+        )(
+            Table.AddColumn(#"Replaced Value", "多笔中文", each if [多笔] > 1 then Number.ToText([多笔]) else "", type text),
+            {"多笔中文"},
+            "一二三"
+        ),
         #"Added Suffix" = Table.AddColumn(
-            #"Replaced Value",
+            MultiTrancheCN,
             "总述",
-            each
-                if [多笔] <> null then
-                    [信用主体及评级] & [增发判定] & Text.Replace(fxCleaner(Number.ToText([多笔]), "一二三"), "二", "双") & "批次离岸债券："
-                else
-                    "",
+            each if [多笔] <> null then [信用主体及评级] & [增发判定] & Text.Replace([多笔中文], "二", "双") & "批次离岸债券：" else "",
             type text
         ),
         AddedCol = Table.AddColumn(#"Added Suffix", "Writer", each if [总述] <> "" then [总述] & "#(lf)" & [描述] else [描述]),
         SCol = Table.SelectColumns(AddedCol, {"信用主体及评级", "板块", "货币", "Writer"}, MissingField.UseNull)
-     
     in
-       SCol 
+        SCol

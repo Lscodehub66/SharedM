@@ -447,7 +447,15 @@ let
             Header_Connect_DMI违约 = {"ISIN码", "发行人名称", "违约日期", "违约类型", "地区"},
             Header_DMI_Credit = {"信用主体", "债券简称", "穆迪/标普", "公司类型", "DMI行业", "细分行业", "省份", "城市", "区县", "定价日"},
             Header_CF = {"序号", "团队", "发行人名称英文", "Mandate", "项目定价日", "KYC", "DD Risk"},
-            Header_DirectoryToFormalities = {"ISIN", "PROJECT_NAME", "定价日", "新规角色",  "IS_KYC_DONE", "信用主体(备证行)", "注册成立地"},
+            Header_DirectoryToFormalities = {
+                "ISIN",
+                "PROJECT_NAME",
+                "定价日",
+                "新规角色",
+                "IS_KYC_DONE",
+                "信用主体(备证行)",
+                "注册成立地"
+            },
             Header_DirectoryToTombsWriter = {"定价日", "年月", "首次违约日"} & {"备证行", "信用主体简称", "通过分行", "角色"},
             Header_S_ToDo = {
                 "PRJ对账号",
@@ -678,6 +686,26 @@ let
                 "亿元",
                 "Check"
             },
+            Header_Maturity2024 = {
+                "Index",
+                "ISIN",
+                "信用主体(备证行)",
+                "发行评级",
+                "货币",
+                "发行规模(亿)",
+                "兑付日",
+                "期限",
+                "票息",
+                "发行品种",
+                "中资属性",
+                "板块",
+                "地区",
+                "IS_CLIENT",
+                "信用主体",
+                "亿美元",
+                "定价日",
+                "Check"
+            },
             Header_MergeRemoval = {"Timestamp", "Updator", "曾用名", "主体备注", "Index", "公司类型", "上市类型", "系"},
             Header_Sync_KYC = {"KYC对账号", "发行人", "KYC Status", "KYC expiry date", "信用主体"},
             //   CN = ColumnNames
@@ -786,6 +814,8 @@ let
                     Header_Sync_KYC
                 else if Text.Contains(Key, "SYNC") and Text.Contains(Key, "DIRECTORY") then
                     Header_Sync_Directory
+                else if Text.Contains(Key, "MATURITY") and Text.Contains(Key, "2024") then
+                    Header_Maturity2024
                 else
                     {""},
             Selected =

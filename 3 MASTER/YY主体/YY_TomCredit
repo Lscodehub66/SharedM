@@ -4,7 +4,7 @@
 
  
    #">>ON/OFF：级别"  = "OFF",
-    MER行政级别 = Load("fxMerge")(ManagedDB, YY, "信用主体", "主体", {"行政级别"}, {"行政级别"}),
+    MER行政级别 = fx("Merge")(ManagedDB, YY, "信用主体", "主体", {"行政级别"}, {"行政级别"}),
     R主体备注 = Table.ReplaceValue(
         MER行政级别,
         each [主体备注],
@@ -26,12 +26,12 @@
     Crossroad = if#">>ON/OFF：业务"  = "ON" then R平台级别 else ManagedDB,
      //ON or OFF
     #">>ON/OFF：业务" = "OFF",
-      R行业二级 = Table.ReplaceValue(Load("fxMerge")( Crossroad, YY, "信用主体", "主体", {"主营业务"}, {"主营业务"}),
+      R行业二级 = Table.ReplaceValue(fx("Merge")( Crossroad, YY, "信用主体", "主体", {"主营业务"}, {"主营业务"}),
      each [行业二级] , each  if [主营业务] <>  "" then [主营业务]&"业务" else [行业二级], Replacer.ReplaceValue, {"行业二级"}),
     Crossroad1 = if  #">>ON/OFF：业务"  = "ON" then R行业二级 else Crossroad ,
     //ON or OFF
     #">>ON/OFF：类型" = "OFF",  
-    MER主体类型 = Load("fxMerge")(Crossroad1, YY, "信用主体", "主体", {"主体类型"}, {"主体类型"}),
+    MER主体类型 = fx("Merge")(Crossroad1, YY, "信用主体", "主体", {"主体类型"}, {"主体类型"}),
     R主体类型 = Table.ReplaceValue(MER主体类型, each [YY主体类型], each [主体类型], Replacer.ReplaceValue, {"YY类型"}),
    Crossroad2 = if #">>ON/OFF：类型" = "ON" then R行业二级  else Crossroad,
     //

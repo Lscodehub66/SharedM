@@ -1,7 +1,7 @@
 let
 Source = Load("YY"),
        Filtered = Table.SelectRows(Source , each [YY_行业] <> ""),
-    #">>ShowedDupe" = Load("fxShowDupe")(    Filtered , {"YY_主体"}),
+    #">>ShowedDupe" = fx("ShowDupe")(    Filtered , {"YY_主体"}),
     SelectedCol = Table.SelectColumns(Filtered, {"YY_主体", "YY_行业","YY_子行业"}, MissingField.UseNull)
     in
     SelectedCol

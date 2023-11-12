@@ -11,7 +11,7 @@
 ) =>
     let
         Source = wPIE_Load,
-        MergedQ = Load("fxMerge")(Source, DimDate, "定价日", "A_Date", {PivotCol, GroupCol}, {""}),
+        MergedQ = fx("Merge")(Source, DimDate, "定价日", "A_Date", {PivotCol, GroupCol}, {""}),
         // "亿美元", "笔数"
         // NumColumns = {"yy","MM","WeekNum"}
         //TextColumns = {"年", "季", "月", "周", "年月"},

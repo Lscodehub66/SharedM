@@ -4,7 +4,7 @@ let
     Source = fx("RemoveBlankColumns")(fx("Source")("Download_Graphs_value")),
      Controller1=List.Buffer(Load("Controller")[当前]),     Controller2=List.Buffer(Load("Controller")[上周]),
     #"Kept First Rows" = Table.FirstN(Source,20),
-    Combined = Load("fxCombine")({HD, #"Kept First Rows"}),
+    Combined = fx("Combine")({HD, #"Kept First Rows"}),
     #"Promoted Headers" = Table.PromoteHeaders(  Combined, [PromoteAllScalars = true]),
     #"Removed Top Rows" = Table.Skip(#"Promoted Headers",1),
    

@@ -11,7 +11,7 @@
 
                 
         Credit_违约日 = Table.ReplaceValue(
-            Load("fxMerge")(Credit_Client, CWB("DMI_Default"), "信用主体", "发行人名称", {"首次违约日"}, {Prefix & "首次违约日"}),
+            fx("Merge")(Credit_Client, CWB("DMI_Default"), "信用主体", "发行人名称", {"首次违约日"}, {Prefix & "首次违约日"}),
             each [首次违约日],
             each
                 each Record.Field(_, Prefix & "首次违约日")             ,
@@ -47,7 +47,7 @@
                 and BISL_对帐号[定价日]{0} > Date.From("2022/01/01")
             then
                 Table.ReplaceValue(
-                    Load("fxMerge")(BISL_对帐号, PQ_QRC合规, "PRJ对账号", "PRJ对账号", {"公盘地址"}, {Prefix & "FolderPath"}),
+                    fx("Merge")(BISL_对帐号, PQ_QRC合规, "PRJ对账号", "PRJ对账号", {"公盘地址"}, {Prefix & "FolderPath"}),
                     each [FolderPath],
                     each
                         if [FolderPath] <> "" and not Text.StartsWith([FolderPath], "\") then

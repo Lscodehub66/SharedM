@@ -27,11 +27,11 @@ let
     Add_Filtered = Table.SelectRows(Add_Source, each Record.Field(_, Name) = "Y"),
     Add_RowCount = Table.RowCount(Add_Filtered),
     #"Add_From_Result////" = if Add_From = "Top" then {Add_Filtered, DB_Source} else {DB_Source, Add_Filtered},
-    Combined = Load("fxCombine")(#"Add_From_Result////", {"Keep"}, DB_Source_CN),
+    Combined = fx("Combine")(#"Add_From_Result////", {"Keep"}, DB_Source_CN),
     #">>ShowDupe" = Table.Distinct(
         Table.Buffer(
             Table.Sort(
-                Load("fxShowDupe")(Combined, {Add_HD}), {{Add_HD, Order.Descending}, {"Timestamp", Order.Descending}}
+                fx("ShowDupe")(Combined, {Add_HD}), {{Add_HD, Order.Descending}, {"Timestamp", Order.Descending}}
             )
         ),
         {Add_HD}

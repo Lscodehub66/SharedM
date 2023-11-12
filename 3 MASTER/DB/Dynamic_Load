@@ -10,8 +10,8 @@ let
     Table1 = Table.SelectRows(Source, each [Item] = "wCurated"){0}[Data],
     Table2 = Table.SelectRows(Source, each [Item] = "wBISL"){0}[Data],
     Table3 = Table.SelectRows(Source, each [Item] = "wCredit"){0}[Data],
-    Merged = fxMerge(Table1, Table2, "Check", "Check", {""}, {""},null,1),
-    Merged1 = fxMerge(Merged, Table3, "信用主体", "信用主体", {""}, {""},null,1),
+    Merged = fx("Merge")(Table1, Table2, "Check", "Check", {""}, {""},null,1),
+    Merged1 = fx("Merge")(Merged, Table3, "信用主体", "信用主体", {""}, {""},null,1),
     Combined = Load(
         "fxCombine"
     )(

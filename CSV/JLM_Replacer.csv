@@ -1,0 +1,173 @@
+﻿Find,EN,CN,CN_Short,Replace
+ABC,ABCI,农银国际,农银国际,^ABC^
+AGRICOLE,CACIB,东方汇理,东方汇理,^AGRICOLE^
+AGRICULTURALBANK,ABC,农业银行,农银,^AGRICULTURALBANK^
+AGRICULTURALBOC,ABC,农业银行,农银,^AGRICULTURALBOC^
+AMTD,AMTD,尚乘,尚乘,^AMTD^
+ANZ,ANZ,澳新银行,澳新,^ANZ^
+BANKOFCHINA,BOC,中国银行,中银,^BANKOFCHINA^
+BEA,BEA,东亚银行,东亚,^BEA^
+BARCLAYS,Barcap,巴克莱,巴克莱,^BARCLAYS^
+BBVA,BBVA,西班牙对外银行,西班牙对外银行,^BBVA^
+BNP,BNP,法国巴黎银行,法巴,^BNP^
+BOCHONGKONG,BOC(HK),中银香港,中银香港,^BOCHONGKONG^
+BOCI,BOCI,中银国际,中银国际,^BOCI^
+BOCOM,BOCOMI,交银国际,交银国际,^BOCOM^
+BOFA,BofA,美银美林,美银,^BOFA^
+BOSC,BOSCI,上银国际,上银国际,^BOSC^
+CAITONG,Caitong,财通证券,财通,^CAITONG^
+CATHAYUNITED,Cathay United,国泰银行,国泰银行,^CATHAYUNITED^
+CCBEUROPE,CCB Europe,建银欧洲,建银欧洲,^CCBEUROPE^
+CCBA,CCB Asia,建银亚洲,建银亚洲,^CCBA^
+CCBINTL,CCBI,建银国际,建银国际,^CCBINTL^
+CEBINTL,CEBI,光银国际,光银国际,^CEBINTL^
+CHINAEVERBRIGHTBK,CEB,光大银行,光银,^CHINAEVERBRIGHTBK^
+CENTRALCHINA,Central China,中州国际,中州国际,^CENTRALCHINA^
+CENTRALWEALTH,Central Wealth,中达证券,中达,^CENTRALWEALTH^
+CHAOSHANG,ChaoShang,潮商证券,潮商,^CHAOSHANG^
+CHINADEVELOPMENTBANK,CDB,国开行,国开行,^CHINADEVELOPMENTBANK^
+CHINAGALAXY,Galaxy,银河证券,银河,^CHINAGALAXY^
+CHINAINDUSTRIAL,CISI,兴证国际,兴证国际,^CHINAINDUSTRIAL^
+CHINAMERCHANTS,CMS,招商证券,招证,^CHINAMERCHANTS^
+CHIYUBANK,Chiyu,集友银行,集友,^CHIYUBANK^
+CHONGHING,Chonghing,创兴银行,创兴,^CHONGHING^
+CICC,CICC,中金公司,中金,^CICC^
+CIMB,CIMB,联昌银行,联昌银行,^CIMB^
+CINDA,Cinda Intl,信达国际,信达国际,^CINDA^
+CHINACITICBANK,CNCBI,信银国际,信银国际,^CHINACITICBANK^
+CITIGROUP,Citi,花旗集团,花旗,^CITIGROUP^
+CLSA,CLSA,中信里昂,中信里昂,^CLSA^
+CMBC,CMBC Cap,民银资本,民银资本,^CMBC^
+CMBINTL,CMBI,招银国际,招银国际,^CMBINTL^
+CNCB,CNCB Cap,信银资本,信银资本,^CNCB^
+COMMERZ,Commerzbank,德国商业银行,德国商业银行,^COMMERZ^
+COMMONWEALTH,CBA,澳洲联邦银行,澳洲联邦银行,^COMMONWEALTH^
+COMMUNICATIONS,BOCOM,交通银行,交银,^COMMUNICATIONS^
+CONSTRUCTIONBANK,CCB,建设银行,建银,^CONSTRUCTIONBANK^
+CREDITSUISSE,CS,瑞士信贷,瑞信,^CREDITSUISSE^
+CRIC,CRIC,克而瑞证券,克而瑞,^CRIC^
+CSCI,CSCI,中信建投国际,中信建投国际,^CSCI^
+CTBCBANK,CTBC,中国信托,中国信托,^CTBCBANK^
+DBS,DBS,星展银行,星展,^DBS^
+DEUTSCHE,DB,德意志银行,德银,^DEUTSCHE^
+DONGHAI,Dong Hai,东海国际,东海,^DONGHAI^
+DONGXING,Dong Xing,东兴证券,东兴,^DONGXING^
+DZBANK,DZ Bank,德国中央合作银行,德国中央合作银行,^DZBANK^
+EMIRATESNBD,Emirates NBD,迪拜国民银行,迪拜国民银行,^EMIRATESNBD^
+ESSENCE,Essence,安信国际,安信,^ESSENCE^
+EVERBRIGHTSEC,EBS,光大证券,光证,^EVERBRIGHTSEC^
+FOSUN,Fosun Hani,复星恒利证券,复星恒利,^FOSUN^
+GFSEC,GF,广发证券,广发,^GFSEC^
+GLORYSUN,Glory Sun,宝新证券,宝新,^GLORYSUN^
+GOLDMANSACHS,GS,高盛公司,高盛,^GOLDMANSACHS^
+GUANGFABANK,CGB,广发银行,广发银行,^GUANGFABANK^
+GUOLIAN,Guolian,国联证券,国联,^GUOLIAN^
+GUOSEN,Guosen,国信证券,国信,^GUOSEN^
+GUOTA,GTJA,国泰君安国际,国君国际,^GUOTA^
+GUOYUAN,Guoyuan,国元证券,国元,^GUOYUAN^
+HAITONG,HTI,海通国际,海通国际,^HAITONG^
+HONGKONGSHANGHAI,HSBC,汇丰银行,汇丰,^HONGKONGSHANGHAI^
+HSBC,HSBC,汇丰银行,汇丰,^HSBC^
+HTBANK,Haitong Bank,海通银行,海通银行,^HTBANK^
+HUAJIN,Huajin,华金证券,华金,^HUAJIN^
+HUARONG,Huarong,华融证券,华融,^HUARONG^
+HUATAI,Huatai,华泰证券,华泰,^HUATAI^
+HUAXIA,HuaXia Bank,华夏银行,华夏,^HUAXIA^
+ICBCASIA,ICBCA,工银亚洲,工银亚洲,^ICBCASIA^
+ICBCEUR,ICBC Europe,工银欧洲,工银欧洲,^ICBCEUR^
+ICBCINTL,ICBCI,工银国际,工银国际,^ICBCINTL^
+ICBCLONDON,ICBC London,工银伦敦,工银伦分,^ICBCLONDON^
+ICBCMACAU,ICBC Macau,工银澳门,工银澳分,^ICBCMACAU^
+ICBCSINGAPORE,ICBC Singapore,工银新加坡,工银新分,^ICBCSINGAPORE^
+ICBCSTANDARDBANK,ICBC Standard,工银标准,工银标准,^ICBCSTANDARDBANK^
+INDUSTRIALBANK,CIBHK,兴业银行,兴业,^INDUSTRIALBANK^
+INDUSTRIALCOMM,ICBC,工商银行,工银,^INDUSTRIALCOMM^
+INGBANK,ING,荷兰国际,荷兰国际,^INGBANK^
+INGCAP,ING,荷兰国际,荷兰国际,^INGCAP^
+INGGROEP,ING,荷兰国际,荷兰国际,^INGGROEP^
+JIANGHAI,Jianghai,江海证券,江海,^JIANGHAI^
+JPM,JPM,摩根大通,摩根大通,^JPM^
+KGI,KGI,凯基证券,凯基,^KGI^
+LUSO,Luso,澳门国际银行,澳门国际银行,^LUSO^
+MACAUCHINESEBANK,MCB,澳门华人银行,澳门华人银行,^MACAUCHINESEBANK^
+MACQUARIE,Macquarie,麦格里,麦格里,^MACQUARIE^
+MAYBANK,Maybank,马来亚银行,马来亚银行,^MAYBANK^
+MERCHANTSBANK,CMB,招商银行,招银,^MERCHANTSBANK^
+MINSHENGBANK,CMBC,民生银行,民银,^MINSHENGBANK^
+MIZUHO,Mizuho,瑞穗证券,瑞穗,^MIZUHO^
+MORGANSTANLEY,MS,摩根士丹利,摩根士丹利,^MORGANSTANLEY^
+MUFG,MUFG,三菱日联,三菱日联,^MUFG^
+NAB,NAB,澳洲国民银行,澳洲国民银行,^NAB^
+NANYANG,NCB,南洋商业银行,南商银行,^NANYANG^
+NATIXIS,Natixis,法国外贸银行,法国外贸银行,^NATIXIS^
+NOMURA,Nomura,野村,野村,^NOMURA^
+OCBC,OCBC,华侨银行,华侨银行,^OCBC^
+ORIENT,Orient,东方证券,东方,^ORIENT^
+PASEC,PACSHK,平证香港,平证香港,^PASEC^
+PUDONG,SPDB,浦发银行,浦银,^PUDONG^
+SANTANDER,Santander,桑坦德銀行,桑坦德銀行,^SANTANDER^
+SCOTIA,Scotia,加拿大丰业银行,加拿大丰业银行,^SCOTIA^
+SHANXI,Shanxi,山西证券,山西,^SHANXI^
+SHENWANHONGYUAN,SWHY,申万宏源,申万宏源,^SHENWANHONGYUAN^
+SILKROAD,Silkroad,丝路国际,丝路国际,^SILKROAD^
+SMBC,SMBC,日兴证券,日兴,^SMBC^
+SOCIETE,SGCIB,法兴,法兴,^SOCIETE^
+SOOCHOW,Soochow,东吴证券,东吴,^SOOCHOW^
+SOUTHWEST,Southwest,西南证券,西南,^SOUTHWEST^
+SPDB,SPDBI,浦银国际,浦银国际,^SPDB^
+STANDARDCHARTERED,SCB,渣打银行,渣打,^STANDARDCHARTERED^
+TENSANT,Tensant,天晟证券,天晟,^TENSANT^
+TF,TFI,天风证券,天风,^TF^
+UBS,UBS,瑞银集团,瑞银,^UBS^
+UOB,UOB,大华银行,大华银行,^UOB^
+VERED,Vered,中薇金融,中薇金融,^VERED^
+WANHAI,AMC Wanhai,万海证券,万海,^WANHAI^
+WELLSFARGO,Wells Fargo,富国银行,富国银行,^WELLSFARGO^
+WESTPAC,Westpac,西太平洋银行,西太平洋银行,^WESTPAC^
+WINGLUNG,CMBWL,招商永隆银行,永隆,^WINGLUNG^
+YUEXIU,Yuexiu,越秀证券,越秀,^YUEXIU^
+ZHESHANGBANK,CZBank,浙商银行,浙商,^ZHESHANGBANK^
+ZHESHANGINTL,Zheshang Intl,浙商国际金控,浙商国际金控,^ZHESHANGINTL^
+ZHONGTAI,Zhongtai,中泰证券,中泰,^ZHONGTAI^
+SUNRIVER,SunRiver,淞港国际证券,淞港,^SUNRIVER^
+WILSON,Wilson,汇生证券,汇生,^WILSON^
+CHINACREDIT,CCIG Sec,中诚国际证券,中诚国际,^CHINACREDIT^
+HUNGSING,Hung Sing,鸿昇证券,鸿昇,^HUNGSING^
+HUAAN,Hua An,华安证券,华安,^HUAAN^
+SINOLINK,Sinolink,国金证券,国金,^SINOLINK^
+DINGXIN,Ding Xin,鼎鑫证券,鼎鑫,^DINGXIN^
+CHINAENTERPRISE,China Enterprise,华业金控,华业,^CHINAENTERPRISE^
+SIGMACAP,Sigma,众和证券,众和,^SIGMACAP^
+FAREASTERNINTLBANK,FEIB,远东国际商业银行,远东国际商业银行,^FAREASTERNINTLBANK^
+SDHG,SDHG,山高国际,山高,^SDHG^
+CHINASHANDONG,CSIAM,华鲁国际,华鲁国际,^CHINASHANDONG^
+DAIWA,Daiwa,大和资本市场,大和,^DAIWA^
+CARNEGIE,Carnegie Hill,衡山证券,衡山,^CARNEGIE^
+GOLDBRIDGE,Goldbridge,金桥证券,金桥,^GOLDBRIDGE^
+DL,DL Sec,德林证券,德林,^DL^
+WANLUNG,Wan Lung,万隆证券,万隆,^WANLUNG^
+HUAFU,Hua Fu Int'l,华福证券,华福国际,^HUAFU^
+PULSAR,Pulsar,脉搏资本,脉搏,^PULSAR^
+OCIAM,OCI AM,东建国际,东建国际,^OCIAM^
+EASTASIACAP,East Asia Capital,三谷,三谷,^EASTASIACAP^
+MINMETALS,Minmetals,五矿证券,五矿证券,^MINMETALS^
+ALPHA,Alpha Sec,亚华证券,亚华,^ALPHA^
+CHENGTONG,Cheng Tong,诚通香港资管,诚通香港资管,^CHENGTONG^
+SHENGYUAN,Sheng Yuan Sec,盛源证券,盛源,^SHENGYUAN^
+VISION,Vision Cap,万盛,万盛,^VISION^
+YONXI,Yonxi Sec,雍熙证券,雍熙,^YONXI^
+FUTEC,Futec,富德国际,富德,^FUTEC^
+HEUNGKONG,HeungKong,香江证券,香江,^HEUNGKONG^
+SDG,SDG Sec,山金证券,山金,^SDG^
+ADMIRALTYHARBOUR,Admiralty Harbour,钟港资本,钟港,^ADMIRALTYHARBOUR^
+JQ,JQ Sec,金信期盈证券,金信期盈,^JQ^
+VALUABLE,Valuable Sec,华盛资本证券,华盛,^VALUABLE^
+CSFG,SDHG,山高国际,山高,^CSFG^
+HARMONIA,Harmonia,仁和资本,仁和,^HARMONIA^
+POTOMAC,Potomac,波多马克,波多马克,^POTOMAC^
+SEAZEN,Seazen,新城晋峰金融,新城晋峰,^SEAZEN^
+TAIFUNG,Tai Fung,大丰银行,大丰,^TAIFUNG^
+CNINVSE,China Inv Sec,中投证券,中投证券,^CNINVSE^
+FOUNDER,Founder Sec,方正证券,方正,^FOUNDER^
+YUANYIN,Yuanyin Sec,原银证券,原银证券,^YUANYIN^
+VTB,VTB Cap,VTB,VTB,^VTB^

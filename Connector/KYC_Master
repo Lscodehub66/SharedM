@@ -5,7 +5,7 @@ let
  ATime       = Table.AddColumn ( Source, "Timestamp", each DateTime.FixedLocalNow() ), 
  CWB_tbl     = CWB ( "KYC_Master" ), 
  // if SourceQRC does not have this item then maintain current CWB data to append
- CWB_combined = Load("fxCombine")( { ATime, CWB_tbl }, { "序号" },{0} ) ,
+ CWB_combined = fx("Combine")( { ATime, CWB_tbl }, { "序号" },{0} ) ,
 Output = try  CWB_combined otherwise try  ATime otherwise CWB_tbl,
     #"Filtered Rows" = Table.SelectRows(Output, each ([序号] <> ""))
 in

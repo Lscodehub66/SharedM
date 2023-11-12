@@ -40,9 +40,14 @@ let
         "FPG1", "票息100DMI"
     },
      #">>SCol" = Table.RemoveColumns(Added,#">>HD_R", MissingField.Ignore),
-   
+   WeeklyAddTapSwith = CWB("WeeklyAddTap"),
+    Appended =
+        if  WeeklyAddTapSwith = "OFF" then
+        #">>SCol" 
+        else
+            fx("Combine")({#">>SCol" , Load("wAddTapPQ")},{null},{0}),
     //
-    Checked = fx("CheckNDupe")(  #">>SCol"),
+    Checked = fx("CheckNDupe")(    Appended ),
     Sorted = fx("SortNIndex")(Checked)
 in
     Sorted

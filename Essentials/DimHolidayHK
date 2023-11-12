@@ -18,7 +18,7 @@ let
     #"sc_Expanded Transform File" = Table.ExpandTableColumn(#"sc_Removed Other Columns", "Transform File", {"Date", "summary"}, {"Date", "summary"}),
     // merge
     
-    Custom1 = Load("fxMerge")( #"Expanded Transform File",   #"sc_Expanded Transform File" , "Date", "",{"summary"},{"summary_sc"} ),
+    Custom1 = fx("Merge")( #"Expanded Transform File",   #"sc_Expanded Transform File" , "Date", "",{"summary"},{"summary_sc"} ),
     #"Sorted Rows" = Table.Sort(Custom1,{{"Date", Order.Descending}})
 in
     #"Sorted Rows"

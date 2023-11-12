@@ -4,12 +4,12 @@ let
     mIndice = Table.Buffer(fx("Source")("DEALSMASTER_mIndice")),
     Dimtbl_Indice = Table.Buffer(Load("Dimtbl_Indice")),
     //
-    Source = Load("fxMerge")(Status_DateTP, mIndice, "Date", "Date", {""}, {""}),
+    Source = fx("Merge")(Status_DateTP, mIndice, "Date", "Date", {""}, {""}),
     #"Removed Columns" = Table.RemoveColumns(Source, {"Date"}, MissingField.Ignore),
     #"Demoted Headers" = Table.DemoteHeaders(#"Removed Columns"),
     #"Transposed Table" = Table.Transpose(#"Demoted Headers"),
     #"Promoted Headers" = Table.PromoteHeaders(#"Transposed Table", [PromoteAllScalars = true]),
-    MDimIndice = Load("fxMerge")(Dimtbl_Indice, #"Promoted Headers", "PK", "PK", {""}, {""}),
+    MDimIndice = fx("Merge")(Dimtbl_Indice, #"Promoted Headers", "PK", "PK", {""}, {""}),
     #"Changed Type" = Table.TransformColumnTypes(
         MDimIndice, {{"当前", type number}, {"上周", type number}, {"年初", type number}}
     ),

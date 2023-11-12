@@ -12,7 +12,7 @@
     let
         Source = wPIE_Load,
         Filtered1 = if Text.Contains(GroupCol,"分类") then Table.SelectRows(Source, each Record.Field(_, GroupCol) <> "--") else Source,
-        MergedQ = Load("fxMerge")(   Filtered1 , DimDate, "定价日", "A_Date", {PivotCol, GroupCol}, {""}),
+        MergedQ = fx("Merge")(   Filtered1 , DimDate, "定价日", "A_Date", {PivotCol, GroupCol}, {""}),
         // "亿美元", "笔数"
         // NumColumns = {"yy","MM","WeekNum"}
         //TextColumns = {"年", "季", "月", "周", "年月"},

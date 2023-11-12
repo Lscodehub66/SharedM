@@ -5,9 +5,9 @@ let
     DMIBank = Load("fxDMIBank"),
     //
     Source = Table.SelectRows(CWB("BankUniverse"), each [IS_SBLC] = "Y"),
-    Merged = Load("fxMerge")(Source, DMIBank, "信用主体", "发行人全称", {"描述"}, {""}),
+    Merged = fx("Merge")(Source, DMIBank, "信用主体", "发行人全称", {"描述"}, {""}),
     #"Filtered Rows" = Table.SelectRows(Merged, each ([描述] <> "")),
-  Merged1 = Load("fxMerge")(    #"Filtered Rows",  Load("SBLC_Rtg"),  "信用主体简称","Entity", {"当前主体评级"},{""}),
+  Merged1 = fx("Merge")(    #"Filtered Rows",  Load("SBLC_Rtg"),  "信用主体简称","Entity", {"当前主体评级"},{""}),
     Sorted = Table.Sort(    Merged1   , {{"SortValue", Order.Ascending}}),
     AddedIndex = Table.AddIndexColumn(Sorted, "Index", 1, 1, Int64.Type),
     SCol = Table.SelectColumns(

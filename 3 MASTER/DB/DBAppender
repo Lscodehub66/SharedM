@@ -24,11 +24,11 @@ let
             {Add_Filtered, DB_Source}
         else
             {DB_Source, Add_Filtered},
-    Combined = Load("fxCombine")(#"//Add_Direction//", "Keep", DB_Source_CN),
+    Combined = fx("Combine")(#"//Add_Direction//", "Keep", DB_Source_CN),
     #">>ShowDupe" = Table.Distinct(
         Table.Buffer(
             Table.Sort(
-                Load("fxShowDupe")(Combined, {Add_HD}), {{Add_HD, Order.Descending}, {"Timestamp", Order.Descending}}
+                fx("ShowDupe")(Combined, {Add_HD}), {{Add_HD, Order.Descending}, {"Timestamp", Order.Descending}}
             )
         ),
         {Add_HD}

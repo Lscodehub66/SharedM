@@ -58,7 +58,7 @@ let
             },
             Bankoutput =
                 if Text.Contains(BankType, "银行") then
-                    Text.BeforeDelimiter(fx("Cleaner")(BankType, null, FindBank, ReplaceBank), "银行") & "银行"
+                    Text.BeforeDelimiter(fx("Clean")(BankType, FindBank, ReplaceBank), "银行") & "银行"
                 else
                     BankType,
             Bankoutput2 =
@@ -275,7 +275,7 @@ let
                 "基金",
                 ""
             },
-            Text2C = fx("Cleaner")(CleanCounty, null, Find, Replace),
+            Text2C = fx("Clean")(CleanCounty, Find, Replace),
             Text3 =
                 if Text.Length(Text2C) > 7 and not Text.Contains(Text2C, "(中国)") then
                     Text.BeforeDelimiter(Text2C, "(")

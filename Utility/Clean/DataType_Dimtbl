@@ -1,14 +1,14 @@
 let //
      
-    fxShowDupe = Load("fxShowDupe"),
+    fxShowDupe = fx("ShowDupe"),
     fxToM = Load("fxToM"),
 
     #">>>>>>>" = Table.Combine({#"DateDupe", #"Num_Dupe", #"Text_Dupe"}),
-    #"DateDupe" = Load("fxShowDupe")(Table.FromColumns({Date1}), {"Column1"}),
+    #"DateDupe" = fx("ShowDupe")(Table.FromColumns({Date1}), {"Column1"}),
     #">>>>>>>Date1" = fxToM(Date1),
-    #"Num_Dupe" = Load("fxShowDupe")(Table.FromColumns({Num1}), {"Column1"}),
+    #"Num_Dupe" = fx("ShowDupe")(Table.FromColumns({Num1}), {"Column1"}),
     #">>>>>>Num_others" = fxToM(List.Distinct(List.RemoveItems(Num_Others, Num_NullToZero))),
-    #"Text_Dupe" = Load("fxShowDupe")(Table.FromColumns({Text1}), {"Column1"}),
+    #"Text_Dupe" = fx("ShowDupe")(Table.FromColumns({Text1}), {"Column1"}),
     #">>>>>>Text_others" = fxToM(List.Distinct(List.RemoveItems(Text_others, Text_NoSpace & Text_NAToBlank))),
     //DateTime ValueType
     DateTime1 = {"Timestamp"},

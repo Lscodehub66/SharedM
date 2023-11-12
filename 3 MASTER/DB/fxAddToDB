@@ -16,11 +16,11 @@
         Add_Filtered = Table.SelectRows(Add_Source, each if DB_Name = "mBISL" then [定价日]> #date(2021,12,31) and Record.Field(_, DB_Name) = "Y" else Record.Field(_, DB_Name) = "Y"),
         Add_RowCount = Table.RowCount(Add_Filtered),
         #"Add_From_Result////" = if Add_From = "Top" then {Add_Filtered, DB_Source} else {DB_Source, Add_Filtered},
-        Combined = Load("fxCombine")(#"Add_From_Result////", {"Keep"}, DB_Source_CN),
+        Combined = fx("Combine")(#"Add_From_Result////", {"Keep"}, DB_Source_CN),
         #">>ShowDupe" = Table.Distinct(
             Table.Buffer(
                 Table.Sort(
-                    Load("fxShowDupe")(Combined, {Add_HD}),
+                    fx("ShowDupe")(Combined, {Add_HD}),
                     {{Add_HD, Order.Descending}, {"Timestamp", Order.Descending}}
                 )
             ),

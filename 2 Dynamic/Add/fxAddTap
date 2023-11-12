@@ -21,6 +21,6 @@ let
  BeforeDelimiter = Table.TransformColumns ( Filtered, { { "Check", each Text.BeforeDelimiter ( _, ";" ), type text } } ), 
  SelectCol2      = Table.SelectColumns ( BeforeDelimiter, { "Check" } ), 
  AddedCustom     = Table.AddColumn ( SelectCol2, "增发判定", each "[增发]" ),
-  PQMerged = Load("fxMerge")( Source  , AddedCustom, "Check", "Check", {""}, {""})
+  PQMerged = fx("Merge")( Source  , AddedCustom, "Check", "Check", {""}, {""})
 in
   PQMerged 

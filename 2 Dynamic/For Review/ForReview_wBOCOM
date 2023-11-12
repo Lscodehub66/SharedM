@@ -16,7 +16,7 @@ let
             else
                 "--"
     ) else Source,
-    MergedQ = Load("fxMerge")(  Prep, try CWB("DLD_QRC_23") otherwise Load("DLD_QRC_23"), "ISIN", "ISIN", {""}, {""}),
+    MergedQ = fx("Merge")(  Prep, try CWB("DLD_QRC_23") otherwise Load("DLD_QRC_23"), "ISIN", "ISIN", {""}, {""}),
     Filtered = Table.SelectRows(MergedQ, each [BISL_ROLE] <> "--" or [担任角色] <> ""),
     #">>ExpandedList" = List.RemoveItems(Table.ColumnNames(MergedQ), Table.ColumnNames(  Prep)),
     Replaced = Table.ReplaceValue(

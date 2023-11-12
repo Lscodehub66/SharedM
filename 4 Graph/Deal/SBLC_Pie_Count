@@ -37,7 +37,7 @@ let
         ),
         "笔数"
     ),
-    Combined = Load("fxCombine")({Pie1, Pie2, Pie3}, {null}, {"Column1", "Column2", "笔数", "笔数占比"}),
+    Combined = fx("Combine")({Pie1, Pie2, Pie3}, {null}, {"Column1", "Column2", "笔数", "笔数占比"}),
   
     #"Merged Queries" = Table.NestedJoin(
         Combined,

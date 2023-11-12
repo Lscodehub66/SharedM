@@ -26,7 +26,7 @@ let
         ),
         "亿美元"
     ),
-    Combined = Load("fxCombine")({Pie2, Pie3}, {null}, {"Column1", "Column2", "亿美元", "占比"}),
+    Combined = fx("Combine")({Pie2, Pie3}, {null}, {"Column1", "Column2", "亿美元", "占比"}),
     //**Skipped**
     #"Merged Queries" = Table.NestedJoin(
         Pie3,

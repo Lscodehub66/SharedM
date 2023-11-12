@@ -12,6 +12,6 @@ let
     RemovedDupe = Table.Distinct(BufferSorted, {"发行人名称"}),
     Renamed = Table.RenameColumns(RemovedDupe, Rename_DMI违约, MissingField.Ignore),
     // {{"ISIN码", "ISIN"}, {"违约日期", "首次违约日"}, {"违约类型", "境外债违约"}, {"企业性质", "公司类型"}}
-    Merged = Load("fxMerge")(Renamed, SourceDMI, "ISIN", "ISIN", {"信用主体"}, {""})
+    Merged = fx("Merge")(Renamed, SourceDMI, "ISIN", "ISIN", {"信用主体"}, {""})
 in
     Merged

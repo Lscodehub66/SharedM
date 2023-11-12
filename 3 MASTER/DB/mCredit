@@ -26,11 +26,11 @@ let
         Add1_Source
     },
     #"Add_From_Result////" = if #">>Add1_Control>>" = "OFF" then List.RemoveItems(Add_tbl, {Add1_Source}) else Add_tbl,
-    Combined = Load("fxCombine")(#"Add_From_Result////", {"Keep"}, DB_Source_CN),
+    Combined = fx("Combine")(#"Add_From_Result////", {"Keep"}, DB_Source_CN),
     #">>ShowDupe" = Table.Distinct(
         Table.Buffer(
             Table.Sort(
-                Load("fxShowDupe")(Combined, {Add_HD}), {{Add_HD, Order.Descending}, {"Timestamp", Order.Descending}}
+                fx("ShowDupe")(Combined, {Add_HD}), {{Add_HD, Order.Descending}, {"Timestamp", Order.Descending}}
             )
         ),
         {Add_HD}

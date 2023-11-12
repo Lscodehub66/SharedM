@@ -1,7 +1,7 @@
 let
     Source = fx("Source")("YY_城投"),
     FnSource = Load("fxConnect_YY")(Source),
-    Merged = Load("fxMerge")(
+    Merged = fx("Merge")(
         FnSource,
         CWB("mCredit"),
         "YY_主体",

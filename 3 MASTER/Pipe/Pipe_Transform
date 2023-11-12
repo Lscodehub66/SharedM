@@ -4,15 +4,20 @@ let
     //**
     fxSNBankCorp = Load("fxSNBankCorp"),
     fxRemoveBlankColumns = Load("fxRemoveBlankColumns"),
-    ExcelToSheet = if List.Contains(Table.ColumnNames(Source),"Item") then   fxRemoveBlankColumns(
-                        Table.PromoteHeaders(
-                            Table.SelectRows( Source, each Text.Contains([Item], "重点")){0}[Data],
-                            [
-                                PromoteAllScalars = true
-                            ]
-                        )
-                    ) else Source,
-    #"Replaced Value1" = Table.ReplaceValue(  ExcelToSheet , "待定", "", Replacer.ReplaceValue, Table.ColumnNames(   ExcelToSheet )),
+    ExcelToSheet =
+        if List.Contains(Table.ColumnNames(Source), "Item") then
+            fxRemoveBlankColumns(
+                Table.PromoteHeaders(
+                    Table.SelectRows(Source, each Text.Contains([Item], "重点")){0}[Data], [
+                        PromoteAllScalars = true
+                    ]
+                )
+            )
+        else
+            Source,
+    #"Replaced Value1" = Table.ReplaceValue(
+        ExcelToSheet, "待定", "", Replacer.ReplaceValue, Table.ColumnNames(ExcelToSheet)
+    ),
     #"Replaced Value2" = Table.ReplaceValue(
         #"Replaced Value1", null, "", Replacer.ReplaceValue, Table.ColumnNames(#"Replaced Value1")
     ),
@@ -23,10 +28,14 @@ let
         #"Replaced Value3", "无", "", Replacer.ReplaceValue, Table.ColumnNames(#"Replaced Value3")
     ),
     Filtered = Table.SelectRows(#"Replaced Value4", each ([项目状态] <> "已入团" and [项目状态] <> "已完成" and [项目状态] <> "")),
-    Renamed = Table.RenameColumns(Filtered, {{List.Select(Table.ColumnNames(Filtered), each Text.StartsWith(_, "公司名称")){0}, "公司名称"}}, MissingField.Ignore),
+    Renamed = Table.RenameColumns(
+        Filtered,
+        {{List.Select(Table.ColumnNames(Filtered), each Text.StartsWith(_, "公司名称")){0}, "公司名称"}},
+        MissingField.Ignore
+    ),
     SCol = Table.SelectColumns(
-        Renamed, {"项目状态", "公司名称", "担任角色", "币种", "发行规模", "年期", "承销团成员", "预计完成日期", "项目进展", "分行"}
-    ,MissingField.UseNull),
+        Renamed, {"项目状态", "公司名称", "担任角色", "币种", "发行规模", "年期", "承销团成员", "预计完成日期", "项目进展", "分行"}, MissingField.UseNull
+    ),
     TFCleaned = Table.TransformColumns(
         SCol,
         List.Transform(
@@ -35,9 +44,10 @@ let
                 {
                     _,
                     each
-                        fxCleaner(
+                        fx(
+                            "Clean"
+                        )(
                             _,
-                            null,
                             {
                                 "省",
                                 "市",
@@ -86,21 +96,16 @@ let
                 }
         )
     ),
-    ASuffix = Table.TransformColumns(
-        TFCleaned,
-        {{"分行", each if Text.Length(_) = 2 then _ & "分行" else "" & _, type text}, {"公司名称", each fxCleaner(_, "主体")}}
-    ),
-    ASN = Table.AddColumn(ASuffix, "简称", each fxSNBankCorp([公司名称])),
+    ASuffix = Table.TransformColumns(TFCleaned, {{"分行", each if Text.Length(_) = 2 then _ & "分行" else "" & _, type text}}),
+    CleanedName = fx("Replace")(ASuffix, {"公司名称"}, "主体"),
+    ASN = Table.AddColumn(CleanedName, "简称", each fxSNBankCorp([公司名称])),
     NoDupe = Table.Distinct(ASN, {"公司名称"}),
     Reordered = Table.ReorderColumns(
         NoDupe,
         List.Distinct(
-            {"简称"} & List.RemoveMatchingItems(Table.ColumnNames(NoDupe), {"公司名称"}) & {
-                "公司名称",
-                "Date modified"
-            }
+            {"简称"} & List.RemoveMatchingItems(Table.ColumnNames(NoDupe), {"公司名称"}) & {"公司名称", "Date modified"}
         ),
         MissingField.Ignore
     )
 in
-      Reordered
+    Reordered

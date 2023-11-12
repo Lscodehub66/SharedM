@@ -6,10 +6,10 @@
             "DummyCol",
             each if List.Contains({"", "--", "n/a",null}, Record.Field(_, ColName) ) then "--" else
                 fx(
-                    "Cleaner"
+                    "Clean"
                 )(
                     Text.Select(Record.Field(_, ColName) ?? "", {"A", "B", "C", "D", "a", "/"}),
-                    null,
+                   
                     {"Baa", "BBB", "Ba"},
                     {"A", "A", "BB"}
                 ),

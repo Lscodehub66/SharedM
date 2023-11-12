@@ -9,7 +9,7 @@
         Source = if InputFnText = "1" then fx("Data")(CurrentWorkbook, 1) else fx("Data")(CurrentWorkbook),
         DefinedNames =
             if List.Contains(
-                {"MONDAY", "UPDATORWEEKLY","REMOVEFROMDB" ,"澳门FILTER", "香港FILTER", "WEEKLYFILTER", "IS_EXCH_FILTER", "MULTISOURCE","GPS"},
+                {"MONDAY", "UPDATORWEEKLY","REMOVEFROMDB" ,"澳门FILTER", "香港FILTER", "WEEKLYFILTER", "IS_EXCH_FILTER", "MULTISOURCE","GPS","WEEKLYADDTAP"},
                 FText
             ) then
                 Source[Column1]{0}

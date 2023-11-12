@@ -3,7 +3,7 @@
         Source = TableName,
         //Merge tables ESGExternal Review & DMI UOP is seperated as steps in deal_master
         mCreditB = try Table.Buffer(CWB("mCredit","1")) otherwise Table.Buffer(fx("Source")("DEALSMASTER_=MCREDIT")),
-        JoinSBLC = Load("fxMerge")(Source, mCreditB, "备证行", "信用主体简称", {"板块三级", "板块标签"}, {"备证分类", "备证行标签"}),
+        JoinSBLC = fx("Merge")(Source, mCreditB, "备证行", "信用主体简称", {"板块三级", "板块标签"}, {"备证分类", "备证行标签"}),
         SBLCTag = Table.ReplaceValue(
             JoinSBLC,
             each [备证行标签],
@@ -18,7 +18,7 @@
             else
                 Table.TransformColumns(SBLCTag, {{"备证分类", each if _ <> "" then _ & "备证" else _, type text}}),
         //
-        JoinDBCredit = Load("fxMerge")(AddSBLCSuffix, mCreditB, "信用主体", "信用主体", {"Y"}, {""}),
+        JoinDBCredit = fx("Merge")(AddSBLCSuffix, mCreditB, "信用主体", "信用主体", {"Y"}, {""}),
         NoNull =
             if List.Contains(Table.ColumnNames(JoinDBCredit), "信用主体简称") then
                 Table.ReplaceValue(JoinDBCredit, null, "【】", Replacer.ReplaceValue, {"信用主体简称"})
@@ -27,6 +27,6 @@
         SOECreds = Table.AddColumn(
             NoNull, "投标资历分类", each if [中资属性] = "地方国企" and [板块] <> "金融机构" then "SOE Creds" else "--"
         ),
-        MergeDate = Load("fxMerge")(SOECreds, Load("DimDate"), "定价日", "A_Date", {""}, {""})
+        MergeDate = fx("Merge")(SOECreds, Load("DimDate"), "定价日", "A_Date", {""}, {""})
     in
         MergeDate

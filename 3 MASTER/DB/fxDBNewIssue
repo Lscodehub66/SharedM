@@ -4,44 +4,49 @@
         Key = Text.Upper(Text.Trim(TableNameText)),
         //
         Source = Table.Buffer(SourceTable),
-        Get = Load("Get"),
-        SourceF = Table.SelectRows(Source, each [删除及隐藏] <> "删除" and  [删除及隐藏] <> "隐藏" and [定价日] > Date.From("2021/12/31")),
-        SourceUSDCNH = Table.SelectRows(SourceF, each ([货币] = "USD" or [货币] = "CNH")),
+        NoHide_Source = Table.SelectRows(Source, each [删除及隐藏] <> "删除" and [删除及隐藏] <> "隐藏"),
+        SourceFrom22 = Table.SelectRows(NoHide_Source, each [定价日] > Date.From("2021/12/31")),
+        SourceUSDCNH = Table.SelectRows(SourceFrom22, each ([货币] = "USD" or [货币] = "CNH")),
         // ORecent
         Header0 = Get("Header_Graph_Deal_Weekly"),
         // {"Index","ISIN","定价日","信用主体(备证行)","发行评级","货币","发行规模(亿)","年期","票息","IPG","收窄基点","结构","主题","板块","地区","BOCOM_DEAL?","亿美元"  },
-        SCol0 = Table.SelectColumns(SourceF, Header0, MissingField.UseNull),
+        SCol0 = Table.SelectColumns(SourceFrom22, Header0, MissingField.UseNull),
         // 1ESG
         Header1 = Get("HeaderESG"),
-        Filtered1 = Table.SelectRows(SourceF, each not List.Contains({null, "", "--"}, [ESG])),
+        Filtered1 = Table.SelectRows(SourceFrom22, each not List.Contains({null, "", "--"}, [ESG])),
         SCol1 = Table.SelectColumns(Filtered1, Header1, MissingField.UseNull),
         // 2DimSum
         Header2 = Get("HeaderDimSum"),
-        Filtered2 = Table.SelectRows(SourceF, each [货币细分] = "点心债"),
+        Filtered2 = Table.SelectRows(SourceFrom22, each [货币细分] = "点心债"),
         SCol2 = Table.SelectColumns(Filtered2, Header2, MissingField.UseNull),
         // 2a DimSum & FTZ
-        Filtered2a = Table.SelectRows(SourceF, each [货币] = "CNH"),
+        Filtered2a = Table.SelectRows(SourceFrom22, each [货币] = "CNH"),
         SCol2a = Table.SelectColumns(Filtered2a, Header2 & {"货币细分"}, MissingField.UseNull),
         // 3IGLGFV
         Header3 = Get("HeaderIGLGFV"),
-        Filtered3 = Table.SelectRows(SourceF, each [是否IG] <> "--" and [投标资历分类] <> "--" and [货币] <> "CNH"),
+        Filtered3 = Table.SelectRows(SourceFrom22, each [是否IG] <> "--" and [投标资历分类] <> "--" and [货币] <> "CNH"),
         SCol3 = Table.SelectColumns(Filtered3, Header3, MissingField.UseNull),
         //4SBLC
         Header4 = Get("HeaderSBLC"),
-        Filtered4 = Table.SelectRows(SourceF, each Text.Contains([结构], "备证")),
+        Filtered4 = Table.SelectRows(SourceFrom22, each Text.Contains([结构], "备证")),
         SCol4 = Table.SelectColumns(Filtered4, Header4, MissingField.UseNull),
         // 5FI
         Header5 = Get("HeaderFI"),
-        Filtered5 = Table.SelectRows(SourceF, each Text.Contains([板块], "金")),
+        Filtered5 = Table.SelectRows(SourceFrom22, each Text.Contains([板块], "金")),
         SCol5 = Table.SelectColumns(Filtered5, Header5, MissingField.UseNull),
         // 6FTZ
         Header6 = Get("HeaderFTZ"),
         Filtered6 = Table.SelectRows(Source, each [货币细分] = "自贸债"),
         SCol6 = Table.SelectColumns(Filtered6, Header6, MissingField.UseNull),
         //8USDCNH_TIGHTEN
-        Header8 = {"Index", "ISIN", "定价日","信用主体简称", "信用主体", "亿美元", "评级分类","币种规模","发行品种", "板块", "收窄基点", "Check"},
+        Header8 = {"Index", "ISIN", "定价日", "信用主体简称", "信用主体", "亿美元", "评级分类", "币种规模", "发行品种", "板块", "收窄基点", "Check"},
         Filtered8 = Table.SelectRows(SourceUSDCNH, each not List.Contains({null, "", "--"}, [收窄基点])),
         SCol8 = Table.SelectColumns(Filtered8, Header8, MissingField.UseNull),
+        //9Mature2024
+        Header9 = Get("Header_Maturity2024"),
+        //  {"Index", "ISIN", "信用主体(备证行)","发行评级","货币", "发行规模(亿)","兑付日","期限","票息", "发行品种", "中资属性","板块", "地区","IS_CLIENT",  "信用主体","亿美元","定价日" ,"Check"},
+        Filtered9 = Table.SelectRows(NoHide_Source, each Date.Year([兑付日]) = 2024),
+        SCol9 = Table.SelectColumns(Filtered9, Header9, MissingField.UseNull),
         //******
         Output =
             if Text.Contains(Key, "ESG") then
@@ -74,9 +79,11 @@
                 SourceUSDCNH
             else if Text.Contains(Key, "USDCNH_TIGHTEN") then
                 Table.TransformColumnTypes(SCol8, {{"收窄基点", type number}})
+            else if Text.Contains(Key, "MATURITY2024") then
+                SCol9
             else
                 SCol0,
         //******FinalSort*****
-        FnSort = Load("fxSortNIndex")(Output)
+        FnSort = fx("SortNIndex")(Output)
     in
         FnSort

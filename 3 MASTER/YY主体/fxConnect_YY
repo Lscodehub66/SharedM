@@ -5,26 +5,21 @@
         SelectedCol = Table.SelectColumns(
             Filtered, {"主体", "主体类型", "行业", "区域", "行政级别", "平台重要性", "主营业务"}, MissingField.UseNull
         ),
-        #">>ShowedDupe" = Load("fxShowDupe")(SelectedCol, {"主体"}),
+        #">>ShowedDupe" = fx("ShowDupe")(SelectedCol, {"主体"}),
         ABDelimiter = Table.AddColumn(SelectedCol, "YY_行业", each Text.BeforeDelimiter([行业], "-"), type text),
         ABDelimiter1 = Table.AddColumn(ABDelimiter, "YY_子行业", each Text.AfterDelimiter([行业], "-"), type text),
         ACol = Table.AddColumn(ABDelimiter1, "Count", each List.Count(Text.Split([区域], "-"))),
-        ABDelimiter2 = Table.AddColumn(
-            ACol, "YY_地区", each fx("Cleaner")(Text.BeforeDelimiter([区域], "-"), "地区"), type text
-        ),
+        ABDelimiter2 = Table.AddColumn(ACol, "YY_地区", each Text.BeforeDelimiter([区域], "-"), type text),
         ADelimiter = Table.AddColumn(
             ABDelimiter2,
             "YY_城市",
             each
                 if List.Count(Text.Split([区域], "-")) >= 3 then
-                    fx("Cleaner")(
-                        Text.BetweenDelimiters(
-                            [区域], "-", "-", {0, RelativePosition.FromStart}, {0, RelativePosition.FromStart}
-                        ),
-                        "区县"
+                    Text.BetweenDelimiters(
+                        [区域], "-", "-", {0, RelativePosition.FromStart}, {0, RelativePosition.FromStart}
                     )
                 else
-                    fx("Cleaner")(Text.AfterDelimiter([区域], "-"), "区县"),
+                    Text.AfterDelimiter([区域], "-"),
             type text
         ),
         ADelimiter1 = Table.AddColumn(
@@ -32,14 +27,16 @@
             "YY_区县",
             each
                 if List.Count(Text.Split([区域], "-")) = 4 then
-                    fx("Cleaner")(Text.AfterDelimiter([区域], "-", {1, RelativePosition.FromEnd}), "区县")
+                    Text.AfterDelimiter([区域], "-", {1, RelativePosition.FromEnd})
                 else if List.Count(Text.Split([区域], "-")) = 3 then
-                    fx("Cleaner")(Text.AfterDelimiter([区域], "-", {0, RelativePosition.FromEnd}), "区县")
+                    Text.AfterDelimiter([区域], "-", {0, RelativePosition.FromEnd})
                 else
                     "",
             type text
         ),
-        Replaced = Table.TransformColumns(ADelimiter1, {{"行政级别", each fx("Cleaner")(_, null, {"归属", "地"}, {"", ""})}}),
+        Cleaned1 = fx("Replace")(ADelimiter1, {"YY_地区"}, "地区"),
+        Cleaned2 = fx("Replace")(Cleaned1, {"YY_城市", "YY_区县"}, "区县"),
+        Replaced = Table.TransformColumns(Cleaned2, {{"行政级别", each fx("Clean")(_, {"归属", "地"}, {"", ""})}}),
         RemovedCol = Table.RemoveColumns(Replaced, {"行业", "区域"}, MissingField.Ignore),
         CN = Table.ColumnNames(RemovedCol),
         CN_TF = List.Transform(CN, each if not Text.StartsWith(_, "YY_") then "YY_" & _ else _),

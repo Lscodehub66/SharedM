@@ -1,0 +1,10 @@
+// let Code = Load("ISIN_Search","Code"), EVA = Expression.Evaluate(Code ,#shared)  in EVA
+let
+    ColList = List.Select(
+        Table.ColumnNames(CWB("ISIN_Search")), each not Text.Contains(_, "Column", Comparer.OrdinalIgnoreCase)  and not Text.Contains(_,"ISIN")
+    ),
+    ISINinput = Table.SelectColumns(CWB("ISIN_Search"),{"输入原始ISIN"},MissingField.UseNull),
+    #"Merged Queries" = Table.NestedJoin(ISINinput, {"输入原始ISIN"}, try CWB("deal_master") otherwise Load("deal_master"), {"ISIN"}, "Data", JoinKind.LeftOuter),
+    #"Expanded deal_master" = Table.ExpandTableColumn(#"Merged Queries", "Data", ColList)
+in
+    #"Expanded deal_master"

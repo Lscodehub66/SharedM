@@ -217,6 +217,7 @@ let
                 {"欧洲中东非洲", "欧洲、中东和非洲"},
                 {"银行财务部门", "司库"}
             },
+           
             一二三 = {
                 {"0", "零"},
                 {"1", "一"},
@@ -242,6 +243,7 @@ let
                 {"9", "I"},
                 {"10", "J"}
             },
+
             国家城市 = {
                 {"ABUDHABI", "^AUH^", "AUH", "阿布达比"},
                 {"ASTANA", "^NQZ^", "NQZ", "阿斯塔纳"},
@@ -271,7 +273,6 @@ let
             LOCATIONCN = List.Transform(国家城市, each List.LastN(_, 2)),
             RTBC = {{"【", ""}, {"】", ""}},
             // Select Cleaner
-            Text_ContainsAny = Load("Text_ContainsAny"),
             FText = if FTextInput = null then "" else Text.Upper(Text.Trim(FTextInput)),
             Nested =
                 if FText = "主体" then

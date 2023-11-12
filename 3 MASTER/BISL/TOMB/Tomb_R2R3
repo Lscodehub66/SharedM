@@ -57,7 +57,7 @@ let
                         and List.Sum([多币种]) / List.Count([多币种]) = 1
                         and List.Sum([多品种]) / List.Count([多品种]) = 1
                     then
-                        fxCleaner(Text.Combine(List.Distinct([币种单位]), ","), null, {"亿", "万"}, {"", ""})
+                        fx("Clean")(Text.Combine(List.Distinct([币种单位]), ","), {"亿", "万"}, {"", ""})
                     else
                         Text.Combine(List.Distinct([币种规模]), ","),
                 type text
@@ -92,16 +92,23 @@ let
     BDelimiter = Table.AddColumn(
         TransformSum, "R2", each if [多品种] = 1 then Text.BeforeDelimiter([唯一品种], ",") else [唯一品种], type text
     ),
+    MultiTrancheCN = fx(
+        "Replace"
+    )(
+        Table.AddColumn(BDelimiter, "多笔中文", each if [多笔] > 1 then Number.ToText([多笔]) else "", type text),
+        {"多笔中文"},
+        "一二三"
+    ),
     Added2 = Table.AddColumn(
-        BDelimiter,
+        MultiTrancheCN,
         "R3",
         each
             if [多品种] > 1 then
                 [多品种详情]
             else if [多笔] > 1 and [多币种] = 1 and [合并单币种] = "元" then
-                Text.Replace(fxCleaner(Number.ToText([多笔]), "123一二三"), "二", "双") & "批次" & "人民币" & [单币种]
+                Text.Replace([多笔中文], "二", "双") & "批次" & "人民币" & [单币种]
             else if [多笔] > 1 and [多币种] = 1 then
-                Text.Replace(fxCleaner(Number.ToText([多笔]), "123一二三"), "二", "双") & "批次" & [单币种]
+                Text.Replace([多笔中文], "二", "双") & "批次" & [单币种]
             else if [多品种] = 1 and [多币种] > 1 then
                 [多币种详情]
             else

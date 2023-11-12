@@ -27,7 +27,7 @@
             MissingField.Ignore
         ),
         CN_RNSource = Table.ColumnNames(Renamed),
-        //【4】DataType -> Load("fxMerge") has dataformat built-in, no seperate datatype step will be arranged
+        //【4】DataType -> fx("Merge") has dataformat built-in, no seperate datatype step will be arranged
         RCol = Table.RemoveColumns(Renamed, {"IS_EXCH"}, MissingField.Ignore),
         PQDMI_Default =
             try
@@ -38,7 +38,7 @@
             if List.Contains(CN_RNSource, "首次违约日") then
                 RCol
             else
-                Load("fxMerge")(RCol, PQDMI_Default, "信用主体", "发行人名称", {"首次违约日"}, {"首次违约日"}),
+                fx("Merge")(RCol, PQDMI_Default, "信用主体", "发行人名称", {"首次违约日"}, {"首次违约日"}),
         AddCol1 = Table.AddColumn(
             MergedQ,
             "IS_EXCH",

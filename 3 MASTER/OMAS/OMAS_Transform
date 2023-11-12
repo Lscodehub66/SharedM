@@ -48,6 +48,6 @@ let
                 & Text.End([Bond Details], 4)
                 & Number.ToText([票息NUM])
     ),
-    FnMerger = Load("fxMerge")(AddedCustom,  fxOMAS_Check(CWB("deal_master")),  "CheckOMAS", "CheckOMAS", {"Check"}, {"Check"})
+    FnMerger = fx("Merge")(AddedCustom,  fxOMAS_Check(CWB("deal_master")),  "CheckOMAS", "CheckOMAS", {"Check"}, {"Check"})
 in
     FnMerger

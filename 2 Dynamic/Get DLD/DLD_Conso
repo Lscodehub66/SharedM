@@ -1,7 +1,6 @@
 // let LoadCode = Load("DLD_Conso","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
     Source = Load("DLD_DMI"),
- 
     //
     Prefix = Load("Prefix"),
     //
@@ -21,30 +20,28 @@ let
     // Multisource steps
     BBG_HD = Get("Header_Exp_Dynamic_BBG"),
     BBG_HDExp = List.Transform(BBG_HD, each if _ = "计息基准" then Prefix & _ else _),
-    BBG_Merged = Load("fxMerge")(Add_BISL, Load("DLD_BBG_Corp"), "Check", "Check", BBG_HD,
-   
-    BBG_HDExp),
- //{"注册成立地", "发行人主上市地", "补充OMAS updates", "定价息差", "发行评级", "主体评级","ESG_Indicator","计息基准"}
-    TBC_1 = List.Accumulate( 
-            {{"发行评级","债项评级"},{"主体评级","穆迪/标普"}}, 
-          BBG_Merged,
-           ( x, y ) => 
-           Table.ReplaceValue(
-        x,
-        each Record.Field(_,y{0}),
-        each
-            if Record.Field(_,y{0}) = "" and Record.Field(_,y{1}) = "" then
-                "【】/【】/【】"
-            else if Record.Field(_,y{1}) = "" then
-                "【" & Record.Field(_,y{0}) & "】"
-            else if Record.Field(_,y{0}) = "" or (Record.Field(_,y{0}) = "--/--/--" and Record.Field(_,y{1}) <> "--/--") then
-                Record.Field(_,y{1}) & "/【】"
-            else
-                Record.Field(_,y{0}),
-        Replacer.ReplaceValue,
-        {y{0}}
-    )),
-   
+    BBG_Merged = fx("Merge")(Add_BISL, Load("DLD_BBG_Corp"), "Check", "Check", BBG_HD, BBG_HDExp),
+    //{"注册成立地", "发行人主上市地", "补充OMAS updates", "定价息差", "发行评级", "主体评级","ESG_Indicator","计息基准"}
+    TBC_1 = List.Accumulate(
+        {{"发行评级", "债项评级"}, {"主体评级", "穆迪/标普"}},
+        BBG_Merged,
+        (x, y) =>
+            Table.ReplaceValue(
+                x,
+                each Record.Field(_, y{0}),
+                each
+                    if Record.Field(_, y{0}) = "" and Record.Field(_, y{1}) = "" then
+                        "【】/【】/【】"
+                    else if Record.Field(_, y{1}) = "" then
+                        "【" & Record.Field(_, y{0}) & "】"
+                    else if Record.Field(_, y{0}) = "" or (Record.Field(_, y{0}) = "--/--/--" and Record.Field(_, y{1}) <> "--/--") then
+                        Record.Field(_, y{1}) & "/【】"
+                    else
+                        Record.Field(_, y{0}),
+                Replacer.ReplaceValue,
+                {y{0}}
+            )
+    ),
     TBC_2 = Table.ReplaceValue(
         TBC_1,
         "",
@@ -53,37 +50,41 @@ let
         {"计息基准"}
     ),
     // End of MultiSource
-    #"//GNG_Multi" = if Text.Contains(Load("Controller")[Multi]{0},"BBG") or Load("Controller")[Multi]{0} = "ON" then "GO" else "NO-GO",
-
-  
+    #"//GNG_Multi" =
+        if Text.Contains(Load("Controller")[Multi]{0}, "BBG") or Load("Controller")[Multi]{0} = "ON" then
+            "GO"
+        else
+            "NO-GO",
     Crossroad =
-             if    #"//GNG_Multi" <> "GO"  then
+        if #"//GNG_Multi" <> "GO" then
             Table.RenameColumns(Add_BISL, {{"债项评级", "发行评级"}, {"穆迪/标普", "主体评级"}}, MissingField.UseNull)
         else
             TBC_2,
     // facilitate FIMTN Review
-    Add_FIMTN = Table.TransformColumns(Load("fxIsFIMTN")(Crossroad),{{"IS_FIMTN", each if _ = "Y" then "【Y】" else _}}),
+    Add_FIMTN = Table.TransformColumns(Load("fxIsFIMTN")(Crossroad), {{"IS_FIMTN", each if _ = "Y" then "【Y】" else _}}),
     //
-    CWBSelfJoin_Merged = Load(
-        "fxMerge"
+    CWBSelfJoin_Merged = fx(
+        "Merge"
     )(
         Add_FIMTN, CWB("DLD_Conso"), "Check", "Check", {"IS_FIMTN"}, {Prefix & "IS_FIMTN"}
     ),
-    CWBSelfJoin_Replaced = try Table.ReplaceValue(
-        CWBSelfJoin_Merged,
-        each [IS_FIMTN],
-        each
-            if
-                Record.Field(_, Prefix & "IS_FIMTN") <> [IS_FIMTN]
-                and Record.Field(_, Prefix & "IS_FIMTN") <> null
-                and Record.Field(_, Prefix & "IS_FIMTN") <> ""
-            then
-                Record.Field(_, Prefix & "IS_FIMTN")
-            else
-                [IS_FIMTN],
-        Replacer.ReplaceValue,
-        {"IS_FIMTN"}
-    ) otherwise Add_FIMTN,
+    CWBSelfJoin_Replaced =
+        try
+            Table.ReplaceValue(
+                CWBSelfJoin_Merged,
+                each [IS_FIMTN],
+                each
+                    if
+                        Record.Field(_, Prefix & "IS_FIMTN") <> [IS_FIMTN]
+                        and Record.Field(_, Prefix & "IS_FIMTN") <> null
+                        and Record.Field(_, Prefix & "IS_FIMTN") <> ""
+                    then
+                        Record.Field(_, Prefix & "IS_FIMTN")
+                    else
+                        [IS_FIMTN],
+                Replacer.ReplaceValue,
+                {"IS_FIMTN"}
+            ) otherwise Add_FIMTN,
     Checked = Load("fxCheckNDupe")(CWBSelfJoin_Replaced),
     Sorted = Load("fxSortNIndex")(Checked),
     //

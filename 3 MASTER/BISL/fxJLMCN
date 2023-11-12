@@ -1,0 +1,199 @@
+(TextName as text) =>
+    let
+        fxClean = (InputText as text, FinderList as list, ReplacerList as list) =>
+            let
+                // Bulk replace
+                ReplacerTable = Table.Buffer(Table.FromColumns({FinderList, ReplacerList}, {"Find", "Replace"})),
+                FindReplaceList = Table.ToRows(ReplacerTable),
+                Counter = Table.RowCount(ReplacerTable),
+                BulkReplaceValues = (TextToReplaceTemp, n) =>
+                    let
+                        ReplacedText = Text.Replace(
+                            TextToReplaceTemp,
+                            if FindReplaceList{n}{0} = null then
+                                ""
+                            else
+                                FindReplaceList{n}{0},
+                            if FindReplaceList{n}{1} = null then
+                                ""
+                            else
+                                FindReplaceList{n}{1}
+                        )
+                    in
+                        if n = Counter - 1 then
+                            ReplacedText
+                        else
+                            @BulkReplaceValues(ReplacedText, n + 1),
+                Output = BulkReplaceValues((InputText ?? ""), 0)
+            in
+                Output,
+        Location_Find = {
+            "ABUDHABI",
+            "ASTANA",
+            "DUBAI",
+            "FRANKFURT",
+            "HONGKONG",
+            "HUNGARY",
+            "JOHANNESBURG",
+            "LONDON",
+            "LUXEMBOURG",
+            "MACAU",
+            "NEWYORK",
+            "PARIS",
+            "SINGAPORE",
+            "SYDNEY",
+            "TAIPEI",
+            "TOKYO",
+            "QATAR"
+        },
+        Location_Replace = List.Buffer(
+            {
+                "AUH",
+                "NQZ",
+                "DXB",
+                "FRA",
+                "HK",
+                "BUD",
+                "JNB",
+                "LON",
+                "LUX",
+                "MFM",
+                "JFK",
+                "PAR",
+                "SG",
+                "SYD",
+                "TPE",
+                "TYO",
+                "QTR"
+            }
+        ),
+        #"Location_Replace^" = List.Transform(Location_Replace, each "^" & _ & "^"),
+        Location_CN = {
+            "阿布达比分行",
+            "阿斯塔纳分行",
+            "迪拜分行",
+            "法兰克福分行",
+            "港分",
+            "匈牙利分行",
+            "约翰内斯堡分行",
+            "伦分",
+            "卢森堡分行",
+            "澳分",
+            "纽分",
+            "巴黎分行",
+            "新分",
+            "悉尼分行",
+            "台北分行",
+            "东京分行",
+            "卡塔尔分行"
+        },
+        TrimJLM_Find = {
+            "BANKOFCOMMUNICATIONSINTERNATIONAL",
+            "CHINACONSTRUCTIONBANKEUROPE",
+            "INDUSTRIALANDCOMMERCIALBANKOFCHINAASIA",
+            "CHINACONSTRUCTIONBANKASIA",
+            "CHINAINVESTMENTSECURITIES",
+            "CHINAEVERBRIGHTBANK",
+            "CHINASECURITIES",
+            "CHINAINTERNATIONALCAPITAL",
+            "ASIAPACIFIC",
+            "ASSETMANAGEMENT",
+            "INTERNATIONAL",
+            "SECURITIES",
+            "CAPITAL",
+            "/THE",
+            "AUSTRALIANEWZEALANDBANK",
+            "MERRILL",
+            "INDUSTRIALANDCOMMERCIAL",
+            "NATIONALAUSTRALIABANK",
+            "OVERSEACHINESEBANK",
+            "UNITEDOVERSEAS",
+            "HAITONGBANK",
+            "MITSUBISHIUFJ",
+            "HONGKONGANDSHANGHAI",
+            "HONGKONGSHANGHAI",
+            "PINGANOFCSC",
+            "BANKOFEASTASIA"
+        },
+        TrimJLM_Replace = {
+            "BOCOMINTERNATIONAL",
+            "CCBEUROPE",
+            "ICBCASIA",
+            "CCBA",
+            "CNINVSE",
+            "CHINAEVERBRIGHTBK",
+            "CSCI",
+            "CICC",
+            "ASIA",
+            "AM",
+            "INTL",
+            "SEC",
+            "CAP",
+            "",
+            "ANZ",
+            "BOFA",
+            "INDUSTRIALCOMM",
+            "NAB",
+            "OCBC",
+            "UOB",
+            "HTBANK",
+            "MUFG",
+            "HSBC",
+            "HSBC",
+            "CHINAPASEC",
+            "BEA"
+        },
+        承销商 = Table.Buffer(Load("JLM_Replacer", "CSV")),
+        承销商_Find = List.Buffer(承销商[Find]),
+        #"承销商_Replace^" = List.Transform(承销商_Find, each "^" & _ & "^"),
+        承销商_CNShort = List.Buffer(承销商[CN_Short]),
+        //Prep Text
+        UpperNSelected = Text.Select(Text.Upper(TextName ?? ""), {"A".."Z", "/", ";"}),
+        RemovedFakeBR = List.Accumulate(
+            {
+                "CREDITAGRICOLECIB",
+                "BARCLAYSBANK",
+                "BNPPARIBAS",
+                "DEUTSCHEBANK",
+                "INGBANK",
+                "MIZUHOBANK",
+                "NATIXIS",
+                "STANDARDCHARTERED",
+                "WESTPAC",
+                "DBSBANK",
+                "UBSAG"
+            },
+            UpperNSelected,
+            (x, y) =>
+                if Text.Contains((x ?? ""), y) and Text.Contains((x ?? ""), "/") then
+                    Text.BeforeDelimiter(x, "/")
+                else
+                    x
+        ),
+        TextToExtract = fxClean(RemovedFakeBR, TrimJLM_Find, TrimJLM_Replace),
+        // Extract Branch
+        BR1 = fxClean(
+            TextToExtract,
+            {
+                "HONGKONGBRANCH",
+                "LONDONBRANCH",
+                "SINGAPOREBRANCH",
+                "DUBAIDIFCBRANCH",
+                "NEWYORKBRANCH",
+                "MACAUBRANCH",
+                "/THE"
+            },
+            {"/HONGKONG", "/LONDON", "/SINGAPORE", "/DUBAI", "/NEWYORK", "/MACAU", ""}
+        ),
+        BR2 = Text.AfterDelimiter(BR1, "/"),
+        BR3 = fxClean(BR2, Location_Find, #"Location_Replace^"),
+        BR4 = Text.BetweenDelimiters(BR3, "^", "^"),
+        BR5 = fxClean(BR4, Location_Replace, Location_CN),
+        // Extract ShortName
+        SN1 = fxClean(TextToExtract, 承销商_Find, #"承销商_Replace^"),
+        SN2 = Text.BetweenDelimiters(SN1, "^", "^"),
+        SN3 = fxClean((SN2 ?? ""), 承销商_Find, 承销商_CNShort),
+        // Combine
+        Output = SN3 & BR5
+    in
+        Output

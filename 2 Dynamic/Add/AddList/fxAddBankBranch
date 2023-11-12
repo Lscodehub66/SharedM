@@ -1,27 +1,28 @@
 //Example
 //Table.AddColumn(SelectedCol, "通过分行", each if Text.Contains([信用主体],"银行") and fxSNBranch([发行人]) = "" then "【总行】" else if Text.Contains([信用主体],"银行") then  fxSNBranch([发行人]) & "分行" else "")
 //Function
-(TableName as table) =>
+(TableName as table,optional ColNameInput as nullable text) =>
     let
         Source = TableName,
-        fxCleaner = fx("Cleaner"),
         DummyCol = {"Text1", "Text2", "Text3"},
         NewCol = {"通过分行"},
-        ColName = "发行人",
+        ColName = if ColNameInput = null then "发行人" else ColNameInput,
         //
         Prep = Table.RemoveColumns(Source, DummyCol & NewCol, MissingField.Ignore),
         PrepText = Table.AddColumn(
             Prep,
             "Text1",
             each
-                if Record.Field(_, ColName) = null then
-                    ""
-                else if not Text.Contains(Record.Field(_, ColName), "银行") or not Text.Contains(Record.Field(_, ColName), "BANK") then
+                if
+                    not Text.Contains((Record.Field(_, ColName) ?? ""), "银行")
+                    and not Text.Contains((Record.Field(_, ColName) ?? ""), "BANK")
+                then
                     ""
                 else
-                    fxCleaner(
-                        Text.Upper(Record.Field(_, ColName)),
-                        null,
+                    fx(
+                        "Clean"
+                    )(
+                        Text.Upper((Record.Field(_, ColName) ?? "")),                
                         {"MACAO", " ", ",", ".", "CHINA", "NY", "THE"},
                         {"MACAU"}
                     ),
@@ -41,34 +42,40 @@
                     Text.BetweenDelimiters([Text1], "公司", "分行")
                 else if Text.Contains([Text1], "分行") and Text.Contains([Text1], "银行") then
                     Text.BetweenDelimiters([Text1], "银行", "分行")
+                else if not Text.Contains([Text1], "(") then
+                    "【总行】"
                 else
-                    "【总行】",
+                    "",
             type text
         ),
-        ExtractedEN = Table.AddColumn(
+        ExtractedEN2 = Table.AddColumn(
             ExtractedCN,
             "Text3",
             each
-                if [Text2] = "" then
-                    ""
-                else if
+                if
                     List.Contains({"A".."Z"}, Text.Start([Text2], 1))
                     and (Text.Contains([Text2], "/") or Text.Contains([Text2], "BRANCH"))
                 then
-                    fxCleaner(
-                        Text.BetweenDelimiters(
-                            fxCleaner([Text2], "Location^"), "^", "^", {1, RelativePosition.FromEnd}, 0
-                        ),
-                        "LocationCN"
-                    )
+                    [Text2]
                 else if List.Contains({"A".."Z"}, Text.Start([Text2], 1)) then
                     "【总行】"
                 else
-                    [Text2],
+                    "",
             type text
         ),
+        #"Delimiter Marked" = fx("Replace")(ExtractedEN2, {"Text3"}, "LOCATION^"),
+        #"Extracted Text Between Delimiters" = fx(
+            "Replace"
+        )(
+            Table.TransformColumns(
+                #"Delimiter Marked",
+                {{"Text3", each Text.BetweenDelimiters(_, "^", "^", {1, RelativePosition.FromEnd}, 0), type text}}
+            ),
+            {"Text3"},
+            "LOCATIONCN"
+        ),
         AddedSuffix = Table.AddColumn(
-            ExtractedEN,
+            #"Extracted Text Between Delimiters",
             NewCol{0},
             each if [Text3] <> "" and not Text.Contains([Text3], "【") then [Text3] & "分行" else [Text3],
             type text

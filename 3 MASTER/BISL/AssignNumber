@@ -1,14 +1,19 @@
 let
- CWB_Directory  = CWB ( "Directory" ), 
- fxAssignNumber = Load ( "fxAssignNumber" ), 
- Source         = Table.SelectColumns ( CWB_Directory, { "Check", "YYMMDD", "COMPARER" }, MissingField.UseNull ), 
- PRJ_Fn         = fxAssignNumber ( Source, "COMPARER", "YYMMDD", 1, "每日第N个项目" ), 
- // Below Step referenced to previous step skipped
- PRJ_Merged     = Load("fxMerge") ( Source, PRJ_Fn, "COMPARER", "COMPARER", { "每日第N个项目" }, { "每日第N个项目" } ), 
- PRJ_Added      = Table.AddColumn ( PRJ_Merged  , "项目序号", each Text.From ( [YYMMDD] ) & fxCleaner ( Number.ToText ( [每日第N个项目] ), "123ABC" ) ), 
- Tranche_Fn     = fxAssignNumber ( PRJ_Added, "Check", "COMPARER", 1, "每项目第N笔" ), 
- // Below Step referenced to previous step skipped
- Tranche_Merged = Load("fxMerge") ( PRJ_Added, Tranche_Fn, "Check", "Check", { "每项目第N笔" }, { "每项目第N笔" } ), 
- Tranche_Added  = Table.AddColumn ( Tranche_Merged, "笔数序号", each [项目序号] & Number.ToText ( [每项目第N笔] ) )
+    CWB_Directory = CWB("Directory"),
+    Source = Table.SelectColumns(CWB_Directory, {"Check", "YYMMDD", "COMPARER"}, MissingField.UseNull),
+    PRJ_Fn = fx("AssignNumber")(Source, "COMPARER", "YYMMDD", 1, "每日第N个项目"),
+    // Below Step referenced to previous step skipped
+    PRJ_Merged = fx("Merge")(Source, PRJ_Fn, "COMPARER", "COMPARER", {"每日第N个项目"}, {"每日第N个项目"}),
+    PRJ_Added = fx(
+        "Replace"
+    )(
+        Table.AddColumn(PRJ_Merged, "项目序号", each Text.From([YYMMDD]) & Number.ToText([每日第N个项目]), type text),
+        {"项目序号"},
+        "123ABC"
+    ),
+    Tranche_Fn = fx("AssignNumber")(PRJ_Added, "Check", "COMPARER", 1, "每项目第N笔"),
+    // Below Step referenced to previous step skipped
+    Tranche_Merged = fx("Merge")(PRJ_Added, Tranche_Fn, "Check", "Check", {"每项目第N笔"}, {"每项目第N笔"}),
+    Tranche_Added = Table.AddColumn(Tranche_Merged, "笔数序号", each [项目序号] & Number.ToText([每项目第N笔]))
 in
- Tranche_Added
+    Tranche_Added

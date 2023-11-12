@@ -14,7 +14,7 @@ let
         {"市场指数"}
     ),
     #"Added Index" = Table.AddIndexColumn(Replaced, "Index", 1, 1, Int64.Type),
-    Custom1 = Load("fxMerge")(#"Added Index", Indice_Table_Data, "PK", "PK", {""}, {""}),
+    Custom1 = fx("Merge")(#"Added Index", Indice_Table_Data, "PK", "PK", {""}, {""}),
     SCol = Table.SelectColumns(
         Custom1,
         List.Distinct(

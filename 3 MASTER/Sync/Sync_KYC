@@ -27,8 +27,8 @@ let
     Renamed = Table.RenameColumns(Replaced, {{"PROJECT_NAME", "KYC对账号"}}),
     SCol = Table.SelectColumns(Renamed, KYC_SyncHeader, MissingField.UseNull),
     TF = Table.TransformColumns(SCol, {{"KYC Status", each "需与QRC确认Excisting"}}),
-    Combined = Load("fxCombine")({KYC_SCol, TF}, {"信用主体"}),
-    MergedQ = Load("fxMerge")(Combined, CWB_mCredit, "信用主体", "信用主体", {"信用主体简称"}, {"信用主体简称"}),
+    Combined = fx("Combine")({KYC_SCol, TF}, {"信用主体"}),
+    MergedQ = fx("Merge")(Combined, CWB_mCredit, "信用主体", "信用主体", {"信用主体简称"}, {"信用主体简称"}),
     Sorted1 = Table.Sort(MergedQ, {{"KYC对账号", Order.Descending}})
 in
     Sorted1

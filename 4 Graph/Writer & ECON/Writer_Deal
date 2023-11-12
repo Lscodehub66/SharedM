@@ -2,7 +2,7 @@
 let
  Source = Load("Controller"),
     #"Removed Other Columns" = Table.SelectColumns(Source,{"当前_YYW"},MissingField.UseNull),
-    MergedQ = Load("fxMerge")(#"Removed Other Columns",  Load("deal_master"),"当前_YYW","YYW" , {""}, {""}),
+    MergedQ = fx("Merge")(#"Removed Other Columns",  Load("deal_master"),"当前_YYW","YYW" , {""}, {""}),
     Filtered  = Table.Buffer(Table.SelectRows (  MergedQ, each [删除及隐藏] = ""and  [定价日] <> null)),
     WriteNewIssue            = Load("fxNewIssueWriter") ( Filtered, "1周", "2主体", "3详情", "4品种", "5价格", "6担任" ),
      #"Renamed Columns" = Table.RenameColumns(  WriteNewIssue   ,{{"货币", "Column1"}, {"板块", "Column0"}, {"Writer", "Column2"}},MissingField.UseNull),

@@ -16,7 +16,7 @@ let
     ),
     Checked = Load("fxCheckNDupe")(SortedText),
     SCol = Table.SelectColumns(Checked, CWB("ESG_ExternalReview", "CN"), MissingField.UseNull),
-    Output = try Load("fxCombine")({SCol, CWB("ESG_ExternalReview")}, {"Check"}) otherwise CWB("ESG_ExternalReview"),
+    Output = try fx("Combine")({SCol, CWB("ESG_ExternalReview")}, {"Check"}) otherwise CWB("ESG_ExternalReview"),
     RBlank1 = Table.SelectRows(Output, each [外部评审方式] <> "" or [外部评审机构] <> "")
 in
  RBlank1
