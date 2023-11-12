@@ -1,4 +1,4 @@
-//Pie1 = Load("fxPie")((Source,"年",Order.Ascending,"货币细分","亿美元"),
+//Pie1 = fx("Pie")((Source,"年",Order.Ascending,"货币细分","亿美元"),
 //let PivotCol = "年",    OneOrZero = Order.Ascending,    GroupCol = "货币细分",    MeasureCol = "亿美元",    Source = wPie_Load, Code = Load("fxPie","Code"), EVA = Expression.Evaluate(Code,#shared) (Source,PivotCol,OneOrZero,GroupCol,MeasureCol) in EVA,
 //PivotCol = "年",    OneOrZero = Order.Ascending,    GroupCol = "货币细分",    MeasureCol = "亿美元",    Source = wPIE_Load,
 (

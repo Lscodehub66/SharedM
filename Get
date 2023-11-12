@@ -710,7 +710,7 @@ let
             Header_Sync_KYC = {"KYC对账号", "发行人", "KYC Status", "KYC expiry date", "信用主体"},
             //   CN = ColumnNames
             CN_BaseDirectory_Deal = Table.ColumnNames(fx("Source")("DIRECTORY_TBL_DEAL")),
-            CN_mChart = Table.ColumnNames(fx("Source")("DEALSMASTER_MCHART")),
+            CN_mChart = Table.ColumnNames(fx("Excel")("DEALSMASTER_MCHART")),
             // Selection
             Key = Text.Replace(Text.Upper(Text.Trim(TextName)), "_", ""),
             CNSource =

@@ -1,10 +1,10 @@
 ﻿//  let LoadCode = Load("DimSum_Pie","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
 let
     Source = Table.Buffer(Load("DimSum_Data")),
-    Pie2 = Load("fxPie")(Source, "年", Order.Ascending, "板块", "笔数"),
-    Pie3 = Load("fxPie")(Source, "年", Order.Ascending, "点心债年期分类", "笔数"),
-    Pie4 = Load("fxPie")(Source, "年", Order.Ascending, "清算地", "笔数"),
-    Pie5 = Load("fxPie")(Source, "年", Order.Ascending, "上市分类", "笔数"),
+    Pie2 = fx("Pie")(Source, "年", Order.Ascending, "板块", "笔数"),
+    Pie3 = fx("Pie")(Source, "年", Order.Ascending, "点心债年期分类", "笔数"),
+    Pie4 = fx("Pie")(Source, "年", Order.Ascending, "清算地", "笔数"),
+    Pie5 = fx("Pie")(Source, "年", Order.Ascending, "上市分类", "笔数"),
     Combined = fx("Combine")({Pie2, Pie3, Pie4, Pie5}),
     Substracted = Table.AddColumn(Combined, "变动", each Number.Round([23年笔数占比] - [22年笔数占比], 4),Percentage.Type),
     #"Merged Queries" = Table.NestedJoin(

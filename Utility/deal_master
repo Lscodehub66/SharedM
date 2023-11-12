@@ -1,5 +1,5 @@
   let
-  Source = fx("Source")("DEALSMASTER_DEAL_MASTER")
+  Source = fx("Excel")("DEALSMASTER_DEAL_MASTER")
   in
   Source
   

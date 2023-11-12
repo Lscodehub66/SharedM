@@ -7,7 +7,7 @@ let
  SelectedCol =  Table.SelectColumns ( Filtered, #"//IDHeaders"  ),
  MergedQ = fx("Merge") (  SelectedCol , Load("DLD_BBG_Corp"), "ISIN", "ISIN", { "" }, { "" } ), 
   #"//BBGHeaders" =List.RemoveItems(Table.ColumnNames ( MergedQ), #"//IDHeaders"),
- MergedQ1 = fx("Merge") ( MergedQ, fx("Source")("DEALSMASTER_DMI_Credit"), "信用主体", "信用主体", { "" }, { "" } ), 
+ MergedQ1 = fx("Merge") ( MergedQ, fx("Excel")("DEALSMASTER_DMI_Credit"), "信用主体", "信用主体", { "" }, { "" } ), 
    #"//DMICrHeaders" =List.RemoveItems(Table.ColumnNames ( MergedQ1),   #"//BBGHeaders" ),
  SelectedCol1 = Table.SelectColumns ( MergedQ1, List.Distinct(#"//IDHeaders"&  #"//DMICrHeaders"&{"主题债券","发行架构" ,"IPT","FPG","联席全球协调人"}&#"//BBGHeaders" ), MissingField.UseNull), 
  AddedCol = Table.AddColumn ( SelectedCol1, "DataSource", each "BBG" ), 

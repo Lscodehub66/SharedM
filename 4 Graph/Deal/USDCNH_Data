@@ -6,7 +6,7 @@ let
     MergedDB = Load("fxDBMerger")(Source),
     FinalizedDB = Load("fxDBFinalization")(MergedDB),
     Twotbl = fx("Combine")({FinalizedDB,  SourceB}, {"Check"}, Header_USDCNH),
-    Fn = Load("fxDBNewIssue")(Twotbl, "USDCNH_Data")
+    Fn =fx("DBNewIssue")(Twotbl, "USDCNH_Data")
     //{"Index","ISIN","定价日", "信用主体", "亿美元", "评级分类", "年期分类","货币",  "货币细分", "板块", "删除及隐藏","Check" }
 in
     Fn

@@ -1,18 +1,13 @@
 let
-Source = fx("Source")("DOWNLOAD"),
-Data = Source{[Item = "Tables_value"]}[Data],
-#"Removed Other Columns" = Table.SelectColumns(
-Data, {"Column61", "Column62", "Column66", "Column67", "Column68"}, MissingField.UseNull
-),
-Cleaned = List.Accumulate(
-List.LastN(Table.ColumnNames(#"Removed Other Columns"), 3),
-#"Removed Other Columns",
-(x, y) => Table.TransformColumns(x, {{y, each fx("Cleaner")(_, "评级")}})
-),
-Custom1 = fx("SheetTotbl")(Cleaned, {"Column61", "Index", null}),
-
-    #"Merged Columns" = Table.CombineColumns(Custom1 ,{"Moody's", "SP", "FITCH"},Combiner.CombineTextByDelimiter("/", QuoteStyle.None),"当前主体评级")
-   
+    Source = fx("Source")("DOWNLOAD"),
+    Data = Source{[Item = "Tables_value"]}[Data],
+    #"Removed Other Columns" = Table.SelectColumns(
+        Data, {"Column61", "Column62", "Column66", "Column67", "Column68"}, MissingField.UseNull
+    ),
+    Cleaned = fx("Replace")(#"Removed Other Columns", {"Column66", "Column67", "Column68"}, "评级"),
+    Custom1 = fx("SheetTotbl")(Cleaned, {"Column61", "Index", null}),
+    #"Merged Columns" = Table.CombineColumns(
+        Custom1, {"Moody's", "SP", "FITCH"}, Combiner.CombineTextByDelimiter("/", QuoteStyle.None), "当前主体评级"
+    )
 in
-
-    #"Merged Columns" 
+    #"Merged Columns"

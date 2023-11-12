@@ -1,5 +1,5 @@
 let
-    Source      = fx("Source")("DEALSMASTER_MINDICE"),
+    Source      = fx("Excel")("DEALSMASTER_=MINDICE"),
   KeyDate = List.Buffer(Load("Controller")[近5年]){0},
  Filtered    = Table.SelectRows (   Source , each [Date] >= KeyDate ) 
 in

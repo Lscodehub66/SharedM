@@ -3,9 +3,9 @@
 let
     Source = Table.Buffer(Load("SBLC_Data")) ,
 
-    Pie2 = Load("fxPie")(Source, "年", Order.Ascending, "货币", "亿美元"),
+    Pie2 = fx("Pie")(Source, "年", Order.Ascending, "货币", "亿美元"),
     //**Skipped**
- Pie3 = Load("fxPie")(Source, "年", Order.Ascending, "板块", "亿美元"),
+ Pie3 = fx("Pie")(Source, "年", Order.Ascending, "板块", "亿美元"),
     Combined = fx("Combine")({  Pie2 ,Pie3}),
     //**Skipped**
     Substracted = Table.AddColumn(Pie2 , "变动", each Number.Round([23年占比] - [22年占比],4), Percentage.Type),

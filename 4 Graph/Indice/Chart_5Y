@@ -1,7 +1,7 @@
 //  let LoadCode = Load("Chart_5Y","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
 let
 
-    Source = fx("Source")("DEALSMASTER_MINDICE"),
+    Source = fx("Excel")("DEALSMASTER_=MINDICE"),
     KeyDate = List.Buffer(Load("Controller")[近5年]){0},
     Filtered = Table.SelectRows(Source, each [Date] >= KeyDate),
     CN_Indice = List.Buffer(Table.SelectRows(Load("Dimtbl_Indice"), each ([IS_5Y] <> ""))[PK]),

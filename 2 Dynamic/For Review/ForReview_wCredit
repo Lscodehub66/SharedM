@@ -19,7 +19,7 @@ let
         }
     ),
     Replaced = Table.ReplaceValue(TFCol, null, each [信用主体], Replacer.ReplaceValue, {"债券简称"}),
-    MergedQ = Table.NestedJoin(Replaced, {"信用主体"}, fx("Source")("DEALSMASTER_mCredit"), {"信用主体"}, Prefix & "Data", JoinKind.LeftAnti),
+    MergedQ = Table.NestedJoin(Replaced, {"信用主体"}, fx("Excel")("DEALSMASTER_mCredit"), {"信用主体"}, Prefix & "Data", JoinKind.LeftAnti),
     Function = Table.AddColumn(MergedQ, "SHORTNAMER", each fx("SNBankCorp")([债券简称])),
     RemovedCol = Table.SelectColumns(Function, {"信用主体", "SHORTNAMER", "中资属性", "板块"}, MissingField.UseNull),
     BlankToInput = Table.ReplaceValue(RemovedCol, null, "【】", Replacer.ReplaceValue, {"中资属性", "板块"})

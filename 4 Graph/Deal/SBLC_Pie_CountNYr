@@ -1,9 +1,9 @@
 //let LoadCode = Load("SBLC_Pie_Count","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
 let
     Source = Table.Buffer(Load("SBLC_Data")),
-    Pie1 = Load("fxPie")(Load("deal_master"), "年", Order.Ascending, "结构分类", "笔数"),
-    Pie2 = Load("fxPie")(Source, "年", Order.Ascending, "结构", "笔数"),
-    Pie3 = Load("fxPie")(Source, "年", Order.Ascending, "备证年期分类", "笔数"),
+    Pie1 = fx("Pie")(Load("deal_master"), "年", Order.Ascending, "结构分类", "笔数"),
+    Pie2 = fx("Pie")(Source, "年", Order.Ascending, "结构", "笔数"),
+    Pie3 = fx("Pie")(Source, "年", Order.Ascending, "备证年期分类", "笔数"),
     Combined = fx("Combine")({Pie1, Pie2, Pie3}),
     Substracted = Table.AddColumn(Combined, "变动", each Number.Round([23年笔数占比] - [22年笔数占比],4), Percentage.Type),
     #"Merged Queries" = Table.NestedJoin(

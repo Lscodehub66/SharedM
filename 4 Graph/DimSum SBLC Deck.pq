@@ -3,7 +3,7 @@ let GPS  = try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} ot
 
 // deal_master
 let
- Source = fx("Source")("DEALSMASTER_DEAL_MASTER"),
+ Source = fx("Excel")("DEALSMASTER_DEAL_MASTER"),
  KeyDate = List.Buffer(Load("Controller")[Monday]){0},
       Filtered = Table.SelectRows(    Source, each [删除及隐藏] = "" and  [定价日] < KeyDate and [定价日]>= #date(2022,1,1) )
 
@@ -42,7 +42,7 @@ in
 // CNH
 let
  Source      = deal_master,
-  Fn = Load("fxDBNewIssue")(    Source  , "DIMSUMFTZ")
+  Fn =fx("DBNewIssue")(    Source  , "DIMSUMFTZ")
  in
   Fn
 
@@ -61,10 +61,10 @@ let GPS  = try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} ot
 let
     Source = Table.Buffer(Load("DimSum")) ,
 
-    Pie2 = Load("fxPie")(Source, "年", Order.Ascending, "板块", "笔数"),
-    Pie3 = Load("fxPie")(Source, "年", Order.Ascending, "点心债年期分类", "笔数"),
-    Pie4 = Load("fxPie")(Source, "年", Order.Ascending, "清算地", "笔数"),
-    Pie5 = Load("fxPie")(Source, "年", Order.Ascending, "上市分类", "笔数"),
+    Pie2 = fx("Pie")(Source, "年", Order.Ascending, "板块", "笔数"),
+    Pie3 = fx("Pie")(Source, "年", Order.Ascending, "点心债年期分类", "笔数"),
+    Pie4 = fx("Pie")(Source, "年", Order.Ascending, "清算地", "笔数"),
+    Pie5 = fx("Pie")(Source, "年", Order.Ascending, "上市分类", "笔数"),
     Combined = fx("Combine")({  Pie2 ,Pie3, Pie4, Pie5}),
     Substracted = Table.AddColumn(Combined, "变动", each [23年笔数占比] - [22年笔数占比], Percentage.Type),
     Reordered = Table.ReorderColumns(
@@ -82,8 +82,8 @@ let GPS  = try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} ot
 let
     Source = Table.Buffer(Load("SBLC")) ,
 
-    Pie2 = Load("fxPie")(Source, "年", Order.Ascending, "货币", "亿美元"),
-    Pie3 = Load("fxPie")(Source, "年", Order.Ascending, "板块", "亿美元"),
+    Pie2 = fx("Pie")(Source, "年", Order.Ascending, "货币", "亿美元"),
+    Pie3 = fx("Pie")(Source, "年", Order.Ascending, "板块", "亿美元"),
     Combined = fx("Combine")({  Pie2 ,Pie3}),
     Substracted = Table.AddColumn(Combined, "变动", each [23年占比] - [22年占比], Percentage.Type),
     Reordered = Table.ReorderColumns(
@@ -100,10 +100,10 @@ let GPS  = try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} ot
 // SBLC_Pie_Count
 let
     Source = Table.Buffer(Load("SBLC")) ,
-Pie1= Load("fxPie")(deal_master, "年", Order.Ascending, "结构分类", "笔数"),
+Pie1= fx("Pie")(deal_master, "年", Order.Ascending, "结构分类", "笔数"),
 
-    Pie2 = Load("fxPie")(Source, "年", Order.Ascending, "结构", "笔数"),
-    Pie3 = Load("fxPie")(Source, "年", Order.Ascending, "备证年期分类", "笔数"),
+    Pie2 = fx("Pie")(Source, "年", Order.Ascending, "结构", "笔数"),
+    Pie3 = fx("Pie")(Source, "年", Order.Ascending, "备证年期分类", "笔数"),
 
     Combined = fx("Combine")({ Pie1, Pie2 ,Pie3}),
     Substracted = Table.AddColumn(Combined, "变动", each [23年笔数占比] - [22年笔数占比], Percentage.Type),
@@ -116,7 +116,7 @@ in
 
 // deal_master
 let
- Source = fx("Source")("DEALSMASTER_DEAL_MASTER"),
+ Source = fx("Excel")("DEALSMASTER_DEAL_MASTER"),
  KeyDate = List.Buffer(Load("Controller")[Monday]){0},
       Filtered = Table.SelectRows(    Source, each [删除及隐藏] = "" and  [定价日] < KeyDate and [定价日]>= #date(2022,1,1) )
 

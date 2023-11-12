@@ -1,6 +1,6 @@
 let
   EndNum = Number.From(Date.ToText(Load("Controller")[Monday]{0},"yyyyMMdd")),
-    Source = Load("fxDimDate")(20220101,  EndNum,{"YYW"}),
+    Source = fx("DimDate")(20220101,  EndNum,{"YYW"}),
     #"Removed Duplicates" = Table.Distinct(Source),
    #">>GroupedByWeek" = Table.Buffer( Table.Group( Table.SelectRows(Load("deal_master"), each [删除及隐藏] = ""), {"YYW"}, {{"笔数", each Table.RowCount(_), Int64.Type}, {"亿美元", each List.Sum([亿美元]), type number}})),
     #"Merged Queries" = fx("Merge")(#"Removed Duplicates",  #">>GroupedByWeek" ,  "YYW", "YYW", {"笔数", "亿美元"},{""},{"Keep"}),

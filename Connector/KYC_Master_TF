@@ -1,37 +1,30 @@
 //let LoadCode = Load("KYC_Master_TF","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
-    let
-        Source = try CWB("KYC_Master") otherwise fx("Source")("KYC_Master"),
-        
-        //
-        TF = Table.TransformColumns(
-            Source,
-            {
-                {
-                    "项目名称（集团全称）",
-                    each fxCleaner(fxCleaner(_, "主体"), null, Get("TFtbl_QRC_ClientName")[From], Get("TFtbl_QRC_ClientName")[To])
-                }
-            }
-        ),
-        ChangedType = Table.TransformColumnTypes(
-            Table.RemoveColumns(TF, {"Approved by RO", "发行人名称中文"}, MissingField.Ignore), {{"序号", type text}}
-        ),
-        AddedCustom = Table.AddColumn(ChangedType, "CLIENT对账号", each Text.Select([序号], {"0".."9"})),
-        ChangedType2 = Table.TransformColumnTypes(AddedCustom, {{"CLIENT对账号", Int64.Type}}),
-        Add1000 = Table.TransformColumns(ChangedType2, {{"CLIENT对账号", each _ + 1000, type number}}),
-        AddedCustom2 = Table.AddColumn(
-            Add1000, "KYC对账号", each Number.ToText([CLIENT对账号]) & Text.Select([序号], {"a".."b"}), type text
-        ),
-        ChangedType3 = Table.TransformColumnTypes(AddedCustom2, {{"KYC expiry date", type date}}),
-        ErrorsReplaced = Table.ReplaceErrorValues(ChangedType3, {{"KYC expiry date", null}}),
-        ConditionalCol = Table.AddColumn(
-            ErrorsReplaced,
-            "KYC Status",
-            each if [KYC expiry date] = null then "**Suspend**" else "Existing KYC Entity"
-        ),
-        ACheck = Table.AddColumn(
-            fx("Data")(ConditionalCol), "TextCheck", each Text.Select([#"发行人名称英文*"], {"A".."Z", "0".."9"})
-        ),
-        Renamed = Table.RenameColumns(ACheck, Get("Rename_Connect_KYC"), MissingField.Ignore)
-        // Rename_Pair   {"发行人名称英文*", "发行人"}, {"项目名称（集团全称）", "信用主体"}
-    in
-        Renamed
+let
+    Source = try CWB("KYC_Master") otherwise fx("Source")("KYC_Master"),
+    //
+    TFtbl_QRC_ClientName = Table.Buffer(Get("TFtbl_QRC_ClientName")),
+    CleanedName = fx("Replace")(Source, {"项目名称（集团全称）"}, "主体"),
+    TF = Table.TransformColumns(
+        CleanedName, {{"项目名称（集团全称）", each fx("Clean")(_, TFtbl_QRC_ClientName[From], TFtbl_QRC_ClientName[To])}}
+    ),
+    ChangedType = Table.TransformColumnTypes(
+        Table.RemoveColumns(TF, {"Approved by RO", "发行人名称中文"}, MissingField.Ignore), {{"序号", type text}}
+    ),
+    AddedCustom = Table.AddColumn(ChangedType, "CLIENT对账号", each Text.Select([序号], {"0".."9"})),
+    ChangedType2 = Table.TransformColumnTypes(AddedCustom, {{"CLIENT对账号", Int64.Type}}),
+    Add1000 = Table.TransformColumns(ChangedType2, {{"CLIENT对账号", each _ + 1000, type number}}),
+    AddedCustom2 = Table.AddColumn(
+        Add1000, "KYC对账号", each Number.ToText([CLIENT对账号]) & Text.Select([序号], {"a".."b"}), type text
+    ),
+    ChangedType3 = Table.TransformColumnTypes(AddedCustom2, {{"KYC expiry date", type date}}),
+    ErrorsReplaced = Table.ReplaceErrorValues(ChangedType3, {{"KYC expiry date", null}}),
+    ConditionalCol = Table.AddColumn(
+        ErrorsReplaced, "KYC Status", each if [KYC expiry date] = null then "**Suspend**" else "Existing KYC Entity"
+    ),
+    ACheck = Table.AddColumn(
+        fx("Data")(ConditionalCol), "TextCheck", each Text.Select([#"发行人名称英文*"], {"A".."Z", "0".."9"})
+    ),
+    Renamed = Table.RenameColumns(ACheck, Get("Rename_Connect_KYC"), MissingField.Ignore)
+    // Rename_Pair   {"发行人名称英文*", "发行人"}, {"项目名称（集团全称）", "信用主体"}
+in
+    Renamed

@@ -4,15 +4,22 @@
         AddedCol = Table.AddColumn(
             Source,
             "DummyCol",
-            each if List.Contains({"", "--", "n/a",null}, Record.Field(_, ColName) ) then "--" else
-                fx(
-                    "Clean"
-                )(
-                    Text.Select(Record.Field(_, ColName) ?? "", {"A", "B", "C", "D", "a", "/"}),
-                   
-                    {"Baa", "BBB", "Ba"},
-                    {"A", "A", "BB"}
-                ),
+            each
+                if List.Contains({"", "--", "n/a", null}, Record.Field(_, ColName)) then
+                    "--"
+                else
+                    Text.Replace(
+                        Text.Replace(
+                            Text.Replace(
+                                Text.Select(Record.Field(_, ColName) ?? "", {"A", "B", "C", "D", "a", "/"}), "Baa",
+                                "A"
+                            ),
+                            "BBB",
+                            "A"
+                        ),
+                        "Ba",
+                        "BB"
+                    ),
             type text
         ),
         Output = Table.AddColumn(
@@ -34,10 +41,6 @@
             type text
         ),
         RCol = fx("RemoveCol")(Output),
-        Optional =
-            if ENoutputIndicator = "EN" then
-               fx("Replace")(RCol, {NewColName},"评级分类") 
-            else
-                RCol
+        Optional = if ENoutputIndicator = "EN" then fx("Replace")(RCol, {NewColName}, "评级分类") else RCol
     in
         Optional

@@ -9,7 +9,7 @@ let    Source = Load("Indice_Table_Data"),
         }
     ),
     Custom1 = Table.TransformColumns(
-        #"Grouped Rows", {{"Column2", each fxCleaner(_, null, {"上周，3个月", "美国国债利率"}, {"年期方面，3个月"}), type text}}
+        #"Grouped Rows", {{"Column2", each Text.Replace(Text.Replace(_,"上周，3个月","年期方面，3个月"), "美国国债利率",""), type text}}
     ),
     #"Merged Queries" = Table.NestedJoin(
         Custom1, {"Index_Writer"}, Load("Spd_TrendPQ"), {"Index_Writer"}, "Data", JoinKind.LeftOuter

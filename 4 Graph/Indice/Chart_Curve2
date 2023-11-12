@@ -1,0 +1,18 @@
+//  let LoadCode = Load("Chart_Curve2","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
+let
+    _Which = "CURVE2",
+    Code = Load("Table_GM", "Code"),
+    Code1 = "(FText as text) => let _Input = FText," & Text.AfterDelimiter(Code, "//**"),
+    EVA = Expression.Evaluate(Code1, #shared)(_Which),
+    #"Removed Other Columns" = Table.SelectColumns(EVA, {"当前"}),
+    Demoted = Table.DemoteHeaders(#"Removed Other Columns"),
+    Transposed = Table.TransformColumns(
+        Table.Transpose(Demoted), {{"Column1", each if _ = "当前" then Date.ToText(Status[当前]{0}, "yyyy年M月d日") else _}}
+    ),
+    Source = CWB("Chart_Curve2"),
+    RemovedRows = Table.RemoveLastN(Source, 1),
+    Demote = Table.DemoteHeaders(RemovedRows),
+    Combined = fx("Combine")({Demote, Transposed}),
+    #"Promoted Headers" = Table.PromoteHeaders(Combined, [PromoteAllScalars = true])
+in
+    #"Promoted Headers"
