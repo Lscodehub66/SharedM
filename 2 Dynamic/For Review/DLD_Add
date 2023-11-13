@@ -10,11 +10,10 @@ let
         else
             Source,
     Clean_Structure = fx("Replace")(Table.DuplicateColumn(Clean_TBC,"发行架构","结构") ,{"结构"},"结构"),  
-    Clean_SBLC = Table.AddColumn(Clean_Structure, "备证行", each fx("SNBankCorp")([SBLC提供者])),
-        Add_Tap = Table.AddColumn(Clean_SBLC , "增发判定", each if [起息日期] = null then "" else if [定价日] > [起息日期] then "[增发]" else "", type text),
+        Add_Tap = Table.AddColumn(    Clean_Structure , "增发判定", each if [起息日期] = null then "" else if [定价日] > [起息日期] then "[增发]" else "", type text),
     
     Added= List.Accumulate( 
-            {"Exchange","BankBranch","BBGFX","Stats","BCM","PriceNum","PriceText","Tenor","ESGMore"}, 
+            {"SBLC","Exchange","BankBranch","BBGFX","Stats","BCM","PriceNum","PriceText","Tenor","ESGMore"}, 
            Add_Tap,
            ( x, y ) => 
             fx("Add"& y)(x)),

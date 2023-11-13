@@ -1,6 +1,0 @@
-let
-    Source = Load("QTomb_R2R3","Code"),
-    LoadCode = "(TableName as table) =>let Source = TableName," & Text.AfterDelimiter(Source,"//**"),
-    EVA = Expression.Evaluate(LoadCode,#shared)
-in
-       EVA

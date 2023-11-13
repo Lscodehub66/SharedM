@@ -2,7 +2,7 @@
     let
         Source = TableName,
         Sheet = Source{[Item = "ECON", Kind = "Sheet"]}[Data],
-        Found = Load("fxFindHeader")(Sheet, "Column1", "Date Time"),
+        Found = fx("SheetTotbl")(Sheet, {"Column1", "Date Time"}),
         RCol = Table.RemoveColumns(Found, {"Column3", "Column4"}, MissingField.Ignore),
         #"Inserted Text After Delimiter" = Table.AddColumn(
             RCol,

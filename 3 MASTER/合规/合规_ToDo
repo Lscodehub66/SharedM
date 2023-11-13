@@ -3,7 +3,7 @@ let
     Source = Load("合规_MergeDIR"),
       Filtered = Table.SelectRows(Source, each [IS_KYC_DONE] <>  "Y" and [PROJECT_NAME] <> ""),
     SelectedCol1 = Table.SelectColumns(Filtered, Get("Header_S_ToDo"), MissingField.UseNull),
-    // { "PRJ对账号",  "PROJECT_NAME","定价日", "COVERAGE", "新规角色",  "Mandated", "主体简称", "发行人", "注册成立地", "KYC expiry date", "KYC Entity Status"}
+    // { "PRJ对账号",  "PROJECT_NAME","定价日", "COVERAGE", "新规角色",  "Mandated", "主体简称", "发行人", "发行人成立地", "KYC expiry date", "KYC Entity Status"}
     Sorted = Table.Buffer(Table.Sort(SelectedCol1, {{"PRJ对账号", Order.Ascending}})),
     RemoveWaitlist = Table.Distinct(Sorted, {"发行人"}),
     Sorted1 = Table.Sort(RemoveWaitlist, {{"PRJ对账号", Order.Descending}})

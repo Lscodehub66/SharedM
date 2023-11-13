@@ -6,7 +6,7 @@ let
     Source =CWB("mIndice"),  
     //
      CN_Source = List.Buffer(Table.ColumnNames(Source)),
-    MondayDate =if OVRDSpd_Monday = "" or OVRDSpd_Monday = null  then Load("Controller")[Monday]{0} else OVRDSpd_Monday,
+      KeyDate = List.Buffer(Load("Controller")[Monday]){0},
      _InputCurves = {"UST", "CGB"},    // second item minus by first item
         CurveHD = List.Select(
         CN_Source,
@@ -17,7 +17,7 @@ let
             each Text.Contains(_, _InputCurves{1}) and Text.Contains(_, Number.ToText(Load("Spd_Tenor"), "0Y"))
         ),
     //
-    Filtered = Table.SelectRows(   Source, each [Date] <    MondayDate),
+    Filtered = Table.SelectRows(   Source, each [Date] <    KeyDate),
    
     Sorted = Table.Sort(Filtered, {{"Date", Order.Descending}}),
     SCol = Table.SelectColumns(Sorted, {"Date"} & CurveHD),
@@ -34,14 +34,14 @@ let
     #"Inserted Trend" = Table.AddColumn(
         #"Inserted Abs", "Trend", each if Record.Field(_, "Spd") < 0 then "倒挂" else "正值", type text
     ),
-    #"Invoked NextRow" = Load("fxNextRow")(#"Inserted Trend", "Trend", Load("Prefix") & "_NextRow"),
+    #"Invoked NextRow" = Load("fxNextRow")(#"Inserted Trend", "Trend", "Dummy" & "_NextRow"),
     #"Inserted Compare" = Table.AddColumn(
         #"Invoked NextRow",
-        Load("Prefix") & "_转向",
+        "Dummy" & "_转向",
         each
             if
-                Record.Field(_, "Trend") <> Record.Field(_, Load("Prefix") & "_NextRow")
-                and Record.Field(_, Load("Prefix") & "_NextRow") <> null
+                Record.Field(_, "Trend") <> Record.Field(_, "Dummy" & "_NextRow")
+                and Record.Field(_, "Dummy" & "_NextRow") <> null
             then
                 "Y"
             else
@@ -52,8 +52,8 @@ let
         each Record.Field(_, "Trend"),
         each
             if
-                Record.Field(_, "Trend") <> Record.Field(_, Load("Prefix") & "_NextRow")
-                and Record.Field(_, Load("Prefix") & "_NextRow") <> null
+                Record.Field(_, "Trend") <> Record.Field(_, "Dummy" & "_NextRow")
+                and Record.Field(_, "Dummy" & "_NextRow") <> null
             then
                 "转向"
             else
@@ -62,13 +62,13 @@ let
         {"Trend"}
     ),
     Avg1_Filtered = Table.SelectRows(
-        Table.FillDown(Replaced, {Load("Prefix") & "_转向"}),
-        each Record.Field(_, Load("Prefix") & "_转向") = Table.Column(Replaced, Load("Prefix") & "_转向"){0}
+        Table.FillDown(Replaced, {"Dummy" & "_转向"}),
+        each Record.Field(_, "Dummy" & "_转向") = Table.Column(Replaced, "Dummy" & "_转向"){0}
     ),
     Avg1_Value = Number.Round(List.Average(Table.Column(Avg1_Filtered, "Spd")), 0),
     Avg2_Filtered = Table.SelectRows(
-        Table.FillDown(Replaced, {Load("Prefix") & "_转向"}),
-        each Record.Field(_, Load("Prefix") & "_转向") <> Table.Column(Replaced, Load("Prefix") & "_转向"){0}
+        Table.FillDown(Replaced, {"Dummy" & "_转向"}),
+        each Record.Field(_, "Dummy" & "_转向") <> Table.Column(Replaced, "Dummy" & "_转向"){0}
     ),
     Avg2_Value = Number.Round(List.Average(Table.Column(Avg2_Filtered, "Spd")), 0),
     Avg_Spd = Table.AddColumn(

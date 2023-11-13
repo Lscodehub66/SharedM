@@ -1,0 +1,22 @@
+//let LoadCode = Load("ESG_ExternalReview","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    Source = fx("Source")("ESG_External_Review"),
+    fxTextSortCombine = Load("fxTextSortCombine"),
+    //
+    RBlank = Table.SelectRows(Source, each [外部评审方式] <> "" or [外部评审机构] <> ""),
+    TFcol = Table.TransformColumns(RBlank, {{"外部评审方式", each Text.BeforeDelimiter(_, "/")}}),
+    SortedText = Table.TransformColumns(
+        TFcol,
+        {
+            {"外部评审机构", each fxTextSortCombine(_, "+", Get("SortReviewParty"))},
+            // { "HKQAA", "S&P", "Moody's","Sustainable Fitch","惠誉常青"  ,"联合绿色发展","中诚信绿金国际", "中财绿融","Sustainalytics", "CECEPEC", "EY" }
+            {"外部评审方式", each fxTextSortCombine(_, "+", Get("SortReviewType"))}
+            // { "发行前认证", "第二方意见", "验证" }
+        }
+    ),
+    Checked =fx("CheckNDupe")(SortedText),
+    SCol = Table.SelectColumns(Checked, CWB("ESG_ExternalReview", "CN"), MissingField.UseNull),
+    Output = try fx("Combine")({SCol, CWB("ESG_ExternalReview")}, {"Check"}) otherwise CWB("ESG_ExternalReview"),
+    RBlank1 = Table.SelectRows(Output, each [外部评审方式] <> "" or [外部评审机构] <> "")
+in
+ RBlank1

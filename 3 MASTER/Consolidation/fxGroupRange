@@ -1,0 +1,40 @@
+(TableName as table, TwoItemColumnNameList as list, ErrorNNumItemList as list, optional SuffixText as text) =>
+    let
+        // TableName = table, TwoItemColumnNameList = {"亿美元","美元规模分类"},ErrorNNumItemList = {"--", 2,3,5},SuffixText = "亿",
+        ErrorValue = ErrorNNumItemList{0},
+        MinNum = ErrorNNumItemList{1},
+        MiddleNum = ErrorNNumItemList{2},
+        UpperNum = ErrorNNumItemList{3},
+        Suffix = if SuffixText = null then "" else SuffixText,
+        MinText = Text.From(MinNum),
+        MiddleText = Text.From(MiddleNum),
+        UpperText = Text.From(UpperNum),
+        InputCN = TwoItemColumnNameList{0},
+        DupeCN = "Dummy" & InputCN,
+        NewCN = TwoItemColumnNameList{1},
+        //
+        Source = TableName,
+        DuplicatedCol = Table.DuplicateColumn(Source, InputCN, DupeCN),
+        NAToBlank = Table.ReplaceValue(DuplicatedCol, "--", "", Replacer.ReplaceValue, {DupeCN}),
+        ChangedType = Table.TransformColumnTypes(NAToBlank, {{DupeCN, type number}}),
+        ReplacedErrors = Table.ReplaceErrorValues(ChangedType, {{DupeCN, -1}}),
+        AddedCol = Table.AddColumn(
+            ReplacedErrors,
+            NewCN,
+            each
+                if Record.Field(_, DupeCN) = null or Record.Field(_, DupeCN) = 0 then
+                    // NoData will return "--" by default
+                    "--"
+                else if Record.Field(_, DupeCN) < 0 then
+                    ErrorValue
+                else if Record.Field(_, DupeCN) <= MinNum then
+                    "≤" & MinText & Suffix
+                else if Record.Field(_, DupeCN) > MinNum and Record.Field(_, DupeCN) <= MiddleNum then
+                    MinText & "-" & MiddleText & Suffix
+                else if Record.Field(_, DupeCN) > MiddleNum and Record.Field(_, DupeCN) <= UpperNum then
+                    MiddleText & "-" & UpperText & Suffix
+                else
+                    ">" & UpperText & Suffix
+        )
+    in
+        AddedCol

@@ -18,7 +18,7 @@
         tblFilter_List = List.Buffer(
             List.Distinct(Table.SelectRows(tblFilter, each tblFilter[Column2] <> "OFF")[Column1])
         ),
-        Prefix = List.Buffer(Load("Controller")[Prefix]){0},
+
         // 【2】Data Range
         Filered_Dates = Load("fxRangeDate")(RangeStartNum, RangeEndNum, TableName, "定价日"),
         //【3】Rename Columns
@@ -63,7 +63,7 @@
         //Transformation Starts
         Table_DMI_HKCompany = Table.Buffer(Load("DMI_Entity_NonCN", "CSV")),
         Filtered_HKMacau = Table.NestedJoin(
-            Filtered_EXCH, {"信用主体"}, Table_DMI_HKCompany, {"信用主体"}, Prefix & "Data", JoinKind.LeftAnti
+            Filtered_EXCH, {"信用主体"}, Table_DMI_HKCompany, {"信用主体"}, "Dummy" & "Data", JoinKind.LeftAnti
         ),
         // Remove redundancy
         Filtered_ValueKey = Table.SelectRows(
@@ -113,7 +113,7 @@
         ),
         Output_Junction_End = if NullAsDefaultNoCleanOR_Y = "Y" then Clean_ACol else Output_Junction,
         // Try Filter out Exchange deals
-        Checked = Load("fxCheckNDupe")(Output_Junction_End),
+        Checked =fx("CheckNDupe")(Output_Junction_End),
         Sorted = Table.Sort(
             Checked,
             {

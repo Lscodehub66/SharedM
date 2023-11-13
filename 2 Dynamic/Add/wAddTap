@@ -1,53 +1,92 @@
 // let Code = Load("wAddTap","Code"), EVA = Expression.Evaluate(Code ,#shared)  in EVA
 let
-TapColList       = {
-  "收窄幅度(bp)", 
-  "发行价", 
-  "首日涨跌", 
-  "认购额(亿)", 
-  "认购倍数", 
-  "亚洲占比", 
-  "基金占比", 
-  "联席全球协调人", 
-  "投资者账户数", 
-  "投资者类型", 
-  "投资者分布", 
-  "定价", 
-  "牵头经办人", 
-  "投资者分布", 
-  "联席账簿管理人", 
-  "IPT_DMI", 
-  "FPG_DMI", 
-  "IPG", 
-  "定价_DMI", 
-  "收窄基点","DataSource", "亿美元","亿港币","亿元","Check"
- },
-    FindList         = List.RemoveItems(CWB( "BOCOMJLM")[Find], {null}),
- ReplaceList      = List.RemoveItems(CWB( "BOCOMJLM")[Replace], {null}),
-  ColNow_mCurated = Table.ColumnNames(fx("Excel")("DEALSMASTER_=mCurated")),  
- Source           = CWB( "AddTapInput" ),
-    Custom2          = fx("Merge") (
-  Source, 
-  Load("deal_master"), 
-  "原始ISIN", 
-  "ISIN", 
-  List.Distinct ( List.RemoveItems ( ColNow_mCurated & { "信用主体(备证行)" }, TapColList & Table.ColumnNames ( Source ) ) & { "Y" } ), 
-  { "" }
- ),
-    Custom3          = Table.SelectRows ( Custom2, each [原始ISIN] <> null and [原始ISIN] <> "" and not Text.Contains ( [#"信用主体(备证行)"], "*" ) ), 
- TF               = Table.TransformColumns (
-  Table.RenameColumns ( Custom3, { { "添加增发方式", "DataSource" },  { "BOCOM_JGC", "联席全球协调人" }, { "BOCOM_JBR", "牵头经办人" } , { "票息_DMI", "票息" } }, MissingField.Ignore ), 
-  {
-   { "IPT", each if _ = null then "" else if Text.EndsWith ( _, "a", Comparer.OrdinalIgnoreCase ) then Text.BeforeDelimiter ( _, "a", { 0, RelativePosition.FromEnd } ) & "区域" else _ }, 
-   { "FPG",  each if Text.StartsWith(_??"","0.") 
-       and not Text.Contains(_??"","%") then Number.ToText(Number.From(_),"0.000%") else _,type text},
-   { "联席全球协调人", each fx("Clean") ( _,FindList, ReplaceList ) }, 
-   { "牵头经办人", each fx("Clean") ( _, FindList, ReplaceList ) }
-  }
- ), 
- AddedFX = fx("AddBBGFX")(TF),
- Demoted          = Table.DemoteHeaders ( AddedFX ), 
- Transposed       = Table.Transpose ( Demoted ), 
- #"Filtered Rows" = Table.SelectRows ( Transposed, each if Table.HasColumns(Transposed, {"Column2","Column3"}) then not List.Contains({null,"","--"}, [Column2] ) or not List.Contains({null,"","--"}, [Column3] )  else not List.Contains({null,"","--"}, [Column2] ) )
+    TapColList = {
+        "收窄幅度(bp)",
+        "发行方式",
+        "发行价",
+        "首日涨跌",
+        "认购额(亿)",
+        "认购倍数",
+        "亚洲占比",
+        "基金占比",
+        "联席全球协调人",
+        "投资者账户数",
+        "投资者类型",
+        "投资者分布",
+        "定价",
+        "牵头经办人",
+        "投资者分布",
+        "联席账簿管理人",
+        "IPT_DMI",
+        "FPG_DMI",
+        "IPG",
+        "定价_DMI",
+        "收窄基点",
+        "DataSource",
+        "亿美元",
+        "亿港币",
+        "亿元",
+        "Check"
+    },
+    FindList = List.RemoveItems(CWB("BOCOMJLM")[Find], {null}),
+    ReplaceList = List.RemoveItems(CWB("BOCOMJLM")[Replace], {null}),
+    ColNow_mCurated = Table.ColumnNames(fx("Excel")("DEALSMASTER_=mCurated")),
+    Source = CWB("AddTapInput"),
+    Custom2 = fx(
+        "Merge"
+    )(
+        Source,
+        Load("deal_master"),
+        "原始ISIN",
+        "ISIN",
+        List.Distinct(List.RemoveItems(ColNow_mCurated & {"信用主体(备证行)"}, TapColList & Table.ColumnNames(Source)) & {
+            "Y"
+        }),
+        {""}
+    ),
+    Custom3 = Table.SelectRows(
+        Custom2, each [原始ISIN] <> null and [原始ISIN] <> "" and not Text.Contains([#"信用主体(备证行)"], "*")
+    ),
+    TF = Table.TransformColumns(
+        Table.RenameColumns(
+            Custom3,
+            {{"添加增发方式", "DataSource"}, {"BOCOM_JGC", "联席全球协调人"}, {"BOCOM_JBR", "牵头经办人"}, {"票息_DMI", "票息"}},
+            MissingField.Ignore
+        ),
+        {
+            {
+                "IPT",
+                each
+                    if _ = null then
+                        ""
+                    else if Text.EndsWith(_, "a", Comparer.OrdinalIgnoreCase) then
+                        Text.BeforeDelimiter(_, "a", {0, RelativePosition.FromEnd}) & "区域"
+                    else
+                        _
+            },
+            {
+                "FPG",
+                each
+                    if Text.StartsWith(_ ?? "", "0.") and not Text.Contains(_ ?? "", "%") then
+                        Number.ToText(Number.From(_), "0.000%")
+                    else
+                        _,
+                type text
+            },
+            {"联席全球协调人", each fx("Clean")(_, FindList, ReplaceList)},
+            {"牵头经办人", each fx("Clean")(_, FindList, ReplaceList)}
+        }
+    ),
+    AddedFX = fx("AddBBGFX")(TF),
+    Demoted = Table.DemoteHeaders(AddedFX),
+    Transposed = Table.Transpose(Demoted),
+    #"Filtered Rows" = Table.SelectRows(
+        Transposed,
+        each
+            if Table.HasColumns(Transposed, {"Column2", "Column3"}) then
+                not List.Contains({null, "", "--"}, [Column2]) or not List.Contains({null, "", "--"}, [Column3])
+            else
+                not List.Contains({null, "", "--"}, [Column2])
+    )
 in
- #"Filtered Rows"
+    #"Filtered Rows"

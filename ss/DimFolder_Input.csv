@@ -1,9 +1,0 @@
-Column1,Column2,Column3,Column4
-PK_Folder,Folder_Path,Folder_Path,Has_NumInPath
-Root,C:\Users\ktkt2\OneDrive,\\itd-m09-fs02\dcm$,
-Base_4,C:\Users\ktkt2\OneDrive\EXE Team\DataHub\Backup,\\itd-m09-fs02\dcm$\0 DCM Base\4 Markets,
-Team_DH,C:\Users\ktkt2\OneDrive\EXE Team\DataHub,\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub,
-Team_DH_DL,C:\Users\ktkt2\OneDrive\EXE Team\DataHub\DataLake,\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\DataLake,
-Team_AM,C:\Users\ktkt2\OneDrive\EXE Team\DataHub\Backup\Weekly AM,\\itd-m09-fs02\dcm$\Team Folder\Execution Team\Weekly AM,YYYYMMDD
-Team_ESG,C:\Users\ktkt2\OneDrive\EXE Team\DataHub\Backup,\\itd-m09-fs02\dcm$\Team Folder\Execution Team\Rating & Advisory\7. ESG\Pitch book,
-QRC,C:\Users\ktkt2\OneDrive\EXE Team\QRC,\\itd-m09-fs02\dcm$\【QRC】DCM项目情况表,

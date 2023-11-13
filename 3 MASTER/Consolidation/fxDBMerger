@@ -1,0 +1,34 @@
+(TableName as table) =>
+    let
+        Source = TableName,
+        //Merge tables ESGExternal Review & DMI UOP is seperated as steps in deal_master
+        mCreditB = try Table.Buffer(CWB("mCredit","1")) otherwise Table.Buffer(fx("Excel")("DEALSMASTER_=MCREDIT")),
+         #"Transformed SBLCName"= Table.RenameColumns(fx("FormerName")(     Source ,"备证行全称"),{"Dummy.信用主体","Dummy.SBLC"},MissingField.UseNull),
+        JoinSBLC = fx("Merge")( #"Transformed SBLCName", mCreditB, "Dummy.SBLC", "信用主体", {"信用主体简称","板块三级", "板块标签"}, {"备证行","备证分类", "备证行标签"}),
+        SBLCTag = Table.ReplaceValue(
+            JoinSBLC,
+            each [备证行标签],
+            each if [备证行标签] = "" or [备证分类] = "" then "--" else [备证分类] & [备证行标签],
+            Replacer.ReplaceValue,
+            {"备证行标签"}
+        ),
+        CN_Source = List.Buffer(Table.ColumnNames(Source)),
+        AddSBLCSuffix =
+            if List.IsEmpty(List.Select(CN_Source, each Text.Contains(_,"备证行"))) then
+                Source
+            else
+                Table.TransformColumns(SBLCTag, {{"备证分类", each if _ <> "" then _ & "备证" else _, type text}}),
+        //
+        #"Transformed FormerName" = fx("FormerName")(AddSBLCSuffix,"信用主体"),
+        JoinDBCredit = fx("Merge")(    #"Transformed FormerName", mCreditB, "Dummy.信用主体", "信用主体", {"Y"}, {""}),
+        NoNull =
+            if List.Contains(Table.ColumnNames(JoinDBCredit), "信用主体简称") then
+                Table.ReplaceValue(JoinDBCredit, null, "【】", Replacer.ReplaceValue, {"信用主体简称"})
+            else
+                JoinDBCredit,
+        SOECreds = Table.AddColumn(
+            NoNull, "投标资历分类", each if [中资属性] = "地方国企" and [板块] <> "金融机构" then "SOE Creds" else "--"
+        ),
+        MergeDate = fx("Merge")(SOECreds, Load("DimDate"), "定价日", "A_Date", {""}, {""})
+    in
+        MergeDate

@@ -89,6 +89,7 @@
         },
         TrimJLM_Find = {
             "BANKOFCOMMUNICATIONSINTERNATIONAL",
+            "CITIBANK",
             "CHINACONSTRUCTIONBANKEUROPE",
             "INDUSTRIALANDCOMMERCIALBANKOFCHINAASIA",
             "CHINACONSTRUCTIONBANKASIA",
@@ -103,6 +104,7 @@
             "CAPITAL",
             "/THE",
             "AUSTRALIANEWZEALANDBANK",
+            "AUSTRALIAANDNEWZEALANDBANK",
             "MERRILL",
             "INDUSTRIALANDCOMMERCIAL",
             "NATIONALAUSTRALIABANK",
@@ -117,6 +119,7 @@
         },
         TrimJLM_Replace = {
             "BOCOMINTERNATIONAL",
+            "CITIGROUP",
             "CCBEUROPE",
             "ICBCASIA",
             "CCBA",
@@ -130,6 +133,7 @@
             "SEC",
             "CAP",
             "",
+            "ANZ",
             "ANZ",
             "BOFA",
             "INDUSTRIALCOMM",
@@ -161,7 +165,7 @@
                 "STANDARDCHARTERED",
                 "WESTPAC",
                 "DBSBANK",
-                "UBSAG"
+                "UBSAG","JPMORGAN"
             },
             UpperNSelected,
             (x, y) =>
@@ -170,7 +174,8 @@
                 else
                     x
         ),
-        TextToExtract = fxClean(RemovedFakeBR, TrimJLM_Find, TrimJLM_Replace),
+        ReplavedValue = List.Accumulate({{"CITI", "CITIGROUP"}}, RemovedFakeBR, (x, y) => if x = y{0} then y{1} else x),
+        TextToExtract = fxClean(ReplavedValue, TrimJLM_Find, TrimJLM_Replace),
         // Extract Branch
         BR1 = fxClean(
             TextToExtract,
@@ -191,7 +196,15 @@
         BR5 = fxClean(BR4, Location_Replace, Location_CN),
         // Extract ShortName
         SN1 = fxClean(TextToExtract, 承销商_Find, #"承销商_Replace^"),
-        SN2 = Text.BetweenDelimiters(SN1, "^", "^"),
+        SN2 =
+            if Text.Contains(SN1, "^") then
+                Text.BetweenDelimiters(SN1, "^", "^")
+            else
+                List.Accumulate(
+                    {"SECURITIES", "CAPITAL", "INTERNATIONAL", "ADVISOR", "FINANCE", "INVESTMENT", "FINANCIAL"},
+                    Text.Upper(TextName),
+                    (x, y) => if Text.Contains(x, y) then Text.BeforeDelimiter(x, y) else x
+                ),
         SN3 = fxClean((SN2 ?? ""), 承销商_Find, 承销商_CNShort),
         // Combine
         Output = SN3 & BR5

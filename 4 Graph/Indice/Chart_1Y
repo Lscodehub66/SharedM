@@ -6,6 +6,6 @@ let
     Filtered = Table.SelectRows(Source, each [Date] >= KeyDate),
     CN_Indice = List.Buffer(Table.SelectRows(Load("Dimtbl_Indice"), each ([IS_1Y] <> ""))[PK]),
     SelectedCol = Table.SelectColumns(Filtered, {"Date"} & CN_Indice),
-    Sorted = Load("fxSortNIndex")(SelectedCol, "Date", null, null, null, "Y")
+    Sorted = fx("SortNIndex")(SelectedCol, "Date", null, null, null, "Y")
 in
     Sorted

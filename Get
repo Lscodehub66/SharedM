@@ -132,11 +132,20 @@ let
                     {"Folder_Base_5_RSP", null, null, "\5 Databases\RSP Database"},
                     {"Folder_Team*", "\EXE Team", "\Team Folder\Execution Team", ""},
                     {"Folder_Team_DH", null, null, "\DataHub"},
-                    {"Folder_Team_AM", null, null, "\Weekly AM"},
+                    {"Folder_Team_Weekly", null, null, "\Weekly"},
                     {"Folder_Pipeline", "", "\Pipeline Report", ""},
                     {"Folder_QRC", "\EXE Team\QRC", "\【QRC】DCM项目情况表", ""}
                 },
                 {"Folder", "Folder_Remote", "Folder_Global", "Folder_Segment"}
+            ),
+            TransformationTable_Entity = Table.PrefixColumns(
+                Table.SelectRows(
+                    Table.SelectColumns(
+                        try CWB("mCredit") otherwise fx("Excel")("DEALSMASTER_=mCredit"), {"信用主体", "曾用名"}
+                    ),
+                    each [曾用名] <> ""
+                ),
+                "Dummy"
             ),
             TransformationTable_QRC_ClientName = Table.FromRows(
                 {
@@ -280,7 +289,7 @@ let
             // 【Prefix】Rename_
             Rename_DB_DataFormat = {
                 {"IN_板块", "板块"},
-                {"发行人注册地", "注册成立地"},
+                {"发行人注册地", "发行人成立地"},
                 {"FLOATER_FORMULA", "计息基准"},
                 {"发行价格", "发行价"},
                 {"IN.中资属性", "中资属性"},
@@ -311,6 +320,49 @@ let
                 "EY"
             },
             // Header_List
+            HD_DLD_TBLDMIISIN = {
+                "Index",
+                "定价日",
+                "ISIN",
+                "信用主体",
+                "Check",
+                "补充OMAS updates",
+                "发行评级",
+                "发行人注册地",
+                "发行人主上市地",
+                "主体评级",
+                "定价息差",
+                "计息基准",
+                "发行人",
+                "担保人",
+                "维好协议提供者",
+                "起息日期",
+                "兑付日",
+                "行权兑付日",
+                "票息",
+                "货币",
+                "发行价格",
+                "发行规模(亿)",
+                "Ticker_ParentCo",
+                "母公司评级",
+                "ESG_Indicator",
+                "SBLC_Provider_Name"
+            },
+            HD_RO_NEWECON = {
+                "Index",
+                "未来一周主要经济数据",
+                "上周主要经济数据",
+                "日期",
+                "区域",
+                "Relevance",
+                "预期",
+                "现值",
+                "前值",
+                "范围",
+                "时间",
+                "TICKER",
+                "RankByDate"
+            },
             HD_RO_ECON = {
                 "Index",
                 "未来一周主要经济数据",
@@ -346,7 +398,7 @@ let
             },
             //{"Index","ISIN","定价日", "信用主体", "亿美元", "评级分类", "年期分类","货币",  "货币细分", "板块", "删除及隐藏","Check" }
             Header_Exp_Dynamic_BBG = {
-                "注册成立地",
+                "发行人成立地",
                 "发行人主上市地",
                 "补充OMAS updates",
                 "定价息差",
@@ -357,16 +409,20 @@ let
             },
             Header_S_Dynamic_FIMTN_Review = {
                 "Index",
-                "IS_FIMTN",
                 "信用主体",
-                "行业",
                 "ISIN",
                 "定价日",
+                "IS_FIMTN",
+                "IPT_DMI",
+                "FPG_DMI",
+                "认购额(亿)",
+                "投资者账户数",
+                "投资者类型",
+                "投资者分布",
+                "行业",
                 "货币",
                 "规模",
                 "主题债券",
-                "IPT_DMI",
-                "FPG_DMI",
                 "联席全球协调人",
                 "牵头经办人"
             },
@@ -379,7 +435,7 @@ let
                 "发行评级",
                 "主体评级",
                 "结构",
-                "备证行",
+                "备证行全称",
                 "港分_ROLE",
                 "澳分_ROLE",
                 "Check"
@@ -434,6 +490,7 @@ let
                 "定价日",
                 "台账序号",
                 "Project Name",
+                "EXE",
                 "COVERAGE",
                 "新规角色",
                 "PROJECT_CODE",
@@ -454,7 +511,7 @@ let
                 "新规角色",
                 "IS_KYC_DONE",
                 "信用主体(备证行)",
-                "注册成立地"
+                "发行人成立地"
             },
             Header_DirectoryToTombsWriter = {"定价日", "年月", "首次违约日"} & {"备证行", "信用主体简称", "通过分行", "角色"},
             Header_S_ToDo = {
@@ -466,7 +523,7 @@ let
                 "Mandated",
                 "主体简称",
                 "发行人",
-                "注册成立地",
+                "发行人成立地",
                 "KYC expiry date",
                 "KYC Status"
             },
@@ -701,6 +758,7 @@ let
                 "板块",
                 "地区",
                 "IS_CLIENT",
+                "IS_BISLDeal",
                 "信用主体",
                 "亿美元",
                 "定价日",
@@ -709,7 +767,7 @@ let
             Header_MergeRemoval = {"Timestamp", "Updator", "曾用名", "主体备注", "Index", "公司类型", "上市类型", "系"},
             Header_Sync_KYC = {"KYC对账号", "发行人", "KYC Status", "KYC expiry date", "信用主体"},
             //   CN = ColumnNames
-            CN_BaseDirectory_Deal = Table.ColumnNames(fx("Source")("DIRECTORY_TBL_DEAL")),
+            CN_BaseDirectory_Deal = Table.ColumnNames(fx("Excel")("DIRECTORY_TBL_DEAL")),
             CN_mChart = Table.ColumnNames(fx("Excel")("DEALSMASTER_MCHART")),
             // Selection
             Key = Text.Replace(Text.Upper(Text.Trim(TextName)), "_", ""),
@@ -723,6 +781,8 @@ let
             TableSource =
                 if Text.Contains(Key, "QRC") and Text.Contains(Key, "NAME") then
                     TransformationTable_QRC_ClientName
+                else if Text.Contains(Key, "ENTITY") then
+                    TransformationTable_Entity
                 else if Text.Contains(Key, "TEXT") and Text.Contains(Key, "FORMAT") then
                     Dimtbl_TextFormat
                 else if Text.Contains(Key, "DIMSUMPIE") then
@@ -764,10 +824,14 @@ let
             HeaderSource =
                 if Text.Contains(Key, "WISSUER") then
                     Header_S_Dynamic_wIssuer
+                else if Text.Contains(Key, "DLDTBLDMIISIN") then
+                    HD_DLD_TBLDMIISIN
                 else if Text.Contains(Key, "DMINOTINUSE") then
                     Header_R_DMI_NotInUse
                 else if Text.Contains(Key, "ROECON") then
                     HD_RO_ECON
+                else if Text.Contains(Key, "RONEWECON") then
+                    HD_RO_NEWECON
                 else if Text.Contains(Key, "WCURATED") then
                     Header_S_Dynamic_wCurated
                 else if Text.Contains(Key, "USDCNH") then

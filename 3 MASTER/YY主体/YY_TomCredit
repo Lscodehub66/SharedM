@@ -35,6 +35,6 @@
     R主体类型 = Table.ReplaceValue(MER主体类型, each [YY主体类型], each [主体类型], Replacer.ReplaceValue, {"YY类型"}),
    Crossroad2 = if #">>ON/OFF：类型" = "ON" then R行业二级  else Crossroad,
     //
-    SelectedCol = Load("fxPresentNoData")(Table.SelectColumns(Crossroad2 , Table.ColumnNames(ManagedDB)))
+    SelectedCol = fx("PresentNoData")(Table.SelectColumns(Crossroad2 , Table.ColumnNames(ManagedDB)))
 in
     SelectedCol

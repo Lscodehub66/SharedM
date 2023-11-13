@@ -48,7 +48,7 @@ Sub Refresh_Deal()
     ActiveWorkbook.Connections("Query - SBLC60").Refresh
     ActiveWorkbook.Connections("Query - SBLC_Bank").Refresh
     ActiveWorkbook.Connections("Query - Recent60").Refresh
-    ActiveWorkbook.Connections("Query - USDCNH_Tighten_3M").Refresh
+    ActiveWorkbook.Connections("Query - USDCNH_Tighten").Refresh
 
 
 End Sub

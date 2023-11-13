@@ -2,7 +2,7 @@
     let
         SourceDB = TableName,
         // Definitions fx("DBManager")(Source,"mCredit","LIFO")
-        Prefix = try Prefix otherwise "Dummy",
+
         //
         CN_Source = Table.ColumnNames(SourceDB),
         HD = List.Intersect({{"Check", "信用主体", "信用主体(备证行)", "Date","Timestamp", "板块二级", "BISL_ROLE"}, CN_Source}),
@@ -35,14 +35,14 @@
             else
                 NullOut,
         // 添加Index辅助列，由新到旧index递增
-        Indexed = Table.AddIndexColumn(RIdentifier, Prefix & "Index", 1, 1),
+        Indexed = Table.AddIndexColumn(RIdentifier, "Dummy" & "Index", 1, 1),
         //LIFO = Last in, First Out 出现重复，保留较旧的记录，删除新加入的记录：
         //Autocopy - 越新加入index数值越低，删除需要将其排在靠后位置，index因此需要按Descending排列
         //Query- 越新加入index数值越大，删除需要将其排在靠后位置，index因此需要按Ascending排列
         Order = if InventoryMethod = "FIFO" then Order.Ascending else Order.Descending,
         SortedDupe =
             if HD_Count > 0 then
-                Table.Buffer(Table.Sort(Indexed, {{HD{0}, Order}, {Prefix & "Index", Order}}))
+                Table.Buffer(Table.Sort(Indexed, {{HD{0}, Order}, {"Dummy" & "Index", Order}}))
             else
                 Indexed,
         RemovedDupe = if HD_Count = 0 or HD{0} = "Timestamp" then Table.Distinct(SortedDupe) else Table.Distinct(SortedDupe, {HD{0}}),
@@ -66,7 +66,7 @@
         //Sort as last step
         RCol = Table.RemoveColumns(
             PresentedNull,
-            List.Select(Table.ColumnNames(PresentedNull), each Text.Contains(_, Prefix)),
+            List.Select(Table.ColumnNames(PresentedNull), each Text.Contains(_, "Dummy")),
             MissingField.Ignore
         ),
         Sorted = fx("SortNIndex")(RCol)

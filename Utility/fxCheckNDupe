@@ -9,7 +9,7 @@
     optional OptionalIsDateFirst as nullable text
 ) =>
     let
-        Prefix = try Prefix otherwise "Dummy",
+       
         NewColName = if OptionalNewColName = null then "Check" else OptionalNewColName,
         TextSource = if OptionalTextSource = null then "ISIN" else OptionalTextSource,
         DateSource = if OptionalDateSource = null then "定价日" else OptionalDateSource,
@@ -18,7 +18,7 @@
         IsDateFirst = if OptionalIsDateFirst = null then "Y" else OptionalIsDateFirst,
         Source = TableName,
         // *Remove DummyCol*
-         RCol = Table.RemoveColumns(Source, List.Select(Table.ColumnNames(Source), each Text.Contains(_, Prefix)),MissingField.Ignore),
+         RCol = Table.RemoveColumns(Source, List.Select(Table.ColumnNames(Source), each Text.Contains(_, "Dummy")),MissingField.Ignore),
          //
         DateType = Table.TransformColumnTypes(  RCol, {{TextSource, type text}, {DateSource, type date}}),
         NoSpace = Table.ReplaceValue(DateType, " ", "", Replacer.ReplaceText, {TextSource}),

@@ -1,0 +1,49 @@
+(TableName as table, optional ColName as nullable text) =>
+    let
+        Source = TableName,
+        DupedCol = Table.DuplicateColumn(Source, (ColName ?? "SBLC提供者"), "Dummy.Dupe"),
+        #"Inserted Text Between Delimiters" = Table.AddColumn(
+              DupedCol ,
+            "备证行分行",
+            each
+                if
+                    Text.Contains(Record.Field(_, (ColName ?? "SBLC提供者")) ?? "", "分行")
+                    and Text.Contains([Dummy.Dupe] ?? "", "公司")
+                then
+                    Text.BetweenDelimiters([Dummy.Dupe], "公司", "分行") & "分行"
+                else if Text.Contains([Dummy.Dupe] ?? "", "支行") and Text.Contains([Dummy.Dupe] ?? "", "公司") then
+                    Text.BetweenDelimiters([Dummy.Dupe], "公司", "支行") & "支行"
+                else if Text.Contains([Dummy.Dupe] ?? "", "银行") and Text.Contains([Dummy.Dupe] ?? "", "分行") then
+                    Text.BetweenDelimiters([Dummy.Dupe], "银行", "分行") & "分行"
+                else
+                    "",
+            type text
+        ),
+        #"Inserted Text Before Delimiter" = Table.AddColumn(
+            #"Inserted Text Between Delimiters",
+            "备证行全称",
+            each
+                if Text.Contains([Dummy.Dupe] ?? "", "分行") or Text.Contains([Dummy.Dupe] ?? "", "支行") then
+                    Text.BeforeDelimiter([Dummy.Dupe] ?? "", [备证行分行])
+                else
+                    [Dummy.Dupe],
+            type text
+        ),
+        #"Revised Incomeplete Names" = Table.TransformColumns(
+            #"Inserted Text Before Delimiter",
+            {
+                {
+                    "备证行全称",
+                    each
+                        if List.Contains({"中国银行", "中国邮政储蓄银行"}, _) then
+                            _ & "股份有限公司"
+                        else if Text.StartsWith(_, "工商银行") then
+                            "中国" & _
+                        else
+                            _,
+                    type text
+                }
+            }
+        )
+    in
+        #"Revised Incomeplete Names"

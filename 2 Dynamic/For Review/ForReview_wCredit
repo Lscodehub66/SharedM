@@ -1,10 +1,10 @@
 // let LoadCode = Load("ForReview_wCredit","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
-
 let
     Source = try CWB("DLD_Conso") otherwise Load("DLD_Conso"),
-    SCol = Table.SelectColumns( Source, {"信用主体","债券简称"}),
-     FromForReviewIssuer = Table.SelectColumns(Table.SelectRows(Load("ForReview_Issuer"), each Text.Contains([信用主体], "【")), {"信用主体"}),
-    Combined = fx("Combine")({ SCol ,FromForReviewIssuer}, {"信用主体"}),
+    FromForReviewIssuer = Table.SelectColumns(
+        Table.SelectRows(Load("ForReview_Issuer"), each Text.Contains([信用主体], "【")), {"信用主体"}
+    ),
+    Combined = fx("Combine")({Source, FromForReviewIssuer}, {"信用主体"}),
     TFCol = Table.TransformColumns(
         Combined,
         {
@@ -19,9 +19,13 @@ let
         }
     ),
     Replaced = Table.ReplaceValue(TFCol, null, each [信用主体], Replacer.ReplaceValue, {"债券简称"}),
-    MergedQ = Table.NestedJoin(Replaced, {"信用主体"}, fx("Excel")("DEALSMASTER_mCredit"), {"信用主体"}, Prefix & "Data", JoinKind.LeftAnti),
+    MergedQ = Table.NestedJoin(
+        Replaced, {"信用主体"}, fx("Excel")("DEALSMASTER_mCredit"), {"信用主体"}, Prefix & "Data", JoinKind.LeftAnti
+    ),
     Function = Table.AddColumn(MergedQ, "SHORTNAMER", each fx("SNBankCorp")([债券简称])),
-    RemovedCol = Table.SelectColumns(Function, {"信用主体", "SHORTNAMER", "中资属性", "板块"}, MissingField.UseNull),
-    BlankToInput = Table.ReplaceValue(RemovedCol, null, "【】", Replacer.ReplaceValue, {"中资属性", "板块"})
+    SCol1 = Table.SelectColumns(
+        Function, {"信用主体", "SHORTNAMER", "板块", "板块二级", "板块三级", "中资属性", "级别", "地区", "城市", "区县"}, MissingField.UseNull
+    ),
+    BlankToInput = Table.ReplaceValue(SCol1, null, "【】", Replacer.ReplaceValue,{"板块","中资属性"})
 in
     BlankToInput

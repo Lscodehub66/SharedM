@@ -10,7 +10,7 @@
         CN_Source = List.Buffer(Table.ColumnNames(Source)),
         //Global RenameColumns
         GlobalRenamed = Table.RenameColumns(Source, Rename_DB_DataFormat, MissingField.Ignore),
-        //  { {"IN_板块", "板块"},    {"发行人注册地", "注册成立地"},    {"FLOATER_FORMULA", "计息基准"},    {"发行价格", "发行价"},    {"IN.中资属性", "中资属性"},   {"发行结构", "发行架构"}}
+        //  { {"IN_板块", "板块"},    {"发行人注册地", "发行人成立地"},    {"FLOATER_FORMULA", "计息基准"},    {"发行价格", "发行价"},    {"IN.中资属性", "中资属性"},   {"发行结构", "发行架构"}}
         //DateTime ValueType
          DimData_Type_Code_Combined =  Text.Replace(Text.Replace(DimData_Type_Code,"let //","let "),"in Output",","),
         Data_Type_DateAuto = Table.FromColumns(

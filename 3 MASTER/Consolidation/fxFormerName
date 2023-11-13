@@ -1,0 +1,12 @@
+(TableName as table, ColName as text) =>
+    let
+        Source = TableName,
+        TFtbl_Entity = Table.Buffer(Get(" TransformationTable_Entity")),
+        mCreditB = Table.Buffer(try CWB("mCredit", "1") otherwise fx("Excel")("DEALSMASTER_=MCREDIT")),
+        JoinedTable = Table.Join(Source, {ColName}, TFtbl_Entity, {"Dummy.曾用名"}, JoinKind.LeftOuter),
+        #"Replaced Value" = Table.ReplaceValue(
+            JoinedTable, null, each Record.Field(_, ColName), Replacer.ReplaceValue, {"Dummy.信用主体"}
+        ),
+        #"Removed Columns" = Table.RemoveColumns(#"Replaced Value", {"Dummy.曾用名"}, MissingField.Ignore)
+    in
+        #"Removed Columns"

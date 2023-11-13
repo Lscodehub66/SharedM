@@ -9,17 +9,34 @@
             _IsEmpty, {"FDPath", "FileName"}, _dimbinary, {"Folder Path", "FileName.Extracted"}
         ),
         #"Added ExcelWB" = Table.RemoveRowsWithErrors(
-            Table.AddColumn(#"Joined Content", "ExcelWB", each fx("ExcelWB")([Content])), {"ExcelWB"}
+            Table.AddColumn(
+                #"Joined Content",
+                "ExcelWB",
+                each Table.SelectRows(Excel.Workbook([Content]), each [Kind] <> "DefinedName")
+            ),
+            {"ExcelWB"}
         ),
         Sheet = #"Added ExcelWB"{0}[ExcelWB],
-        #"Filtered Rows" = Table.SelectRows(
-            Sheet,
-            each
-                if Text.Contains(_input ?? "", "=") then
-                    Text.Upper([Item]) = _sheetkey
-                else
-                    Text.Contains([Item], _sheetkey, Comparer.OrdinalIgnoreCase)
-        ),
-        Table = if _sheetkey = "" then Sheet else fx("Data")(#"Filtered Rows"[Data]{0})
+        #"Filtered Rows" =
+            if _sheetkey = "" then
+                Table.SelectColumns(
+                    Table.Sort(Sheet, {{"Kind", Order.Descending}, {"Item", Order.Ascending}}),
+                    {"Item", "Kind", "Data"}
+                )
+            else
+                fx(
+                    "Data"
+                )(
+                    Table.SelectRows(
+                        Sheet,
+                        each
+                            if Text.Contains(_input ?? "", "=") then
+                                Text.Upper([Item]) = _sheetkey
+                            else
+                                Text.Contains([Item], _sheetkey, Comparer.OrdinalIgnoreCase)
+                    )
+                [Data]{
+                    0
+                })
     in
-        Table
+        #"Filtered Rows"

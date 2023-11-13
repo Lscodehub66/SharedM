@@ -12,7 +12,7 @@ let
             TextName =
                 if InputText = null then
                     ""
-                else if FTextInput = "主体" and not List.ContainsAny(Text.ToList(InputText), {"A".."Z"}, Comparer.OrdinalIgnoreCase) then
+                else if FTextInput = "主体" and not List.ContainsAny(Text.ToList(InputText), {"A".."Z","+"}, Comparer.OrdinalIgnoreCase) then
                     Text.Replace(InputText, " ", "")
                 else
                     InputText,
@@ -176,7 +176,7 @@ let
                 {"Sole", "独家"},
                 {"Dealer", "承销商"},
                 {"Leftlead", "牵头"},
-                {"Lead", ""},
+                {"Active", ""},
                 {"SGC", "JGC"},
                 {"JGC", "全球协调人"},
                 {"JBR", "账簿管理人"},

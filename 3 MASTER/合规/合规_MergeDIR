@@ -5,7 +5,7 @@ let
     MergedQ = fx("Merge")(
         TFSource, CWB("Directory"), "PRJ对账号", "PRJ对账号", Get("Header_DirectoryToFormalities"), {""}
     ),
-    //  {"ISIN", "PROJECT_NAME", "定价日", "新规角色","IS_KYC_DONE" ,"信用主体(备证行)", "注册成立地"}
+    //  {"ISIN", "PROJECT_NAME", "定价日", "新规角色","IS_KYC_DONE" ,"信用主体(备证行)", "发行人成立地"}
     ACheck = Table.AddColumn(MergedQ, "TextCheck", each Text.Select([发行人], {"A".."Z", "0".."9"})),
     MergedQ1 = fx("Merge")(
         ACheck, Load("KYC_Master_TF"), "TextCheck", "TextCheck", {"KYC expiry date", "KYC Status", "公盘地址"}, {""}

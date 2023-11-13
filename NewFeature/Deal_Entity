@@ -1,0 +1,14 @@
+
+// Deal_Entity
+let
+    Source = CWB("mCurated"),
+    #"Removed Other Columns" = Table.SelectColumns(Source,{"信用主体", "结构", "TICKER", "注册成立地", "通过分行", "发行人", "担保人", "维好协议提供者", "备证行全称"}),
+    #"Replaced Value" = Table.ReplaceValue(  #"Removed Other Columns" ,"--","",Replacer.ReplaceValue,Table.ColumnNames(   #"Removed Other Columns"  )),
+    #"Added Conditional Column" = Table.AddColumn(#"Replaced Value", "发行主体", each if [通过分行]<>"" and  not Text.Contains([通过分行], "(") then [通过分行] else if Text.Contains([信用主体],"银行") and [通过分行] = "" then "总行" else if List.Contains({"直发","备证"},[结构])   then [信用主体] else [发行人]),
+    Replacer = fx("Replacer")(#"Added Conditional Column",{"发行主体"},{".",",","COMPANY","LIMITED"},{"","","CO","LTD"}),
+    #"Filtered Rows" = Table.SelectRows(Replacer, each ([TICKER] <> "")),
+    #"Removed Other Columns1" = Table.RemoveColumns(#"Filtered Rows",{"发行人", "通过分行"}),
+    #"Removed Duplicates" = Table.Distinct(#"Removed Other Columns1", {"信用主体", "结构", "TICKER", "担保人", "维好协议提供者", "备证行全称", "发行主体"}),
+    #"Sorted Rows" = Table.Sort(#"Removed Duplicates",{{"信用主体", Order.Ascending}})
+in
+    #"Sorted Rows"

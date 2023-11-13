@@ -15,6 +15,6 @@ let
     CWBtbl = CWB_DMI_Credit,
     ToAppend = Table.SelectRows(CWBtbl, each not List.Contains(Renamed[信用主体], [信用主体])),
     Combined = try fx("Combine")({Renamed, ToAppend}, {"信用主体"}) otherwise   Renamed ,
-    SIndexed = Load("fxSortNIndex")(Combined, "DEBUT_DATE", "信用主体", "", "", "Y")
+    SIndexed = fx("SortNIndex")(Combined, "DEBUT_DATE", "信用主体", "", "", "Y")
 in
      SIndexed

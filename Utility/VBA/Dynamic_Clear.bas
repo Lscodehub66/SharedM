@@ -44,7 +44,11 @@ Private Sub Worksheet_Change(Byval Target As Range)
         Selection.ClearContents
 
         Sheet18.Activate
-        Application.Goto Reference:="ISIN_Search_ToClear"
+        Application.Goto Reference:="ISIN_Search"
+        Selection.ClearContents
+        Application.Goto Reference:="wAddTap"
+        Selection.ClearContents
+        Application.Goto Reference:="AddTapInput"
         Selection.ClearContents
 
 

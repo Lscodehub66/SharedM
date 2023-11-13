@@ -11,7 +11,6 @@ Sub RefreshDataLake()
 
 
     If Range("GPS") = "Global" Then
-        ActiveWorkbook.Connections("Query - External_Sources").Refresh
         ActiveWorkbook.Connections("Query - ESG_ExternalReview").Refresh
         ActiveWorkbook.Connections("Query - KYC_Master").Refresh
         ActiveWorkbook.Connections("Query - CPL_23").Refresh

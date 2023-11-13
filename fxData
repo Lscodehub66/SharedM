@@ -5,8 +5,8 @@
         DBRenamed = Table.RenameColumns(
             Source,
             {
-                {"IN_板块", "板块"},
-                {"发行人注册地", "注册成立地"},
+                {"IN_板块", "板块"},{"浮动息差","FLOATER_FORMULA"},
+                {"发行人注册地", "发行人成立地"},
                 {"FLOATER_FORMULA", "计息基准"},
                 {"发行价格", "发行价"},
                 {"IN.中资属性", "中资属性"},
@@ -20,7 +20,7 @@
         ),
         CN_RNSource = List.Buffer(Table.ColumnNames(DBRenamed)),
         //DateTime ValueType
-        DateTime1 = {"Timestamp", "定价会日期时间"},
+        DateTime1 = {"Timestamp", "定价会日期时间", "Date Time"},
         Time1 = {"定价会时间"},
         //Date ValueType
         Date1 = {
@@ -84,7 +84,7 @@
             "年份",
             "当前",
             "投资者账户数",
-            "浮息息差",
+         
             "票面利率",
             "第N次担任",
             "认购额(亿)",
@@ -128,7 +128,7 @@
         Text_Trim = {"PROJECT_CODE", "期数", "外部评审机构", "外部评审方式", "FolderPath"},
         Text_Upper = {
             "Bond Details",
-            "CCY",
+            "CCY",   
             "信用主体",
             "计息基准",
             "ISIN",
@@ -148,6 +148,8 @@
         Text_NoNA = {"增发判定", "主题债券"},
         Text1 = {
             "主体",
+            "EXE","浮息息差","FLOATER_FORMULA",
+
             "系",
             "mCredit",
             "mCurated",
@@ -193,6 +195,8 @@
             "英文简称",
             "CLIENT对账号",
             "SBLC提供者",
+            "备证行全称",
+            "备证行分行",
             "Sync",
             "Tap",
             "TextCheck",
@@ -257,7 +261,7 @@
             "ESG",
             "货币细分",
             "品种主题",
-            "注册成立地",
+            "发行人成立地",
             "发行人主上市地",
             "PROJECT_NAME",
             "COVERAGE",

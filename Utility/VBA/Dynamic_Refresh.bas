@@ -5,8 +5,7 @@ Sub RefreshDownload()
 
     '
     ActiveWorkbook.Connections("Query - DimMonday").Refresh
-    ActiveWorkbook.Connections("Query - DLD_DMI").Refresh
-    ActiveWorkbook.Connections("Query - DLD_BBG_Corp").Refresh
+    ActiveWorkbook.Connections("Query - CSOE_SASAC").Refresh
     ActiveWorkbook.Connections("Query - DLD_QRC_23").Refresh
     ActiveWorkbook.Connections("Query - DLD_Conso").Refresh
     ActiveWorkbook.Connections("Query - DMI_NewColumn").Refresh

@@ -1,6 +1,6 @@
 // let LoadCode = Load("DLD_BBG_Corp","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-    Source = fx("Source")("DOWNLOAD_tbl_dmi_isin"),
+    Source = fx("Excel")("DOWNLOAD_tbl_dmi_isin"),
     RCol = Table.RemoveColumns(Source, {"Index"}, MissingField.Ignore),
     FBlank = Table.SelectRows(
         RCol, each not List.IsEmpty(List.RemoveMatchingItems(Record.FieldValues(_), {"", null}))
@@ -24,6 +24,6 @@ let
         if #"//GNG_Multi" <> "GO" then
             try CWB("DLD_BBG_Corp") otherwise fx("CheckNDupe")(TBC_Replaced)
         else
-            Load("fxCheckNDupe")(TBC_Replaced)
+           fx("CheckNDupe")(TBC_Replaced)
 in
     Crossroad

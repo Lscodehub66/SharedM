@@ -1,4 +1,4 @@
-// DimFolderExcel
+// DimFDExcel
 let
     //Has_NumInPath Parameters - create here then add to Folder Step
     YYYYMMDD = Text.Replace(Load("MondayText"), "/", "") & "\",
@@ -14,9 +14,9 @@ let
                 {"Team_DH_B", Root{0} & "Backup\", Root{1} & "Team Folder\Execution Team\DataHub\"},
                 {"Team_DH_DL", Root{0} & "DataLake\", Root{1} & "Team Folder\Execution Team\DataHub\DataLake\"},
                 {
-                    "Team_AM",
-                    Root{0} & "Backup\Weekly AM\" & YYYYMMDD & "Data\",
-                    Root{1} & "Team Folder\Execution Team\Weekly AM\" & YYYYMMDD & "Data\"
+                    "Team_Weekly",
+                    Root{0} & "Backup\Weekly\" & YYYYMMDD & "Data\",
+                    Root{1} & "Team Folder\Execution Team\Weekly\" & YYYYMMDD & "Data\"
                 },
                 {
                     "Team_ESG",
@@ -35,8 +35,8 @@ let
         {
             {"DEALs MASTER", "DEALSMASTER", "Team_DH"},
             {"DEALs MASTER", "DEALSMASTER", "Team_DH_B"},
-            {"1.Weekly Download", "DOWNLOAD", "Team_AM"},
-            {"2.Dynamic List Generator", "DYNAMIC", "Team_AM"},
+            {"1.Weekly Download", "DOWNLOAD", "Team_Weekly"},
+            {"2.Dynamic List Generator", "DYNAMIC", "Team_Weekly"},
             {"Graph", "GRAPH", "Base_4"},
             {"DEAL DIRECTORY", "DIRECTORY", "Base_4"},
             {"ESG Deal List", "ESG", "Team_ESG"},

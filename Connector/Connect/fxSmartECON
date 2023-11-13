@@ -1,0 +1,81 @@
+(optional FTextToIndicateFuture as nullable text) =>
+    let
+        Source = fx("Excel")("DOWNLOAD_ECON"),
+        RlvLvl = Load("RlvLvl"),
+        US_addon = Load("US_addon"),
+        BufferedMon = List.Buffer(Load("Controller")[Monday]){0},
+        Found = fx("SheetTotbl")(Source, {"Column1", "Date Time"}),
+        #"Filtered Rows0" = Table.SelectRows(Found, each ([Date Time] <> null)),
+        #"Changed Type" = Table.TransformColumnTypes(#"Filtered Rows0", {{"Column5", type text}}),
+        #"Inserted Date" = Table.AddColumn(#"Changed Type", "日期", each DateTime.Date([Date Time]), type date),
+        #"Inserted Time" = Table.AddColumn(#"Inserted Date", "时间", each DateTime.Time([Date Time]), type time),
+        #"Duplicated Column" = fx(
+            "Replacer"
+        )(
+            Table.DuplicateColumn(#"Inserted Time", "Column2", "区域"), {"区域"}, {"US", "CH", "EC"}, {"美国", "中国", "欧元区"}
+        ),
+        #"Inserted Text After Delimiter" = fx(
+            "Replace"
+        )(
+            Table.AddColumn(
+                #"Duplicated Column",
+                "范围",
+                each
+                    if
+                        Text.Contains([Column5] ?? "", "/")
+                        or not List.ContainsAny(Text.ToList([Column5] ?? ""), {"A".."Z"}, Comparer.OrdinalIgnoreCase)
+                    then
+                        ""
+                    else
+                        Text.Upper(Text.BeforeDelimiter([Column5] ?? "", " ")),
+                type text
+            ),
+            {"范围"},
+            "MMM0月"
+        ),
+        #"Filtered Rows1" = Table.SelectRows(
+            #"Inserted Text After Delimiter",
+            each [日期] >= Date.AddDays(BufferedMon, -7) and [日期] < Date.AddDays(BufferedMon, 7)
+        ),
+        #"Filtered Rows" = Table.SelectRows(
+            #"Filtered Rows1", each if [区域] = "美国" then [Relevance] > RlvLvl + US_addon else [Relevance] > RlvLvl
+        ),
+        #"Inserted Text" = Table.AddColumn(
+            #"Filtered Rows",
+            "区域范围",
+            each if not Text.Contains([Event] ?? "", [区域]) then Text.Combine({[区域], [范围]}, "") else "",
+            type text
+        ),
+        #"Inserted Merged Column" = Table.AddColumn(
+            #"Inserted Text", "事件", each Text.Combine({[区域范围], [Event]}, ""), type text
+        ),
+        TextNum = List.Accumulate(
+            {{"Prior", "前值"}, {"Survey", "预期"}, {"Actual", "现值"}},
+            #"Inserted Merged Column",
+            (x, y) => Load("fxECON_TextNum")(x, y{0}, y{1})
+        ),
+        #"Added Conditional Column" = Table.AddColumn(
+            TextNum, "Table", each if [日期] < BufferedMon then "ECON" else "FUTURE", type text
+        ),
+        #"Removed Columns" = Table.RemoveColumns(
+            #"Added Conditional Column",
+            {"Date Time", "Column2", "Column3", "Event", "Column5", "Survey", "Actual", "Prior", "Revised"}
+        ),
+        #"Sorted by Date" = Table.Sort(#"Removed Columns", {{"日期", Order.Ascending}}),
+        #"Ranked by Date" = Table.AddIndexColumn(#"Sorted by Date", "RankByDate", 1, 1, Int64.Type),
+        FText = if Load("fxFText")(FTextToIndicateFuture) = "FUTURE" then "FUTURE" else "ECON",
+        FTextCN = if FText = "FUTURE" then "未来一周主要经济数据" else "上周主要经济数据",
+        FRows = Table.SelectRows(#"Ranked by Date", each [Table] = FText),
+        Sorted0 = Table.Sort(FRows, {{"区域", Order.Descending}, {"Relevance", Order.Descending}}),
+        Renamed = Table.RenameColumns(Sorted0, {{"事件", FTextCN}, {"Ticker", "TICKER"}}, MissingField.Ignore),
+        #"Added Index1" = Table.AddIndexColumn(Renamed, "Index", 1, 1, Int64.Type),
+        RemoveColumns = Table.RemoveColumns(
+            #"Added Index1",
+            List.Select(Table.ColumnNames(#"Added Index1"), each Text.Contains(_, "Column"))
+                & {"Date Time", "Event", "Survey", "Actual", "Prior", "Revised", "区域范围", "Table"},
+            MissingField.Ignore
+        ),
+        #"Reordered Columns" = Table.ReorderColumns(RemoveColumns, Get("RONEWECON"), MissingField.Ignore),
+        DateTexted = Table.TransformColumns(#"Reordered Columns", {{"日期", each Date.ToText(_, "M月d日"), type text}})
+    in
+        DateTexted

@@ -1,0 +1,39 @@
+// fxReplacer
+let
+    Source = (
+  TableToClean as table,  
+  TableToCleanColumn as list,
+  FindList as list, 
+  ReplaceList as list
+) =>
+  let
+    ReplacerTable = Table.Buffer(Table.FromColumns({FindList, ReplaceList}, {"Find", "Replace"})), 
+    //Convert the ReplacerTable to a list using the Table.ToRows function
+    //so we can reference the list with an index number
+    FindReplaceList = Table.ToRows(ReplacerTable), 
+    //Count number of rows in the ReplacerTable to determine
+    //how many iterations are needed
+    Counter = Table.RowCount(ReplacerTable), 
+    //Define a function to iterate over our list 
+    //with the Table.ReplaceValue function
+    BulkReplaceValues = (TableToCleanTemp, n) =>
+      let
+        //Replace values using nth item in FindReplaceList
+        ReplaceTable = Table.ReplaceValue(
+          TableToCleanTemp, 
+          //replace null with empty string in nth item
+          if FindReplaceList{n}{0} = null then "" else FindReplaceList{n}{0}, 
+          if FindReplaceList{n}{1} = null then "" else FindReplaceList{n}{1}, 
+          Replacer.ReplaceText, 
+          TableToCleanColumn
+        )
+      in
+        //if we are not at the end of the FindReplaceList
+        //then iterate through Table.ReplaceValue again
+        if n = Counter - 1 then ReplaceTable else @BulkReplaceValues(ReplaceTable, n + 1), 
+    //Evaluate the sub-function at the first row
+    Output = BulkReplaceValues(TableToClean, 0)
+  in
+    Output
+in
+    Source

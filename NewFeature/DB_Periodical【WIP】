@@ -11,10 +11,10 @@
 
                 
         Credit_违约日 = Table.ReplaceValue(
-            fx("Merge")(Credit_Client, CWB("DMI_Default"), "信用主体", "发行人名称", {"首次违约日"}, {Prefix & "首次违约日"}),
+            fx("Merge")(Credit_Client, CWB("DMI_Default"), "信用主体", "发行人名称", {"首次违约日"}, {"Dummy" & "首次违约日"}),
             each [首次违约日],
             each
-                each Record.Field(_, Prefix & "首次违约日")             ,
+                each Record.Field(_, "Dummy" & "首次违约日")             ,
             Replacer.ReplaceValue,
             {"首次违约日"}
         ),
@@ -47,17 +47,17 @@
                 and BISL_对帐号[定价日]{0} > Date.From("2022/01/01")
             then
                 Table.ReplaceValue(
-                    fx("Merge")(BISL_对帐号, PQ_QRC合规, "PRJ对账号", "PRJ对账号", {"公盘地址"}, {Prefix & "FolderPath"}),
+                    fx("Merge")(BISL_对帐号, PQ_QRC合规, "PRJ对账号", "PRJ对账号", {"公盘地址"}, {"Dummy" & "FolderPath"}),
                     each [FolderPath],
                     each
                         if [FolderPath] <> "" and not Text.StartsWith([FolderPath], "\") then
                             "\\itd-m09-fs02\dcm$\" & Text.AfterDelimiter([FolderPath], "\")
                         else if
                             [FolderPath] = ""
-                            and Record.Field(_, Prefix & "FolderPath") <> null
-                            and Record.Field(_, Prefix & "FolderPath") <> ""
+                            and Record.Field(_, "Dummy" & "FolderPath") <> null
+                            and Record.Field(_, "Dummy" & "FolderPath") <> ""
                         then
-                            Record.Field(_, Prefix & "FolderPath")
+                            Record.Field(_, "Dummy" & "FolderPath")
                         else
                             [FolderPath],
                     Replacer.ReplaceValue,

@@ -10,8 +10,8 @@ let
     //【Input】Insert New From Top or Below
     RDupe_Method = "LIFO",
     //【Input】LIFO or FIFO
-    Add_Source = wDynamicPQ,
-    Add1_Source = Entity_AddPQ,
+    Add_Source = Load("wDynamicPQ"),
+    Add1_Source = Load("Entity_AddPQ"),
     #">>Add1_Control>>" = CWB("AddEntity")[Column1]{0},
     //【Input】PQ//
     DB_Source = CWB(DB_Name),
@@ -46,10 +46,10 @@ let
             )
         else
             Combined,
-    RDupe_Indexed = Table.AddIndexColumn(Combined, Prefix & "RDupeIndex", 1, 1),
+    RDupe_Indexed = Table.AddIndexColumn(Combined, "Dummy" & "RDupeIndex", 1, 1),
     #"RDupe_Order////" = if RDupe_Method <> "FIFO" then Order.Ascending else Order.Descending,
     RDupe_Sorted = Table.Buffer(
-        Table.Sort(RDupe_Indexed, {{Add_HD, #"RDupe_Order////"}, {Prefix & "RDupeIndex", #"RDupe_Order////"}})
+        Table.Sort(RDupe_Indexed, {{Add_HD, #"RDupe_Order////"}, {"Dummy" & "RDupeIndex", #"RDupe_Order////"}})
     ),
     RDupe_Removed = Table.Distinct(RDupe_Sorted, Add_HD),
     wRemove = Load("Controller")[RemoveFrom_DB]{0},

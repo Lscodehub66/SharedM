@@ -36,7 +36,7 @@ let
     ),
     SelectCol = fx("Data")(Table.SelectColumns(BlankToNil,Get("wBISL"), MissingField.UseNull)),
     BlankToInput = Table.ReplaceValue(
-        SelectCol, "", "【】", Replacer.ReplaceValue, {"PROJECT_CODE", "期数", "新规角色", "COVERAGE"}
+        SelectCol, "", "【】", Replacer.ReplaceValue, {"EXE","PROJECT_CODE", "期数", "新规角色", "COVERAGE"}
     ),
     BlankToInput1 = Table.ReplaceValue(
         BlankToInput, "", each if [BISL_ROLE] <> "JBR" then "【】" else "", Replacer.ReplaceValue, {

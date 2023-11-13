@@ -1,19 +1,24 @@
 let
-    Source = CWB("ESG"),
+    Source = fx("Data")(fx("Excel")("DEALSMASTER"){[Item = "ESG", Kind = "Table"]}[Data]),
+    #"Duplicated Column" = Table.DuplicateColumn(Source, "筹款用途", "Dummy.Dupe"),
+    #"Uppercased Text" = Table.TransformColumns(#"Duplicated Column", {{"Dummy.Dupe", Text.Upper, type text}}),
     Add_Before = Table.AddColumn(
-        Source,
+        #"Uppercased Text",
         "Column1",
         each
-            if Text.Contains([筹款用途], "框架") then
-                Text.BeforeDelimiter([筹款用途], "框架") & "框架"
-            else if Text.Contains([筹款用途], "framework", Comparer.OrdinalIgnoreCase) then
-                Text.BeforeDelimiter([筹款用途], "Framework", Comparer.OrdinalIgnoreCase)
+            if Text.Contains([Dummy.Dupe], "框架") then
+                Text.BeforeDelimiter([Dummy.Dupe], "框架") & "框架"
+            else if Text.Contains([Dummy.Dupe], "FRAMEWORK") then
+                Text.BetweenDelimiters([Dummy.Dupe], "THE", "FRAMEWORK") & "FRAMEWORK"
             else
                 "",
         type text
     ),
+    #"Extracted Text After Delimiter" = Table.TransformColumns(
+        Add_Before, {{"Column1", each Text.AfterDelimiter(_, "THE", {0, RelativePosition.FromEnd}), type text}}
+    ),
     Add_Before2 = Table.AddColumn(
-        Add_Before,
+        #"Extracted Text After Delimiter",
         "Column2",
         each
             if Text.Contains([Column1], "绿") and Text.Contains(Text.AfterDelimiter([Column1], "绿"), "项目") then
@@ -23,7 +28,7 @@ let
             else if Text.Contains([Column1], "可") then
                 "可" & Text.AfterDelimiter([Column1], "可")
             else
-                "",
+                [Column1],
         type text
     )
 in

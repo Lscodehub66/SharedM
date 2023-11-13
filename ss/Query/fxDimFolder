@@ -1,6 +1,0 @@
-let
-Code = Load("DimFolder","Code"),
-EVA = Expression.Evaluate("(optional DateText as nullable text) => let Monday = DateText," & Text.AfterDelimiter(Code,"//**"),#shared)
-in
-EVA
-    

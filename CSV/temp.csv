@@ -1,10 +1,10 @@
 PK_Excel,Excel_Key,PK_Folder,PK_Sheet
 DEALs MASTER,DEALSMASTER,Team_DH,
 DEALs MASTER,DEALSMASTER,Team_DH_B,
-1.Weekly Download,DOWNLOAD,Team_AM,美元债一级
-1.Weekly Download,DOWNLOAD,Team_AM,ECON
-1.Weekly Download,DOWNLOAD,Team_AM,
-2.Dynamic List Generator,DYNAMIC,Team_AM,
+1.Weekly Download,DOWNLOAD,Team_Weekly,美元债一级
+1.Weekly Download,DOWNLOAD,Team_Weekly,ECON
+1.Weekly Download,DOWNLOAD,Team_Weekly,
+2.Dynamic List Generator,DYNAMIC,Team_Weekly,
 Graph,GRAPH,Base_4,
 DEAL DIRECTORY,DIRECTORY,Base_4,
 ESG Deal List,ESG,Team_ESG,EXTERNAL_REVIEW

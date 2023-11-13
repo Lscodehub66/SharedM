@@ -1,7 +1,8 @@
 //let Code = Load("Directory","Code"), EVA = Expression.Evaluate(Code ,#shared) in EVA
 let
      #"Buffered Ancient" = Table.Buffer(CWB("BISL_Ancient")),
-    #"Buffered mDeal" = Table.Buffer(deal_master),
+    #"Buffered mDeal" = Table.Buffer(CWB("deal_master")),
+     JLMtbl = Table.RenameColumns(Table.SelectColumns(CWB("BISL_JLMPeers"),{"Check", "JGC","JBR"},MissingField.Ignore),{{"Check", "Check.Dummy"}},MissingField.Ignore),
     CN_Base = List.Buffer(CWB("BaseDirectory_CN")),
     CN_CWB = List.Buffer(Table.ColumnNames(CWB("Directory"))),
     //
@@ -9,9 +10,11 @@ let
     Ancient_Finalized = Load("fxDBFinalization")(Ancient_Merged),
     deal_masterFiltered = Table.SelectRows(#"Buffered mDeal", each [BISL_ROLE] <> "" and [BISL_ROLE] <> "--"),
     Combined = fx("Combine")({Ancient_Finalized, deal_masterFiltered}, null, {1}),
-    Checked = Load("fxCheckNDupe")(Combined),
+    Checked =fx("CheckNDupe")(Combined),
     MergedQ = fx("Merge")(Checked, CWB("Table_PRJMerge"), "COMPARER", "COMPARER", {"承销费原币"}, {""}),
-    NthMandate = fx("NthMandated")(MergedQ, {"YYMMDD", "信用主体"}),
+   
+    MergedQ2 = fx("Merge")(  MergedQ , JLMtbl,"Check","Check.Dummy",{"JGC","JBR"},{"JGC","JBR"}),
+    NthMandate = fx("NthMandated")(MergedQ2, {"YYMMDD", "信用主体"}),
     #"Count Multi-Tranche" = fx("AddMultiCount")(NthMandate),
     ExeTime =
         if Table.HasColumns(#"Count Multi-Tranche", "Date_Onboarded") then
@@ -27,7 +30,7 @@ let
             )
         else
             #"Count Multi-Tranche",
-    Sorted = Load("fxSortNIndex")(ExeTime),
+    Sorted = fx("SortNIndex")(ExeTime),
     ReplacedCCY = Table.ReplaceValue(Sorted, "美元债", "", Replacer.ReplaceValue, {"货币细分"}),
     Reordered = Table.ReorderColumns(
         ReplacedCCY,

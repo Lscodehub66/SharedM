@@ -1,0 +1,14 @@
+//let LoadCode = Load("CSOE_SASAC","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    Source = Web.Page(Web.Contents("http://www.sasac.gov.cn/n2588045/n27271785/n27271792/index.html")),
+    Data0 = Table.Buffer(Source{0}[Data]),
+    #"Removed Columns" = Table.RemoveColumns(Data0, {"Column3"}),
+    Fifty = Table.PromoteHeaders(Table.SelectColumns(#"Removed Columns", {"Column4", "Column5"})),
+    One = Table.PromoteHeaders(Table.SelectColumns(#"Removed Columns", {"Column1", "Column2"})),
+    Combined = Table.Combine({One, Fifty}),
+    #"Removed Columns1" = Table.RemoveColumns(Combined, {"序号"}),
+    #"Added Index" = Table.AddIndexColumn(#"Removed Columns1", "Index", 1, 1, Int64.Type),
+    #"Reordered Columns" = Table.ReorderColumns(#"Added Index", {"Index", "企业(集团)名称"}),
+    Replaced = fx("Replace")(#"Reordered Columns", {"企业(集团)名称"}, "主体")
+in
+    Replaced

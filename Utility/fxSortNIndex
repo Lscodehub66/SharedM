@@ -19,7 +19,7 @@
         Entity_CN_Count = List.Count(Entity_CN),
         Entity_CN1 = List.First(Entity_CN),
          // *Remove DummyCol*
-         RCol = Table.RemoveColumns(    Prep  , List.Select(CN_Source, each Text.Contains(_, Load("Prefix"))),MissingField.Ignore),
+         RCol = Table.RemoveColumns(    Prep  , List.Select(CN_Source, each Text.Contains(_, "Dummy")),MissingField.Ignore),
          //
         DefaultSort =
             if List.ContainsAll(CN_Source, {"定价日", "货币", "年期"}) and Entity_CN_Count > 0 then
