@@ -1,0 +1,45 @@
+let
+//**
+SourceFD = Load("DimFolder", "CSV"),
+    GPS = Load("GPS"),
+    RCol = Table.RemoveColumns(SourceFD, if GPS <> "Remote" then {"Column2"} else {"Column3"}),
+    #"Promoted Headers" = Table.PromoteHeaders(RCol, [PromoteAllScalars = true]),
+    #"Removed Top Rows" = Table.Skip(#"Promoted Headers", 1),
+    #"Replaced Value" = Table.ReplaceValue(
+        #"Removed Top Rows", "YYYYMMDD", Monday, Replacer.ReplaceText, {"Has_NumInPath"}
+    ),
+    #"Added Custom" = Table.AddColumn(
+        #"Replaced Value",
+        "Path",
+        each
+            if List.Contains({null, "", "--"}, [Has_NumInPath]) then
+                [Folder_Path]
+            else
+                [Folder_Path] & "\" & Text.Replace([Has_NumInPath], "/", "")
+    ),
+    #"Invoked Custom Function" = Table.AddColumn(#"Added Custom", "Data", each Load("fxFolder")([Path], ".xls")),
+    #"Removed Other Columns" = Table.SelectColumns(#"Invoked Custom Function", {"Data", "PK_Folder"}),
+    #"Expanded Data" = Table.ExpandTableColumn(
+        #"Removed Other Columns",
+        "Data",
+        List.RemoveItems(
+            Table.ColumnNames(#"Removed Other Columns"[Data]{0}), Table.ColumnNames(#"Removed Other Columns")
+        )
+    ),
+    #"Inserted Text Before Delimiter" = Table.AddColumn(
+        #"Expanded Data",
+        "PK_File",
+        each
+            Text.BeforeDelimiter(
+                Text.BeforeDelimiter(Text.BeforeDelimiter([Name], ".", {0, RelativePosition.FromEnd}), "-"), "_"
+            ),
+        type text
+    ),
+    #"Merged Columns" = Table.CombineColumns(
+        #"Inserted Text Before Delimiter",
+        {"Folder Path", "Name"},
+        Combiner.CombineTextByDelimiter("", QuoteStyle.None),
+        "File Path"
+    )
+in
+    #"Merged Columns"

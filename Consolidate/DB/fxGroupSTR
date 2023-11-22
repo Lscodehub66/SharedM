@@ -1,0 +1,16 @@
+( TextName as text ) =>
+ let
+ STRValue = if TextName = null then "" else TextName,
+  Output = 
+   if Text.Contains ( STRValue, "备证" ) then
+    "备证"
+   else if Text.Contains ( STRValue, "维好" ) then
+    "维好"
+   else if Text.Contains ( STRValue, "红筹" ) then
+    "红筹"
+   else if Text.Contains ( STRValue, "担保" ) then
+    "担保"
+   else
+    "直发"
+ in
+  Output

@@ -1,0 +1,123 @@
+let
+    Source = (optional Load as text, optional InputFullPath as nullable text) =>
+        let
+            GPS = try Excel.CurrentWorkbook(){[Name = "GPS"]}[Content][Column1]{0} otherwise "Remote",
+            //C:\Users\ktkt2\OneDrive\EXE Team\
+            DRIVE = if GPS = "Remote" then "C:\Users\ktkt2\OneDrive\" else "\\10.10.1.215\dcm$\",
+            //
+            fBASE = if GPS = "Remote" then "Business\Hub Drive\DCM Base\" else "0 DCM Base\",
+            //
+            fEXE = if GPS = "Remote" then "EXE Team\" else "Team Folder\Execution Team\",
+            //
+            fCVRG = if GPS = "Remote" then "EXE Team\CVRG\" else "Pipeline Report\",
+            //
+            fQRC = if GPS = "Remote" then "EXE Team\QRC\" else "【QRC】DCM项目情况表\",
+            //
+            Path =
+                if InputFullPath <> "" and InputFullPath <> null then
+                    InputFullPath
+                else if (Load = "DataHub" or Load = "DEALs MASTER") and GPS = "Remote" then
+                    DRIVE & fEXE & "DataHub\DEALs MASTER.xlsm"
+                else if (Load = "DataHub" or Load = "DEALs MASTER") then
+                    DRIVE & fEXE & "DataHub\DEALs MASTER.xlsm"
+                else if Load = "1.Download" and Date.FromText(Monday) < #date(2023, 06, 19) then
+                    DRIVE & fEXE & "Weekly AM\" & Text.Replace(Monday, "/", "") & "\Data\1.Weekly Download.xlsx"
+                else if Load = "1.Download" and Date.FromText(Monday) >= #date(2023, 06, 19) then
+                    DRIVE & fEXE & "Weekly AM\" & Text.Replace(Monday, "/", "") & "\Data\1.Weekly Download.xlsm"
+                else if Load = "2.Dynamic" then
+                    DRIVE & fEXE & "Weekly AM\" & Text.Replace(Monday, "/", "") & "\Data\2.Dynamic List Generator.xlsm"
+                else if Load = "Directory" then
+                    DRIVE & fBASE & "4 Markets\DEAL DIRECTORY.xlsm"
+                else if Load = "Graph" then
+                    DRIVE & fBASE & "4 Markets\Data\Graph.xlsx"
+                else if Load = "台账23" then
+                    DRIVE & fQRC & "DCM台账2023.xlsx"
+                else if Load = "KYCMaster" then
+                    DRIVE & fQRC & "DCM Existing KYC Master List.xlsx"
+                else if Load = "ESGExternal" then
+                    DRIVE & fEXE & "Rating & Advisory\7. ESG\Pitch book\ESG Deal List.xlsx"
+                else if Load = "Periodic" then
+                    DRIVE & fEXE & "DataHub\DataLake\PERIODICALs.xlsx"
+                else if Load = "PipelineF" then
+                    DRIVE & fCVRG
+                else if Load = "Pipeline" then
+                    DRIVE & fCVRG & "SOE - master.xlsx"
+                else if Load = "RSPFolder" then
+                    DRIVE & fBASE & "5 Databases\RSP Database"
+                else if Load = "RSPIndex" then
+                    DRIVE & fBASE & "5 Databases\RSP Database\NetRoadshow RSP Index.xlsx"
+                else
+                    "",
+            Output =
+                if Load = "PipelineF" or Load = "RSPFolder" then
+                    Folder.Files(Path)
+                else
+                    Excel.Workbook(File.Contents(Path)),
+            SelectedCol =
+                if Load = "PipelineF" or Load = "RSPFolder" then
+                    Output
+                else
+                    Table.SelectColumns(Output, {"Item", "Kind", "Data"}, MissingField.Ignore),
+            Sorted =
+                if Load = "PipelineF" or Load = "RSPFolder" then
+                    SelectedCol
+                else
+                    Table.Sort(SelectedCol, {{"Kind", Order.Descending}, {"Item", Order.Ascending}}),
+            Filtered =
+                if Load = "PipelineF" or Load = "RSPFolder" then
+                    Sorted
+                else
+                    Table.SelectRows(Sorted, each ([Kind] <> "DefinedName")),
+            ReplacedDynamic =
+                if Load = "PipelineF" or Load = "RSPFolder" then
+                    Filtered
+                else if Load = "2.Dynamic" then
+                    Table.TransformColumns(
+                        Filtered,
+                        {
+                            {
+                                "Item",
+                                each
+                                    Text.Replace(
+                                        Text.Replace(
+                                            Text.Replace(_, "review_shortname", "wCredit"),
+                                            "Table_postreview",
+                                            "wCurated"
+                                        ),
+                                        "Table_review_BISL",
+                                        "wBISL"
+                                    )
+                            }
+                        }
+                    )
+                else
+                    Filtered
+        in
+            ReplacedDynamic,
+    fnType = type function (
+        optional Load as (
+            type text meta [
+                Documentation.AllowedValues = {
+                    "DEALs MASTER",
+                    "1.Download",
+                    "2.Dynamic",
+                    "Directory",
+                    "Graph",
+                    "台账23",
+                    "KYCMaster",
+                    "ESGExternal",
+                    "Periodic",
+                    "PipelineF",
+                    "Pipeline",
+                    "RSPFolder",
+                    "RSPIndex"
+                }
+            ]
+        ),
+        optional InputFullPath as nullable text
+    ) as list meta [
+        Documentation.Name = "fxLauncher",
+        Documentation.Description = "Dynamically connect to DCM Data Sheets"
+    ]
+in
+    Value.ReplaceType(Source, fnType)

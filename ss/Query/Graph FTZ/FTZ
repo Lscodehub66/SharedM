@@ -1,0 +1,31 @@
+// FTZ
+let
+  Source = ConnectDB,
+Table = Source{[Item = "FTZ", Kind = "Table"]}[Data], 
+headers_FTZcol = {"Index", 
+"ISIN", 
+"定价日","信用主体(备证行)",
+"发行评级",
+"货币",
+"发行规模(亿)",
+"年期",
+"票息",
+"IPG",
+"收窄基点",
+"结构",
+"主题",
+"行业",
+"地区",
+"BOCOM_DEAL?",
+"BISL_ROLE",
+"主体评级",
+"境内主体评级",
+"上市",
+"信用主体",
+"亿元",
+"Check"},
+  #"Removed Columns" = Table.SelectColumns(Table, headers_FTZcol,MissingField.UseNull), 
+  #"Invoked DataFormat" = fxDataFormat(
+    #"Removed Columns")
+in
+    #"Invoked DataFormat"

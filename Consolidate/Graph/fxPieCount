@@ -1,0 +1,44 @@
+//Pie1 = Load("fxPie")((Source,"年",Order.Ascending,"货币细分","亿美元"),
+//let PivotCol = "年",    OneOrZero = Order.Ascending,    GroupCol = "货币细分",    MeasureCol = "亿美元",    Source = wPie_Load, Code = Load("fxPie","Code"), EVA = Expression.Evaluate(Code,#shared) (Source,PivotCol,OneOrZero,GroupCol,MeasureCol) in EVA,
+//PivotCol = "年",    OneOrZero = Order.Ascending,    GroupCol = "货币细分",    MeasureCol = "亿美元",    Source = wPIE_Load,
+(wPIE_Load as table, PivotCol as text, OneOrZero as number, GroupCol as text, MeasureCol as text, CountCol as text) =>
+    let
+        Source = wPIE_Load,
+        MergedQ = Load("fxMerge")(Source, DimDate, "定价日", "A_Date", {PivotCol, GroupCol}, {""}),
+        // "亿美元", "笔数"
+        // NumColumns = {"yy","MM","WeekNum"}
+        //TextColumns = {"年", "季", "月", "周", "年月"},
+        SCol = Table.SelectColumns(MergedQ, {"定价日", PivotCol, GroupCol, MeasureCol}, MissingField.UseNull),
+        Grouped =
+            if CountCol <> null then
+                Table.Group(
+                    SCol,
+                    {PivotCol, GroupCol},
+                    {
+                        {MeasureCol, each Number.Round(List.Sum(Record.Field(_, MeasureCol)),2), type number},
+                        {CountCol, each List.Count(Record.Field(_, GroupCol)), type number}
+                    }
+                )
+            else
+                Table.Group(
+                    SCol, {PivotCol, GroupCol}, {
+                        {MeasureCol, each Number.Round(List.Sum(Record.Field(_, MeasureCol)),2), type number}
+                    }
+                ),
+        #"Unpivoted Columns" = Table.UnpivotOtherColumns(Grouped, {PivotCol, GroupCol}, "Attribute", "Value"),
+        #"Merged Columns" = Table.CombineColumns(
+            #"Unpivoted Columns",
+            {GroupCol, "Attribute"},
+            Combiner.CombineTextByDelimiter("_", QuoteStyle.None),
+            "Merged"
+        ),
+        #"Pivoted Column1" = Table.Pivot(
+            #"Merged Columns", List.Distinct(#"Merged Columns"[Merged]), "Merged", "Value", List.Sum
+        ),
+        ACol = Table.AddColumn(#"Pivoted Column1", "Column1", each PivotCol, type text),
+        Renamed = Table.RenameColumns(ACol, {{PivotCol, "Column2"}}),
+        Reordered = Table.ReorderColumns(
+            Renamed, List.Distinct({"Column1", "Column2"} & Table.ColumnNames(Renamed)), MissingField.Ignore
+        )
+    in
+        Reordered

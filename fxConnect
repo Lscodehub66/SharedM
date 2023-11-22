@@ -1,0 +1,353 @@
+let
+    Source = (optional NameKeyWord as text, optional InputPathorFNumInput as nullable text) =>
+        let
+            // NameKeyWord = Source, InputPathorFNumInput = Monday,
+            TextContainsAny = Load("Text.ContainsAny"),
+            fxFindHeader = Load("fxFindHeader"),
+            fxRemoveBlankColumns = Load("fxRemoveBlankColumns"),
+            //
+            GPS = try Excel.CurrentWorkbook(){[Name = "GPS"]}[Content][Column1]{0} otherwise "Remote",
+            // Global Drive & Folder Definition
+            //C:\Users\ktkt2\OneDrive\EXE Team\
+            RootDrive = if GPS = "Remote" then "C:\Users\ktkt2\OneDrive\" else "\\10.10.1.215\dcm$\",
+            //
+            fBase_4 = if GPS = "Remote" then "EXE Team\DataHub\SharedM\" else "0 DCM Base\4 Markets\",
+            fBase_5 = if GPS = "Remote" then "Business\Hub Drive\DCM Base\5 Databases\" else "0 DCM Base\5 Databases\",
+            //
+            fDH = if GPS = "Remote" then "EXE Team\DataHub\" else "Team Folder\Execution Team\DataHub\",
+            fEXE = if GPS = "Remote" then "EXE Team\DataHub\SharedM\" else "Team Folder\Execution Team\",
+            //
+            fCVRG = if GPS = "Remote" then "EXE Team\CVRG\" else "Pipeline Report\",
+            //
+            fQRC = if GPS = "Remote" then "EXE Team\QRC\" else "【QRC】DCM项目情况表\",
+            //
+            Key = Text.Replace(Text.Upper(Text.Trim(NameKeyWord)), " ", ""),
+            //
+            DateText =
+                if List.Contains({"0".."9"}, Text.Start(InputPathorFNumInput, 1)) then
+                    Text.Replace(InputPathorFNumInput, "/", "")
+                else
+                    "",
+            FileExt =
+                if not List.Contains({"0".."9"}, Text.Start(InputPathorFNumInput, 1)) then
+                    ""
+                else if Date.FromText(DateText) < #date(2023, 06, 19) then
+                    ".xlsx"
+                else
+                    ".xlsm",
+            //
+            Path =
+                if
+                    InputPathorFNumInput <> null
+                    and not List.Contains({"0".."9"}, Text.Start(InputPathorFNumInput, 1))
+                then
+                    InputPathorFNumInput
+                else if Text.Contains(Key, "DATAHUB") or Text.Contains(Key, "DEALSMASTER") then
+                    // TextContainsAny(Key, {"DATAHUB", "DEALSMASTER"})
+                    RootDrive & fDH & "DEALs MASTER.xlsm"
+                else if Text.Contains(Key, "DOWNLOAD") then
+                    //TextContainsAny(Key, {"DOWNLOAD",  "DYNAMIC"})
+                    RootDrive &fEXE  &"Weekly AM\"& DateText & "\Data\1.Weekly Download" & FileExt
+                else if Text.Contains(Key, "DYNAMIC") then
+                    RootDrive&fEXE  &"Weekly AM\"&DateText & "\Data\2.Dynamic List Generator.xlsm"
+                else if Text.Contains(Key, "DIRECTORY") then
+                    RootDrive & fBase_4 & "DEAL DIRECTORY.xlsm"
+                else if Text.Contains(Key, "GRAPH") then
+                    RootDrive & fBase_4 & "Data\Graph.xlsx"
+                else if Text.Contains(Key, "台账") and Text.Contains(Key, "23") then
+                    RootDrive & fQRC & "DCM台账2023.xlsx"
+                else if Text.Contains(Key, "KYC") then
+                    RootDrive & fQRC & "DCM Existing KYC Master List_19 Oct 2023.xlsx"
+                else if Text.Contains(Key, "ESG") then
+                    RootDrive & fEXE & "Rating & Advisory\7. ESG\Pitch book\ESG Deal List.xlsx"
+                else if TextContainsAny(Key, {"DMI", "美元债", "一级", "违约", "银行", "YY"}) then
+                    RootDrive & fDH & "DataLake"
+                else if Text.Contains(Key, "OMAS") then
+                    RootDrive & fDH & "DataLake\OMAS"
+                else if Text.Contains(Key, "PIPE") then
+                    RootDrive & fCVRG
+                else if Text.Contains(Key, "RSP") and Text.Contains(Key, "F") then
+                    RootDrive & fBase_5 & "RSP Database"
+                else if Text.Contains(Key, "RSP") then
+                    RootDrive & fBase_5 & "RSP Database\NetRoadshow RSP Index.xlsx"
+                else
+                    "",
+            //
+            WhichOne = if Text.EndsWith(Path, ".xlsx") or Text.EndsWith(Path, ".xlsm") then "Excel" else "Folder",
+            //
+            Fetcher =
+                if WhichOne = "Excel" then
+                    Table.SelectRows(
+                        Table.Sort(
+                            Table.SelectColumns(
+                                Excel.Workbook(File.Contents(Path)), {"Item", "Kind", "Data"}, MissingField.Ignore
+                            ),
+                            {{"Kind", Order.Descending}, {"Item", Order.Ascending}}
+                        ),
+                        each ([Kind] <> "DefinedName")
+                    )
+                else
+                    Table.SelectRows(
+                        Folder.Files(Path),
+                        each
+                            not Text.Contains([Name], "~")
+                            and not Text.Contains([Name], "FID-NB")
+                            and not Text.Contains([Folder Path], "\ss\")
+                    ),
+            Dynamic_Excel =
+                if Text.Contains(Key, "DYNAMIC") then
+                    Table.TransformColumns( 
+                        Fetcher, 
+                        {
+                            {
+                                "Item",
+                                each
+                                    Text.Replace(
+                                        Text.Replace(
+                                            Text.Replace(_, "review_shortname", "wCredit"),
+                                            "Table_postreview",
+                                            "wCurated"
+                                        ),
+                                        "Table_review_BISL",
+                                        "wBISL"
+                                    )
+                            }
+                        }
+                    )
+                else
+                    Fetcher,
+            //台账 KYC Connect
+            QRC_List =
+                if Text.Contains(Key, "KYC") then
+                    {"Column2", "序号"}
+                else if Text.Contains(Key, "合规") then
+                    {"Column3", "团队"}
+                else
+                    {"Column2", "Project Name"},
+            QRC_Sheet =
+                if Text.Contains(Key, "KYC") then
+                    Table.SelectRows(
+                        Dynamic_Excel, each Text.Contains([Item], "KYC") and Text.Contains([Item], "Master")
+                    ){
+                        0
+                    }[Data]
+                else if Text.Contains(Key, "合规") then
+                    Table.SelectRows(Dynamic_Excel, each Text.Contains([Item], "项目合规")){0}[Data]
+                else
+                    Table.SelectRows(
+                        Dynamic_Excel,
+                        each Text.Contains([Item], "收入") and Text.Contains([Item], Text.Select(Key, {"0".."9"}))
+                    ){
+                        0
+                    }[Data],
+            QRC_Table = Table.SelectRows(
+                fxRemoveBlankColumns(fxFindHeader(QRC_Sheet, QRC_List{0}, QRC_List{1})),
+                each Record.Field(_, QRC_List{1}) <> null
+            ),
+            //
+            QRC_Step =
+                if
+                    Text.Contains(Key, "KYC")
+                    or (Text.Contains(Key, "台账") and (Text.Contains(Key, "收入") or Text.Contains(Key, "合规")))
+                then
+                    QRC_Table
+                else
+                    Dynamic_Excel,
+            //PipeFile
+            Pipe_Key = if Text.Contains(Key, "POE") then "POE" else if Text.Contains(Key, "FI") then "FI" else "SOE",
+            Pipe_Folder =
+                if Text.Contains(Key, "PIPE") then
+                    Table.SelectRows(
+                        QRC_Step,
+                        each
+                            Text.EndsWith([Folder Path], "Report\")
+                            and [Extension] = ".xlsx"
+                            and Text.Contains([Name], "master", Comparer.OrdinalIgnoreCase)
+                            and not Text.Contains([Name], "~")
+                    )
+                else
+                    QRC_Step,
+            Pipe_Excel = Excel.Workbook(
+                Table.SelectRows(
+                    Pipe_Folder, each Text.StartsWith([Name], Pipe_Key, Comparer.OrdinalIgnoreCase)
+                ){
+                    0
+                }[Content]
+            ),
+            Pipe_Sheet =
+                if Text.Contains(Key, "PIPE") and not Text.EndsWith(Key, "F") and not Text.Contains(Key, "FOLDER")
+                then
+                    fxRemoveBlankColumns(
+                        Table.PromoteHeaders(
+                            Table.SelectRows(Pipe_Excel, each Text.Contains([Item], "重点")){0}[Data],
+                            [
+                                PromoteAllScalars = true
+                            ]
+                        )
+                    )
+                else
+                    Pipe_Folder,
+            //Excel ESG
+            ExcelESGReview =
+                if Text.Contains(Key, "ESG") and Text.Contains(Key, "REVIEW") then
+                    Load("fxDataFormat")(
+                        Table.SelectRows(
+                            Pipe_Sheet,
+                            each
+                                Text.Contains([Item], "External", Comparer.OrdinalIgnoreCase)
+                                and Text.Contains([Item], "review", Comparer.OrdinalIgnoreCase)
+                        ){
+                            0
+                        }[Data]
+                    )
+                else
+                    Pipe_Sheet,
+            // ExcelFromFolder
+            FolderToExcel =
+                if TextContainsAny(Key, {"DMI", "美元债", "一级"}) then
+                    fxFindHeader(
+                        Excel.Workbook(
+                            Table.SelectRows(ExcelESGReview, each Text.Contains([Name], "美元债一级")){0}[Content]
+                        ){
+                            0
+                        }[Data],
+                        "Column1",
+                        "信用主体"
+                    )
+                else if Text.Contains(Key, "违约") then
+                    fxFindHeader(
+                        Excel.Workbook(
+                            Table.SelectRows(
+                                ExcelESGReview,
+                                each Text.Contains([Name], "违约") and Text.Contains([Extension], "xlsx")
+                            ){
+                                0
+                            }[Content]
+                        ){
+                            0
+                        }[Data],
+                        "Column1",
+                        "ISIN码"
+                    )
+                else if Text.Contains(Key, "银行") then
+                    fxFindHeader(
+                        Excel.Workbook(
+                            Table.SelectRows(
+                                ExcelESGReview,
+                                each Text.Contains([Name], "银行") and Text.Contains([Extension], "xlsx")
+                            ){
+                                0
+                            }[Content]
+                        ){
+                            0
+                        }[Data],
+                        "Column1",
+                        "发行人全称"
+                    )
+                else if Text.Contains(Key, "YY") and Text.Contains(Key, "金融") then
+                    Table.PromoteHeaders(
+                        Table.SelectRows(
+                            Excel.Workbook(
+                                Table.SelectRows(
+                                    ExcelESGReview,
+                                    each Text.Contains([Name], "YY") and Text.Contains([Extension], "xlsx")
+                                ){
+                                    0
+                                }[Content]
+                            ),
+                            each Text.Contains([Name], "金融")
+                        ){
+                            0
+                        }[Data],
+                        [
+                            PromoteAllScalars = true
+                        ]
+                    )
+                else if Text.Contains(Key, "YY") and Text.Contains(Key, "城投") then
+                    Table.PromoteHeaders(
+                        Table.SelectRows(
+                            Excel.Workbook(
+                                Table.SelectRows(
+                                    ExcelESGReview,
+                                    each Text.Contains([Name], "YY") and Text.Contains([Extension], "xlsx")
+                                ){
+                                    0
+                                }[Content]
+                            ),
+                            each Text.Contains([Name], "城投")
+                        ){
+                            0
+                        }[Data],
+                        [
+                            PromoteAllScalars = true
+                        ]
+                    )
+                else if Text.Contains(Key, "YY") and Text.Contains(Key, "产业") then
+                    Table.PromoteHeaders(
+                        Table.SelectRows(
+                            Excel.Workbook(
+                                Table.SelectRows(
+                                    ExcelESGReview,
+                                    each Text.Contains([Name], "YY") and Text.Contains([Extension], "xlsx")
+                                ){
+                                    0
+                                }[Content]
+                            ),
+                            each Text.Contains([Name], "产业")
+                        ){
+                            0
+                        }[Data],
+                        [
+                            PromoteAllScalars = true
+                        ]
+                    )
+                else if Text.Contains(Key, "YY") then
+                    Excel.Workbook(
+                        Table.SelectRows(
+                            ExcelESGReview, each Text.Contains([Name], "YY") and Text.Contains([Extension], "xlsx")
+                        ){
+                            0
+                        }[Content]
+                    )
+                else
+                    ExcelESGReview
+        in
+            FolderToExcel,
+    fnType = type function (
+        optional NameKeyWord as (
+            type text meta [
+                Documentation.AllowedValues = {
+                    "DEALs MASTER",
+                    "1.Download",
+                    "2.Dynamic",
+                    "Directory",
+                    "Graph",
+                    "台账23",
+                    "台账23收入",
+                    "台账23合规",
+                    "KYC",
+                    "ESG Deal List",
+                    "Periodic",
+                    "Pipe_Folder",
+                    "Pipe_SOE",
+                    "Pipe_FI",
+                    "Pipe_POE",
+                    "RSPFolder",
+                    "RSPIndex",
+                    "DMI美元债一级",
+                    "DMI境外债券违约",
+                    "DMI银行指标数据",
+                    "YY_金融主体",
+                    "YY_产业主体",
+                    "YY_城投主体",
+                    "YY_研究主体"
+                }
+            ]
+        ),
+        optional InputPathorFNumInput as nullable text
+    ) as list meta [
+        Documentation.Name = "fxConnect",
+        Documentation.Description = "One-stop connector to manage DCM data"
+    ]
+in
+    Value.ReplaceType(Source, fnType)

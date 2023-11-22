@@ -1,0 +1,123 @@
+//From Directory to Tombstones: Group Directory Tranches into Projects
+//let LoadCode = Load("QTomb_Writer","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    CWB_Directory = CWB("Directory"),
+    FilteredSource = Table.SelectRows(CWB_Directory, each [首次违约日] = null),
+    //
+    NumberOfTombs = 50,
+    GetNumberOfFirstN = List.Sum(
+        Table.FirstN(
+            Table.Group(FilteredSource, {"COMPARER"}, {{"Count", each Table.RowCount(_), Int64.Type}}), NumberOfTombs
+        )[Count]
+    ),
+    //
+    Source = Table.FirstN(FilteredSource, GetNumberOfFirstN),
+    //**
+    Merged = Table.AddColumn(Source, "币种规模品种", each Text.Combine({[币种规模], [发行品种]}, ""), type text),
+    Grouped = Table.Group(
+        Merged,
+        {"COMPARER"},
+        {
+            {"信用主体", each Text.Combine(List.Distinct([信用主体]), ","), type text},
+            {"多笔", each List.Sum([多笔]) / List.Count([多笔]), type number},
+            {"多币种", each List.Sum([多币种]) / List.Count([多币种]), type number},
+            {"多品种", each List.Sum([多品种]) / List.Count([多品种]), type number},
+            {
+                "多币种详情",
+                each
+                    if
+                        List.Sum([多币种]) / List.Count([多币种]) > 1
+                        and List.Sum([多品种]) / List.Count([多品种]) = 1
+                        or List.Sum([多品种]) = 0
+                    then
+                        Text.Combine([币种规模], "及")
+                    else
+                        {""}{0},
+                type text
+            },
+            {
+                "唯一品种",
+                each
+                    if List.Sum([多品种]) = 0 or List.Sum([多品种]) / List.Count([多品种]) = 1 then
+                        Text.Combine(List.Distinct([发行品种]), ",")
+                    else
+                        {""}{0},
+                type text
+            },
+            {
+                "多品种详情",
+                each if List.Sum([多品种]) / List.Count([多品种]) > 1 then Text.Combine([币种规模品种], ",") else {""}{0},
+                type text
+            },
+            {
+                "合并单币种",
+                each
+                    if
+                        List.Sum([多笔]) / List.Count([多笔]) > 1
+                        and List.Sum([多币种]) / List.Count([多币种]) = 1
+                        and List.Sum([多品种]) / List.Count([多品种]) = 1
+                    then
+                        fxCleaner(Text.Combine(List.Distinct([币种单位]), ","), null, {"亿", "万"}, {"", ""})
+                    else
+                        Text.Combine(List.Distinct([币种规模]), ","),
+                type text
+            },
+            {
+                "计算合并单币种",
+                each
+                    if
+                        List.Sum([多笔]) / List.Count([多笔]) > 1
+                        and List.Sum([多币种]) / List.Count([多币种]) = 1
+                        and List.Sum([多品种]) / List.Count([多品种]) = 1
+                    then
+                        List.Sum([#"发行规模(亿)"])
+                    else
+                        List.Sum([#"发行规模(亿)"]) * 0,
+                type number
+            }
+        }
+    ),
+    TransformSum = Table.AddColumn(
+        Grouped,
+        "单币种",
+        each
+            if [计算合并单币种] < 1 and [计算合并单币种] > 0 then
+                Number.ToText(Number.Round([计算合并单币种] * 10000, 3)) & "万" & [合并单币种]
+            else if [计算合并单币种] > 1 then
+                Number.ToText(Number.Round([计算合并单币种], 3)) & "亿" & [合并单币种]
+            else
+                [合并单币种],
+        type text
+    ),
+    BDelimiter = Table.AddColumn(
+        TransformSum, "R2", each if [多品种] = 1 then Text.BeforeDelimiter([唯一品种], ",") else [唯一品种], type text
+    ),
+    Added2 = Table.AddColumn(
+        BDelimiter,
+        "R3",
+        each
+            if [多品种] > 1 then
+                [多品种详情]
+            else if [多笔] > 1 and [多币种] = 1 and [合并单币种] = "元" then
+                Text.Replace(fxCleaner(Number.ToText([多笔]), "123一二三"), "二", "双") & "批次" & "人民币" & [单币种]
+            else if [多笔] > 1 and [多币种] = 1 then
+                Text.Replace(fxCleaner(Number.ToText([多笔]), "123一二三"), "二", "双") & "批次" & [单币种]
+            else if [多品种] = 1 and [多币种] > 1 then
+                [多币种详情]
+            else
+                [单币种]
+    ),
+    AddSuffix = Table.ReplaceValue(
+        Added2,
+        each [R3],
+        each if Text.Contains([COMPARER], "TAP") and not Text.Contains([R3], "增发") then "增发" & [R3] else [R3],
+        Replacer.ReplaceValue,
+        {"R3"}
+    ),
+    BDelimiter2 = Table.AddColumn(AddSuffix, "R3A", each Text.AfterDelimiter([R3], ","), type text),
+    BDelimiter3 = Table.TransformColumns(BDelimiter2, {{"R3", each Text.BeforeDelimiter(_, ","), type text}}),
+    Replaced1 = Table.ReplaceValue(BDelimiter3, "", each [R3A], Replacer.ReplaceValue, {"R2"}),
+    Replaced2 = Table.ReplaceValue(Replaced1, ",", "#(lf)", Replacer.ReplaceText, {"R2"}),
+    SelectedCol2 = Table.SelectColumns(Replaced2, {"COMPARER", "R2", "R3"})
+in
+    SelectedCol2

@@ -1,0 +1,18 @@
+(InputTable as table, ColumnName as text, AnchorValue as text) as table =>
+    let
+        IndexNumber =
+            let
+                #"Added Index" = Table.AddIndexColumn(InputTable, "Index", 1, 1, Int64.Type),
+                #"Changed Type" = Table.TransformColumnTypes(#"Added Index", {{ColumnName, type text}}),
+                #"Filtered Rows" = Table.SelectRows(
+                    #"Changed Type", each (Text.Lower(Record.Field(_, ColumnName)) = Text.Lower(AnchorValue))
+                ){
+                    0
+                }[Index]
+            in
+                #"Filtered Rows",
+        RemoveRows = Table.Skip(InputTable, IndexNumber - 1),
+        PromoteHeaders = Table.PromoteHeaders(RemoveRows),
+          #"Filtered Rows1" = Table.SelectRows(  PromoteHeaders, each not List.IsEmpty(List.RemoveMatchingItems(Record.FieldValues(_), {"", null})))
+    in
+      #"Filtered Rows1" 

@@ -1,0 +1,20 @@
+let
+    Source = writer,
+    #"Filtered Rows" = Table.SelectRows(Source, each Text.Contains([主题], "明珠")),
+    #"Removed Other Columns" = Table.SelectColumns(#"Filtered Rows",{"地区"}),
+    #"Removed Duplicates" = Table.Distinct(#"Removed Other Columns"),
+    #"Transposed Table" = Table.Transpose(#"Removed Duplicates"),
+    #"Promoted Headers" = Table.PromoteHeaders(#"Transposed Table", [PromoteAllScalars=true]),
+    Custom1 = Table.ColumnNames(#"Promoted Headers"),
+    Custom2 = Table.AddColumn(#"Transposed Table",
+    "省级：非金融行业发行明珠债", 
+    each Text.Combine(
+      Custom1, 
+      "、"
+    ), 
+    type text
+  ),
+    #"Removed Other Columns1" = Table.SelectColumns(Custom2,{"省级：非金融行业发行明珠债"}),
+    Custom3 = Table.SelectColumns(Source,{"Index"})
+in
+    Custom3

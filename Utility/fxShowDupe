@@ -1,0 +1,9 @@
+( TableName as table, ListColName as list ) =>
+ let
+  Source      = TableName, 
+  ColNames    = List.RemoveMatchingItems ( List.Distinct ( ListColName ), { "null" } ), 
+  addCount    = Table.Group ( Source, ColNames, { { "Count", Table.RowCount, type number } } ), 
+  selectDupe  = Table.SelectRows ( addCount, each [Count] > 1 ), 
+  removeCount = Table.RemoveColumns ( selectDupe, "Count" )
+ in
+  Table.Join ( Source, ColNames, removeCount, ColNames, JoinKind.Inner )

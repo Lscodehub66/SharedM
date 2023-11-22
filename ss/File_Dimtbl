@@ -1,0 +1,61 @@
+let
+    //
+    fxFText = Load("fxFText"),
+    //
+    File_Source = Table.FromRows(
+        {
+            {"DataHub,DealsMaster", "DEALs MASTER", "", "=",0, "Team_DH", "DM", ""},
+            {"Dim", "Dim", "", "=", 0, "Team_DH", "Dim", ""},
+            {"Download", "1.Weekly Download", "", "=",  99999999, "Team_AM", "DLD", ""},
+            {
+                "Dynamic",
+                "2.Dynamic List Generator",
+                "",
+                "=",
+                99999999,
+                "Team_AM",
+                "Dynamic",
+                "Rename_Connect_Dynamic"
+            },
+            {"Graph", "Graph", "", "=",0, "Base_4", "Graph", ""},
+            {"Directory", "DEAL DIRECTORY", "", "=", 0, "Base_4", "Directory", ""},
+            {"RSP", "NetRoadshow RSP Index", "Index", "Contains", 0, "Base_5_RSP", "RSPIndex", ""},
+            {"KYC", "DCM Existing KYC Master List", "", "Contains",0, "QRC", "KYC", ""},
+            {"台账", "DCM台账2023", "", "Contains", 9999, "QRC", "DCM", ""},
+            {"Pipe", "SOE - master", "master", "Contains",0, "Pipeline", "Pipeline", ""},
+            {"DMI,美元债,一级", "美元债一级", "美元债一级", "Contains", 0, "Team_DH", "DMI_NI", ""},
+            {"违约", "境外债券违约", "", "Contains", 0, "Team_DH", "DMI_Default", ""},
+            {"银行", "银行指标数据", "", "Contains",0, "Team_DH", "DMI_Bank", ""},
+            {"YY", "YY_研究主体", "", "Contains", 0, "Team_DH", "YY", ""}
+        },
+        {
+            "InputFText",
+            "Name",
+            "Name_FText",
+            "Name_FText_Dummy",
+            "InputFNum",
+            "PK_Folder",
+            "PK_File",
+            "TF_Rename_Connect"
+        }
+    ),
+    File_TF = Table.TransformColumns(File_Source, {{"InputFText", each fxFText(_)}, {"InputFNum", each if _ = "" then null else _}}),
+    File_Replaced = Table.ReplaceValue(
+        File_TF,
+        "",
+        each if Text.Contains([Name_FText_Dummy], "=") then "=" & [Name] else [InputFText],
+        Replacer.ReplaceValue,
+        {"Name_FText"}
+    ),
+    File_TF_CN = List.Select(
+        Record.FieldNames(File_Source{0}), each Text.Contains(_, "TF_", Comparer.OrdinalIgnoreCase)
+    ),
+    File_TF_CN_Prefix = Text.AfterDelimiter(File_TF_CN{0}, "_") & "_",
+    File_TF_Record = Table.ReplaceValue(
+        File_Replaced, "Y", each File_TF_CN_Prefix & [PK_File], Replacer.ReplaceValue, File_TF_CN
+    ),
+    File_RCol = Table.RemoveColumns(
+        File_TF_Record, List.Select(Table.ColumnNames(File_TF_Record), each Text.Contains(_, Prefix))
+    )
+in
+    File_RCol

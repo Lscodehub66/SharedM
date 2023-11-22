@@ -1,0 +1,23 @@
+(Input) =>
+    let
+        List_MCode = "{""" & Text.Combine(List.Transform(Input, each Text.From(_)), """, """) & """}",
+        //
+        tbl_CN = Table.ColumnNames(Input),
+        tbl_Type = Table.TransformColumnTypes(Input, List.Transform(       tbl_CN , each {_, type text})),
+        tbl_MCol = Table.CombineColumns(
+            Input, Table.ColumnNames(tbl_Type), Combiner.CombineTextByDelimiter(";", QuoteStyle.None), "Merged"
+        ),
+        tbl_MCode = " = Table.FromRows ( { "
+            & Text.Combine(
+                List.Transform(
+                    tbl_MCol[Merged],
+                    each "{""" & Text.Combine(List.Transform(Text.Split(_, ";"), each Text.From(_)), """, """) & """}"
+                ),
+                ", "
+            )
+            & " } ,  ",
+        tbl_CN_MCode = " { """ & Text.Combine(List.Transform(       tbl_CN , each Text.From(_)), """, """) & """} ),",
+        tbl_Output = tbl_MCode & tbl_CN_MCode,
+        Output = try List_MCode otherwise tbl_Output
+    in
+        Output

@@ -1,0 +1,76 @@
+Entity_Client =
+            if List.Contains(CN_Source, "IS_CLIENT") then
+                Table.ReplaceValue(
+                  Source,
+                    "",
+                    each if List.Contains(CWB("Directory")[信用主体], [信用主体]) then "Y" else "",
+                    Replacer.ReplaceValue,
+                    {"IS_CLIENT"}
+                )
+            else
+                 Source,
+        
+        
+        Entity_地区 =
+            if List.Contains(CN_Source, "区县") then
+                Table.TransformColumns(Source, {{"区县", each  fxCleaner(_, "区县")}})
+            else
+                Source,
+
+                
+        Credit_违约日 = Table.ReplaceValue(
+            Load("fxMerge")(Credit_Client, CWB("DMI_Default"), "信用主体", "发行人名称", {"首次违约日"}, {Prefix & "首次违约日"}),
+            each [首次违约日],
+            each
+                each Record.Field(_, Prefix & "首次违约日")             ,
+            Replacer.ReplaceValue,
+            {"首次违约日"}
+        ),
+        Credit_IsDefault =
+            if List.ContainsAll(CN_Source, {"首次违约日", "IS_DEFAULT"})  then
+                Table.ReplaceValue(
+                    Credit_违约日,
+                    "",                    each
+                        if [首次违约日] <> null then "Y" else "" ,
+                    Replacer.ReplaceValue,
+                    {"IS_DEFAULT"}
+                )
+            else
+                Credit_Client
+//
+                 fxSmartListing = Load("fxSmartListing"),
+              
+                Curated_上市 =
+            if List.Contains(CN_Source, "上市") and DB_Type <> "W" then
+                Table.TransformColumns(Curated_结构, {{"上市", each fxSmartListing(_)}})
+            else
+                Curated_结构,
+  
+   PQ_QRC合规 = Load("合规_MergeDIR"),
+   // **************************** Skipped ***************************
+        BISL_台账 =
+            if
+                List.ContainsAll(CN_Source, {"FolderPath", "定价日"})
+                and DB_Type <> "W"
+                and BISL_对帐号[定价日]{0} > Date.From("2022/01/01")
+            then
+                Table.ReplaceValue(
+                    Load("fxMerge")(BISL_对帐号, PQ_QRC合规, "PRJ对账号", "PRJ对账号", {"公盘地址"}, {Prefix & "FolderPath"}),
+                    each [FolderPath],
+                    each
+                        if [FolderPath] <> "" and not Text.StartsWith([FolderPath], "\") then
+                            "\\10.10.1.215\dcm$\" & Text.AfterDelimiter([FolderPath], "\")
+                        else if
+                            [FolderPath] = ""
+                            and Record.Field(_, Prefix & "FolderPath") <> null
+                            and Record.Field(_, Prefix & "FolderPath") <> ""
+                        then
+                            Record.Field(_, Prefix & "FolderPath")
+                        else
+                            [FolderPath],
+                    Replacer.ReplaceValue,
+                    {"FolderPath"}
+                )
+            else
+                BISL_对帐号,
+        // **************************** Skipped ***************************

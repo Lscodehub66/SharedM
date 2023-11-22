@@ -1,0 +1,21 @@
+// 用于merge Directory 后load completed formalities
+// let LoadCode = Load("合规_MergeDIR","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    TFSource = Load("合规_23_22"),
+    MergedQ = Load(
+        "fxMerge"
+    )(
+        TFSource, CWB("Directory"), "PRJ对账号", "PRJ对账号", Get("Header_DirectoryToFormalities"), {""}
+    ),
+    //  {"ISIN", "PROJECT_NAME", "定价日", "新规角色", "信用主体(备证行)", "注册成立地"}
+    ACheck = Table.AddColumn(MergedQ, "TextCheck", each Text.Select([发行人], {"A".."Z", "0".."9"})),
+    MergedQ1 = Load(
+        "fxMerge"
+    )(
+        ACheck, Load("KYCLoad"), "TextCheck", "TextCheck", {"KYC expiry date", "KYC Status", "公盘地址"}, {""}
+    ),
+    // Merge with KYC_Master
+    Replaced = Table.ReplaceValue(MergedQ1, null, "New KYC Entity", Replacer.ReplaceValue, {"KYC Status"}),
+    ABDelimiter = Table.AddColumn(Replaced, "主体简称", each Text.BeforeDelimiter([#"信用主体(备证行)"], "("), type text)
+in
+    ABDelimiter

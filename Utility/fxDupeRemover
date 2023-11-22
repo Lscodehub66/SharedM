@@ -1,0 +1,25 @@
+//Sample =  fxDupeRemover ( TableName, "Check", "ISIN", "定价日","yyMMdd","","Y" )
+let
+    Source = (TableName as table, NewColName as text, TextSource as text, DateSource as text, DateFormat as text, Delimeter as text, IsDateFirst as text ) =>
+ let
+  Source     = TableName, 
+  DateType   = Table.TransformColumnTypes ( Source, { { TextSource, type text }, { DateSource, type date } } ), 
+  NoSpace    = Table.ReplaceValue ( DateType, " ", "", Replacer.ReplaceText, { TextSource } ), 
+  Removed    = Table.RemoveColumns ( NoSpace, { NewColName }, MissingField.Ignore ), 
+  ReAdd      = Table.AddColumn (
+   Removed, 
+   NewColName, 
+   each 
+    if IsDateFirst = "N" then
+     Record.Field ( _, TextSource ) & Delimeter & Date.ToText ( Record.Field ( _, DateSource ), DateFormat )
+    else
+     Date.ToText ( Record.Field ( _, DateSource ), DateFormat )  & Delimeter & Record.Field ( _, TextSource ), 
+   type text
+  ), 
+  RemoveDupe = Table.Distinct ( ReAdd, { NewColName } )
+ in
+  RemoveDupe
+in
+    Source
+
+  

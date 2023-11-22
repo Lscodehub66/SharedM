@@ -1,0 +1,69 @@
+let
+    SourceFD = Table.Buffer(Load("DimFolder", "CSV")),
+    RCol = Table.RemoveColumns(SourceFD, if Load("GPS") <> "Remote" then {"Column2"} else {"Column3"}),
+    #"Promoted Headers" = Table.PromoteHeaders(RCol, [PromoteAllScalars = true]),
+    #"Removed Top Rows" = Table.Skip(#"Promoted Headers", 1),
+    Monday = Load("Monday"),
+    #"Replaced Value" = Table.ReplaceValue(
+        #"Removed Top Rows", "YYYYMMDD", Monday, Replacer.ReplaceText, {"Has_NumInPath"}
+    ),
+    #"Added Custom" = Table.AddColumn(
+        #"Replaced Value",
+        "Path",
+        each
+            if List.Contains({null, "", "--"}, [Has_NumInPath]) then
+                [Folder_Path]
+            else
+                [Folder_Path] & "\" & Text.Replace([Has_NumInPath], "/", "")
+    ),
+    #"Filtered Rows" = Table.SelectRows(#"Added Custom", each ([Folder_Path] <> "")),
+    #"Invoked Custom Function" = Table.AddColumn(#"Filtered Rows", "Data", each Load("fxFolder")([Path], ".xls")),
+    #"Removed Other Columns" = Table.SelectColumns(#"Invoked Custom Function", {"Data", "PK_Folder"}),
+    #"Expanded Data" = Table.ExpandTableColumn(
+        #"Removed Other Columns",
+        "Data",
+        List.RemoveItems(
+            Table.ColumnNames(#"Removed Other Columns"[Data]{0}), Table.ColumnNames(#"Removed Other Columns")
+        )
+    ),
+    #"Inserted Text Before Delimiter" = Table.AddColumn(
+        #"Expanded Data",
+        "PK_File",
+        each
+            Text.BeforeDelimiter(
+                Text.BeforeDelimiter(Text.BeforeDelimiter([Name], ".", {0, RelativePosition.FromEnd}), "-"), "_"
+            ),
+        type text
+    ),
+    #"Merged Columns" = Table.Buffer(
+        Table.CombineColumns(
+            #"Inserted Text Before Delimiter",
+            {"Folder Path", "Name"},
+            Combiner.CombineTextByDelimiter("", QuoteStyle.None),
+            "File Path"
+        )
+    ),
+    #"Merged Queries" = Table.NestedJoin(
+        Load("DimFile", "CSV"),
+        {"PK_Folder", "PK_File"},
+        #"Merged Columns",
+        {"PK_Folder", "PK_File"},
+        "Data",
+        JoinKind.LeftOuter
+    ),
+    #"Expanded DimFolder" = Table.ExpandTableColumn(
+        #"Merged Queries",
+        "Data",
+        List.RemoveItems(Table.ColumnNames(#"Merged Queries"[Data]{0}), Table.ColumnNames(#"Merged Queries"))
+    ),
+    TF = Table.TransformColumns(#"Expanded DimFolder", {{"Tab", Text.Upper, type text}}),
+    TF2 = Table.TransformColumnTypes(TF, {{"Tab_Skip", Int64.Type}}),
+    A1 = Table.AddColumn(
+        TF2, "FText", each if [Tab] <> "" and [Tab] <> "0" then [FText_File] & "_" & [Tab] else [FText_File]
+    ),
+    #"Removed Other Columns1" = Table.SelectColumns(
+        A1, {"Content", "File Path", "FText", "FText_File", "Tab", "Tab_Skip", "Tab_Find", "Tab_Find_Key"}
+    ),
+    #"Filtered Rows1" = Table.SelectRows(#"Removed Other Columns1", each not List.Contains({"",null}, [File Path] ))
+in
+    #"Filtered Rows1"

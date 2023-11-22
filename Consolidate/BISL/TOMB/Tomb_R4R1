@@ -1,0 +1,29 @@
+//Tombstones to Merge with Directory to use rich fields
+//let LoadCode = Load("QTomb_R4R1","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    Source = Load("QTomb_R2R3"),
+    MergeSource =  CWB("Directory"),
+ //**   
+    Header_DirectoryToTombsWriter = Get("Header_DirectoryToTombsWriter"),
+    MergedQ = Load("fxMerge")(Source, CWB("Directory"), "COMPARER", "COMPARER", Header_DirectoryToTombsWriter,null,{"COMPARER"}),
+    // { "定价日", "年月", "首次违约日" } & { "备证行", "信用主体简称", "通过分行", "角色" }
+    AddedR1 = Table.AddColumn(
+        MergedQ,
+        "P1",
+        each
+            if [备证行] <> "--" then
+                [信用主体简称] & "#(lf)" & "(" & [备证行] & "备证)"
+            else if Text.Contains([通过分行], "分行") then
+                [信用主体简称] & "#(lf)" & [通过分行]
+            else
+                [信用主体简称]
+    ),
+    AddedR4 = Table.AddColumn(
+        AddedR1, "R4", each if Text.Contains([角色], "及") then Text.Replace([角色], "及", "#(lf)") else "#(lf)" & [角色]
+    ),
+    MergedCol = Table.CombineColumns(
+        AddedR4, {"R2", "R3", "R4", "年月"}, Combiner.CombineTextByDelimiter("#(lf)", QuoteStyle.None), "P2"
+    ),
+    SCol = Table.SelectColumns(MergedCol, {"定价日", "P1", "P2"}, MissingField.UseNull)
+in
+    SCol

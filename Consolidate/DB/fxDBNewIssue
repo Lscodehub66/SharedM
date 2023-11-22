@@ -1,0 +1,86 @@
+//let MonitorName = "ESG", LoadCode = Load("fxDBNewIssue","Code"), EVA = Expression.Evaluate(LoadCode ,#shared)(deal_master,MonitorName) in EVA
+(SourceTable as table, TableNameText as text) =>
+    let
+        Key = Text.Upper(Text.Trim(TableNameText)),
+        //
+        Source = Table.Buffer(SourceTable),
+        Get = Load("Get"),
+        SourceF = Table.SelectRows(Source, each [删除及隐藏] = "" and [定价日] > Date.From("2021/12/31")),
+        SourceUSDCNH = Table.SelectRows(   SourceF,            each ([货币] = "USD" or [货币] = "CNH")),
+        // ORecent
+        Header0 = Get("Header_Graph_Deal_Weekly"),
+        // {"Index","ISIN","定价日","信用主体(备证行)","发行评级","货币","发行规模(亿)","年期","票息","IPG","收窄基点","结构","主题","板块","地区","BOCOM_DEAL?","亿美元"  },
+        SCol0 = Table.SelectColumns(SourceF, Header0, MissingField.UseNull),
+        // 1ESG
+        Header1 = Get("HeaderESG"),
+        Filtered1 = Table.SelectRows(SourceF, each not List.Contains({null, "", "--"}, [ESG])),
+        SCol1 = Table.SelectColumns(Filtered1, Header1, MissingField.UseNull),
+        // 2DimSum
+        Header2 = Get("HeaderDimSum"),
+        Filtered2 = Table.SelectRows(SourceF, each [货币细分] = "点心债"),
+        SCol2 = Table.SelectColumns(Filtered2, Header2, MissingField.UseNull),
+        // 2a DimSum & FTZ
+        Filtered2a = Table.SelectRows(SourceF, each  [货币] = "CNH"),
+        SCol2a = Table.SelectColumns(Filtered2a, Header2 & {"货币细分"}, MissingField.UseNull),
+        // 3IGLGFV
+        Header3 = Get("HeaderIGLGFV"),
+        Filtered3 = Table.SelectRows(SourceF, each [是否IG] <> "--" and [投标资历分类] <> "--" and [货币] <> "CNH"),
+        SCol3 = Table.SelectColumns(Filtered3, Header3, MissingField.UseNull),
+        //4SBLC
+        Header4 = Get("HeaderSBLC"),
+        Filtered4 = Table.SelectRows(SourceF, each Text.Contains([结构], "备证")),
+        SCol4 = Table.SelectColumns(Filtered4, Header4, MissingField.UseNull),
+        // 5FI
+        Header5 = Get("HeaderFI"),
+        Filtered5 = Table.SelectRows(SourceF, each Text.Contains([板块], "金")),
+        SCol5 = Table.SelectColumns(Filtered5, Header5, MissingField.UseNull),
+        // 6FTZ
+        Header6 = Get("HeaderFTZ"),
+        Filtered6 = Table.SelectRows(Source, each [货币细分] = "自贸债"),
+        SCol6 = Table.SelectColumns(Filtered6, Header6, MissingField.UseNull),
+        // 7Graph
+        Header7 = Get("HeaderChart"),
+        //{"Index","ISIN","定价日", "信用主体", "亿美元", "评级分类", "年期分类","货币",  "货币细分", "板块", "删除及隐藏","Check" }
+        SourceGraph = Load("fxCombine")({Load("ChartPQ"), SourceF}, {"Check"}, Header7),
+        Filtered7 = Table.SelectRows(SourceGraph, each [货币] = "USD" or [货币] = "CNH"),
+        //8IPG
+        Header8 = {"Index", "ISIN", "定价日", "信用主体", "亿美元", "评级分类", "板块", "收窄基点", "Check"},
+        Filtered8 = Table.SelectRows(
+             SourceUSDCNH,
+           each not List.Contains({null, "", "--"}, [收窄基点]) 
+        ),
+        SCol8 = Table.SelectColumns(Filtered8, Header8, MissingField.UseNull),
+        //******
+        Output =
+            if Text.Contains(Key, "ESG") then
+                Table.TransformColumns(SCol1, {{"ESG主题", each if not Text.Contains(_, "债") then _ & "债券" else _}})
+            else if Text.Contains(Key, "DIMSUM") and Text.Contains(Key, "FTZ") then
+                SCol2a
+            else if Text.Contains(Key, "DIMSUM") then
+                Table.ReplaceValue(
+                    SCol2, each [主题], each if [主题] = "点心债" then "--" else Text.Replace([主题] ,"点心债","债券") , Replacer.ReplaceValue, {"主题"}
+                )
+            else if Text.Contains(Key, "IGLGFV") then
+                SCol3
+            else if Text.Contains(Key, "SBLC") then
+                SCol4
+            else if Text.Contains(Key, "FI") then
+                SCol5
+            else if Text.Contains(Key, "FTZ") then
+                Table.ReplaceValue(
+                    SCol6,
+                    each [主题],
+                    each if [主题] = "明珠债" then "--" else Text.Replace([主题], "明珠债", "债券"),
+                    Replacer.ReplaceValue,
+                    {"主题"}
+                )
+            else if Text.Contains(Key, "USDCNH_PIE_DATA") then
+                Filtered7
+            else if Text.Contains(Key, "USDCNH_TIGHTEN") then
+                Table.TransformColumnTypes(SCol8, {{"收窄基点", type number}})
+            else
+                SCol0,
+        //******FinalSort*****
+        FnSort = Load("fxSortNIndex")(Output)
+    in
+        FnSort

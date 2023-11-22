@@ -1,0 +1,37 @@
+// 
+(
+    TableName as table,
+    optional OptionalNewColName as nullable text,
+    optional OptionalTextSource as nullable text,
+    optional OptionalDateSource as nullable text,
+    optional OptionalDateFormat as nullable text,
+    optional OptionalDelimeter as nullable text,
+    optional OptionalIsDateFirst as nullable text
+) =>
+    let
+        Prefix = try Prefix otherwise "Dummy",
+        NewColName = if OptionalNewColName = null then "Check" else OptionalNewColName,
+        TextSource = if OptionalTextSource = null then "ISIN" else OptionalTextSource,
+        DateSource = if OptionalDateSource = null then "定价日" else OptionalDateSource,
+        DateFormat = if OptionalDateFormat = null then "yyMMdd" else OptionalDateFormat,
+        Delimeter = if OptionalDelimeter = null then "" else OptionalDelimeter,
+        IsDateFirst = if OptionalIsDateFirst = null then "Y" else OptionalIsDateFirst,
+        Source = TableName,
+         RCol = Table.RemoveColumns(Source, List.Select(Table.ColumnNames(Source), each Text.Contains(_, Prefix)),MissingField.Ignore),
+        DateType = Table.TransformColumnTypes(  RCol, {{TextSource, type text}, {DateSource, type date}}),
+        NoSpace = Table.ReplaceValue(DateType, " ", "", Replacer.ReplaceText, {TextSource}),
+        Removed = Table.RemoveColumns(NoSpace, {NewColName}, MissingField.Ignore),
+        ReAdd = Table.AddColumn(
+            Removed,
+            NewColName,
+            each
+                if IsDateFirst = "N" then
+                    Record.Field(_, TextSource) & Delimeter & Date.ToText(Record.Field(_, DateSource), DateFormat)
+                else
+                    Date.ToText(Record.Field(_, DateSource), DateFormat) & Delimeter & Record.Field(_, TextSource),
+            type text
+        ),
+        RemoveDupe = Table.Distinct(ReAdd, {NewColName})
+       
+    in
+        RemoveDupe

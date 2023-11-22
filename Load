@@ -1,0 +1,45 @@
+// let GPS  = try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Remote",  FilePath = if GPS = "Remote" then "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM\Load" else "\\10.10.1.215\dcm$\Team Folder\Execution Team\DataHub\SharedM\Load",  LoadCode = Text.FromBinary ( Binary.Buffer ( File.Contents ( FilePath ) ) ), EVA = Expression.Evaluate ( LoadCode, #shared ) in EVA
+//
+(Name_Input as text, optional Path_Input_ShowCode as text) =>
+    let
+        //Name_Input = "", Path_Input_ShowCode = null,
+        GPS = try Excel.CurrentWorkbook(){[Name = "GPS"]}[Content][Column1]{0} otherwise "Remote",
+        Name_Type = if not Text.Contains(Name_Input, ".") then "M" else "",
+        Name_File =
+            if Name_Input = "fxGetBranch" then
+                "fxAddBranch"
+            else if Text.StartsWith(Name_Input, "Q") then
+                Text.RemoveRange(Name_Input, 0)
+            else if Path_Input_ShowCode = "CSV" then Name_Input&".csv" else
+                Text.Replace(Name_Input, ".", "_"),
+        //
+        Folder_Root =
+            if GPS = "Remote" then
+                "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\"
+            else
+                "\\10.10.1.215\dcm$\Team Folder\Execution Team\DataHub\",
+        Path_MorLake =
+            if Path_Input_ShowCode <> null and not List.Contains({"Code","CSV"},Path_Input_ShowCode )  then
+                Path_Input_ShowCode
+            else if Name_Type = "M" then
+                Folder_Root & "SharedM"
+            else
+                Folder_Root & "DataLake\pquery",
+        Path = Path_MorLake & (if Text.End(Path_MorLake, 1) <> "\" then "\" else ""),
+        Path_GitHub = "https://raw.githubusercontent.com/Lscodehub66/DataHub/main/",
+        //
+        File_M_Folder = Folder.Files(Path),
+        File_M_Filtered = Table.SelectRows(File_M_Folder, each [Name] = Name_File),
+        File_M_Content = File_M_Filtered{0}[Content],
+        File_M_LoadCode = Text.FromBinary(Binary.Buffer(File_M_Content)),
+        File_PQ_LoadCode = Text.FromBinary(Binary.Buffer(File.Contents(Path & Name_Input & ".pq"))),
+        File_M_CSV = Table.PromoteHeaders(Csv.Document(File_M_Content),[PromoteAllScalars=true]),
+        LoadCode = if Name_Type = "M" then File_M_LoadCode else File_PQ_LoadCode,
+        //
+        EVA_Existing = Expression.Evaluate(Name_File, #shared),
+        EVA_LoadCode = Expression.Evaluate(LoadCode, #shared),
+        EVA = try EVA_Existing otherwise EVA_LoadCode,
+        //
+        Output = if Path_Input_ShowCode = "Code" then LoadCode else if Path_Input_ShowCode = "CSV" then File_M_CSV else  EVA
+    in
+        Output

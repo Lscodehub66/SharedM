@@ -1,0 +1,9 @@
+(TableName as table) =>
+    let
+        Source = TableName,
+        Prefix = Load("Prefix"),
+        RCol = Table.RemoveColumns(
+            Source, List.Select(Table.ColumnNames(Source), each Text.Contains(_, Prefix)), MissingField.Ignore
+        )
+    in
+        RCol

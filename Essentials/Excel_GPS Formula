@@ -1,0 +1,3 @@
+= IF(ISNUMBER(FIND("ktkt2",CELL("filename"))),"Remote",IF(ISNUMBER(FIND("http",CELL("filename"))),"Remote","Global"))
+
+

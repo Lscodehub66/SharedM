@@ -1,0 +1,21 @@
+let
+ Source       = DLDconso, 
+ FnBOCOM      = fxIsBOCOM ( Source ), 
+ FnMerger     = fxDynamicMerge ( FnBOCOM, 台账23, "ISIN", "ISIN", { "" }, { "" } ), 
+ Filtered     = Table.SelectRows ( FnMerger, each [BISL_ROLE] <> "--" or [港分_ROLE] <> "--" or [澳分_ROLE] <> "--" or [担任角色] <> null ), 
+ Replacednull = Table.ReplaceValue ( Filtered, null, each if [BISL] <> "--" then "【台账nil】" else if [BISL] = "--" then "--" else null, Replacer.ReplaceValue, List.RemoveItems ( Table.ColumnNames ( 台账23 ), Table.ColumnNames ( FnBOCOM ) ) ), 
+ Replaced     = try
+  Table.ReplaceValue (
+   Replacednull, 
+   each [BISL_ROLE], 
+   each if Text.Contains ( [担任角色], "台账" ) then [BISL_ROLE] else if [BISL_ROLE] = [担任角色] then [BISL_ROLE] else [BISL_ROLE] & "【QRC：" & [担任角色] & "】", 
+   Replacer.ReplaceValue, 
+   { "BISL_ROLE" }
+  )
+ otherwise
+  Filtered, 
+ SelectCol    = Table.SelectColumns ( Replaced, { "信用主体", "Check", "ISIN", "定价日", "台账序号", "COVERAGE", "Project Name", "新规角色", "PROJECT_CODE", "期数", "BISL_ROLE", "港分_ROLE", "澳分_ROLE", "IS_LEAD", "IS_B&D", "是否合名" }, MissingField.UseNull ), 
+ ReplacedNull = Table.ReplaceValue ( SelectCol, null, each if [BISL_ROLE] <> "--" then "【】" else null, Replacer.ReplaceValue, { "PROJECT_CODE", "期数" } ), 
+ Sorted       = Table.Sort ( ReplacedNull, { { "BISL_ROLE", Order.Descending } } )
+in
+ Sorted

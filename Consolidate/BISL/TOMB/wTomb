@@ -1,0 +1,30 @@
+
+
+//let LoadCode = Load("QwTomb","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    Source = CWB("Directory"),
+    MondayDate = Date.From(Monday),
+    fxtblTomb_R2R3 = Load("fxtblTomb_R2R3"),
+    fxtblTomb_R4R1 = Load("fxtblTomb_R4R1"),
+    fxtblTomb_Transpose = Load("fxtblTomb_Transpose"),
+    //
+    Filtered = Table.SelectRows(
+        Source, each Date.Year([定价日]) = Date.Year(MondayDate) and Date.WeekOfYear([定价日]) = Date.WeekOfYear(
+            MondayDate 
+        ) -1
+    ),
+    //
+    TombWriter = fxtblTomb_R4R1(fxtblTomb_R2R3(Filtered), Filtered),
+    BlankTable =
+        if Table.RowCount(Filtered) = 0 then
+            Table.FromRows({{Monday, "本周无新增", ""}} & List.Repeat({{"", "", ""}}, 9), Table.ColumnNames(TombWriter))
+        else
+            Table.FromRows(
+                List.Repeat({{null, "", ""}}, 10 - Table.RowCount(Filtered)), Table.ColumnNames(TombWriter)
+            ),
+    Combined = Table.Combine(
+        {TombWriter, Table.SelectColumns(BlankTable, Table.ColumnNames(TombWriter), MissingField.UseNull)}
+    ),
+    TransposedTomb = fxtblTomb_Transpose(Combined)
+in
+    TransposedTomb

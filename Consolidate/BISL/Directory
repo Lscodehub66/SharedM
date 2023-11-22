@@ -1,0 +1,21 @@
+//let LoadCode = Load("QDirectory","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    Source = CWB("AncientDirectory"),
+    //
+    Ancient_Merged = Load("fxDBMerger")(Source),
+    Ancient_Finalized = Load("fxDBFinalization")(Ancient_Merged),
+    deal_masterFiltered = Table.SelectRows(deal_master, each [BISL_ROLE] <> "" and [BISL_ROLE] <> "--"),
+    Combined = Load("fxCombine")({Ancient_Finalized, deal_masterFiltered}, null, {1}),
+    Checked = Load("fxCheckNDupe")(Combined),
+    MergedQ = Load("fxMerge")(Checked, CWB("Table_PRJMerge"), "COMPARER", "COMPARER", {"承销费原币"}, {""}),
+    #">>Calculated NthMandate" = Table.Buffer(Load("fxNthMandated")(MergedQ)),
+    Addcol = Load("fxMerge")(MergedQ, #">>Calculated NthMandate", "COMPARER", "COMPARER", {"第N次担任"}, {""}),
+    Sorted = Load("fxSortNIndex")(Addcol),
+    ReplacedCCY = Table.ReplaceValue(Sorted, "美元债", "", Replacer.ReplaceValue, {"货币细分"}),
+    Reordered = Table.ReorderColumns(
+        ReplacedCCY,
+        CWB("BaseDirectory_CN") & List.RemoveMatchingItems(Table.ColumnNames(ReplacedCCY), CWB("BaseDirectory_CN")),
+        MissingField.Ignore
+    )
+in
+    Reordered

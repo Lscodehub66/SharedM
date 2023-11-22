@@ -1,0 +1,38 @@
+let
+  Source = fxLauncher("台账23", null), 
+  项目合规情况_Sheet = Source{[Item = "项目合规情况", Kind = "Sheet"]}[Data], 
+  #"Filtered Rows" = Table.SelectRows(项目合规情况_Sheet, each ([Column3] <> null)), 
+  #"Removed Other Columns" = Table.SelectColumns(
+    #"Filtered Rows", 
+    {
+      "Column2", 
+      "Column3", 
+      "Column4", 
+      "Column5", 
+      "Column6", 
+      "Column7", 
+      "Column8", 
+      "Column9", 
+      "Column10", 
+      "Column11", 
+      "Column12", 
+      "Column13", 
+      "Column14", 
+      "Column15", 
+      "Column16", 
+      "Column17", 
+      "Column18", 
+      "Column19", 
+      "Column20", 
+      "Column21"
+    }
+  ), 
+  #"Promoted Headers" = Table.PromoteHeaders(#"Removed Other Columns", [PromoteAllScalars = true]), 
+  #"Appended Query" = Table.Combine({#"Promoted Headers", 合规22_InQry}),
+    #"Invoked fxDataFormat" = fxDataFormat(#"Appended Query"),
+    #"Invoked fxGlobalSync" = fxGlobalSync(#"Invoked fxDataFormat","序号","项目定价日"),
+    #"Sorted Rows" = Table.Sort(#"Invoked fxGlobalSync",{{"PRJ对账号", Order.Descending}}),
+    #"Removed Columns" = Table.RemoveColumns(#"Sorted Rows",{"发行人名称中文","公盘地址","团队成员","Completed","Record Keeping"}),
+    Custom1 = Table.AddColumn(#"Removed Columns", "TextCheck", each Text.Select([发行人名称英文],{"A" .. "Z", "0" .. "9"}))
+in
+    Custom1

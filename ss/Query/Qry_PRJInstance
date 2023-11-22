@@ -1,0 +1,62 @@
+let
+ Source       = Directory, 
+ TapMark      = Table.ReplaceValue ( Source, each [币种规模], each if [增发判定] <> "" and [增发判定] <> "--" and [增发判定] <> null then "增发" & [币种规模] else [币种规模], Replacer.ReplaceValue, { "币种规模" } ), 
+ Merged       = Table.AddColumn ( TapMark, "币种规模品种", each Text.Combine ( { [币种规模], [发行品种] }, "" ), type text ), 
+ Grouped      = Table.Group (
+  Merged, 
+  { "COMPARER" }, 
+  {
+   { "信用主体", each Text.Combine ( List.Distinct ( [信用主体] ), "," ), type text }, 
+   { "多笔", each List.Sum ( [多笔] ) / List.Count ( [多笔] ), type number }, 
+   { "多币种", each List.Sum ( [多币种] ) / List.Count ( [多币种] ), type number }, 
+   { "多品种", each List.Sum ( [多品种] ) / List.Count ( [多品种] ), type number }, 
+   { "多期限", each List.Sum ( [多期限] ) / List.Count ( [多期限] ), type number }, 
+   { "多币种详情", each if List.Sum ( [多币种] ) / List.Count ( [多币种] ) > 1 and List.Sum ( [多品种] ) / List.Count ( [多品种] ) = 1 then Text.Combine ( [币种规模], "及" ) else { "" }{0}, type text }, 
+   { "唯一品种", each if List.Sum ( [多品种] ) / List.Count ( [多品种] ) = 1 then Text.Combine ( List.Distinct ( [发行品种] ), "," ) else { "" }{0}, type text }, 
+   { "多品种详情", each if List.Sum ( [多品种] ) / List.Count ( [多品种] ) > 1 then Text.Combine ( [币种规模品种], "," ) else { "" }{0}, type text }, 
+   {
+    "唯一币种合计", 
+    each 
+     if List.Sum ( [多笔] ) / List.Count (  [多笔] ) > 1 and List.Contains ( [货币], "USD" ) and List.Sum ( [多币种] ) / List.Count ( [多币种] ) = 1 and List.Sum ( [多品种] ) / List.Count ( [多品种] ) = 1 then
+      Text.Combine ( List.Distinct ( [增发判定] ), "," ) &Number.ToText ( List.Sum ( [#"发行规模(亿)"] ) ) & Text.Combine ( List.Distinct ( [币种单位] ), "," ) 
+     else
+      Text.Combine ( List.Distinct ( [币种规模] ), "," ), 
+    type text
+   }
+  }
+ ), 
+ BDelimiter   = Table.AddColumn ( Grouped, "R2", each if [多品种] = 1 then Text.BeforeDelimiter ( [唯一品种], "," ) else [唯一品种], type text ), 
+ Added2       = Table.AddColumn (
+  BDelimiter, 
+  "R3", 
+  each 
+   if [多品种] > 1 then
+    [多品种详情]
+   else if [多期限] = 2 and [多币种] = 1 then
+    "双期限共" & [唯一币种合计]
+   else if [多期限] > 2 and [多币种] = 1 then
+    Number.ToText ( [多笔] ) & "种期限共" & [唯一币种合计]
+   else if [多品种] = 1 and [多币种] > 1 then
+    [多币种详情]
+   else
+    [唯一币种合计]
+ ), 
+ BDelimiter2  = Table.AddColumn ( Added2, "R3A", each Text.AfterDelimiter ( [R3], "," ), type text ), 
+ BDelimiter3  = Table.TransformColumns ( BDelimiter2, { { "R3", each Text.BeforeDelimiter ( _, "," ), type text } } ), 
+ Replaced1    = Table.ReplaceValue ( BDelimiter3, "", each [R3A], Replacer.ReplaceValue, { "R2" } ), 
+ Replaced2    = Table.ReplaceValue ( Replaced1, ",", "#(lf)", Replacer.ReplaceText, { "R2" } ), 
+ SelectedCol2 = Table.SelectColumns ( Replaced2, { "COMPARER", "信用主体", "R2", "R3" } ), 
+ FirstCHAR    = Table.AddColumn ( SelectedCol2, "YYMMDD", each Text.Start ( [COMPARER], 6 ), type text ), 
+ InstanceGp   = Table.Group ( FirstCHAR, { "YYMMDD" }, { { "Data", each _, type table [ YYMMDD = text, COMPARER = text ] } } ), 
+ IGCustom     = Table.AddColumn ( InstanceGp, "Custom", each Table.AddIndexColumn ( [Data], "每日第N个项目", 0 ) ), 
+ IGRemoved    = Table.SelectColumns ( IGCustom, { "Custom" } ), 
+ IGExpanded   = Table.ExpandTableColumn ( IGRemoved, "Custom", Table.ColumnNames ( IGRemoved[Custom]{0} ) ), 
+ AddPRJSQ     = Table.AddColumn ( IGExpanded, "项目序号", each [YYMMDD] & "(" & Number.ToText ( [每日第N个项目], "0" ) & ")" ), 
+ Sorted       = Table.Buffer ( Table.Sort ( AddPRJSQ, { { "项目序号", Order.Descending } } ) ), 
+ InstanceGp1  = Table.Group ( Sorted, { "信用主体" }, { { "Data", each _, type table [ YYMMDD = text, 每日第N个项目 = number ] } } ), 
+ IGCustom1    = Table.AddColumn ( InstanceGp1, "Custom", each Table.AddIndexColumn ( [Data], "第N次担任", 1 ) ), 
+ IGRemoved1   = Table.SelectColumns ( IGCustom1, { "Custom" } ), 
+ IGExpanded1  = Table.ExpandTableColumn ( IGRemoved1, "Custom", Table.ColumnNames ( IGRemoved1[Custom]{0} ) ), 
+ Sorted1      = Table.Buffer ( Table.Sort ( IGExpanded1, { { "项目序号", Order.Descending } } ) )
+in
+ Sorted1

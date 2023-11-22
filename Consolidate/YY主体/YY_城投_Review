@@ -1,0 +1,49 @@
+let
+    Source = Load("fxConnect")("YY_城投"),
+    FnSource = Load("fxConnect_YY")(Source),
+    Merged = Load("fxMerge")(
+        FnSource,
+        CWB("mCredit"),
+        "YY_主体",
+        "信用主体",
+        {"板块三级", "板块二级", "板块", "级别", "地区", "城市", "区县", "Index"},
+        {"板块三级", "板块二级", "板块", "级别", "地区", "城市", "区县", "Index"}
+    ),
+    Filtered = Table.SelectRows(Merged, each [Index] <> null),
+    #"Replaced Value" = Table.ReplaceValue(Filtered, "--", "", Replacer.ReplaceText, {"级别", "地区", "城市", "区县"}),
+    Replaced = Table.ReplaceValue(
+        #"Replaced Value",
+        each [地区],
+        each if [YY_地区] <> [地区] then [地区] & "【" & [YY_地区] & "】" else [地区],
+        Replacer.ReplaceValue,
+        {"地区"}
+    ),
+    Replaced1 = Table.ReplaceValue(
+        Replaced, each [城市], each if [YY_城市] <> [城市] then [城市] & "【" & [YY_城市] & "】" else [城市], Replacer.ReplaceValue,
+        {
+            "城市"
+        }
+    ),
+    Replaced2 = Table.ReplaceValue(
+        Replaced1, each [区县], each if [YY_区县] <> [区县] then [区县] & "【" & [YY_区县] & "】" else [区县],
+        Replacer.ReplaceValue, {"区县"}
+    ),
+    Replaced3 = Table.ReplaceValue(
+        Replaced2,
+        each [级别],
+        each
+            if [级别] = "园区" and [行政级别] <> "" then
+                "【" & [行政级别] & "】"
+            else if [行政级别] = "" and [级别] <> "" then
+                "【" & [级别] & "】"
+            else if [行政级别] <> [级别] then
+                [级别] & "【" & [行政级别] & "】"
+            else if [行政级别] = [级别] then
+                [级别]
+            else
+                "",
+        Replacer.ReplaceValue,
+        {"级别"}
+    )
+in
+    Replaced3

@@ -1,0 +1,19 @@
+let
+ Source = ( TableName as table, ColToClean as text, FastLoadNum1 as nullable number ) =>
+  let
+   Source = TableName, 
+   FastLoad = Table.SelectRows ( Source, each if FastLoadNum1 = 1 then Record.Field ( _, ColToClean ) <> null and Record.Field ( _, ColToClean ) <> "" and Record.Field ( _, ColToClean ) <> "--" else true ), 
+   DupeA = Table.DuplicateColumn ( FastLoad, ColToClean, "CopyColA" ), 
+   Removed = Table.RemoveColumns ( DupeA, { "浮息_BMK" }, MissingField.Ignore ), 
+   // Skip 
+   FunctionSkip = fxListToNull ( Removed ), 
+   // Start Clean
+   Delimiter1 = Table.AddColumn ( Removed, "浮息_SPD", each Text.AfterDelimiter ( Text.Select ( [CopyColA], { "0" .. "9", "+", "." } ), "+" ), type text ), 
+   Delimiter9 = Table.TransformColumns ( Delimiter1, { { "CopyColA", each Text.BeforeDelimiter ( _, ".00" ), type text } } ), 
+   Delimiter4 = Table.TransformColumns ( Delimiter9, { { "CopyColA", each Text.BeforeDelimiter ( _, "+" ), type text } } ), 
+   Function2 = Table.AddColumn ( Delimiter4, "浮息_BMK", each fxSmartClean ( [CopyColA], "FRN" ) ), 
+   RemovedCol = Table.RemoveColumns ( Function2, { "CopyColA" }, MissingField.Ignore )
+  in
+   RemovedCol
+in
+ Source

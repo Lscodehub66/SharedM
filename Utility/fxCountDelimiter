@@ -1,0 +1,8 @@
+(TextName as text, DelimeterToCount as text) =>
+ let
+  LEN_Initial = Text.Length(TextName), 
+   DelimeterRemoved = Text.Replace(TextName, DelimeterToCount, ""), 
+   LEN_R = Text.Length(DelimeterRemoved),
+  CompareLEN =  LEN_Initial -  LEN_R + Text.Length(DelimeterToCount)
+in
+CompareLEN

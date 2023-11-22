@@ -1,0 +1,44 @@
+let
+ Source = ( TableName as table, ColToClean as text, FastLoadNum1 as nullable number ) =>
+  let
+   Source       = TableName, 
+   FastLoad     = Table.SelectRows (
+    Source, 
+    each 
+     if FastLoadNum1 = 1 then
+      Record.Field ( _, ColToClean ) <> null and Record.Field ( _, ColToClean ) <> "" and Record.Field ( _, ColToClean ) <> "--"
+     else
+      true
+   ), 
+   DupeA        = Table.DuplicateColumn ( FastLoad, ColToClean, "CopyColA" ), 
+   Removed      = Table.RemoveColumns ( DupeA, { "IPT" }, MissingField.Ignore ), 
+   // Skip 
+   FunctionSkip = fxListToNull ( Removed ), 
+   // Skip 
+   IPTtoClean   = Table.TransformColumns ( Removed, { { "CopyColA", each Text.BeforeDelimiter ( _, "，" ), type text } } ), 
+   Delimiter    = Table.TransformColumns ( IPTtoClean, { { "CopyColA", each Text.BeforeDelimiter ( _, "区域+" ), type text } } ), 
+   Delimiter1   = Table.TransformColumns ( Delimiter, { { "CopyColA", each Text.BeforeDelimiter ( _, "（" ), type text } } ), 
+   Function     = Table.AddColumn ( Delimiter1, "IPT", each fxSmartClean ( [CopyColA], "IPT" ) ), 
+   Removed1     = Table.RemoveColumns ( Function, { "CopyColA" }, MissingField.Ignore ), 
+   识别MultiIPT   = Table.ReplaceValue (
+    Removed1, 
+    each [IPT], 
+    each 
+     if Text.Contains ( [IPT], "/T" ) = true or Text.Contains ( [IPT], "、" ) = true or Text.Contains ( [IPT], "-" ) = true then
+      "【CHECK:MULTI-IPT】"
+     else
+      [IPT], 
+    Replacer.ReplaceText, 
+    { "IPT" }
+   ), 
+   识别IPTSPD     = Table.AddColumn ( 识别MultiIPT, "IPT_SPD", each Text.Select ( Text.AfterDelimiter ( [IPT], "+" ), { "0" .. "9", "-", "." } ), type text ), 
+   IPT收益率       = Table.AddColumn (
+    识别IPTSPD, 
+    "IPT_YIELD", 
+    each if Text.Contains ( [IPT], "%" ) then Text.BeforeDelimiter ( [IPT], "%" ) else null, 
+    type text
+   )
+  in
+   IPT收益率
+in
+ Source

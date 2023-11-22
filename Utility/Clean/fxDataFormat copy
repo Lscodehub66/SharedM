@@ -1,0 +1,218 @@
+// Referenced Fn - fxCleaner
+(TableName as table) =>
+    let
+        Source = TableName,
+        fxCleaner = Load("fxCleaner"),
+        Get = Load("Get"),
+        
+        DimData_Type_Code =Load("DimData_Type","Code") ,
+        Rename_DB_DataFormat = Get("Rename_DB"),
+        CN_Source = Table.ColumnNames(Source),
+        //Global RenameColumns
+        GlobalRenamed = Table.RenameColumns(Source, Rename_DB_DataFormat, MissingField.Ignore),
+        //  { {"IN_板块", "板块"},    {"发行人注册地", "注册成立地"},    {"FLOATER_FORMULA", "计息基准"},    {"发行价格", "发行价"},    {"IN.中资属性", "中资属性"},   {"发行结构", "发行架构"}}
+        //DateTime ValueType
+         DimData_Type_Code_Combined =  Text.Replace(Text.Replace(DimData_Type_Code,"let //","let "),"in Output",","),
+        Data_Type_DateAuto = Table.FromColumns(
+            {List.Select(CN_Source, each Text.Contains(_, "Date", Comparer.OrdinalIgnoreCase)), {"date"}}
+        ),
+        Data_Type_TextAuto = Table.FromColumns(
+            {List.Select(CN_Source, each Text.Contains(_, "Key", Comparer.OrdinalIgnoreCase)), {"text"}}
+        ),
+        DataTypeTable = Table.FillDown(
+            Load("fxCombine")({Output, Data_Type_TextAuto, DimData_Type}, {"Column1"}), {"Column2"}
+        ),
+        // ValueType Transform
+        TransposedTable = Table.Transpose(DataTypeTable),
+        Promoted1 = Table.PromoteHeaders(TransposedTable, [PromoteAllScalars = true]),
+        MatchingColumns = List.Intersect({Table.ColumnNames(Promoted1), CN_Source}),
+        SelectedCol1 = Table.SelectColumns(Promoted1, MatchingColumns),
+        DemotedHeader = Table.DemoteHeaders(SelectedCol1),
+        TransposedTable1 = Table.Transpose(DemotedHeader),
+        AddedCol = Table.AddColumn(
+            TransposedTable1,
+            "ValueType",
+            each Value.Type(if [Column2] = "date" then #date(2020, 1, 1) else if [Column2] = "number" then 1 else "A")
+        ),
+        RemovedCol = Table.RemoveColumns(AddedCol, {"Column2"}),
+        TransposedTable2 = Table.Transpose(RemovedCol),
+        DataTypeList = Table.ToColumns(TransposedTable2),
+        //DataType Transformation Step
+        DetectDataType = Table.TransformColumnTypes(GlobalRenamed, DataTypeList),
+        TimestampType =
+            if List.Contains(Table.ColumnNames(DetectDataType), "Timestamp") then
+                Table.TransformColumnTypes(DetectDataType, {{"Timestamp", type datetime}})
+            else
+                DetectDataType,
+        // Replace all errors
+        ListToTable = Table.FromList(CN_Source, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
+        AddedCol2 = Table.AddColumn(ListToTable, "Replacement", each null),
+        TransposedTableError = Table.Transpose(AddedCol2),
+        ColumnList = Table.ToColumns(TransposedTableError),
+        ByeAllErrors = Table.ReplaceErrorValues(TimestampType, ColumnList),
+        //Replace null with Zero
+        ListNum_NullToZero = List.Intersect({CN_Source, Num_NullToZero}),
+        ReplacedNum_NullToZero = Table.ReplaceValue(ByeAllErrors, null, 0, Replacer.ReplaceValue, ListNum_NullToZero),
+        //For text type column Replace null with blank
+        NullToBlankList = Table.SelectRows(DataTypeTable, each [Column2] = "text")[Column1],
+        ListToBlank = List.Intersect({CN_Source, NullToBlankList}),
+        ReplaceNullwBlank = Table.ReplaceValue(ReplacedNum_NullToZero, null, "", Replacer.ReplaceValue, ListToBlank),
+        // -- to blank
+        NAListToBlank = List.Intersect({CN_Source, Text_NAToBlank}),
+        ReplaceNAwBlank = Table.ReplaceValue(ReplaceNullwBlank, "--", "", Replacer.ReplaceValue, NAListToBlank),
+        //Remove Space
+        ListToRemoveSpace = List.Intersect({CN_Source, Text_NoSpace}),
+        RemovedSpace = Table.ReplaceValue(ReplaceNAwBlank, " ", "", Replacer.ReplaceText, ListToRemoveSpace),
+        //Global Replacer
+        Replace板块 =
+            if List.Contains(CN_Source, "板块") then
+                Table.TransformColumns(
+                    RemovedSpace,
+                    {
+                        {
+                            "板块",
+                            each
+                                fxCleaner(
+                                    _,
+                                    null,
+                                    {"Sovereign", "FI", "LGFV", "Industrials", "Property"},
+                                    {"主权/政府", "金融机构", "地方平台", "产业", "房地产"}
+                                )
+                        }
+                    }
+                )
+            else
+                RemovedSpace,
+        // Global CNH
+        CNHEverywhere =
+            if List.Contains(CN_Source, "货币") then
+                Table.ReplaceValue(Replace板块, "CNY", "CNH", Replacer.ReplaceText, {"货币"})
+            else
+                Replace板块,
+        // Rounding
+        Round =
+            if List.Contains(CN_Source, "亿港币") then
+                Table.TransformColumns(CNHEverywhere, {{"亿港币", each Number.Round(_, 3), type number}})
+            else
+                CNHEverywhere,
+        Round1 =
+            if List.Contains(CN_Source, "亿美元") then
+                Table.TransformColumns(Round, {{"亿美元", each Number.Round(_, 3), type number}})
+            else
+                Round,
+        Round2 =
+            if List.Contains(CN_Source, "亿元") then
+                Table.TransformColumns(Round1, {{"亿元", each Number.Round(_, 3), type number}})
+            else
+                Round1,
+        Round3 =
+            if List.Contains(CN_Source, "发行规模(亿)") then
+                Table.TransformColumns(Round2, {{"发行规模(亿)", each Number.Round(_, 3), type number}})
+            else
+                Round2,
+        Round4 =
+            if List.Contains(CN_Source, "FEE") then
+                Table.TransformColumns(Round3, {{"FEE", each Number.Round(_, 0), type number}})
+            else
+                Round3,
+        Round5 =
+            if List.Contains(CN_Source, "iTraxx Asia") then
+                Table.TransformColumns(
+                    Round4,
+                    {
+                        {"3个月", each Number.Round(_, 4), type number},
+                        {"2年期", each Number.Round(_, 4), type number},
+                        {"3年期", each Number.Round(_, 4), type number},
+                        {"5年期", each Number.Round(_, 4), type number},
+                        {"10年期", each Number.Round(_, 4), type number},
+                        {"7年期", each Number.Round(_, 4), type number},
+                        {"30年期", each Number.Round(_, 4), type number},
+                        {"美国", each Number.Round(_, 4), type number},
+                        {"中国", each Number.Round(_, 4), type number},
+                        {"投资级", each Number.Round(_, 2), type number},
+                        {"高收益级", each Number.Round(_, 2), type number},
+                        {"iTraxx Asia", each Number.Round(_, 2), type number},
+                        {"VIX", each Number.Round(_, 2), type number}
+                    }
+                )
+            else
+                Round4,
+        Round6 =
+            if List.Contains(CN_Source, "承销费原币") then
+                Table.TransformColumns(Round5, {{"承销费原币", each Number.Round(_, 0), type number}})
+            else
+                Round5,
+        // Dummy EndRound Line
+        EndRound = Round6,
+        //筹款用途句号
+        RemoveEndComma =
+            if List.Contains(CN_Source, "筹款用途") then
+                Table.TransformColumns(
+                    EndRound,
+                    {
+                        {
+                            "筹款用途",
+                            each
+                                if Text.EndsWith(_, "。") and _ <> null then
+                                    Text.BeforeDelimiter(_, "。", {0, RelativePosition.FromEnd})
+                                else
+                                    _,
+                            type text
+                        }
+                    }
+                )
+            else
+                EndRound,
+        //Replace
+        Replacedsector =
+            if List.Contains(CN_Source, "板块") then
+                Table.ReplaceValue(RemoveEndComma, "类", "", Replacer.ReplaceValue, {"板块"})
+            else
+                RemoveEndComma,
+        //Trim only
+        TrimTextList = {"PROJECT_CODE", "期数", "外部评审机构", "外部评审方式", "FolderPath"},
+        Cols_TrimList = List.Intersect({CN_Source, TrimTextList}),
+        _Cols_TrimOnly = List.Accumulate(
+            Cols_TrimList, Replacedsector, (s, c) => Table.TransformColumns(s, {c, Text.Trim})
+        ),
+        //Trim & UpperText
+        UpperTextList = {
+            "Bond Details",
+            "CCY",
+            "信用主体",
+            "计息基准",
+            "ISIN",
+            "ISIN Code",
+            "IPT_DMI",
+            "FPG_DMI",
+            "发行人",
+            "担保人",
+            "备证行",
+            "维好协议提供者",
+            "TICKER",
+            "债券代码",
+            "发行人名称英文*",
+            "发行人名称英文"
+        },
+        Cols_List = List.Intersect({CN_Source, UpperTextList}),
+        _Cols_Trimed = List.Accumulate(
+            Cols_List, _Cols_TrimOnly, (s, c) => Table.TransformColumns(s, {c, Text.Trim})
+        ),
+        _Cols_Cleand = List.Accumulate(Cols_List, _Cols_Trimed, (s, c) => Table.TransformColumns(s, {c, Text.Clean})),
+        _Cols_Capitalised = List.Accumulate(
+            Cols_List, _Cols_Cleand, (s, c) => Table.TransformColumns(s, {c, Text.Upper})
+        ),
+        //Removed【】
+        Removedinput =
+            if List.Contains(CN_Source, "删除及隐藏") then
+                Table.TransformColumns(
+                    _Cols_Capitalised,
+                    List.Transform(
+                        List.Intersect({CN_Source, NullToBlankList}),
+                        each {_, each fxCleaner(_, null, {"【", "】"}, {"", ""})}
+                    )
+                )
+            else
+                _Cols_Capitalised
+    in
+        Removedinput

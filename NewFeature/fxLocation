@@ -1,0 +1,18 @@
+(TextName as text) =>
+
+let
+Text1 =  if Text.Contains ( TextName, "BRANCH" ) and not Text.Contains ( TextName, "/" ) then
+    fxCleaner (
+    TextName, null,
+     { "HONGKONGBRANCH", "LONDONBRANCH", "SINGAPOREBRANCH", "DUBAIDIFCBRANCH", "NEWYORKBRANCH", "MACAUBRANCH" ,"/THE"}, 
+     { "/HONGKONG", "/LONDON", "/SINGAPORE", "/DUBAI", "/NEWYORK", "/MACAU" ,""}
+    )
+   else
+    TextName,
+Text2 =  Text.AfterDelimiter ( Text1, "/" ),
+Text3 = fxCleaner(Text2,null,CityTable[City], CityTable[Delimitered]),
+Text4 = Text.BetweenDelimiters ( Text3, "^", "^" ), 
+Text5 = fxCleaner(Text4, null,CityTable[Code], CityTable[中文] )
+
+in
+Text5

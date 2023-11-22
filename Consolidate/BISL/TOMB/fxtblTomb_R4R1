@@ -1,0 +1,7 @@
+let
+  
+     EVA =  Expression.Evaluate("(TableName as table, TableToMerge as table) =>let Source = TableName, MergeSource = TableToMerge," & Text.AfterDelimiter(Load("QTomb_R4R1","Code"),"//**"),#shared)
+    
+    
+in
+       EVA

@@ -1,0 +1,28 @@
+//  let LoadCode = Load("Writer_Table","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
+let
+    Source = Load("mTable"),
+    #"Grouped Rows" = Table.Group(
+        Table.SelectRows(Source, each [Index_Writer] <> null),
+        {"Index_Writer"},
+        {
+            {"RESIDENCE", each Text.Combine(List.Distinct([RESIDENCE]), ";"), type text},
+            {"CN_描述", each "上周，" & Text.Combine(List.Distinct([CN_描述]), "，"), type text}
+        }
+    ),
+    Custom1 = Table.TransformColumns(
+        #"Grouped Rows", {{"CN_描述", each fxCleaner(_, null, {"上周，3个月", "美国国债利率"}, {"年期方面，3个月"}), type text}}
+    ),
+    #"Merged Queries" = Table.NestedJoin(
+        Custom1, {"Index_Writer"}, Spd_TrendPQ, {"Index_Writer"}, "Data", JoinKind.LeftOuter
+    ),
+    #"Expanded Data" = Table.ExpandTableColumn(#"Merged Queries", "Data", {"描述"}, {"描述"}),
+    Replaced = Table.ReplaceValue(
+        #"Expanded Data",
+        each [CN_描述],
+        each if not List.Contains({null, "", "--"}, [描述]) then [描述] else [CN_描述],
+        Replacer.ReplaceValue,
+        {"CN_描述"}
+    ),
+    #"Removed Columns" = Table.RemoveColumns(Replaced, {"描述"})
+in
+    #"Removed Columns"

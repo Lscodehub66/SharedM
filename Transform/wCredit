@@ -1,0 +1,14 @@
+let
+ Source            = Excel.CurrentWorkbook(){[ Name = "tbl_review_shortname" ]}[Content], 
+ Promoted          = Table.PromoteHeaders ( Source, [ PromoteAllScalars = true ] ), 
+ Filtered          = Table.Distinct(Table.SelectRows ( Promoted, each [信用主体] <> null and [信用主体] <> "" )), 
+ Renamed           = Table.RenameColumns (  Filtered , { { "IN_板块", "板块" }, { "IN.中资属性", "中资属性" }, { "SHORTNAMER", "信用主体简称" } }, MissingField.Ignore ), 
+ Merged = Load("fxMerge")(Renamed   , CWB_DLDconso, "信用主体", "信用主体",ColNow_mCredit,{""}),
+Presenter = Load("fxPresentNoData") (  Merged ), 
+ SelectedCol       =  if Table.RowCount ( Table.SelectRows ( Source, each not List.IsEmpty ( List.RemoveMatchingItems ( Record.FieldValues ( _ ), { "", null } ) ) ) ) > 0 then
+   Table.SelectColumns ( Presenter, ColNow_mCredit, MissingField.UseNull )
+  else
+   Table.SelectColumns (  Table.SelectRows ( Source, each not List.IsEmpty ( List.RemoveMatchingItems ( Record.FieldValues ( _ ), { "", null } ) ) ), ColNow_mCredit, MissingField.UseNull )
+
+in
+ SelectedCol

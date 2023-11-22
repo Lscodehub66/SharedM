@@ -1,0 +1,11 @@
+// let  LoadCode = Load("ChartPQ","Code"), EVAOutput= Expression.Evaluate(LoadCode ,#shared) in EVAOutput
+
+
+let
+    Source = CWB("mChart"),
+    Header7 = Get("HeaderChart"),
+    MergedDB = Load("fxDBMerger")(Source),
+    FinalizedDB = Load("fxDBFinalization")(MergedDB),
+    SCol = Table.SelectColumns(FinalizedDB, Header7, MissingField.UseNull)
+in
+    SCol

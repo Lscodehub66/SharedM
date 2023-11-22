@@ -1,0 +1,12 @@
+(TableName as table) =>
+let
+    Source = TableName,
+AddedCustom = Table.AddColumn(Source,"票息NUM", each if Text.Contains([票息],"+")  then "10" 
+else if Text.Contains([票息],".") or Text.Contains([票息],"%") then [票息] else null),
+    #"Changed Type" = Table.TransformColumnTypes(AddedCustom,{{"票息NUM", type number}}),
+    RoundedOff = Table.TransformColumns(#"Changed Type",{{"票息NUM", each Number.Round(_*10000, 0), type number}}),
+AddedCustom1 = Table.AddColumn(RoundedOff, "CheckOMAS", each Date.ToText([定价日],"yyMMdd")&[货币]&Number.ToText(Number.Round([#"发行规模(亿)"]*100,0))  & 
+Date.ToText([兑付日], "yyyy") & Number.ToText( [票息NUM])),
+SelectedCol = Table.SelectColumns(AddedCustom1, Table.ColumnNames(Source)&{"CheckOMAS"})
+in
+   SelectedCol

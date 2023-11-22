@@ -1,0 +1,24 @@
+PK_File,PK_Folder,FText_File,File Name,Tab,Tab_Skip,Tab_Find,Tab_Find_Key
+DEALs MASTER,Team_DH,DEALSMASTER,DEALs MASTER,,,,
+DEALs MASTER,Team_DH_M_ss,DEALSMASTER,DEALs MASTER,,,,
+1.Weekly Download,Team_AM,DOWNLOAD,1.Weekly Download,,,,
+2.Dynamic List Generator,Team_AM,DYNAMIC,2.Dynamic List Generator,,,,
+Graph,Base_4,GRAPH,Graph,,,,
+DEAL DIRECTORY,Base_4,DIRECTORY,DEAL DIRECTORY,,,,
+ESG Deal List,Team_ESG,ESG,ESG Deal List,,,,
+ESG Deal List,Team_ESG,ESG,ESG Deal List,External_review,,,
+DCM Existing KYC Master List,QRC,KYC,DCM Existing KYC Master List,,,,
+DCM Existing KYC Master List,QRC,KYC,DCM Existing KYC Master List,Master,,Column2,序号
+DCM台账2023,QRC,台账23,DCM台账2023,,,,
+DCM台账2023,QRC,台账23,DCM台账2023,合规,,Column3,团队
+DCM台账2023,QRC,台账23,DCM台账2023,收入情况2023,,Column2,Project Name
+美元债一级,Team_DH_DL,DMI,美元债一级,0,1,,
+境外债券违约,Team_DH_DL,违约,境外债券违约,0,1,,
+银行指标数据,Team_DH_DL,银行,银行指标数据,0,1,,
+YY,Team_DH_DL,YY,YY_研究主体_20230930134600,城投,0,,
+YY,Team_DH_DL,YY,YY_研究主体_20230930134600,金融,0,,
+YY,Team_DH_DL,YY,YY_研究主体_20230930134600,产业,0,,
+BBGFX,Team_DH_DL,BBGFX,BBGFX,,,,
+BBGFX,Team_DH_DL,BBGFX,BBGFX,value,,Column1,Base Currency
+DCM2021年台账,QRC,台账21,DCM2021年台账,,,,
+DCM2022年台账,QRC,台账22,DCM2022年台账,,,,

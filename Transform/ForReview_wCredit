@@ -1,0 +1,29 @@
+// let LoadCode = Load("ForReview_wCredit","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+
+let
+    Source = CWB("DLD_Conso"),
+    SCol = Table.SelectColumns( Source, {"信用主体","债券简称"}),
+     FromForReviewIssuer = Table.SelectColumns(Table.SelectRows(ForReview_Issuer, each Text.Contains([信用主体], "【")), {"信用主体"}),
+    Combined = Load("fxCombine")({ SCol ,FromForReviewIssuer}, {"信用主体"}),
+    TFCol = Table.TransformColumns(
+        Combined,
+        {
+            {
+                "信用主体",
+                each
+                    if Text.Contains(_, "【") then
+                        Text.BetweenDelimiters(Text.BeforeDelimiter(_, "【", {0, RelativePosition.FromEnd}), "【", "】")
+                    else
+                        _
+            }
+        }
+    ),
+    Replaced = Table.ReplaceValue(TFCol, null, each [信用主体], Replacer.ReplaceValue, {"债券简称"}),
+    //
+    PQmCredit = Load("fxConnect")("DataHub"){[Item = "mCredit", Kind = "Table"]}[Data],
+    MergedQ = Load("fxMerge")(Replaced ,  PQmCredit, "信用主体","信用主体", {""},{""}),
+    Function = Table.AddColumn(RemovedDupe, "SHORTNAMER", each fxSNBankCorp([债券简称])),
+    RemovedCol = Table.SelectColumns(Function, {"信用主体", "SHORTNAMER", "中资属性", "板块"}, MissingField.UseNull),
+    BlankToInput = Table.ReplaceValue(RemovedCol, null, "【】", Replacer.ReplaceValue, {"中资属性", "板块"})
+in
+    BlankToInput

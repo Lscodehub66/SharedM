@@ -1,0 +1,64 @@
+(FTextInput as nullable text) =>
+    let
+     FText = Text.Upper(FTextInput ),
+   FText_File = Text.BeforeDelimiter(FText, "_"),
+        FText_Tab = Text.AfterDelimiter(FText, "_"),
+        LoadExcel = Table.Buffer(Load("DimExcel")),
+        Source = Table.SelectRows(
+           LoadExcel,
+            each
+                if FText = null then
+                    true
+                else 
+                    FText_File = [FText_File]
+
+        ),
+FilterOrReplace = if List.Contains(Source[Tab],FText_Tab) then Table.SelectRows( Source , each [Tab] = FText_Tab) else Table.ReplaceValue(Source, "", FText_Tab, Replacer.ReplaceValue, {"Tab"}),
+
+        //**
+        #"SelectedSheet" = Table.AddColumn(
+          FilterOrReplace,
+            "Sheet",
+            each
+                if [Tab] = "" then
+                    Load("fxExcel")([Content])
+                else if [Tab] = "0" then
+                    Table.First(Load("fxExcel")([Content]))[Data]
+                else
+                    Table.SelectRows(
+                        Load("fxExcel")([Content]),
+                        (Magic) => Text.Contains(Magic[Item], [Tab], Comparer.OrdinalIgnoreCase)
+                    ){
+                        0
+                    }[Data]
+        ),
+        #"TransformedToTable" = Table.AddColumn(
+            #"SelectedSheet",
+            "Table",
+            each if [Tab] = "" then [Sheet] else Load("fxSheet")([Sheet], [Tab_Skip], [Tab_Find], [Tab_Find_Key])
+        ),
+        //***
+        #"Removed Errors" =
+            if Text.Contains(
+                #"TransformedToTable"[File Path]{0}, "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\DEALs MASTER"
+            ) then
+                Table.RemoveRowsWithErrors(#"TransformedToTable", {"Table"})
+            else
+                #"TransformedToTable",
+        Distincted = Table.Distinct(#"Removed Errors", {"FText"}),
+        CN_Data = Table.ColumnNames(Distincted[Table]{0}),
+        #"Expanded Table" =
+            if FText = null then
+                Distincted
+            else if List.ContainsAll(CN_Data, {"Item", "Data"}) then
+                Load(
+                    "fxDataFormat"
+                )(
+                    Table.ExpandTableColumn(
+                        Table.SelectColumns(Distincted, {"Table", "File Path"}), "Table", CN_Data
+                    )
+                )
+            else
+                Load("fxDataFormat")(Distincted{0}[Table])
+in
+    #"Expanded Table"

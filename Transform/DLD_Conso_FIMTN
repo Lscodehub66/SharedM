@@ -1,0 +1,11 @@
+let
+    Source = DLD_Conso,
+    YmeansExcludeFIMTN = "N",
+    Filtered = Table.SelectRows(Source, each [IS_FIMTN] <> YmeansExcludeFIMTN),
+    HDText = "Review_FIMTN",
+    HD = Get("Header_S_Dynamic_" & HDText),
+    //{"ISIN" ,"定价日" ,"债券简称" ,"IS_FIMTN","是否调整"}
+    SCol = Table.SelectColumns(Filtered, HD, MissingField.UseNull),
+    TBC = Table.ReplaceValue(SCol, "Y", "【Y】", Replacer.ReplaceValue, {"IS_FIMTN"})
+in
+    TBC

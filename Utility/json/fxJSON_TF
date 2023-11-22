@@ -1,0 +1,38 @@
+// fxJSON_TF
+let
+    Source = (JSON_Parameter as binary) => let
+        Source = Json.Document(JSON_Parameter),
+        vcalendar = Source[vcalendar
+],
+        vcalendar1 = vcalendar{
+    0
+},
+        vevent = vcalendar1[vevent
+],
+        #"Converted to Table" = Table.FromList(vevent, Splitter.SplitByNothing(),
+null,
+null, ExtraValues.Error),
+        #"Expanded Column1" = Table.ExpandRecordColumn(#"Converted to Table",
+"Column1",
+{
+    "dtstart",
+    "summary"
+},
+{
+    "dtstart",
+    "summary"
+}),
+        #"Added Custom" = Table.AddColumn(#"Expanded Column1",
+"Date", each [dtstart
+]{
+    0
+}),
+        #"Removed Other Columns" = Table.SelectColumns(#"Added Custom",
+{
+    "Date",
+    "summary"
+})
+    in
+        #"Removed Other Columns"
+in
+    Source

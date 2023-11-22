@@ -1,0 +1,66 @@
+(
+    TableName as table,
+    optional DateCol as text,
+    optional SortCol1 as text,
+    optional SortCol2 as nullable text,
+    optional SortCol3 as nullable text,
+    optional IsReversedIndex as nullable text
+) =>
+    let
+        Source = Load("fxDataFormat")(TableName),
+        Order = if IsReversedIndex <> "N" then Order.Ascending else Order.Descending,
+        RemovedCol = Table.RemoveColumns(Source, {"Index"}, MissingField.Ignore),
+        HeaderList = List.Intersect(
+            {List.RemoveItems({DateCol, SortCol1, SortCol2, SortCol3}, {"", null}), CN_Source}
+        ),
+        HD_Count = List.Count(HeaderList),
+        CN_Source = Table.ColumnNames(Source),
+        Entity_CN = List.Select(CN_Source, each Text.Contains(_, "信用主体")),
+        Entity_CN_Count = List.Count(Entity_CN),
+        Entity_CN1 = List.First(Entity_CN),
+        DefaultSort =
+            if List.ContainsAll(CN_Source, {"定价日", "货币", "年期"}) and Entity_CN_Count > 0 then
+                Table.Sort(RemovedCol, {{"定价日", Order}, {Entity_CN1, Order}, {"货币", Order}, {"年期", Order}})
+            else if List.Contains(CN_Source, "定价日") and Entity_CN_Count > 0 then
+                Table.Sort(RemovedCol, {{"定价日", Order}, {Entity_CN1, Order}})
+            else if List.ContainsAll(CN_Source, {"DEBUT_DATE","Timestamp"}) and Entity_CN_Count > 0 then
+                Table.Sort(RemovedCol, {{"Timestamp", Order}, {"DEBUT_DATE", Order}, {Entity_CN1, Order}})
+                else if List.ContainsAll(CN_Source, {"Date","Timestamp"})  then
+                Table.Sort(RemovedCol, {{"Timestamp", Order}, {"Date", Order}})
+            else
+                RemovedCol,
+        Result =
+            if HD_Count = 0 and IsReversedIndex = null then
+                DefaultSort
+            else if HD_Count = 1 then
+                Table.Sort(RemovedCol, {{List.First(HeaderList), Order}})
+            else if HD_Count = 2 then
+                Table.Sort(RemovedCol, {{List.First(HeaderList), Order}, {List.FirstN(HeaderList, 2){1}, Order}})
+            else if HD_Count = 3 then
+                Table.Sort(
+                    RemovedCol,
+                    {
+                        {List.First(HeaderList), Order},
+                        {List.FirstN(HeaderList, 3){1}, Order},
+                        {List.Last(HeaderList), Order}
+                    }
+                )
+            else if HD_Count = 4 then
+                Table.Sort(
+                    RemovedCol,
+                    {
+                        {List.First(HeaderList), Order},
+                        {List.FirstN(HeaderList, 3){1}, Order},
+                        {List.FirstN(HeaderList, 3){2}, Order},
+                        {List.Last(HeaderList), Order}
+                    }
+                )
+            else
+                RemovedCol,
+        AddedIndex = Table.AddIndexColumn(Result, "Index", 1, 1, Int64.Type),
+        Reversed = Table.Sort(AddedIndex, {"Index", Order.Descending}),
+        Reorder = Table.ReorderColumns(
+            Reversed, {"Index"} & List.RemoveMatchingItems(Table.ColumnNames(Reversed), {"Index"})
+        )
+    in
+        Reorder

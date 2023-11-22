@@ -1,0 +1,27 @@
+let
+    Start = #date(2017, 1, 1), SColInput = {null},
+    End = Date.From(DateTime.FixedLocalNow()),
+    //**
+    DimDate = List.Reverse(List.Generate(() => Start, each _ <= End, each Date.AddDays(_, 1))),
+    Source = Table.FromColumns({DimDate}, {"Column1"}),
+    ACol0 = Table.AddColumn(Source, "YY", each Date.Year([Column1]), type number),
+    ACol1 = Table.AddColumn(ACol0, "MM", each Date.Month([Column1]), type number),
+    ACol2 = Table.AddColumn(ACol1, "WeekNum", each Date.WeekOfYear([Column1], Day.Monday), type number),
+    ACol2a = Table.AddColumn(ACol2, "WeekStartDate", each Date.StartOfWeek([Column1], Day.Monday), type date),
+    ACol2b = Table.AddColumn(
+        ACol2a, "YYW", each Text.RemoveRange(Number.ToText([YY]), 0, 2) & "W" & Number.ToText([WeekNum],"00"), type text
+    ),
+    ACol3 = Table.AddColumn(ACol2b, "年", each Date.ToText([Column1], "yy年"), type text),
+    ACol4 = Table.AddColumn(ACol3, "季", each "Q" & Number.ToText(Date.QuarterOfYear([Column1]), "0"), type text),
+    ACol4a = Table.AddColumn(ACol4, "YYQQ", each Text.RemoveRange(Number.ToText([YY]), 0, 2) & [季], type text),
+    ACol5 = Table.AddColumn(ACol4a, "月", each Number.ToText([MM], "00月")),
+    ACol6 = Table.AddColumn(ACol5, "周", each Number.ToText([WeekNum], "00周")),
+    ACol7 = Table.AddColumn(ACol6, "年月", each [年] & [月], type text),
+    ACol8 = Table.AddColumn(ACol7, "YYMMDD", each Date.ToText([Column1], "yyMMdd"), type text),
+    Renamed = Table.RenameColumns(ACol8, {{"Column1", "A_Date"}}),
+    Sorted = Table.Sort(Renamed, {{"A_Date", Order.Ascending}}),
+    AddedIndex = Table.AddIndexColumn(Sorted, "Index", 1, 1),
+    SortReversed = Table.Sort(AddedIndex, {{"Index", Order.Descending}}),
+    SColOutput = if SColInput = {null} then SortReversed else Table.SelectColumns(SortReversed, SColInput ,MissingField.UseNull)
+in
+      SColOutput

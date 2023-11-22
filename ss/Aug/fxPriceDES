@@ -1,0 +1,37 @@
+let
+ Source = ( TableName as table ) =>
+  let
+   Source      = TableName, 
+   IPT区间描述     = Table.AddColumn (
+    Source, 
+    "IPG", 
+    each if [IPT_BMK] = "%" then Number.ToText ( [IPT_YIELD], "0.000%" ) & "a" else if [IPT_BMK] <> "" and [IPT_SPD] <> null then [IPT_BMK] & "+" & Number.ToText ( [IPT_SPD], "0.0" ) & "a" else [IPT_BMK]
+   ), 
+   NoWIRP      = Table.AddColumn (
+    IPT区间描述, 
+    "FPG1", 
+    each 
+     if [FPT_YIELD上限] <> null then
+      Number.ToText ( [FPT_YIELD], "0.000%" ) & "-" & Number.ToText ( [FPT_YIELD上限], "0.000%" )
+     else if [FPT_SPD上限] <> null then
+      [FPT_BMK] & "+" & Number.ToText ( [FPT_SPD], "0.0" ) & "-" & Number.ToText ( [FPT_SPD上限], "0.0" )
+     else if [FPT_BMK] <> "" and [FPT_YIELD] <> null then
+      Number.ToText ( [FPT_YIELD], "0.000%" )
+     else if [FPT_BMK] <> "" and [FPT_SPD] <> null then
+      [FPT_BMK] & "+" & Number.ToText ( [FPT_SPD], "0.0" )
+     else
+      ""
+   ), 
+   FPGwithWIRP = Table.AddColumn (
+    NoWIRP, 
+    "FPG", 
+    each if [WPIR] <> null and [FPT_BMK] = "%" then [FPG1] & "(+/-" & Number.ToText ( [WPIR], "0.0" ) & "bps)" else if [WPIR] <> null then [FPG1] & "(+/-" & Number.ToText ( [WPIR], "0.0" ) & ")" else [FPG1]
+   ), 
+   PricedwSPD  = Table.AddColumn ( FPGwithWIRP, "定价", each if [定价息差] <> null and not Text.Contains ( [定价_BMK], "%" ) then [定价_BMK] & "+" & Number.ToText ( [定价息差], "0.0" ) else "" ), 
+   票息Percent   = Table.AddColumn ( PricedwSPD, "票息", each if [计息基准] <> "" then [定价] else Number.ToText ( [票息_DMI], "0.000%" ), type text ), 
+   Custom1     = Table.TransformColumns ( 票息Percent, { { "IPG", each fxNumText ( _ ) }, { "票息", each fxNumText ( _ ) }, { "FPG", each fxNumText ( _ ) }, { "定价", each fxNumText ( _ ) } } ), 
+   Renamed     = Table.RenameColumns ( Custom1, { { "定价_BMK", "定价基准" } }, MissingField.Ignore )
+  in
+   Renamed
+in
+ Source

@@ -1,0 +1,78 @@
+//Add ESG & FeaturedMore - You need 票息 to indicate FRN pls arrange after getting 票息
+(TableName as table) =>
+    let
+        Source = TableName,
+        // Featured
+        FeaturedMore = Table.AddColumn(
+            Source,
+            "品种主题",
+            each
+                 if Text.Contains([计息基准], "+") or Text.Contains([票息], "+") then
+                    "浮息"
+               
+                else if [主题债券] = "T2" then
+                    "T2"
+                else if [主题债券] = "AT1" and Text.Contains([特殊条款说明], "优先股") and List.Count(Text.Split([特殊条款说明], "优先股")) >= 4 then
+                    "AT1优先股"
+                else if [主题债券] = "AT1" then
+                    "AT1"
+                else if Text.Contains([特殊条款说明], "优先股") and List.Count(Text.Split([特殊条款说明], "优先股")) >= 4 then
+                    "优先股"
+                else if
+                    Text.Contains([#"发行期限(年)"], "P")
+                    and [主题债券] <> "AT1"
+                    and [主题债券] <> "T2"
+                    and Text.Contains([偿还顺位], "Subordinated")
+                    or Text.Contains([偿还顺位], "Junior")
+                then
+                    "次级永续"
+                else if
+                    Text.Contains([#"发行期限(年)"], "P")
+                    and [主题债券] <> "AT1"
+                    and [主题债券] <> "T2"
+                    and not Text.Contains([偿还顺位], "Subordinated")
+                    and not Text.Contains([偿还顺位], "Junior")
+                then
+                    "高级永续"
+                else
+                    "--"
+        ),
+        HD = List.Intersect({{"ESG_Indicator", "主题债券"}, Table.ColumnNames(Source)}),
+        // "筹款用途"
+        MergedCol = Table.CombineColumns(
+            FeaturedMore, HD, Combiner.CombineTextByDelimiter("", QuoteStyle.None), "ESG_Source"
+        ),
+        ESG_DMIBBG = Table.AddColumn(
+            MergedCol,
+            "ESG",
+            each
+                if Text.Contains([ESG_Source], "挂钩") or  Text.Contains([ESG_Source], "LINKED") then
+                    "可持续挂钩"
+                else if Text.Contains([ESG_Source], "可持续") or Text.Contains([ESG_Source], "SUSTAIN") then
+                    "可持续"
+                else if Text.Contains([ESG_Source], "社会") or Text.Contains([ESG_Source], "SOCIAL") then
+                    "社会"
+                else if Text.Contains([ESG_Source], "绿") or Text.Contains([ESG_Source], "GREEN") then
+                    "绿色"
+                else
+                    ""
+        ),
+        ESG_FrUOP =
+            if Table.HasColumns(Source, "筹款用途") then
+                Table.ReplaceValue(
+                    ESG_DMIBBG,
+                    "",
+                    each
+                        if Text.Contains([筹款用途], "绿") then
+                            "【绿色】"
+                        else if Text.Contains([筹款用途], "可持续") then
+                            "【可持续】"
+                        else
+                            "",
+                    Replacer.ReplaceValue,
+                    {"ESG"}
+                )
+            else
+                ESG_DMIBBG
+    in
+        ESG_FrUOP

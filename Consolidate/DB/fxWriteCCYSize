@@ -1,0 +1,53 @@
+(TableName as table, SizeColumn as text, CCYColumn as text, optional IsTapColumn as text) =>
+    let
+        Source = TableName,
+        Prefix = Load("Prefix"),
+        ColumnsToAdd = {Prefix & "CN规模", "币种单位", "币种规模"},
+        Prep1 = Table.RemoveColumns(Source, ColumnsToAdd, MissingField.Ignore),
+        //
+        SizeCN = Table.AddColumn(
+            Prep1,
+            Prefix & "CN规模",
+            each
+                if Record.Field(_, SizeColumn) < 1 then
+                    Number.Round(Record.Field(_, SizeColumn) * 10000, 3)
+                else
+                    Number.Round(Record.Field(_, SizeColumn), 3),
+            type number
+        ),
+        CrcyCN = Table.AddColumn(
+            SizeCN,
+            "币种单位",
+            each
+                if Record.Field(_, CCYColumn) = null then
+                    ""
+                else if Record.Field(_, SizeColumn) < 1 then
+                    "万" & fxCleaner(Record.Field(_, CCYColumn), "CrcySuffix")
+                else
+                    "亿" & fxCleaner(Record.Field(_, CCYColumn), "CrcySuffix"),
+            type text
+        ),
+        CrcySizeCN = Table.AddColumn(
+            CrcyCN,
+            "币种规模",
+            each
+                if Record.Field(_, CCYColumn) = "CNH" then
+                    "人民币" & Number.ToText(Record.Field(_, Prefix & "CN规模")) & [币种单位]
+                else
+                    Number.ToText(Record.Field(_, Prefix & "CN规模")) & [币种单位],
+            type text
+        ),
+        TapCN =
+            if IsTapColumn = null then
+                CrcySizeCN
+            else
+                Table.ReplaceValue(
+                    CrcySizeCN,
+                    each [币种规模],
+                    each fxCleaner(Record.Field(_, IsTapColumn), null, {"[", "]"}, {"", ""}) & [币种规模],
+                    Replacer.ReplaceValue,
+                    {"币种规模"}
+                ),
+             Output =    if not Table.HasColumns(Source,{ SizeColumn,CCYColumn,IsTapColumn}) then Source else TapCN
+    in
+                Output 

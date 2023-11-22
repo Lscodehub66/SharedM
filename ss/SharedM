@@ -1,0 +1,32 @@
+// SharedM
+let
+    GPS = try Excel.CurrentWorkbook(){[Name = "GPS"]}[Content][Column1]{0} otherwise "Remote",
+    FolderPath =
+        if GPS = "Remote" then
+            "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM"
+        else
+            "\\10.10.1.215\dcm$\Team Folder\Execution Team\DataHub\SharedM",
+    AltFolderPath = "\\10.10.1.215\dcm$\Team Folder\Execution Team\DataHub\SharedM",
+    Source = try Folder.Files(FolderPath) otherwise Folder.Files(AltFolderPath),
+    Merged = Table.AddColumn(
+        Source,
+        "Path",
+        each
+            if
+                not Text.Contains([Name], "fx", Comparer.OrdinalIgnoreCase)
+                and not Text.StartsWith([Name], "q", Comparer.OrdinalIgnoreCase)
+            then
+                [Folder Path] & "Q" & [Name]
+            else
+                Text.Combine({[Folder Path], [Name]}, ""),
+        type text
+    ),
+    Filtered = Table.SelectRows(
+        Merged,
+        each
+            Text.StartsWith([Name], "q", Comparer.OrdinalIgnoreCase)
+            or Text.StartsWith([Name], "fx", Comparer.OrdinalIgnoreCase)
+    ),
+    Removed = Table.SelectColumns(Filtered, {"Name", "Path"})
+in
+    Removed

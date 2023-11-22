@@ -1,0 +1,101 @@
+let
+    Source2 = Excel.Workbook(
+        File.Contents("C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM\Zss\DEALs MASTER.xlsm"), null, true
+    ),
+    Table = fxDataFormat(Source2{[Item = "mIndice", Kind = "Table"]}[Data]),
+    _CurrentDate = Date.From(Monday),
+    _InputCurves = {"UST", "CGB"},
+    // second item minus by first item
+    _InputTenorNum = 3,
+    // number format - put 0.25 for 3mth. Avaliable 0.25,1,2,3,5,7,10
+    InputHDList = List.Select(
+        CN_Source, each Text.Contains(_, _InputCurves{0}) and Text.Contains(_, Number.ToText(_InputTenorNum, "0Y"))
+    )
+        & List.Select(
+            CN_Source,
+            each Text.Contains(_, _InputCurves{1}) and Text.Contains(_, Number.ToText(_InputTenorNum, "0Y"))
+        ),
+    _HD_DAX = "Spd",
+    _HD_Trend = "Trend",
+    //
+    Source = Table.SelectRows(Table, each [Date] < _CurrentDate),
+    CN_Source = Table.ColumnNames(Source),
+    Sorted = Table.Sort(Source, {{"Date", Order.Descending}}),
+    ACol = Table.AddColumn(
+        Sorted,
+        _HD_DAX,
+        each Number.Round((Record.Field(_, InputHDList{1}) - Record.Field(_, InputHDList{0})) * 10000, 0),
+        type number
+    ),
+    ACol2 = Table.AddColumn(ACol, _HD_Trend, each if Record.Field(_, _HD_DAX) < 0 then "倒挂" else "正值", type text),
+    SCol = Table.SelectColumns(ACol2, { "Date", _HD_DAX, _HD_Trend}),
+    Fn = Load("fxNextRow")(SCol, _HD_Trend),
+    NextRow_Is = Table.AddColumn(
+        Fn, _HD_Trend & "_转向", each if Record.Field(_, _HD_Trend) <> [NextRow] and [NextRow] <> null then "Y" else null
+    ),
+    Replaced = Table.ReplaceValue(
+        NextRow_Is,
+        each Record.Field(_, _HD_Trend),
+        each
+            if Record.Field(_, _HD_Trend) <> [NextRow] and [NextRow] <> null then
+                "**【转向】**"
+            else
+                Record.Field(_, _HD_Trend),
+        Replacer.ReplaceValue,
+        {_HD_Trend}
+    ),
+    #"Filled Down" = Table.FillDown(Replaced, {_HD_Trend & "_转向"}),
+    RCol1 = Table.RemoveColumns(#"Filled Down", {"NextRow"}),
+    Avg1_Filtered = Table.SelectRows(
+        Table.FillDown(Replaced, {_HD_Trend & "_转向"}),
+        each Record.Field(_, _HD_Trend & "_转向") = Table.Column(Replaced, _HD_Trend & "_转向"){0}
+    ),
+    Avg1_Value = List.Average(Table.Column(Avg1_Filtered, _HD_DAX)),
+    Avg2_Filtered = Table.SelectRows(
+        Table.FillDown(Replaced, {_HD_Trend & "_转向"}),
+        each Record.Field(_, _HD_Trend & "_转向") <> Table.Column(Replaced, _HD_Trend & "_转向"){0}
+    ),
+    Avg2_Value = List.Average(Table.Column(Avg2_Filtered, _HD_DAX)),
+    Avg_Spd = Table.AddColumn(
+        Avg1_Filtered,
+        _HD_DAX & "_Avg",
+        each
+            if Record.Field(_, _HD_DAX) =<0 then Avg1_Value else Avg2_Value ,
+        Int64.Type
+    ),
+    Avg_Date = Table.AddColumn(
+        Avg2_Filtered, "Date_Min", each List.Min(Table.Column(Avg1_Filtered, "Date")), type date
+    ),
+    Avg_SPD_2 = Table.AddColumn(Avg_Date, _HD_DAX & "_Avg" & "_转向前平均", each Avg1_Spd, Int64.Type),
+    _PeakValue =
+        if Avg1_Spd < 0 then
+            List.Min(Table.Column(Avg1_Filtered, _HD_DAX))
+        else
+            List.Max(Table.Column(Avg1_Filtered, _HD_DAX)),
+    _PeakRow = Table.SelectRows(Avg1_Filtered, each Record.Field(_, _HD_DAX) = _PeakValue),
+    Peak_SPD = Table.AddColumn(Avg_SPD_2, _HD_DAX & "_Peak", each Table.Column(_PeakRow, _HD_DAX){0}, type number),
+    Peak_Date = Table.AddColumn(Peak_SPD, "Date_Peak", each Table.Column(_PeakRow, "Date"){0}, type date),
+    Peak_IsPeak = Table.AddColumn(
+        Peak_Date, _HD_Trend & "_Is_Peak", each if [Date] <> [Date_Peak] then "已收窄" else "达到最高值", type text
+    ),
+    Range = Table.AddColumn(Peak_IsPeak, "Duration", each Duration.Days([Date] - [Date_Min]), type duration),
+    Custom2 = fxDataFormat(Range),
+    Writer = Table.AddColumn(
+        Custom2,
+        "描述",
+        each
+            "当前，中美利差为"
+                & Number.ToText(Record.Field(_, _HD_DAX), "0bps")
+                & "，相较"
+                & Date.ToText([Date_Peak], "yyyy年M月")
+                & "的最高点"
+                & Number.ToText(Record.Field(_, _HD_DAX & "_Peak"), "0bps")
+                & Record.Field(_, _HD_Trend & "_Is_Peak")
+                & "。"
+                & "#(lf)"
+                & "自转向以来，中美利差平均约为"
+                & Number.ToText(Record.Field(_, _HD_DAX & "_Avg"), "0bps"),
+        type text
+    )
+in
+    Writer

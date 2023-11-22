@@ -1,0 +1,271 @@
+// GPS
+let
+
+GPS = "Remote"
+in
+    GPS
+
+// SharedM
+let
+    Source = Folder.Files(if GPS = "Remote" then "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM" else "\\10.10.1.215\dcm$\Team Folder\Execution Team\DataHub\SharedM"),
+    Filtered = Table.SelectRows(Source, each not Text.Contains([Folder Path], ".git") and not Text.Contains([Name],"git") and [Name] <> ""),
+    Merged = Table.AddColumn(Filtered, "Path", each Text.Combine({[Folder Path], [Name]}, ""), type text),
+    Extracted = Table.TransformColumns(Merged, {{"Folder Path", each Text.AfterDelimiter(_, "SharedM\"), type text} ,{"Name", each Text.BeforeDelimiter(_, "."), type text}}),
+    Removed = Table.SelectColumns(Extracted,{"Name","Folder Path" ,"Path"})
+in
+    Removed
+
+// fxShared
+let
+    Source = ( FunctionFileName as text ) =>
+ let
+  Filtered = Table.SelectRows ( SharedM, each [Name] = FunctionFileName), 
+  Path     = Filtered[Path]{0}, 
+  Source   = Text.FromBinary ( File.Contents ( Path ) ) 
+
+ in
+  Source
+in
+    Source
+
+// fxLauncher
+let
+ Source = fxShared ( "fxLauncher" ), 
+ EVA    = Expression.Evaluate ( Source, #shared )
+in
+ EVA
+
+// DMI2022
+let
+    Source = fxLauncher("DataHub", null),
+    mDMI_Table = Source{[Item="mDMI",Kind="Table"]}[Data]
+in
+    mDMI_Table
+
+// DMItestJGC
+let
+ Source             = DMI2022, 
+ RemovedCol         = Table.SelectColumns ( Source, { "联席全球协调人" } ), 
+ Filtered           = Table.SelectRows ( RemovedCol, each [联席全球协调人] <> "" and Text.Contains ( [联席全球协调人], ";" ) ), 
+ RemovedDupe        = Table.Distinct ( Filtered ), 
+ Function           = Table.AddColumn ( RemovedDupe, "TextCheck", each fxPrepTextCheck ( [联席全球协调人] ) ), 
+ AddBeforeDelimeter = Table.AddColumn ( Function, "Left-Lead", each Text.BeforeDelimiter ( [TextCheck], ";" ), type text ), 
+ Function1          = Table.AddColumn ( AddBeforeDelimeter, "Text", each fxBetweenDelimiterAll ( [TextCheck], ";", ";", "@" ) ), 
+ ExpandedList       = Table.ExpandListColumn ( Function1, "Text" ), 
+ Removed            = Table.SelectColumns ( ExpandedList, { "Text" } ), 
+ #">>BrFiltered"    = Table.SelectRows ( Removed, each Text.Contains ( [Text], "/" ) or Text.Contains ( [Text], "BRANCH" ) ), 
+ #">>RemovedDupe"   = Table.Distinct ( #">>BrFiltered" ), 
+ Custom2            = Table.AddColumn ( Removed, "br", each fxLocation ( [Text] ) ), 
+ FunctionBranch     = fxBranch ( Removed ), 
+ BeforeDelimeter    = Table.TransformColumns ( FunctionBranch, { { "Text1", each Text.BeforeDelimiter ( _, "/" ), type text } } ), 
+ FunctionReplacer   = fxReplacer ( BeforeDelimeter, PreJLM[Find], PreJLM[Replace], { "Text1" } ), 
+ Custom             = Table.AddColumn ( FunctionReplacer, "Col", each fxCleanJLM ( [Text1] ) ), 
+ Custom1            = Table.AddColumn ( Custom, "Col1", each fxCleaner ( [Col], null,JLMTable[Find], JLMTable[Replace] ), type text ), 
+ Splitted           = Table.SplitColumn ( Custom1, "Col1", Splitter.SplitTextByDelimiter ( "^", QuoteStyle.Csv ), { "Merch.1", "Merch.2", "Merch.3" } ), 
+ FnClean2           = Table.AddColumn ( Splitted, "Conso1", each if [Merch.2] = null then "" else fxCleaner ( [Merch.2], null,JLMTable[Find], JLMTable[CN] ), type text ), 
+ Merged             = Table.AddColumn ( FnClean2, "Merged", each if [Conso] <> "" then [Conso1] & "/" & [Conso] else [Conso1], type text ), 
+ SelectedCol        = Table.SelectColumns ( Merged, { "Conso1", "Text" } ),
+    Custom3 = Table.AddColumn (Removed, "中文", each fxJLMCNname ( [Text] ) )
+in
+ Custom3
+
+// fxPrepTextCheck
+(TextName as text) =>
+
+let
+    Text1 = Text.Upper (TextName),
+    Text2 = Text.Select( Text1, {"A" .. "Z", "/",";"} ),
+    Text3 = if Text.EndsWith(Text2,"/") then Text.Replace(Text2,"/","") else Text2
+in
+    Text3
+
+// fxBetweenDelimiterAll
+(InputText as text, StartDelimiter as text, EndDelimiter as text, optional Alternative_Dummy as text) =>
+
+let
+    // If the end delimiter contains the same characters than the start delimiter then that portion has to be replaced in the end parameter by a dummy. Otherwise the query fails.
+    AlternativeDummy = Alternative_Dummy,
+    Dummy = if AlternativeDummy is null then "°" else AlternativeDummy,
+    String = InputText,
+    ParaStart = StartDelimiter,
+    ParaEnd = EndDelimiter,
+    
+    // If the delimiters are identical, a different logic has to be applied.
+    IdenticalDelimiters = ParaEnd = ParaStart,
+    // Start of logic for identical delimiters
+    SplitText = Text.Split(String, ParaStart),
+    ResultIdenticalDelimiters = List.Alternate(SplitText,1,1),
+    
+    // Start of logic for different start- and end-delimiters: Create dummy end-delimiter.
+    DummyParaEnd = Text.Replace(ParaEnd, ParaStart, Dummy),
+    DummyString = Text.Replace(String, ParaEnd, DummyParaEnd),
+    SplitByParaStart = List.Skip(Text.Split(DummyString, ParaStart),1),
+    ConvertToTable = Table.FromList(SplitByParaStart, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
+    ExtractBeforeParaEnd = Table.AddColumn(ConvertToTable, "Result", each Text.BeforeDelimiter([Column1], DummyParaEnd)),
+    Cleanup = Table.RemoveColumns(ExtractBeforeParaEnd,{"Column1"})[Result],
+    
+    Result = if Text.Contains(String, ParaStart) and Text.Contains(String, ParaEnd) 
+                then (if IdenticalDelimiters 
+                        then ResultIdenticalDelimiters 
+                        else Cleanup) 
+                else error Error.Record( "At least one of the delimiters is not found in the string" )
+in
+    Result
+
+// fxCleaner
+let 
+Source = #"fxShared"("fxCleaner"),
+    EVA = Expression.Evaluate(Source, #shared)    
+in
+    EVA
+
+// CityTable
+let
+    Source = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("ZZLbbtNAEIbfxdd9iXXtxK6TXeP1QkyVPkxRqp4gNz1QVKSWgzkIGkuhahRK8jLZdfMW/DNLL1AvPP+O9HnO29uBCE2UiDANNoIdYZIdKAR2/XZpZ68eFgs3OQmGGyB1KaQgTj57SRzEc+5sYq9P2vmUuciEgsNFg5AwCOzD8rs7umSgUwiZdUxREgSHIAism57aUWNHR209ZjRRspvhIzLJCEwyyllfuNnEE0Z2RVERgE6IgMDa4/324MLuf2NqSyVCyliHpuBYW5JLg8C287pdNnZvRH1cXfMPPSUjJQnFi9Aee6v72p3WnjCDuB+qfwHhMWUGlPv1B/fx5jFUX2wKQ0y/0ycGQq0upuvzrwzI+EWliozr6nCTEK7rD0pjJBdFqgnAgwAI5bn7tf79hgGdYgy5KmKCdJcYTYW5s8YeXtn3vhRdRTLmWeHFTEWzcrsHtrlnohRpHvP2yjwmAkKZxo09PveEyirFQKUYYG81u1zNfzCQ0uRinfKpwCEIwnNpHvMIo8tC9DwEx9+d9oOxn75gcav5O180VtdN/Enlz7k1COc8dLd3Txrzff3fls5FytvUOW8TQjf5edmOf+JMguHwLw==", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [City = _t, Delimitered = _t, Code = _t, 中文 = _t])
+in
+    Source
+
+// fxLocation
+(TextName as text) =>
+
+let
+Text1 =  if Text.Contains ( TextName, "BRANCH" ) and not Text.Contains ( TextName, "/" ) then
+    fxCleaner (
+    TextName, 
+     { "HONGKONGBRANCH", "LONDONBRANCH", "SINGAPOREBRANCH", "DUBAIDIFCBRANCH", "NEWYORKBRANCH", "MACAUBRANCH" ,"/THE"}, 
+     { "/HONGKONG", "/LONDON", "/SINGAPORE", "/DUBAI", "/NEWYORK", "/MACAU" ,""}
+    )
+   else
+    TextName,
+Text2 =  Text.AfterDelimiter ( Text1, "/" ),
+Text3 = fxCleaner(Text2,CityTable[City], CityTable[Delimitered]),
+Text4 = Text.BetweenDelimiters ( Text3, "^", "^" ), 
+Text5 = fxCleaner(Text4, CityTable[Code], CityTable[中文] )
+
+in
+Text5
+
+// fxBranch
+(TableName as table ) =>
+let
+ Source            = TableName, 
+ BranchToSlash     = Table.AddColumn (
+  Source, 
+  "Text1", 
+  each 
+   if Text.Contains ( [Text], "BRANCH" ) and not Text.Contains ( [Text], "/" ) then
+    fxCleaner (
+     [Text], 
+     { "HONGKONGBRANCH", "LONDONBRANCH", "SINGAPOREBRANCH", "DUBAIDIFCBRANCH", "NEWYORKBRANCH", "MACAUBRANCH" }, 
+     { "/HONGKONG", "/LONDON", "/SINGAPORE", "/DUBAI", "/NEWYORK", "/MACAU" }
+    )
+   else
+    [Text]
+ ), 
+ AddAfterDelimeter = Table.AddColumn ( BranchToSlash, "Text2", each Text.AfterDelimiter ( [Text1], "/" ), type text ), 
+ FnClean           = Table.AddColumn ( AddAfterDelimeter, "Merch", each fxCleaner ( [Text2], CityTable[City], CityTable[Delimitered] ), type text ), 
+ Filtered          = Table.SelectRows ( FnClean, each [Merch] <> "THE" ), 
+ Splitted          = Table.SplitColumn ( Filtered, "Merch", Splitter.SplitTextByDelimiter ( "^", QuoteStyle.Csv ), { "Merch.1", "Merch.2", "Merch.3" } ), 
+ Consolidated      = Table.AddColumn ( Splitted, "ConsoTemp", each if [Merch.2] = null then [Merch.1] else [Merch.2] ), 
+ FnClean2          = Table.AddColumn ( Consolidated, "Conso", each fxCleaner ( [ConsoTemp], CityTable[Code], CityTable[中文] ), type text ), 
+ RemovedCol        = Table.RemoveColumns ( FnClean2, { "ConsoTemp", "Merch.1", "Merch.2", "Merch.3","Text2" } )
+in
+ RemovedCol
+
+// fxReplacer
+let
+    Source = (
+  TableToClean as table, 
+  FindList as list, 
+  ReplaceList as list, 
+  TableToCleanColumn as list
+) =>
+  let
+    ReplacerTable = Table.Buffer(Table.FromColumns({FindList, ReplaceList}, {"Find", "Replace"})), 
+    //Convert the ReplacerTable to a list using the Table.ToRows function
+    //so we can reference the list with an index number
+    FindReplaceList = Table.ToRows(ReplacerTable), 
+    //Count number of rows in the ReplacerTable to determine
+    //how many iterations are needed
+    Counter = Table.RowCount(ReplacerTable), 
+    //Define a function to iterate over our list 
+    //with the Table.ReplaceValue function
+    BulkReplaceValues = (TableToCleanTemp, n) =>
+      let
+        //Replace values using nth item in FindReplaceList
+        ReplaceTable = Table.ReplaceValue(
+          TableToCleanTemp, 
+          //replace null with empty string in nth item
+          if FindReplaceList{n}{0} = null then "" else FindReplaceList{n}{0}, 
+          if FindReplaceList{n}{1} = null then "" else FindReplaceList{n}{1}, 
+          Replacer.ReplaceText, 
+          TableToCleanColumn
+        )
+      in
+        //if we are not at the end of the FindReplaceList
+        //then iterate through Table.ReplaceValue again
+        if n = Counter - 1 then ReplaceTable else @BulkReplaceValues(ReplaceTable, n + 1), 
+    //Evaluate the sub-function at the first row
+    Output = BulkReplaceValues(TableToClean, 0)
+  in
+    Output
+in
+    Source
+
+// PreJLM
+let
+    Source = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("bVJJbsMwDPyLzwH6BpqmLTYSJWhp0QT5/zdKynK29iCAnBmu4vU6oWOBQtgyV6YynSYsyNPtNCiWSlmgchTwCIkreBMxYhdBYUiAvDIqbF6HZ5Azy6aQWXu6PThAPlO1Qh3dfJz/gKnSYUIpVAMIbBRIqtUInXhpTGH1fSdehlHnubh1DqkjngNXWhTxddk10axnPySQn6MTjDnF3As+Q4ftol904vLmH673eJ/uYX5Ud5901W0Lcm9yH72VmsEzCH1fCDzI0pepK5BLVwTKmb0FzHGFsZbFwrjLdQKVjJwPxuAuPtZ3rzTyC8ydj1+UC4EdAhUaZMR532kTW+DQ2Nwt7mEOuEbZht7VxwnYRaH+DQ4OBef92PQzSpu5OG7rpzKhrdvYo2xnfTpOcSCbJrekZTRx0P9xiS0srnrRVsuKJ+gXcfsF", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [Find = _t, Replace = _t])
+in
+    Source
+
+// fxExtract
+(TextName as text, Delimiter as text) =>
+
+let
+Text1 = if Text.Contains(TextName, Delimiter) and not Text.StartsWith(TextName,Delimiter) then Text.BeforeDelimiter(TextName, Delimiter) else TextName
+in
+Text1
+
+// fxCleanerJLM
+(TextName as text) =>
+
+ let
+ Text = fxExtract ( TextName, "LTD" ) ,
+ Text1 =  if Text.Contains(Text, "BANK") and not Text.StartsWith(Text,  "BANK") then Text.BeforeDelimiter(Text,  "BANK") &"BANK" else Text,
+ Text2 = fxExtract(Text1,"INVEST"),
+ Text3 =  if Text.Contains(Text2, "SEC") and not Text.StartsWith(Text2,  "SEC") then Text.BeforeDelimiter(Text2,  "SEC") &"SEC" else Text2,
+ Text4 = if Text.EndsWith(Text3,"AG") then Text.Replace(Text3,"AG","") else Text3
+ in
+ Text4
+
+// JLMTable
+let
+    Source = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("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", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [Find = _t, EN = _t, CN = _t]),
+    AddReplace = Table.AddColumn(Source,"Replace", each "^"&[Find]&"^",type text)
+    in
+    AddReplace
+
+// fxJLMCNname
+( TextName as text ) =>
+ let
+  Text1  = 
+   if Text.Contains ( TextName, "BRANCH" ) and not Text.Contains ( TextName, "/" ) then
+    fxCleaner (
+     TextName, 
+     { "HONGKONGBRANCH", "LONDONBRANCH", "SINGAPOREBRANCH", "DUBAIDIFCBRANCH", "NEWYORKBRANCH", "MACAUBRANCH", "/THE" }, 
+     { "/HONGKONG", "/LONDON", "/SINGAPORE", "/DUBAI", "/NEWYORK", "/MACAU", "" }
+    )
+   else
+    TextName, 
+  Text2  = Text.BeforeDelimiter ( Text1, "/" ), 
+  Text3  = fxCleaner ( Text2, PreJLM[Find], PreJLM[Replace] ), 
+  Text4  = Text.BeforeDelimiter ( Text3, "LTD" ), 
+  Text5  = if Text.Contains ( Text4, "BANK" ) and not Text.StartsWith ( Text4, "BANK" ) then Text.BeforeDelimiter ( Text4, "BANK" ) & "BANK" else Text4, 
+  Text6  = Text.BeforeDelimiter ( Text5, "INVEST" ), 
+  Text7  = if Text.Contains ( Text6, "SEC" ) and not Text.StartsWith ( Text6, "SEC" ) then Text.BeforeDelimiter ( Text6, "SEC" ) & "SEC" else Text6, 
+  Text8  = if Text.EndsWith ( Text7, "AG" ) then Text.Replace ( Text7, "AG", "" ) else Text7, 
+  Text9  = fxCleaner ( Text8, JLMTable[Find], JLMTable[Replace] ), 
+  Text10 = Text.BetweenDelimiters ( Text9, "^", "^" ), 
+  Text11 = if Text10 = null then "" else fxCleaner ( Text10, JLMTable[Find], JLMTable[CN] )
+ in
+  Text11

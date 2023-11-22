@@ -1,0 +1,300 @@
+(TableName as table, optional DB_Name as text, optional InventoryMethod as text) =>
+    let
+        Updator = try CWB("UpdatorWeekly")[Column1]{0} otherwise "",
+        CWB_BankUniverse = CWB("BankUniverse"),
+         CWB_NBFI = CWB("NBFI"),
+          CWB_Directory = CWB("Directory"),
+        Source1 = TableName,
+        // Definitions fxDBManager(Source,"mCredit","LIFO")
+        PQ_QRC合规 = Load("Q合规MergeDIR"),
+        fxSmartListing = Load("fxSmartListing"),
+        fxPRJSync = Load("fxPRJSync"),
+        Prefix = "Dummy",
+        MorW = if Text.Contains(DB_Name, "w", Comparer.OrdinalIgnoreCase) then "W" else "M",
+        DB_Type =
+            if List.ContainsAll(Table.ColumnNames(TableName), {"信用主体", "信用主体简称"}) then
+                "Entity"
+            else if List.ContainsAll(Table.ColumnNames(TableName), {"信用主体", "定价日", "ISIN", "Check"}) then
+                "Tranche"
+            else
+                "Others",
+        // Filter out blank rows & invoke dataformat
+        NullOut =
+            if DB_Type = "Entity" or DB_Type = "Tranche" then
+                fxDataFormat(Table.SelectRows(Source1, each [信用主体] <> null and [信用主体] <> ""))
+            else
+                fxDataFormat(Source1),
+        // Recalculate identifiers
+        RIdentifier =
+            if List.Contains(Table.ColumnNames(NullOut), "Check") then
+                Table.ReplaceValue(
+                    NullOut, each [Check], each fxCheck([定价日], "yyMMdd", [ISIN], "Y"), Replacer.ReplaceValue, {
+                        "Check"
+                    }
+                )
+            else
+                NullOut,
+        // 添加Index辅助列，由新到旧index递增
+        Indexed = Table.AddIndexColumn(RIdentifier, Prefix & "Index", 1, 1),
+        //LIFO = Last in, First Out 出现重复，保留较旧的记录，删除新加入的记录：
+        //Autocopy - 越新加入index数值越低，删除需要将其排在靠后位置，index因此需要按Descending排列
+        //Query- 越新加入index数值越大，删除需要将其排在靠后位置，index因此需要按Ascending排列
+        SortedDupe =
+            if InventoryMethod = "LIFO" and DB_Type = "Tranche" then
+                Table.Buffer(Table.Sort(Indexed, {{"Check", Order.Descending}, {Prefix & "Index", Order.Descending}}))
+            else if InventoryMethod = "FIFO" and DB_Type = "Tranche" then
+                Table.Buffer(Table.Sort(Indexed, {{"Check", Order.Descending}, {Prefix & "Index", Order.Ascending}}))
+            else if InventoryMethod = "LIFO" and DB_Type = "Entity" then
+                Table.Buffer(Table.Sort(Indexed, {{"信用主体", Order.Descending}, {Prefix & "Index", Order.Descending}}))
+            else if InventoryMethod = "FIFO" and DB_Type = "Entity" then
+                Table.Buffer(Table.Sort(Indexed, {{"信用主体", Order.Descending}, {Prefix & "Index", Order.Ascending}}))
+            else
+                Indexed,
+        RemovedDupe =
+            if DB_Type = "Tranche" then
+                Table.Distinct(SortedDupe, {"Check"})
+            else if DB_Type = "Entity" then
+                Table.Distinct(SortedDupe, {"信用主体"})
+            else
+                Table.Distinct(SortedDupe),
+        #">>Debugfilter1" = Table.SelectRows(
+            RemovedDupe, each Text.Contains([信用主体], "科学城") or Date.IsInCurrentDay([Timestamp])
+        ),
+        // Weekly
+        W_removedcol = Table.RemoveColumns(RemovedDupe, {"Updator", "Timestamp"}, MissingField.Ignore),
+        W_addedupdator = Table.AddColumn(W_removedcol, "Updator", each Updator),
+        W_addedtimestamp = Table.AddColumn(W_addedupdator, "Timestamp", each DateTime.FixedLocalNow()),
+        // Remember to check the referenced name if you revise previous steps **Referenced Dummy Step **
+        _CROSSROAD = if MorW = "W" then W_addedtimestamp else RemovedDupe,
+        // Revalidate mCurated
+        Curated_结构 =
+            if List.ContainsAll(Table.ColumnNames(_CROSSROAD), {"结构", "备证行"}) and DB_Type <> "W" then
+                Table.ReplaceValue(
+                    _CROSSROAD,
+                    each [结构],
+                    each if [备证行] <> "--" and not Text.Contains([结构], "备证") then "备证" else [结构],
+                    Replacer.ReplaceValue,
+                    {"结构"}
+                )
+            else
+                _CROSSROAD,
+        Curated_上市 =
+            if List.Contains(Table.ColumnNames(Curated_结构), "上市") and DB_Type <> "W" then
+                Table.TransformColumns(Curated_结构, {{"上市", each fxSmartListing(_)}})
+            else
+                Curated_结构,
+        // Revalidate mBISL AncientDirectory
+        BISL_对帐号 =
+            if List.Contains(Table.ColumnNames(Curated_上市), "台账序号") and DB_Type <> "W" then
+                fxPRJSync(Curated_上市, "台账序号", "定价日", "PRJ对账号")
+            else
+                Curated_上市,
+        // **************************** Skipped ***************************
+        BISL_台账 =
+            if
+                List.ContainsAll(Table.ColumnNames(BISL_对帐号), {"FolderPath", "定价日"})
+                and DB_Type <> "W"
+                and BISL_对帐号[定价日]{0} > Date.From("2022/01/01")
+            then
+                Table.ReplaceValue(
+                    fxDynamicMerge(BISL_对帐号, PQ_QRC合规, "PRJ对账号", "PRJ对账号", {"公盘地址"}, {Prefix & "FolderPath"}),
+                    each [FolderPath],
+                    each
+                        if [FolderPath] <> "" and not Text.StartsWith([FolderPath], "\") then
+                            "\\10.10.1.215\dcm$\" & Text.AfterDelimiter([FolderPath], "\")
+                        else if
+                            [FolderPath] = ""
+                            and Record.Field(_, Prefix & "FolderPath") <> null
+                            and Record.Field(_, Prefix & "FolderPath") <> ""
+                        then
+                            Record.Field(_, Prefix & "FolderPath")
+                        else
+                            [FolderPath],
+                    Replacer.ReplaceValue,
+                    {"FolderPath"}
+                )
+            else
+                BISL_对帐号,
+        // **************************** Skipped ***************************
+        //  **Referenced Dummy Step ** This step is referenced by the conditional mCredit Manager step as Source !
+        DummyStep = BISL_对帐号,
+        // Revalidate mCredit
+        Credit_地区 =
+            if List.Contains(Table.ColumnNames(DummyStep), "区县") and DB_Type = "Entity" and DB_Type <> "W" then
+                Table.ReplaceValue(DummyStep, each [区县], each fxCleaner([区县], "区县"), Replacer.ReplaceValue, {"区县"})
+            else
+                DummyStep,
+        Credit_省级 =
+            if
+                List.ContainsAll(Table.ColumnNames(DummyStep), {"平台级别", "城市"})
+                and DB_Type = "Entity"
+                and DB_Type <> "W"
+            then
+                Table.ReplaceValue(
+                    Credit_地区, each [城市], each if [平台级别] = "省级" then "" else [城市], Replacer.ReplaceValue, {"城市"}
+                )
+            else
+                DummyStep,
+        Credit_FI =
+            if
+                List.ContainsAll(Table.ColumnNames(DummyStep), {"板块三级", "板块标签"})
+                and DB_Type = "Entity"
+                and DB_Type <> "W"
+            then
+                Table.ReplaceValue(
+                    fxDynamicMerge(
+                        Credit_省级, CWB_BankUniverse, "信用主体", "信用主体", {"板块三级", "板块标签"}, {
+                            Prefix & "板块三级",
+                            Prefix & "板块标签"
+                        }
+                    ),
+                    each [板块三级],
+                    each
+                        if
+                            Record.Field(_, Prefix & "板块三级") <> null
+                            and Record.Field(_, Prefix & "板块三级") <> ""
+                            and Record.Field(_, Prefix & "板块三级") <> "--"
+                        then
+                            Record.Field(_, Prefix & "板块三级")
+                        else
+                            [板块三级],
+                    Replacer.ReplaceValue,
+                    {"板块三级"}
+                )
+            else
+                DummyStep,
+        Credit_NBFI =
+            if
+                List.ContainsAll(Table.ColumnNames(DummyStep), {"板块三级", "板块标签"})
+                and DB_Type = "Entity"
+                and DB_Type <> "W"
+            then
+                Table.ReplaceValue(
+                    fxDynamicMerge(
+                        Credit_FI,
+                        CWB_NBFI,
+                        "信用主体",
+                        "信用主体",
+                        {"板块三级", "板块标签"},
+                        {Prefix & "板块三级" & Prefix, Prefix & "板块标签" & Prefix}
+                    ),
+                    each [板块三级],
+                    each
+                        if
+                            Record.Field(_, Prefix & "板块三级" & Prefix) <> null
+                            and Record.Field(_, Prefix & "板块三级" & Prefix) <> ""
+                            and Record.Field(_, Prefix & "板块三级" & Prefix) <> "--"
+                        then
+                            Record.Field(_, Prefix & "板块三级" & Prefix)
+                        else
+                            [板块三级],
+                    Replacer.ReplaceValue,
+                    {"板块三级"}
+                )
+            else
+                DummyStep,
+        Credit_标签 =
+            if List.Contains(Table.ColumnNames(DummyStep), "板块标签") and DB_Type = "Entity" and DB_Type <> "W" then
+                Table.ReplaceValue(
+                    Credit_NBFI,
+                    "",
+                    each
+                        if
+                            Record.Field(_, Prefix & "板块标签" & Prefix) <> null
+                            and Record.Field(_, Prefix & "板块标签" & Prefix) <> ""
+                            and Record.Field(_, Prefix & "板块标签" & Prefix) <> "--"
+                        then
+                            Record.Field(_, Prefix & "板块标签" & Prefix)
+                        else if
+                            Record.Field(_, Prefix & "板块标签") <> null
+                            and Record.Field(_, Prefix & "板块标签") <> ""
+                            and Record.Field(_, Prefix & "板块标签") <> "--"
+                        then
+                            Record.Field(_, Prefix & "板块标签")
+                        else
+                            [板块标签],
+                    Replacer.ReplaceValue,
+                    {"板块标签"}
+                )
+            else
+                DummyStep,
+        // **************************** Skipped ***************************
+        Credit_板块二级 =
+            if
+                List.ContainsAll(Table.ColumnNames(DummyStep), {"行业二级", "板块二级"})
+                and DB_Type = "Entity"
+                and DB_Type <> "W"
+            then
+                Table.ReplaceValue(
+                    Credit_标签,
+                    each [板块二级],
+                    each if [板块三级] <> "--" or Text.Contains([行业二级], "业务") then [行业二级] else [板块二级],
+                    Replacer.ReplaceValue,
+                    {"板块二级"}
+                )
+            else
+                DummyStep,
+        // **************************** Skipped ***************************
+        Credit_行业二级 =
+            if List.ContainsAll(Table.ColumnNames(DummyStep), {"行业二级", "细分行业"}) and DB_Type <> "W" then
+                Table.ReplaceValue(
+                    fxDynamicMerge(Credit_板块二级, SectorMap, "细分行业", "细分行业", {"行业二级"}, {Prefix & "行业二级"}),
+                    each [行业二级],
+                    each
+                        if
+                            not Text.Contains([行业二级], "业务")
+                            and Record.Field(_, Prefix & "行业二级") <> null
+                            and Record.Field(_, Prefix & "行业二级") <> ""
+                            and Record.Field(_, Prefix & "行业二级") <> "--"
+                        then
+                            Record.Field(_, Prefix & "行业二级")
+                        else
+                            [行业二级],
+                    Replacer.ReplaceValue,
+                    {"行业二级"}
+                )
+            else
+                DummyStep,
+        // **************************** Skipped ***************************
+        Credit_简称 =
+            if List.Contains(Table.ColumnNames(DummyStep), "信用主体简称") and DB_Type <> "W" then
+                Table.TransformColumns(Credit_标签, {{"信用主体简称", each fxCleaner(_, null, {"(", ")"}, {"", ""})}})
+            else
+                DummyStep,
+        Credit_Client =
+            if List.Contains(Table.ColumnNames(DummyStep), "IS_CLIENT") and DB_Type <> "W" then
+                Table.ReplaceValue(
+                    fxDynamicMerge(Credit_简称, CWB_Directory, "信用主体", "信用主体", {"信用主体"}, {Prefix & "信用主体"}),
+                    each [IS_CLIENT],
+                    each
+                        if
+                            Record.Field(_, Prefix & "信用主体") <> null
+                            and Record.Field(_, Prefix & "信用主体") <> ""
+                            and Record.Field(_, Prefix & "信用主体") <> "--"
+                        then
+                            "Y"
+                        else
+                            [IS_CLIENT],
+                    Replacer.ReplaceValue,
+                    {"IS_CLIENT"}
+                )
+            else
+                DummyStep,
+        //  **Referenced Dummy Step ** This step is referenced by the conditional sort step - better not to change it !
+        PresentedNull = fxPresentNoData(Credit_Client),
+        //Sort as last step
+        SelectedCol = Table.SelectColumns(
+            PresentedNull,
+            List.Distinct(List.Transform(Table.ColumnNames(PresentedNull), each Text.Replace(_, Prefix, "")))
+        ),
+        Sorted =
+            if DB_Type = "Tranche" and List.ContainsAll(Table.ColumnNames(SelectedCol), {"货币", "年期"}) then
+                fxSortNIndex(SelectedCol, "定价日", "信用主体", "货币", "年期", "Y")
+            else if DB_Type = "Tranche" then
+                fxSortNIndex(SelectedCol, "定价日", "信用主体", "", "", "Y")
+            else if DB_Type = "Entity" and List.Contains(Table.ColumnNames(SelectedCol), "DEBUT_DATE") then
+                fxSortNIndex(SelectedCol, "DEBUT_DATE", "信用主体", "", "", "Y")
+            else
+                SelectedCol
+    in
+        Sorted

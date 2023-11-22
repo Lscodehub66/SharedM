@@ -1,0 +1,16 @@
+// For each Tombstone, From 1 Row 3 Columns to 1 Column 3 Rows
+    let
+    Source = Load("QTomb_R4R1"),
+    //**
+        // Transpose every 3 rows
+        AIndex = Table.AddIndexColumn( Source, "TOMBIndex", 1, 1, Int64.Type),
+        SelectedCol = Table.SelectColumns(AIndex, {"TOMBIndex", "P1", "P2"}, MissingField.UseNull),
+        Unpivoted = Table.UnpivotOtherColumns(SelectedCol, {"TOMBIndex"}, "Attribute", "Value"),
+        RemovedCol = Table.RemoveColumns(Unpivoted, {"Attribute"}),
+        AIndex1 = Table.AddIndexColumn(RemovedCol, "Index", 0, 1, Int64.Type),
+        CalculatedModulo = Table.TransformColumns(AIndex1, {{"Index", each Number.Mod(_, 2), type number}}),
+        ChangedType = Table.TransformColumnTypes(CalculatedModulo, {{"TOMBIndex", type text}}),
+        PivotedCol = Table.Pivot(ChangedType, List.Distinct(ChangedType[TOMBIndex]), "TOMBIndex", "Value"),
+        RemovedCol1 = Table.RemoveColumns(PivotedCol, {"Index"})
+    in
+        RemovedCol1

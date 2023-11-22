@@ -1,0 +1,16 @@
+let
+    Source = Load("fxDimSheet")("BBGFX_value"),
+    USDUSD = Load("fxCombine")({Source, Table.FromColumns({{"USD"},{"USD"}},{"Base Currency","Term Currency"})}),
+    #"Replaced Value" = Table.ReplaceValue(USDUSD ,null,1,Replacer.ReplaceValue,List.Select(Table.ColumnNames(USDUSD), each List.Contains({"0".."9"},Text.Start(_,1)))),
+    #"Filtered Rows" = Table.SelectRows(
+        #"Replaced Value", each ([Term Currency] = "CNH" or [Term Currency] = "HKD" or [Term Currency] = "USD")
+    ),
+    #"Removed Duplicates" = Table.Distinct(#"Filtered Rows", {"Base Currency", "Term Currency"}),
+    #"Unpivoted Other Columns1" = Table.UnpivotOtherColumns(
+        #"Removed Duplicates", {"Base Currency", "Term Currency"}, "YYQQ", "C_FX"
+    ),
+    #"Sorted Rows" = Table.Sort(#"Unpivoted Other Columns1",{{"YYQQ", Order.Descending}, {"Term Currency", Order.Descending}, {"Base Currency", Order.Descending}}),
+    Invoked = Load("fxYYQQStartEnd")( #"Sorted Rows", "YYQQ",{"Date_QEnd"}),
+    #"Added Custom" = Table.AddColumn(Invoked, "IS_ACTUAL", each "Actual")
+in
+    #"Added Custom"

@@ -1,0 +1,21 @@
+//  let LoadCode = Load("USDCNH_Pie","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
+let
+    Source = Table.Buffer(Load("USDCNH_Pie_Data")) ,
+    Pie1 = Load("fxPie")(Source, "年", Order.Ascending, "月", "亿美元"),
+    Pie2 = Load("fxPie")(Source, "年", Order.Ascending, "货币细分", "亿美元"),
+    Pie3 = Load("fxPie")(Source, "年", Order.Ascending, "板块", "亿美元"),
+    Pie4 = Load("fxPie")(Source, "年", Order.Ascending, "年期分类", "亿美元"),
+    Pie5 = Load("fxPie")(Source, "年", Order.Ascending, "评级分类", "亿美元"),
+    Combined = Load("fxCombine")({Pie1, Pie2, Pie3, Pie4, Pie5}),
+    Substracted = Table.AddColumn(Combined, "变动", each [23年占比] - [22年占比], Percentage.Type),
+    MergedQ = Load(
+        "fxMerge"
+    )(
+        Substracted, Get("SortTable_Graph_USDCNHPIE"), "Column2", "Column2", {"Index"}, {"Index"}
+    ),
+    Sorted = Table.Sort(MergedQ, {{"Index", 0}}),
+    Reordered = Table.ReorderColumns(
+        Sorted, List.Distinct({"Index"} & Table.ColumnNames(Sorted)), MissingField.Ignore
+    )
+in
+    Reordered

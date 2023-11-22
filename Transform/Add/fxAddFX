@@ -1,0 +1,26 @@
+//fxAddFX
+let
+ Source = (TableName as table, optional FTextUSDCNHHKD as text) =>
+  let
+       Source = Load("fxDataFormat")(TableName),
+       fxSmartFX = Load("fxSmartFX"),
+       FText = if FTextUSDCNHHKD = null then "USDCNHHKD" else FTextUSDCNHHKD,
+        FX_0 = if Text.Contains(FText,"USD")  then Table.AddColumn(
+         Source,
+        "亿美元",
+        each if [货币] = "USD" then 1 * [#"发行规模(亿)"] else fxSmartFX("USD", [货币], [定价日]) * [#"发行规模(亿)"],
+        type number
+    ) else Source,
+    FX_1 = if Text.Contains(FText,"CNH")  then Table.AddColumn(
+        FX_0, "亿元", each if [货币] = "CNH" then 1 * [#"发行规模(亿)"] else fxSmartFX("CNH", [货币], [定价日]) * [#"发行规模(亿)"],
+        type number
+    ) else FX_0,
+    FX_2 = if Text.Contains(FText,"HKD")  then Table.AddColumn(
+        FX_1, "亿港币", each if [货币] = "HKD" then 1 * [#"发行规模(亿)"] else fxSmartFX("HKD", [货币], [定价日]) * [#"发行规模(亿)"],
+        type number
+    ) else FX_1
+
+  in
+    FX_2
+in
+ Source

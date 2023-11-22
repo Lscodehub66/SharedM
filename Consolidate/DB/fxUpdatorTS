@@ -1,0 +1,18 @@
+(TableName as table) =>
+    let
+        Source = TableName,
+        Updator = try CWB("UpdatorWeekly") otherwise "【】",
+        AofTF = List.ContainsAny(Table.ColumnNames(Source), {"Updator", "Timestamp"}),
+        //
+        W_removedcol = Table.RemoveColumns(Source, {"Updator", "Timestamp"}, MissingField.Ignore),
+        W_addedupdator = Table.AddColumn(W_removedcol, "Updator", each Updator),
+        W_addedtimestamp = Table.AddColumn(W_addedupdator, "Timestamp", each DateTime.FixedLocalNow()),
+        Output =
+            if AofTF = true then
+                Table.TransformColumns(
+                    Source, {{"Updator", each Updator}, {"Timestamp", each DateTime.FixedLocalNow()}}
+                )
+            else
+                W_addedtimestamp
+    in
+        Output

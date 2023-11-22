@@ -1,0 +1,20 @@
+let
+ Source = ( TextName as text ) =>
+  let
+   Find    = { "上海浦东发展", "国家开发", "邮政储蓄", "南洋商业", "农村商业", "银行(中国)", "中国建设", "中国农业", "中国工商", "中国邮储", "市" }, 
+   Replace = { "浦发", "国开", "邮储", "南商", "农商", "(中国)银行", "建设", "农业", "工商", "邮储", "" }, 
+   Text    = fxClean ( TextName, Find, Replace ), 
+   Text1   = Text.BeforeDelimiter ( Text, "银行" ), 
+   Text2   = 
+    if Text1 = "" then
+     "--"
+    else if Text.Contains ( Text1, "(中国)" ) then
+     Text1
+    else if Text.EndsWith ( Text1, "农商" ) then
+     Text1 & "行"
+    else
+     Text1 & "银行"
+  in
+   Text2
+in
+ Source

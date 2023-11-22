@@ -1,0 +1,42 @@
+(TableName as table) =>
+    let
+        Source = TableName,
+        CN_Source = Table.ColumnNames(Source),
+        // Revalidate mCredit
+        Entity_省级 =
+            if List.ContainsAll(CN_Source, {"级别", "城市"}) then
+                Table.ReplaceValue(
+                    Source, each [城市], each if [级别] = "省级" then "" else [城市], Replacer.ReplaceValue, {"城市"}
+                )
+            else
+                Source,
+        Entity_级别 =
+            if Table.HasColumns(Source, "级别") then
+                Table.ReplaceValue(
+                    Entity_省级,
+                    "",
+                    each if [中资属性] <> "地方国企" then "--" else if [IS_DEFAULT] <> "" then "" else "【】",
+                    Replacer.ReplaceValue,
+                    {"级别"}
+                )
+            else
+                Entity_省级,
+        Entity_系 =
+            if Table.HasColumns(Source, "系") then
+                Table.ReplaceValue(
+                    Entity_级别, "", each if [中资属性] = "央企(子)" then "【】" else "", Replacer.ReplaceValue, {"系"}
+                )
+            else
+                Entity_级别,
+        Entity_Default = Table.ReplaceValue(
+            Entity_系, "", each if [IS_DEFAULT] = "Y*" then "--" else "", Replacer.ReplaceValue, {"地区", "板块", "中资属性"}
+        ),
+        Entity_FI = Table.ReplaceValue(
+            Entity_Default,
+            "--",
+            each if Text.Contains([板块], "金融") then "【】" else "--",
+            Replacer.ReplaceValue,
+            {"板块二级", "板块三级"}
+        )
+    in
+        Entity_FI

@@ -1,0 +1,24 @@
+//let LoadCode = Load("DLD_DMI","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    LoadCode = Load("DLD_DMI", "Code"),
+    EVA = Expression.Evaluate(LoadCode, #shared),
+    Source = DLD_SourcePQ,
+    Sheet = Source{[Item = "美元债一级", Kind = "Sheet"]}[Data],
+    Found = Load("fxFindHeader")(Sheet, "Column1", "信用主体"),
+    ACol = Table.AddColumn(Found, "DataSource", each "DMI"),
+    CN_ACol = Table.ColumnNames(ACol),
+    Appended =
+        if TapLookup[Column3]{0} = "N" then
+            ACol
+        else
+            Load("fxCombine")({ACol, Table.SelectColumns(CWB_AddTap, CN_ACol, MissingField.UseNull)}),
+    Appended1 =
+        if  not Text.Contains(Multi, "BBG")   then
+            Appended
+        else
+            Load("fxCombine")({Appended, Table.SelectColumns(DLD_DMI_MissingPQ, CN_ACol, MissingField.UseNull)}),
+    Code1 = Load("fxDMI", "Code"),
+    EVA1 = Expression.Evaluate(Code1, #shared)(Appended1, "Y"),
+    Filtered = Table.SelectRows(EVA1, each [定价日] >= RangeStart and [债券简称] <> null)
+in
+    Filtered

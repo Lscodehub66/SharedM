@@ -1,0 +1,30 @@
+let
+    Source = CWB("ESG"),
+    Add_Before = Table.AddColumn(
+        Source,
+        "Column1",
+        each
+            if Text.Contains([筹款用途], "框架") then
+                Text.BeforeDelimiter([筹款用途], "框架") & "框架"
+            else if Text.Contains([筹款用途], "framework", Comparer.OrdinalIgnoreCase) then
+                Text.BeforeDelimiter([筹款用途], "Framework", Comparer.OrdinalIgnoreCase)
+            else
+                "",
+        type text
+    ),
+    Add_Before2 = Table.AddColumn(
+        Add_Before,
+        "Column2",
+        each
+            if Text.Contains([Column1], "绿") and Text.Contains(Text.AfterDelimiter([Column1], "绿"), "项目") then
+                "绿" & Text.AfterDelimiter([Column1], "绿", 1)
+            else if Text.Contains([Column1], "绿") then
+                "绿" & Text.AfterDelimiter([Column1], "绿")
+            else if Text.Contains([Column1], "可") then
+                "可" & Text.AfterDelimiter([Column1], "可")
+            else
+                "",
+        type text
+    )
+in
+    Add_Before2

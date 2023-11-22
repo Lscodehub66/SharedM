@@ -1,0 +1,46 @@
+//Pie1 = Load("fxPie")((Source,"年",Order.Ascending,"货币细分","亿美元"),
+//let PivotCol = "年",    OneOrZero = Order.Ascending,    GroupCol = "货币细分",    MeasureCol = "亿美元",    Source = wPie_Load, Code = Load("fxPie","Code"), EVA = Expression.Evaluate(Code,#shared) (Source,PivotCol,OneOrZero,GroupCol,MeasureCol) in EVA,
+//PivotCol = "年",    OneOrZero = Order.Ascending,    GroupCol = "货币细分",    MeasureCol = "亿美元",    Source = wPIE_Load,
+(
+    wPIE_Load as table,
+    PivotCol as text,
+    OneOrZero as number,
+    GroupCol as text,
+    MeasureCol as text,
+    optional CalculatePercentIsTrue as logical
+) =>
+    let
+        Source = wPIE_Load,
+        Filtered1 = if Text.Contains(GroupCol,"分类") then Table.SelectRows(Source, each Record.Field(_, GroupCol) <> "--") else Source,
+        MergedQ = Load("fxMerge")(   Filtered1 , DimDate, "定价日", "A_Date", {PivotCol, GroupCol}, {""}),
+        // "亿美元", "笔数"
+        // NumColumns = {"yy","MM","WeekNum"}
+        //TextColumns = {"年", "季", "月", "周", "年月"},
+        SCol = Table.SelectColumns(MergedQ, {"定价日", PivotCol, GroupCol, MeasureCol}, MissingField.UseNull),
+        Grouped = if MeasureCol = "笔数" then Table.Group(
+            SCol,
+            {PivotCol, GroupCol},
+            {{MeasureCol, each  List.Count(Record.Field(_, GroupCol)) , type number}}
+        ) else Table.Group(
+            SCol,
+            {PivotCol, GroupCol},
+            {{MeasureCol, each Number.Round(List.Sum(Record.Field(_, MeasureCol)),2) , type number}}
+        ),
+        PivotedValues = List.Sort(
+            Table.ToList(Table.Distinct(Table.SelectColumns(Grouped, PivotCol))), OneOrZero
+        ),
+        PivotedValues_TF = List.Transform(PivotedValues, each _ & MeasureCol),
+        PivotedValues_RN = List.Zip({PivotedValues, PivotedValues_TF}),
+        Pivoted = Table.Pivot(Grouped, PivotedValues, PivotCol, MeasureCol, List.Sum),
+        Renamed = Table.RenameColumns(Pivoted, PivotedValues_RN & {{GroupCol, "Column2"}}),
+        ACol = Table.AddColumn(Renamed, "Column1", each GroupCol, type text),
+        Reordered = Table.ReorderColumns(
+            ACol, List.Distinct({"Column1", "Column2"} & Table.ColumnNames(ACol)), MissingField.Ignore
+        ),
+        Pt1 = Load("fxAddpt")(Reordered, PivotedValues_TF{0}),
+        Pt2 = Load("fxAddpt")(Pt1, PivotedValues_TF{1}),
+        Output = if CalculatePercentIsTrue <> false then Pt2 else Reordered
+    in
+        Output
+
+

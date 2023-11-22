@@ -1,0 +1,30 @@
+let
+ Source              = DLDconso, 
+ // FRN Spd & BMK
+ FnFRN  = fxFRN ( Source, "计息基准", null ), 
+ #">>Debug"          = fxDebug ( FnFRN, "计息基准", null, List.RemoveMatchingItems ( Table.ColumnNames ( FnFRN ), Table.ColumnNames ( Source ) ) ), 
+ // IPG Spd & Yield
+ FnIPGNum = fxIPGNum ( FnFRN, "IPT_DMI", null ), 
+ #">>Debug1"         = fxDebug ( FnIPGNum, "IPT_DMI", null, List.RemoveMatchingItems ( Table.ColumnNames ( FnIPGNum ), Table.ColumnNames ( FnFRN ) ) ), 
+ // FPG Spd & Yield WPIR
+ FnFPGNum = fxFPGNum ( FnIPGNum, "FPG_DMI", null ), 
+ #">>Debug2"         = fxDebug ( FnFPGNum, "FPG_DMI", null, List.RemoveMatchingItems ( Table.ColumnNames ( FnFPGNum ), Table.ColumnNames ( FnIPGNum ) ) ), 
+ // Priced Spd & BMK
+ FnPBMK = fxPBMK ( FnFPGNum, "定价息差" ), 
+ #">>Debug3"         = fxDebug ( FnPBMK, "票息_DMI", null, List.RemoveMatchingItems ( Table.ColumnNames ( FnPBMK ), Table.ColumnNames ( FnFPGNum ) ) ), 
+ FnPNum = fxPNum ( FnPBMK ), 
+ #">>Debug4"         = fxDebug ( FnPNum, "票息_DMI", null, List.RemoveMatchingItems ( Table.ColumnNames ( FnPNum ), Table.ColumnNames ( FnPBMK ) ) ), 
+ FnPriceDES = fxPriceDES ( FnPNum ), 
+ #">>Debug5"         = fxDebug ( FnPNum, "票息_DMI", null, List.RemoveMatchingItems ( Table.ColumnNames ( FnPriceDES ), Table.ColumnNames ( FnPNum ) ) ), 
+ PricerHeaders       = { "Check", "ISIN", "定价日", "信用主体", "票息", "IPG", "FPG", "定价", "定价基准", "收窄基点" }, 
+ #">>Calculations"   = Table.SelectColumns (  FnPriceDES, { "ISIN", "Check", "定价日", "信用主体" } & List.RemoveMatchingItems ( Table.ColumnNames (  FnPriceDES ), Table.ColumnNames ( Source ) ) ), 
+ #">>CheckResult"    = Table.SelectColumns (  FnPriceDES, PricerHeaders ), 
+ FnFeatured          = fxAddESGMore (  FnPriceDES ), 
+ FnTenor             = fxAddTenor ( FnFeatured ), 
+ AStructure            = Table.AddColumn ( FnTenor, "结构", each fxCleaner ( [发行架构], "Structure" ) ), 
+ ASBLC            = Table.AddColumn ( AStructure, "备证行", each fxSNBankCorp ( [SBLC提供者] ) ), 
+ AListing             = Table.AddColumn ( ASBLC, "上市", each fxSmartListing ( [发行场所] ) ), 
+ ABranch              = Table.AddColumn ( AListing, "通过分行", each fxSNBranch ( [发行人] ) ), 
+ SelectedCol         = Table.SelectColumns ( ABranch, List.Distinct ( PricerHeaders & List.RemoveMatchingItems ( Table.ColumnNames ( ABranch ), Table.ColumnNames (  FnPriceDES ) ) ) )
+in
+ SelectedCol

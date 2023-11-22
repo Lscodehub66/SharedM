@@ -1,0 +1,3 @@
+(FText as text) => let FText_File = Text.Upper(Text.BeforeDelimiter(FText, "_")), 
+FText_Tab = Text.Upper(Text.AfterDelimiter(FText, "_")),  
+Source = Table.SelectRows( Load("DimExcel"), each FText_Tab = Text.Replace( [Tab],"0","") and FText_File =  [FText_File]),

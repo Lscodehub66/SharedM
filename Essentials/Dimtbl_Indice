@@ -1,0 +1,49 @@
+// // let  LoadCode = Load("Dimtbl_Indice","Code"), EVA = Expression.Evaluate(LoadCode ,#shared)in EVA
+let
+    Source = Table.Buffer(Load("fxDataFormat")(Load("Dimtbl_Indice_Input", "CSV"))),
+    Source1 = Table.Buffer(Load("fxDataFormat")(Load("DimTextFormat", "CSV"))),
+    #"Merged Columns" = Table.CombineColumns(
+        Source,
+        {"Series_FillDown", "Series_Indice"},
+        Combiner.CombineTextByDelimiter("_", QuoteStyle.None),
+        "KEY_INDICE"
+    ),
+    #"Merged Columns1" = Table.CombineColumns(
+        #"Merged Columns",
+        {"SeriesCN_Indice", "SeriesCN_FillDown"},
+        Combiner.CombineTextByDelimiter("", QuoteStyle.None),
+        "市场指数"
+    ),
+    Custom1 = Table.TransformColumns(
+        #"Merged Columns1",
+        {
+            {"KEY_INDICE", each if Text.EndsWith(_, "_") then Text.BeforeDelimiter(_, "_") else Text.Replace(
+                _, "*", ""
+            )},
+            {
+                "市场指数",
+                each
+                    if Text.StartsWith(_, "*") then
+                        Text.Replace(_, "*", "")
+                    else if Text.Contains(_, "*") then
+                        Text.BeforeDelimiter(_, "*")
+                    else
+                        _
+            }
+        }
+    ),
+    #"Renamed Columns" = Table.RenameColumns(Custom1, {{"Format_FillDown", "Column1"}}),
+    CN = List.Distinct(
+        {"Column1", "KEY_INDICE", "市场指数"}
+            & List.Select(
+                Table.ColumnNames(#"Renamed Columns"), each Text.StartsWith(_, "IS") or Text.Contains(_, "Index")
+            )
+            & {"RESIDENCE"}
+    ),
+    SCol = Table.SelectColumns(#"Renamed Columns", CN, MissingField.Ignore),
+    Custom2 = Load("fxMerge")(SCol, Source1, "Column1", "Column1", {""}, {""}),
+    #"Inserted Merged Column" = Table.AddColumn(
+        Custom2, "PK", each Text.Combine({[Prefix], [KEY_INDICE]}, "_"), type text
+    )
+in
+    #"Inserted Merged Column"

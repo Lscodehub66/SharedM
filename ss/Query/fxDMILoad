@@ -1,0 +1,155 @@
+//Indicate "Y" in second argument to enable clean steps - best for load small number of rows - such as weekly
+// let Code = Load("fxDMI","Code"), EVA = Expression.Evaluate(Code,#shared)(Source) in EVA
+
+// let TableName =  Source, NullAsDefaultNoCleanOR_Y= "Y",RangeStartNum=null,RangeEndNum = null,
+
+
+(
+    TableName as table,
+    optional NullAsDefaultNoCleanOR_Y as text,
+    optional RangeStartNum as nullable number,
+    optional RangeEndNum as nullable number
+) =>
+    let
+      
+        //【1】Parameters & Utilities
+      
+        tblFilter_ValueKey_DMI = Table.FromRows(
+            {
+                {"零息", "ON", "利率类型"},
+                {"可转债", "ON", "债券类型"},
+                {"中国人民银行", "ON", "信用主体"},
+                {"实物支付", "ON", "利率类型"},
+                {"台湾省", "ON", "省份"},
+                {"其他地区", "ON", "省份"},
+                {"澳门特别行政区", "ON", "省份"},
+                {"香港特别行政区", "ON", "省份"},
+                {"Y", "Y", "IS_EXCH"}
+            },
+            {"Column1", "Column2", "Column3"}
+        ),
+        listFilter_ValueKey_DMI = List.Distinct(
+            Table.SelectRows(tblFilter_ValueKey_DMI, each tblFilter_ValueKey_DMI[Column2] <> "OFF")[Column1]
+        ),
+          fxCleaner = Load("fxCleaner"),
+        // 【2】Data Range
+        Filered_Dates = Load("fxRangeDate")(RangeStartNum, RangeEndNum, TableName, "定价日"),
+        //【3】Rename Columns
+        Renamed = Table.RenameColumns(
+            Filered_Dates,
+            {{"定价", "定价_DMI"}, {"IPT", "IPT_DMI"}, {"FPG", "FPG_DMI"}, {"发行结构", "发行架构"}, {"票息", "票息_DMI"}},
+            MissingField.Ignore
+        ),
+        CN_RNSource = Table.ColumnNames(Renamed),
+        //【4】DataType -> fxDynamicMerge has dataformat built-in, no seperate datatype step will be arranged
+        RCol = Table.RemoveColumns(Renamed, {"违约日期", "IS_EXCH"}, MissingField.Ignore),
+        mEntity =
+            try CWB("mCredit") otherwise Load("fxConnect")("DataHub"){[Item = "mCredit", Kind = "Table"]}[Data],
+        MergedQ = fxDynamicMerge(RCol, mEntity, "信用主体", "信用主体", {"信用主体简称", "首次违约日"}, {"信用主体简称", "违约日期"}),
+        AddCol1 = Table.AddColumn(
+            MergedQ,
+            "IS_EXCH",
+            each
+                if Text.Contains([特殊条款说明], "交换") or Text.Contains([特殊条款说明], "交換") or Text.Contains([特殊条款说明], "EXCH")
+                then
+                    "Y"
+                else if [违约日期] <> null and [定价日] > [违约日期] then
+                    "Y"
+                else
+                    "--"
+        ),
+        Filtered_EXCH = Table.SelectRows(AddCol1, each not List.Contains(listFilter_ValueKey_DMI, [IS_EXCH])),
+        //Transformation Starts
+        HKToCN = Table.ReplaceValue(
+            Filtered_EXCH,
+            each [省份],
+            each
+                if
+                    List.Contains(
+                        {
+                            "工银国际租赁财务有限公司",
+                            "工银国际控股有限公司",
+                            "中银国际控股有限公司",
+                            "中国石油财务(香港)有限公司",
+                            "中国建设银行(亚洲)股份有限公司",
+                            "中国华融国际控股有限公司",
+                            "中国光大证券国际有限公司",
+                            "中国光大水务有限公司",
+                            "中信证券经纪(香港)有限公司"
+                        },
+                        [信用主体]
+                    )
+                    and Text.Contains([省份], "香港")
+                then
+                    "北京市"
+                else if List.Contains({"招银国际租赁管理有限公司"}, [信用主体]) and Text.Contains([省份], "香港") then
+                    "深圳市"
+                else if List.Contains({"天风国际证券集团有限公司"}, [信用主体]) and Text.Contains([省份], "香港") then
+                    "湖北省"
+                else
+                    [省份],
+            Replacer.ReplaceValue,
+            {"省份"}
+        ),
+        // Remove redundancy
+        Filtered_ValueKey = Table.SelectRows(
+            HKToCN,
+            each
+                not List.Contains(listFilter_ValueKey_DMI, [利率类型])
+                and not List.Contains(listFilter_ValueKey_DMI, [信用主体])
+                and not List.Contains(listFilter_ValueKey_DMI, [评级类型])
+                and not List.Contains(listFilter_ValueKey_DMI, [债券类型])
+                and not List.Contains(listFilter_ValueKey_DMI, [省份])
+                and [定价日] <> null
+                and [#"发行规模(亿)"] <> null
+        ),
+        Revalidated = Table.ReplaceValue(
+            Filtered_ValueKey,
+            each [计息基准],
+            each if not Text.Contains([利率类型], "浮") and [计息基准] <> "" and [计息基准] <> null then "" else [计息基准],
+            Replacer.ReplaceValue,
+            {"计息基准"}
+        ),
+        Output_Junction = Revalidated,
+        // Clean
+        Clean_TF = Table.TransformColumns(
+            Output_Junction,
+            {
+                {
+                    "信用主体",
+                    each
+                        if Text.Contains(_, "银行") and Text.Contains(_, "公司") and Text.Contains(_, "分行") then
+                            Text.Replace(_, Text.BetweenDelimiters(_, "公司", "分行") & "分行", "")
+                        else
+                            _
+                },
+                {"区县", each fxCleaner(_, "区县")}
+            }
+        ),
+        Clean_TF_Entity = Table.TransformColumns(
+            Clean_TF,
+            List.Transform(
+                List.Intersect({CN_RNSource, {"信用主体", "发行人", "担保人", "维好协议提供者"}}), each {_, each fxCleaner(_, "主体")}
+            )
+        ),
+        Clean_TF_Rtg = Table.TransformColumns(
+            Clean_TF_Entity,
+            List.Transform(List.Intersect({CN_RNSource, {"穆迪/标普", "债项评级"}}), each {_, each fxCleaner(_, "评级")})
+        ),
+        Clean_ACol = Table.AddColumn(
+            Table.RemoveColumns(Clean_TF_Rtg, {"地区"}, MissingField.Ignore), "地区", each fxCleaner([省份], "地区")
+        ),
+        Output_Junction_End = if NullAsDefaultNoCleanOR_Y = "Y" then Clean_ACol else Output_Junction,
+        // Try Filter out Exchange deals
+        Checked = fxCheckNDupe(Output_Junction_End),
+        Sorted = Table.Sort(
+            Checked,
+            {
+                {"定价日", Order.Descending},
+                {"信用主体", Order.Ascending},
+                {"货币", Order.Ascending},
+                {"发行期限(年)", Order.Ascending}
+            }
+        )
+    in
+        Sorted

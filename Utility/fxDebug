@@ -1,0 +1,31 @@
+let
+    Source = (
+  TableName as table, 
+  FilterColName as text, 
+  FilterOutValue as nullable text, 
+  ColSelectedList as list
+) =>
+  let
+    Source = TableName, 
+    #"Removed Duplicates" = Table.Distinct(Source, {FilterColName}), 
+    #"ToBlank" = Table.ReplaceValue(
+      #"Removed Duplicates", 
+      FilterOutValue, 
+      "", 
+      Replacer.ReplaceValue, 
+      {FilterColName}
+    ), 
+    #"ToBlank1" = Table.ReplaceValue(#"ToBlank", null, "", Replacer.ReplaceValue, {FilterColName}), 
+    #"ToBlank2" = Table.ReplaceValue(#"ToBlank1", "--", "", Replacer.ReplaceValue, {FilterColName}), 
+    #"///ResultsRow" = Table.SelectRows(#"ToBlank2", each if FilterOutValue = null then true else Record.Field(_, FilterColName) <> ""), 
+    #"//Columns" = Table.SelectColumns(
+      #"///ResultsRow", 
+     List.Distinct({"ISIN", "定价日", "信用主体", FilterColName} & ColSelectedList) , 
+      MissingField.Ignore
+    ),
+     #"Sorted Rows" = Table.Sort( #"//Columns", {{FilterColName, Order.Descending}})
+  
+  in
+   #"Sorted Rows"
+in
+    Source

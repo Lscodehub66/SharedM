@@ -1,0 +1,7 @@
+( TableName as table, TableToMerge as table, CurrentCol as text, TargetCol as text ) =>
+ let
+  Source   = TableName, 
+  MergedCr = Table.NestedJoin ( Source, { CurrentCol }, TableToMerge, { TargetCol }, "Data", JoinKind.LeftOuter ), 
+  Expanded = Table.ExpandTableColumn ( MergedCr, "Data", List.RemoveItems ( Table.ColumnNames ( MergedCr[Data]{0} ), Table.ColumnNames ( Source ) & Col_MergeRemoval ) )
+ in
+  Expanded

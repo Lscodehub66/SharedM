@@ -1,0 +1,20 @@
+letExcel
+    Source = Load("fxDataFormat")(.CurrentWorkbook(){[Name = "Directory"]}[Content]),
+
+ SelectedRows = Table.SelectRows(Source, each ([BISL_ROLE] <> "Dealer" and [BISL_ROLE] <> "PA") and 
+ ext.StartsWith([YYMMDD],"21") or  Text.StartsWith([YYMMDD],"22") or Text.StartsWith([YYMMDD],"23") ),
+    MergedQ = Table.NestedJoin(SelectedRows , {"Check"}, PERIODICALs, {"Check"}, "Data", JoinKind.LeftOuter),
+    ExpandedQ = Table.ExpandTableColumn(MergedQ, "Data", {"联席全球协调人", "牵头经办人" }),
+    RemovedDupe = Table.Distinct(ExpandedQ, {"Check"}),
+    CFunction = Table.AddColumn(RemovedDupe, "COUNT_JGC", each fxCountDelimiter([联席全球协调人], ";")),
+    CFunction1 = Table.AddColumn(  CFunction,"COUNT_JBR", each fxCountDelimiter([牵头经办人], ";")),
+    CFunction2 = Table.RemoveRowsWithErrors(CFunction1, {"COUNT_JGC"}),
+    SelectedCol = Table.SelectColumns(CFunction2,{"定价日", "PROJECT_NAME", "信用主体(备证行)", "中资属性", "板块", "年月", "年","交易简称", "COUNT_JGC", "COUNT_JBR"}),
+    ChangedType = Table.TransformColumnTypes(SelectedCol,{{"年", type text}}),
+    AddSuffix = Table.TransformColumns(ChangedType, {{"年", each _ & "年", type text}}),
+    Grouped = Table.Group(AddSuffix, {"年", "板块"}, {{"JGC", each List.Average([COUNT_JGC]), type number}, {"JBR", each List.Average([COUNT_JBR]), type number}}),
+    Sorted = Table.Sort(Grouped,{{"板块", Order.Ascending}, {"年", Order.Descending}}),
+    RoundedOff = Table.TransformColumns(Sorted,{{"JGC", each Number.Round(_, 0), type number}, {"JBR", each Number.Round(_, 0), type number}}),
+   Plus = Table.AddColumn(RoundedOff, "JGCJBR", each [JGC] + [JBR], type number)
+in
+    Plus

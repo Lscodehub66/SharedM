@@ -1,0 +1,57 @@
+// let LoadCode = Load("mCredit"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+
+let
+    DB_Name = "mCredit",
+    //【Input】Text//
+    Add_CN_RemoveNARows = {"BISL_ROLE", "删除及隐藏","Check", "信用主体"},
+    //【Input】Eligibility to include in this database
+    Add_CN_DistinctCol = {"Check", "信用主体"},
+    //
+    Add_From = "Below",
+    //【Input】Insert New From Top or Below
+    RDupe_Method = "LIFO",
+    //【Input】LIFO or FIFO
+    Add_Source = wDynamicPQ,
+    Add1_Source = Entity_AddPQ,
+#">>Add1_Control>>" = CWB("AddEntity")[Column1]{0},
+//【Input】PQ//
+    DB_Source = CWB(DB_Name),
+    DB_Source_CN = Table.ColumnNames(DB_Source),
+    Add_HD_NoNA = List.Intersect({Add_CN_RemoveNARows, DB_Source_CN}){0},
+    Add_HD = List.Intersect({Add_CN_DistinctCol, DB_Source_CN}){0},
+    //
+    Add_Filtered = Table.SelectRows(
+        Add_Source, each not List.Contains({"--", "", null}, Record.Field(_, Add_HD_NoNA))
+    ),
+    Add_RowCount = Table.RowCount(Add_Filtered),
+    Add_tbl = if Add_From = "Top" then {Add_Filtered, Add1_Source , DB_Source} else {DB_Source, Add_Filtered,Add1_Source},
+  #"Add_From_Result////"= if #">>Add1_Control>>" = "OFF" then List.RemoveItems(Add_tbl,{Add1_Source}) else Add_tbl ,
+    Combined = Load("fxCombine")(#"Add_From_Result////", {"Keep"}, DB_Source_CN),
+    #">>ShowDupe" = Table.Distinct(
+        Table.Buffer(
+            Table.Sort(
+                Load("fxShowDupe")(Combined, {Add_HD}), {{Add_HD, Order.Descending}, {"Timestamp", Order.Descending}}
+            )
+        ),
+        {Add_HD}
+    ),
+    RDupe_Checked =
+        if Add_HD = "Check" then
+            Table.ReplaceValue(
+                Combined,
+                each [Check],
+                each Load("fxCheck")([定价日], "yyMMdd", [ISIN], "Y"),
+                Replacer.ReplaceValue,
+                {"Check"}
+            )
+        else
+            Combined,
+    RDupe_Indexed = Table.AddIndexColumn(Combined, Prefix & "RDupeIndex", 1, 1),
+    #"RDupe_Order////" = if RDupe_Method <> "FIFO" then Order.Ascending else Order.Descending,
+    RDupe_Sorted = Table.Buffer(
+        Table.Sort(RDupe_Indexed, {{Add_HD, #"RDupe_Order////"}, {Prefix & "RDupeIndex", #"RDupe_Order////"}})
+    ),
+    RDupe_Removed = Table.Distinct(RDupe_Sorted, Add_HD),
+    ManagedDB = if Add_RowCount = 0 then fxDBManager(DB_Source, "m") else fxDBManager(RDupe_Removed, "m")
+in
+    ManagedDB

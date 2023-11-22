@@ -1,0 +1,7 @@
+let 
+FileName = "fxDataFormat",
+Source =  Text.FromBinary ( File.Contents ( Table.SelectRows (SharedM, each [Name] = Text.Trim(FileName))[Path]{0})), 
+EVA = Expression.Evaluate(Source, #shared)    
+in
+    EVA
+////

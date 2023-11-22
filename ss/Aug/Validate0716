@@ -1,0 +1,146 @@
+// Base on raw data column to validate - best not to engage cleaned data
+let
+ Source           = DLDconso, 
+ #"//FIMTN"       = Source, 
+ CustomFunction   = Table.AddColumn ( Source, "COUNT_JGC", each fxCountDelimiter ( [联席全球协调人], ";" ) ), 
+ CustomFunction1  = Table.AddColumn ( CustomFunction, "COUNT_JLM", each fxCountDelimiter ( [牵头经办人], ";" ) ), 
+ IndicateFIMTN    = Table.AddColumn (
+  CustomFunction1, 
+  "IS_FIMTN", 
+  each 
+   if [主题债券] <> "" and [主题债券] <> "点心债" then
+    "--"
+   else if Text.Contains ( [联席全球协调人], "BOCOM" ) then
+    "--"
+   else if [IPT_DMI] <> "" then
+    "--"
+   else if [FPG_DMI] <> "" then
+    "--"
+   else if [COUNT_JGC] > 2 then
+    "--"
+   else if [COUNT_JLM] > 3 then
+    "--"
+   else if [行业] <> "金融" then
+    "--"
+   else
+    "Y"
+ ), 
+ #">>Debug"       = fxDebug (
+  IndicateFIMTN, 
+  "IS_FIMTN", 
+  null, 
+  List.RemoveMatchingItems ( Table.ColumnNames ( IndicateFIMTN ), Table.ColumnNames ( CustomFunction1 ) )
+ ), 
+ FIMTN            = fxIsFIMTN ( Source, 0 ), 
+ #"//AddFeatured" = Source, 
+ ESGFr主题债券        = Table.AddColumn (
+  Source, 
+  "ESG", 
+  each 
+   if Text.Contains ( [主题债券], "挂钩" ) then
+    "SLB"
+   else if Text.Contains ( [主题债券], "可持续" ) then
+    "Sustainable"
+   else if Text.Contains ( [主题债券], "社会" ) then
+    "Social"
+   else if Text.Contains ( [主题债券], "绿" ) then
+    "Green"
+   else
+    "--"
+ ), 
+ #">>Debug1"      = fxDebug (
+  ESGFr主题债券, 
+  "主题债券", 
+  null, 
+  List.RemoveMatchingItems ( Table.ColumnNames ( ESGFr主题债券 ), Table.ColumnNames ( TableName ) )
+ ), 
+ FTZDimSum        = Table.AddColumn (
+  ESGFr主题债券, 
+  "FTZ", 
+  each 
+   if Text.StartsWith ( [ISIN], "G" ) and not Text.StartsWith ( [ISIN], "GB" ) then
+    "FTZ"
+   else if Text.Contains ( [货币], "CNH" ) then
+    "DimSum"
+   else
+    "--"
+ ), 
+ FTZTo主题债券        = Table.ReplaceValue (
+  FTZDimSum, 
+  each [主题债券], 
+  each if [主题债券] = "" and Text.StartsWith ( [ISIN], "G" ) then "明珠债" else [主题债券], 
+  Replacer.ReplaceValue, 
+  { "主题债券" }
+ ), 
+ FEATUREDMore     = Table.AddColumn (
+  FTZTo主题债券, 
+  "FEATURED", 
+  each 
+   if Text.Start ( [ISIN], 2 ) = "MO" then
+    "MOX"
+   else if Text.Contains ( [计息基准], "+" ) then
+    "FRN"
+   else if Text.StartsWith ( [ISIN], "CND" ) then
+    "Yulan"
+   else if [主题债券] = "T2" then
+    "T2"
+   else if [主题债券] = "AT1" and fxCountDelimiter ( [特殊条款说明], "优先股" ) > 10 then
+    "AT1(PrefShare)"
+   else if [主题债券] = "AT1" then
+    "AT1"
+   else if fxCountDelimiter ( [特殊条款说明], "优先股" ) > 10 then
+    "PrefShare"
+   else if Text.Contains ( [#"发行期限(年)"], "P" )
+    and [主题债券]
+    <> "AT1" and [主题债券]
+    <> "T2" and Text.Contains ( [偿还顺位], "Subordinated" ) or Text.Contains ( [偿还顺位], "Junior" )
+   then
+    "JuniorPerp"
+   else if Text.Contains ( [#"发行期限(年)"], "P" )
+    and [主题债券]
+    <> "AT1" and [主题债券]
+    <> "T2" and not Text.Contains ( [偿还顺位], "Subordinated" ) and not Text.Contains ( [偿还顺位], "Junior" )
+   then
+    "SeniorPerp"
+   else
+    ""
+ ), 
+ #">>Debug2"      = fxDebug (
+  FEATUREDMore, 
+  "FEATURED", 
+  null, 
+  List.RemoveMatchingItems ( Table.ColumnNames ( FEATUREDMore ), Table.ColumnNames ( ESGFr主题债券 ) )
+ ), 
+ AddFeatured      = fxAddFeatured ( FIMTN ), 
+ #"//AddTenor"    = Source, 
+ AddedDuration    = Table.AddColumn ( CustomFunction4, "年期", each Duration.Days ( [兑付日] - [起息日期] ) ), 
+ AddedCustom      = Table.AddColumn (
+  AddedDuration, 
+  "期限备注", 
+  each if [年期] > 359 and [年期] < 365 then Number.ToText ( [年期], "0" ) & "天" else ""
+ ), 
+ RoundedOff       = Table.TransformColumns ( AddedCustom, { { "年期", each Number.Round ( _ / 365, 1 ), type number } } ), 
+ ChangedType      = Table.TransformColumnTypes ( RoundedOff, { { "年期", type text } } ), 
+ ReplacedValue    = Table.ReplaceValue (
+  ChangedType, 
+  each [年期], 
+  each if [年期] = null then [#"发行期限(年)"] else if [是否永续债] = "是" then "PNC" & [年期] else [年期], 
+  Replacer.ReplaceValue, 
+  { "年期" }
+ ), 
+ AddTenor         = fxAddTenor ( AddFeatured ), 
+ //CleanDMI
+ fxValidator      = fxValidator ( Source ), 
+ CleanSTR         = Table.AddColumn ( fxValidator, "结构", each fxSmartClean ( [发行架构], "Structure" ) ), 
+ NameSBLC         = Table.AddColumn ( CleanSTR, "备证行", each fxSNSBLC ( [SBLC提供者] ) ), 
+ CleanListing     = Table.AddColumn (
+  NameSBLC, 
+  "上市", 
+  each if fxCountDelimiter ( [发行场所], ";" ) > 3 then "多地上市" else fxSmartClean ( [发行场所], "Listing" )
+ ), 
+ SelectedCol      = Table.SelectColumns (
+  CleanListing, 
+  { "ISIN", "Check", "定价日", "信用主体" } & List.RemoveMatchingItems ( Table.ColumnNames ( CleanListing ), Table.ColumnNames ( Source ) )
+ )
+in
+ SelectedCol

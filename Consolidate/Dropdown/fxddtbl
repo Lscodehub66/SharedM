@@ -1,0 +1,31 @@
+// let Code = Load("fxddtbl","Code"), EVA = Expression.Evaluate(Code, #shared)("mCredit", "地方平台", "板块","板块二级") in EVA
+(_SourceName as text, _IndirectName as text, optional _Preceding as text, optional _Dependent as text) =>
+    let
+        //_SourceName = "mCredit",    _IndirectName = "地方平台",    _Preceding = "板块",   _Dependent = "板块二级",  
+        QryNCWBName =  Text.Replace("dd_" & _IndirectName,"&", "_"),
+        CWBQryLoad = try CWB(QryNCWBName) otherwise CWB(QryNCWBName&"_1"),
+        Source = CWB(_SourceName),
+        IfThenFilter = Table.SelectRows(
+            Source,
+            if _Dependent = null and _Preceding = null then
+                each true
+            else
+                each Record.Field(_, _Preceding) = _IndirectName
+        ),
+        DistinctedSCol = Table.Distinct(
+            Table.SelectColumns(IfThenFilter, if _Dependent is null then {_IndirectName} else {_Dependent})
+        ),
+        IfThenRename =
+            if _Dependent = null and _Preceding = null then
+                DistinctedSCol
+            else
+                Table.RenameColumns(DistinctedSCol, {{_Dependent, _IndirectName}}),
+        MergedQ = fxMerge(
+            IfThenRename, CWBQryLoad , _IndirectName, _IndirectName, {"SortValue"}, {"SortValue"}, {_Dependent}
+        ),
+        NoBlank = Table.SelectRows(
+            MergedQ, each not List.IsEmpty(List.RemoveMatchingItems(Record.FieldValues(_), {"", null}))
+        ),
+        Sorted =  Table.Sort(NoBlank, {{"SortValue", Order.Ascending}}) 
+    in
+        Sorted

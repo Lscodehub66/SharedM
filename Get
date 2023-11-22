@@ -1,0 +1,837 @@
+//let GPS  = try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Remote",  FilePath = if GPS = "Remote" then "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM\Get" else "\\10.10.1.215\dcm$\Team Folder\Execution Team\DataHub\SharedM\Get",  LoadCode = Text.FromBinary ( Binary.Buffer ( File.Contents ( FilePath ) ) ), EVA = Expression.Evaluate ( LoadCode, #shared ) in EVA
+let
+    Source = (TextName as text) =>
+        let
+            //  Parameters
+            fxConnect = Load("fxConnect"),
+            //
+            Dimtbl_DMI_Filter = Table.FromRows(
+                {
+                    {1, "零息", "ON", "利率类型"},
+                    {2, "可转债", "ON", "债券类型"},
+                    {3, "中国人民银行", "ON", "信用主体"},
+                    {4, "实物支付", "ON", "利率类型"},
+                    {5, "台湾省", "ON", "省份"},
+                    {6, "其他地区", "ON", "省份"},
+                    //   {7, "澳门特别行政区", "ON", "省份"},   {8, "香港特别行政区", "ON", "省份"},
+                    {9, "Y", "ON", "IS_EXCH"}
+                },
+                {"Index", "Column1", "Column2", "Column3"}
+            ),
+            SortTable_Graph_USDCNHPIE = Table.TransformColumnTypes(
+                Table.FromRows(
+                    {
+                        {"1", "月", "01月"},
+                        {"2", "月", "02月"},
+                        {"3", "月", "03月"},
+                        {"4", "月", "04月"},
+                        {"5", "月", "05月"},
+                        {"6", "月", "06月"},
+                        {"7", "月", "07月"},
+                        {"8", "月", "08月"},
+                        {"9", "月", "09月"},
+                        {"10", "月", "10月"},
+                        {"11", "月", "11月"},
+                        {"12", "月", "12月"},
+                        {"13", "货币细分", "美元债"},
+                        {"14", "货币细分", "自贸债"},
+                        {"15", "货币细分", "点心债"},
+                        {"16", "板块", "主权/政府"},
+                        {"17", "板块", "金融机构"},
+                        {"18", "板块", "地方平台"},
+                        {"19", "板块", "产业"},
+                        {"20", "板块", "房地产"},
+                        {"21", "年期分类", "≤1年"},
+                        {"22", "年期分类", "1-3年"},
+                        {"23", "年期分类", "3-5年"},
+                        {"24", "年期分类", ">5年"},
+                        {"25", "年期分类", "永续"},
+                        {"26", "评级分类", "无评级"},
+                        {"27", "评级分类", "投资级"},
+                        {"28", "评级分类", "高收益"}
+                    },
+                    {"Index", "Column1", "Column2"}
+                ),
+                {{"Index", Int64.Type}}
+            ),
+            SortTable_Graph_DimSumPie = Table.TransformColumnTypes(
+                Table.FromRows(
+                    {
+                        {"1", "上市分类", "港交所"},
+                        {"2", "上市分类", "澳交所"},
+                        {"3", "上市分类", "未上市"},
+                        {"4", "上市分类", "多地上市"},
+                        {"5", "上市分类", "新交所"},
+                        {"6", "板块", "地方平台"},
+                        {"7", "板块", "金融机构"},
+                        {"8", "板块", "主权/政府"},
+                        {"9", "板块", "产业"},
+                        {"10", "板块", "房地产"},
+                        {"11", "清算地", "CMU"},
+                        {"12", "清算地", "欧清/明讯"},
+                        {"13", "清算地", "澳交所"},
+                        {"14", "清算地", "上清所"},
+                        {"15", "点心债年期分类", "3年"},
+                        {"16", "点心债年期分类", "2年"},
+                        {"17", "点心债年期分类", "其他"},
+                        {"18", "点心债年期分类", "5年"}
+                    },
+                    {"Index", "Column1", "Column2"}
+                ),
+                {{"Index", Int64.Type}}
+            ),
+            SortTable_Graph_SBLCPieCount = Table.TransformColumnTypes(
+                Table.FromRows(
+                    {
+                        {"1", "结构分类", "直发"},
+                        {"2", "结构分类", "备证"},
+                        {"3", "结构分类", "担保"},
+                        {"4", "结构分类", "维好"},
+                        {"5", "结构分类", "红筹"},
+                        {"6", "结构", "备证"},
+                        {"7", "结构", "备证+担保"},
+                        {"8", "结构", "备证+担保+维好"},
+                        {"9", "结构", "备证+维好"},
+                        {"10", "备证年期分类", "3年"},
+                        {"11", "备证年期分类", "2.9年"},
+                        {"12", "备证年期分类", "其他"},
+                        {"13", "备证年期分类", "1年"}
+                    },
+                    {"Index", "Column1", "Column2"}
+                ),
+                {{"Index", Int64.Type}}
+            ),
+            SortTable_Graph_SBLCPieSize = Table.TransformColumnTypes(
+                Table.FromRows(
+                    {
+                        {"1", "板块", "地方平台"},
+                        {"2", "板块", "产业"},
+                        {"3", "板块", "房地产"},
+                        {"4", "货币", "CNH"},
+                        {"5", "货币", "USD"},
+                        {"6", "货币", "JPY"},
+                        {"7", "货币", "EUR"}
+                    },
+                    {"Index", "Column1", "Column2"}
+                ),
+                {{"Index", Int64.Type}}
+            ),
+            Dimtbl_TextFormat = Table.FromRows(
+                {
+                    {"Indice_Equity", "I", "0", "点", "0.0%", "维持不变/下跌/上涨", 2},
+                    {"Indice", "I", "0", "", "0.0%", "维持不变/下跌/上涨", 2},
+                    {"Rates", "R", "0.000%", "", "0bps", "持平/收窄/走阔", 5},
+                    {"CCY", "C", "0.0000", "元", "0.0%", "维持不变/下跌/上涨", 4},
+                    {"Spd", "S", "0bps", "", "0bps", "持平/收窄/走阔", 1}
+                },
+                {"Column1", "Prefix", "Text", "Text_Suffix", "Text_Trend", "Text_Trend_CN", "Rounding"}
+            ),
+            Dimtbl_Folder = Table.FromRows(
+                {
+                    {"Root*", "C:\Users\ktkt2\OneDrive", "\\10.10.1.215\dcm$", ""},
+                    {"Folder_Base*", "\Business\Hub Drive\DCM Base", "\0 DCM Base", ""},
+                    {"Folder_Base_4", null, null, "\4 Markets"},
+                    {"Folder_Base_5_RSP", null, null, "\5 Databases\RSP Database"},
+                    {"Folder_Team*", "\EXE Team", "\Team Folder\Execution Team", ""},
+                    {"Folder_Team_DH", null, null, "\DataHub"},
+                    {"Folder_Team_AM", null, null, "\Weekly AM"},
+                    {"Folder_Pipeline", "", "\Pipeline Report", ""},
+                    {"Folder_QRC", "\EXE Team\QRC", "\【QRC】DCM项目情况表", ""}
+                },
+                {"Folder", "Folder_Remote", "Folder_Global", "Folder_Segment"}
+            ),
+            TransformationTable_QRC_ClientName = Table.FromRows(
+                {
+                    {"1022", "中国诚通香港有限公司", "中国诚通控股集团有限公司"},
+                    {"1023", "广东交通集团", "广东省交通集团有限公司"},
+                    {"1024", "中国水务集团", "中国水务集团有限公司"},
+                    {"1025", "衢州市交通投资集团有限公司", "衢州市衢通发展集团有限公司"},
+                    {"1026", "河南省铁路建设投资集团", "河南省铁路建设投资集团有限公司"},
+                    {"1043", "中航国际租赁有限公司", "中航国际融资租赁有限公司"},
+                    {"1055", "长沙先导投资控股有限公司", "长沙先导投资控股集团有限公司"}
+                },
+                {"CLIENT对账号", "From", "To"}
+            ),
+            TransformationTable_DLD_TableName = Table.FromRows(
+                {{"2023/10/06", "BBGcorp", "DLD_BBG_Corp"}}, {"Date", "From", "To"}
+            ),
+            PQTable_QRC_合规台账22 = Table.FromRows(
+                Json.Document(
+                    Binary.Decompress(
+                        Binary.FromText(
+                            "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",
+                            BinaryEncoding.Base64
+                        ),
+                        Compression.Deflate
+                    )
+                ),
+                let
+                    _t = ((type nullable text) meta [Serialized.Text = true])
+                in
+                    type table [
+                        序号 = _t,
+                        团队 = _t,
+                        #"Project Name" = _t,
+                        #"项目名称（集团全称）" = _t,
+                        发行人名称中文 = _t,
+                        发行人名称英文 = _t,
+                        上会审批日 = _t,
+                        Mandate = _t,
+                        项目定价日 = _t,
+                        #"KYC Deadline" = _t,
+                        #"KYC expiry date" = _t,
+                        KYC = _t,
+                        #"Approved by RO" = _t,
+                        Worldcheck = _t,
+                        #"DD Form" = _t,
+                        #"DD Risk" = _t,
+                        #"Record Keeping" = _t,
+                        Completed = _t,
+                        公盘地址 = _t
+                    ]
+            ),
+            Table_DMI_HKCompany = Table.FromRows(
+                {
+                    {"香港按揭证券有限公司"},
+                    {"香港铁路有限公司"},
+                    {"中华人民共和国香港特别行政区政府"},
+                    {"友邦保险控股有限公司"},
+                    {"星展银行有限公司"},
+                    {"凯基证券(香港)有限公司"},
+                    {"新鸿基地产发展有限公司"},
+                    {"香港上海汇丰银行有限公司"},
+                    {"恒基兆业地产有限公司"},
+                    {"恒隆地产有限公司"},
+                    {"香格里拉(亚洲)有限公司"},
+                    {"太古地产有限公司"},
+                    {"香港置地控股有限公司"},
+                    {"ESR Group Limited"},
+                    {"希慎兴业有限公司"},
+                    {"太古股份有限公司"},
+                    {"康业金融科技集团有限公司"},
+                    {"长江和记实业有限公司"},
+                    {"嘉里物流联网有限公司"},
+                    {"东亚银行有限公司"},
+                    {"永利澳门有限公司"},
+                    {"香港机场管理局"},
+                    {"领展资产管理有限公司"},
+                    {"九龙仓置业地产投资有限公司"},
+                    {"香港中华煤气有限公司"},
+                    {"国泰航空有限公司"},
+                    {"富力地产(香港)有限公司"},
+                    {"Sands China Ltd."},
+                    {"新世界发展有限公司"},
+                    {"招商局港口控股有限公司"},
+                    {"渣打银行(香港)有限公司"},
+                    {"港华智慧能源有限公司"},
+                    {"新鸿基有限公司"},
+                    {"AMTD Group Company Limited"},
+                    {"新濠国际发展有限公司"},
+                    {"香港电讯信托与香港电讯有限公司"},
+                    {"会德丰有限公司"},
+                    {"创科实业有限公司"},
+                    {"中国美东汽车控股有限公司"},
+                    {"联洋智能控股有限公司"},
+                    {"丽新发展有限公司"},
+                    {"长江实业集团有限公司"},
+                    {"和记港口信托"},
+                    {"九龙仓集团有限公司"},
+                    {"狮桥资本有限公司"},
+                    {"PCGI Holdings Limited"},
+                    {"置地控股有限公司"},
+                    {"长江基建集团有限公司"},
+                    {"资本策略地产有限公司"},
+                    {"中华电力有限公司"},
+                    {"GLP PTE. LTD."},
+                    {"盈科大衍地产发展有限公司"},
+                    {"利福国际集团有限公司"},
+                    {"澳门博彩控股有限公司"},
+                    {"乐明国际投资(香港)有限公司"},
+                    {"怡和控股有限公司"},
+                    {"MGM China Holdings Limited"},
+                    {"香港俊发地产有限公司"},
+                    {"隽洋有限公司"},
+                    {"青山发电有限公司"},
+                    {"利丰有限公司"},
+                    {"新濠博亚娱乐有限公司"},
+                    {"电讯盈科有限公司"},
+                    {"汇丰控股有限公司"},
+                    {"鼎睿再保险有限公司"},
+                    {"第一太平有限公司"},
+                    {"南丰国际控股有限公司"},
+                    {"英皇国际集团有限公司"},
+                    {"香港电灯有限公司"},
+                    {"嘉民香港物流基金"},
+                    {"金界控股有限公司"},
+                    {"冠君产业信托"},
+                    {"兆邦基地产控股有限公司"},
+                    {"PineBridge Investments, L.P."},
+                    {"瑞安建业有限公司"},
+                    {"太平洋航运集团有限公司"},
+                    {"FWD Group Limited"},
+                    {"普汇中金国际控股有限公司"},
+                    {"新创建集团有限公司"},
+                    {"理文造纸有限公司"},
+                    {"IFC DEVELOPMENT LIMITED"},
+                    {"嘉年华国际控股有限公司"},
+                    {"德昌电机控股有限公司"},
+                    {"中国地产集团有限公司"},
+                    {"恒成国际发展有限公司"},
+                    {"香港航空国际控股有限公司"},
+                    {"天韵国际控股有限公司"},
+                    {"FWD Limited"},
+                    {"千百度国际控股有限公司"},
+                    {"东建国际控股有限公司"},
+                    {"中国环保科技控股有限公司"},
+                    {"爪哇控股有限公司"},
+                    {"香港宽频有限公司"},
+                    {"稀镁科技集团控股有限公司"},
+                    {"绿领控股集团有限公司"},
+                    {"中国优通未来空间产业集团控股有限公司"},
+                    {"世纪阳光集团控股有限公司"},
+                    {"富豪酒店国际控股有限公司"},
+                    {"香港快运航空有限公司"},
+                    {"德祥地产集团有限公司"},
+                    {"电视广播有限公司"},
+                    {"CWT International Ltd"},
+                    {"美丽中国控股有限公司"},
+                    {"莱蒙国际集团有限公司"},
+                    {"新昌集团控股有限公司"},
+                    {"港灯电力投资有限公司"},
+                    {"中国金融投资管理有限公司"},
+                    {"中海重工集团有限公司"},
+                    {"耐世特汽车系统集团有限公司"},
+                    {"中国农产品交易有限公司"},
+                    {"香港翔隆有限公司"},
+                    {"津联集团有限公司"},
+                    {"嘉华国际集团有限公司"},
+                    {"太平洋恩利资源发展有限公司"},
+                    {"丽新制衣国际有限公司"},
+                    {"恒生银行有限公司"},
+                    {"御泰中彩控股有限公司"},
+                    {"中国电力国际发展有限公司"},
+                    {"ASMPT Limited"}
+                },
+                {"信用主体"}
+            ),
+            // 【Prefix】Rename_
+            Rename_DB_DataFormat = {
+                {"IN_板块", "板块"},
+                {"发行人注册地", "注册成立地"},
+                {"FLOATER_FORMULA", "计息基准"},
+                {"发行价格", "发行价"},
+                {"IN.中资属性", "中资属性"},
+                {"发行结构", "发行架构"}
+            },
+            Rename_Connect_合规 = {
+                {"Mandate", "Mandated"},
+                {"发行人名称英文", "发行人"},
+                {"团队", "COVERAGE"},
+                {"KYC expiry date", "假设KYC到期日"},
+                {"项目名称（集团全称）", "信用主体"}
+            },
+            Rename_Connect_KYC = {{"发行人名称英文*", "发行人"}, {"项目名称（集团全称）", "信用主体"}},
+            Rename_Connect_DMI违约 = {{"ISIN码", "ISIN"}, {"违约日期", "首次违约日"}, {"违约类型", "境外债违约"}, {"企业性质", "公司类型"}},
+            // Sort_List
+            Sort_ESG_ReviewType = {"发行前认证", "第二方意见", "验证"},
+            Sort_ESG_ReviewParty = {
+                "HKQAA",
+                "S&P",
+                "Sustainable Fitch",
+                "Moody's",
+                "中诚信绿金科技",
+                "Sustainalytics",
+                "CECEPEC",
+                "EY"
+            },
+            // Header_List
+            Header_Graph_Chart = {
+                "Index",
+                "ISIN",
+                "定价日",
+                "信用主体",
+                "亿美元",
+                "评级分类",
+                "年期分类",
+                "货币",
+                "货币细分",
+                "板块",
+                "删除及隐藏",
+                "Check"
+            },
+            //{"Index","ISIN","定价日", "信用主体", "亿美元", "评级分类", "年期分类","货币",  "货币细分", "板块", "删除及隐藏","Check" }
+            Header_Exp_Dynamic_BBG = {
+                "注册成立地",
+                "发行人主上市地",
+                "补充OMAS updates",
+                "定价息差",
+                "发行评级",
+                "主体评级",
+                "ESG_Indicator",
+                "计息基准"
+            },
+            Header_S_Dynamic_FIMTN_Review = {
+                "Index",
+                "IS_FIMTN",
+                "信用主体",
+                "行业",
+                "ISIN",
+                "定价日",
+                "货币",
+                "规模",
+                "主题债券",
+                "IPT_DMI",
+                "FPG_DMI",
+                "联席全球协调人",
+                "牵头经办人"
+            },
+            // to be reordered to the first N Columns
+            Header_S_Dynamic_wIssuer = {
+                "删除及隐藏",
+                "ISIN",
+                "定价日",
+                "信用主体",
+                "发行评级",
+                "主体评级",
+                "结构",
+                "备证行",
+                "港分_ROLE",
+                "澳分_ROLE",
+                "Check"
+            },
+            Header_S_Dynamic_wCurated = {
+                "定价日",
+                "信用主体",
+                "ESG",
+                "IPG",
+                "FPG",
+                "收窄基点",
+                "定价",
+                "增发判定",
+                "货币",
+                "发行规模(亿)",
+                "年期",
+                "票息",
+                "品种主题",
+                "上市",
+                "期限备注",
+                "亿美元",
+                "亿元",
+                "亿港币",
+                "ISIN",
+                "Check"
+            },
+            Header_S_Dynamic_wBISL = {
+                "信用主体",
+                "Check",
+                "ISIN",
+                "定价日",
+                "台账序号",
+                "Project Name",
+                "COVERAGE",
+                "新规角色",
+                "PROJECT_CODE",
+                "期数",
+                "BISL_ROLE",
+                "IS_LEAD",
+                "IS_B&D",
+                "是否合名"
+            },
+            Header_Sync_Directory = {"PROJECT_NAME", "COVERAGE", "定价日", "交易简称", "Check", "币种规模", "票息", "期限", "ISIN"},
+            Header_Connect_DMI违约 = {"ISIN码", "发行人名称", "违约日期", "违约类型", "地区"},
+            Header_DMI_Credit = {"信用主体", "债券简称", "穆迪/标普", "公司类型", "行业", "细分行业", "省份", "城市", "区县", "定价日"},
+            Header_CF = {"序号", "团队", "发行人名称英文", "Mandate", "项目定价日", "KYC", "DD Risk"},
+            Header_DirectoryToFormalities = {"ISIN", "PROJECT_NAME", "定价日", "新规角色", "信用主体(备证行)", "注册成立地"},
+            Header_DirectoryToTombsWriter = {"定价日", "年月", "首次违约日"} & {"备证行", "信用主体简称", "通过分行", "角色"},
+            Header_S_ToDo = {
+                "PRJ对账号",
+                "PROJECT_NAME",
+                "定价日",
+                "COVERAGE",
+                "新规角色",
+                "Mandated",
+                "主体简称",
+                "发行人",
+                "注册成立地",
+                "KYC expiry date",
+                "KYC Status"
+            },
+            Header_FI = {
+                "Index",
+                "ISIN",
+                "定价日",
+                "信用主体(备证行)",
+                "发行评级",
+                "货币",
+                "发行规模(亿)",
+                "年期",
+                "票息",
+                "IPG",
+                "收窄基点",
+                "结构",
+                "主题",
+                "上市",
+                "地区",
+                "BOCOM_DEAL?",
+                "主体评级",
+                "货币细分",
+                "信用主体",
+                "亿美元",
+                "板块二级",
+                "板块三级",
+                "品种主题",
+                "Stats",
+                "Check"
+            },
+            Header_ESG = {
+                "Index",
+                "定价日",
+                "信用主体(备证行)",
+                "发行评级",
+                "发行规模(亿)",
+                "货币",
+                "年期",
+                "票息",
+                "上市",
+                "ESG主题",
+                "BOCOM_DEAL?",
+                "亿美元",
+                "亿元",
+                "板块",
+                "外部评审方式",
+                "外部评审机构",
+                "筹款用途",
+                "货币细分",
+                "上市分类",
+                "交易简称",
+                "ISIN"
+            },
+            Header_SBLC = {
+                "Index",
+                "ISIN",
+                "定价日",
+                "信用主体简称",
+                "备证行",
+                "发行评级",
+                "货币",
+                "发行规模(亿)",
+                "年期",
+                "票息",
+                "IPG",
+                "收窄基点",
+                "结构",
+                "主题",
+                "上市",
+                "地区",
+                "板块",
+                "备证分类",
+                "备证行标签",
+                "BOCOM_DEAL?",
+                "主体评级",
+                "境内主体评级",
+                "货币细分",
+                "信用主体",
+                "亿美元",
+                "年",
+                "年月",
+                "Check"
+            },
+            Header_DimSum = {
+                "Index",
+                "ISIN",
+                "定价日",
+                "信用主体(备证行)",
+                "主体评级",
+                "发行评级",
+                "发行规模(亿)",
+                "年期",
+                "票息",
+                "IPG",
+                "收窄基点",
+                "结构",
+                "主题",
+                "清算地",
+                "境内主体评级",
+                "地区",
+                "板块",
+                "BOCOM_DEAL?",
+                "BISL_ROLE",
+                "上市",
+                "上市分类",
+                "信用主体",
+                "评级分类",
+                "主体评级分类",
+                "付息频率",
+                "年月",
+                "Check"
+            },
+            Header_IGLGFV = {
+                "Index",
+                "ISIN",
+                "定价日",
+                "信用主体(备证行)",
+                "主体评级",
+                "发行评级",
+                "货币",
+                "发行规模(亿)",
+                "年期",
+                "票息",
+                "IPG",
+                "收窄基点",
+                "结构",
+                "主题",
+                "境内主体评级",
+                "地区",
+                "级别",
+                "BOCOM_DEAL?",
+                "BISL_ROLE",
+                "上市",
+                "信用主体",
+                "是否IG",
+                "评级分类",
+                "主体评级分类",
+                "Check",
+                "亿美元",
+                "Check"
+            },
+            Header_Graph_Deal_Weekly = {
+                "Index",
+                "ISIN",
+                "定价日",
+                "信用主体(备证行)",
+                "发行评级",
+                "货币",
+                "发行规模(亿)",
+                "年期",
+                "票息",
+                "IPG",
+                "收窄基点",
+                "结构",
+                "主题",
+                "板块",
+                "地区",
+                "BOCOM_DEAL?",
+                "亿美元"
+            },
+            Header_SBLC60 = {
+                "Index",
+                "定价日",
+                "信用主体简称",
+                "备证行",
+                "发行评级",
+                "货币",
+                "发行规模(亿)",
+                "年期",
+                "票息",
+                "IPG",
+                "收窄基点",
+                "结构",
+                "主题",
+                "板块",
+                "地区",
+                "BOCOM_DEAL?"
+            },
+            Header_DimSum60 = {
+                "Index",
+                "定价日",
+                "信用主体(备证行)",
+                "发行评级",
+                "发行规模(亿)",
+                "年期",
+                "票息",
+                "IPG",
+                "收窄基点",
+                "结构",
+                "主题",
+                "板块",
+                "地区",
+                "BOCOM_DEAL?"
+            },
+            Header_FTZ = {
+                "Index",
+                "ISIN",
+                "定价日",
+                "信用主体(备证行)",
+                "发行评级",
+                "货币",
+                "发行规模(亿)",
+                "年期",
+                "票息",
+                "IPG",
+                "收窄基点",
+                "结构",
+                "主题",
+                "行业",
+                "地区",
+                "BOCOM_DEAL?",
+                "BISL_ROLE",
+                "主体评级",
+                "境内主体评级",
+                "上市",
+                "信用主体",
+                "亿元",
+                "Check"
+            },
+            Header_MergeRemoval = {"Timestamp", "Updator", "曾用名", "主体备注", "Index", "公司类型", "上市类型", "系"},
+            Header_Sync_KYC = {"KYC对账号", "发行人", "KYC Status", "KYC expiry date", "信用主体"},
+            //   CN = ColumnNames
+            CN_BaseDirectory_Deal = Table.ColumnNames(
+                Load("fxConnect")("Directory"){[Item = "tbl_deal", Kind = "Table"]}[Data]
+            ),
+            CN_mChart = Table.ColumnNames(Load("fxConnect")("DataHub"){[Item = "mChart", Kind = "Table"]}[Data]),
+            // Selection
+            Key = Text.Replace(Text.Upper(Text.Trim(TextName)), "_", ""),
+            CNSource =
+                if Text.Contains(Key, "DIRECTORY") and Text.Contains(Key, "DEAL") then
+                    CN_BaseDirectory_Deal
+                else if Text.Contains(Key, "MCHART") then
+                    CN_mChart
+                else
+                    {""},
+            TableSource =
+                if Text.Contains(Key, "QRC") and Text.Contains(Key, "NAME") then
+                    TransformationTable_QRC_ClientName
+                else if Text.Contains(Key, "TEXT") and Text.Contains(Key, "FORMAT") then
+                    Dimtbl_TextFormat
+                else if Text.Contains(Key, "DIMSUMPIE") then
+                    SortTable_Graph_DimSumPie
+                else if Text.Contains(Key, "SBLCPIECOUNT") then
+                    SortTable_Graph_SBLCPieCount
+                else if Text.Contains(Key, "SBLCPIESIZE") then
+                    SortTable_Graph_SBLCPieSize
+                else if Text.Contains(Key, "USDCNHPIE") then
+                    SortTable_Graph_USDCNHPIE
+                else if Text.Contains(Key, "DLD") and Text.Contains(Key, "NAME") then
+                    TransformationTable_DLD_TableName
+                else if Text.Contains(Key, "合规") and Text.Contains(Key, "22") then
+                    PQTable_QRC_合规台账22
+                else if Text.Contains(Key, "DIM") and Text.Contains(Key, "FOLDER") then
+                    Dimtbl_Folder
+                else if Text.Contains(Key, "DMI") and Text.Contains(Key, "FILTER") then
+                    Dimtbl_DMI_Filter
+                else if Text.Contains(Key, "DMI") and Text.Contains(Key, "HK") then
+                    Table_DMI_HKCompany
+                else
+                    #table({""}, {{""}}),
+            RenameSource =
+                if Text.Contains(Key, "合规") then
+                    Rename_Connect_合规
+                else if Text.Contains(Key, "KYC") then
+                    Rename_Connect_KYC
+                else if Text.Contains(Key, "DMI") and (Text.Contains(Key, "违约") or Text.Contains(Key, "DEFAULT")) then
+                    Rename_Connect_DMI违约
+                else if Text.Contains(Key, "DB") or Text.Contains(Key, "DATAFORMAT") then
+                    Rename_DB_DataFormat
+                else
+                    {""},
+            SortSource =
+                if Text.Contains(Key, "REVIEW") and Text.Contains(Key, "TYPE") then
+                    Sort_ESG_ReviewType
+                else if Text.Contains(Key, "REVIEW") and Text.Contains(Key, "PARTY") then
+                    Sort_ESG_ReviewParty
+                else
+                    {""},
+            HeaderSource =
+                if Text.Contains(Key, "WISSUER") then
+                    Header_S_Dynamic_wIssuer
+                else if Text.Contains(Key, "WCURATED") then
+                    Header_S_Dynamic_wCurated
+                else if Text.Contains(Key, "CHART") then
+                    Header_Graph_Chart
+                else if Text.Contains(Key, "WBISL") then
+                    Header_S_Dynamic_wBISL
+                else if Text.Contains(Key, "DYNAMIC") and Text.Contains(Key, "FIMTN") then
+                    Header_S_Dynamic_FIMTN_Review
+                else if Text.Contains(Key, "DYNAMIC") and Text.Contains(Key, "BBG") then
+                    Header_Exp_Dynamic_BBG
+                else if Text.Contains(Key, "DIRECTORY") and Text.Contains(Key, "FORMALITIES") then
+                    Header_DirectoryToFormalities
+                else if Text.Contains(Key, "DIRECTORY") and Text.Contains(Key, "TOMB") then
+                    Header_DirectoryToTombsWriter
+                else if Text.Contains(Key, "FORMALITIES") then
+                    Header_CF
+                else if Text.Contains(Key, "SBLC60") then
+                    Header_SBLC60
+                else if Text.Contains(Key, "DIMSUM60") then
+                    Header_DimSum60
+                else if Text.Contains(Key, "TODO") then
+                    Header_S_ToDo
+                else if Text.Contains(Key, "FI") then
+                    Header_FI
+                else if Text.Contains(Key, "ESG") then
+                    Header_ESG
+                else if Text.Contains(Key, "SBLC") then
+                    Header_SBLC
+                else if Text.Contains(Key, "DIMSUM") then
+                    Header_DimSum
+                else if Text.Contains(Key, "IGLGFV") then
+                    Header_IGLGFV
+                else if Text.Contains(Key, "FTZ") then
+                    Header_IGLGFV
+                else if Text.Contains(Key, "GRAPH") and (Text.Contains(Key, "WEEKLY") or Text.Contains(Key, "DEAL")) then
+                    Header_Graph_Deal_Weekly
+                else if Text.Contains(Key, "MERGE") and Text.Contains(Key, "REMOV") then
+                    Header_MergeRemoval
+                else if Text.Contains(Key, "DMI") and Text.Contains(Key, "CREDIT") then
+                    Header_DMI_Credit
+                else if Text.Contains(Key, "DMI") and (Text.Contains(Key, "违约") or Text.Contains(Key, "DEFAULT")) then
+                    Header_Connect_DMI违约
+                else if Text.Contains(Key, "KYC") and Text.Contains(Key, "SYNC") then
+                    Header_Sync_KYC
+                else if Text.Contains(Key, "SYNC") and Text.Contains(Key, "DIRECTORY") then
+                    Header_Sync_Directory
+                else
+                    {""},
+            Selected =
+                if Text.StartsWith(Key, "CN") then
+                    CNSource
+                else if Text.StartsWith(Key, "RENAME") then
+                    RenameSource
+                else if Text.StartsWith(Key, "SORT") then
+                    SortSource
+                else
+                    HeaderSource,
+            Output =
+                if Text.Contains(Key, "TABLE") or Text.Contains(Key, "TBL") then
+                    Table.Distinct(TableSource)
+                else
+                    List.Distinct(Selected)
+        in
+            Output,
+    fnType = type function (
+        TextName as (
+            type text meta [
+                Documentation.AllowedValues = {
+                    "DimentionTable_Folder",
+                    "TransformationTable_QRC_ClientName",
+                    "TransformationTable_DLD_TableName",
+                    "PQTable_QRC_合规台账22",
+                    "CN_BaseDirectory_Deal",
+                    "Rename_DB_DataFormat",
+                    "Rename_Connect_合规",
+                    "Rename_Connect_KYC",
+                    "Sort_ESG_ReviewType",
+                    "Sort_ESG_ReviewParty",
+                    "Header_DMI_Credit",
+                    "Header_Sync_Directory",
+                    "Header_Graph_Deal_Weekly",
+                    "Header_IGLGFV",
+                    "Header_DimSum",
+                    " Header_ESG",
+                    "Header_SBLC",
+                    "Header_FI",
+                    "Header_FTZ",
+                    "Header_ToDo",
+                    "Header_CF",
+                    "Header_Sync_KYC",
+                    "Header_DirectoryToFormalities",
+                    "Header_MergeRemoval"
+                }
+            ]
+        )
+    ) as list meta [
+        Documentation.Name = "fxtblNList",
+        Documentation.Description = "Transformation Table \ Header Lists \ CWB tables Column Names \ Rename Pairs"
+    ]
+in
+    Value.ReplaceType(Source, fnType)

@@ -1,0 +1,10 @@
+let
+  EndNum = Number.From(Date.ToText(Status[Monday]{0},"yyyyMMdd")),
+    Source = Load("fxDimDate")(20220101,  EndNum,{"YYW"}),
+    #"Removed Duplicates" = Table.Distinct(Source),
+   #">>GroupedByWeek" = Table.Buffer( Table.Group( Table.SelectRows(Load("deal_master"), each [删除及隐藏] = ""), {"YYW"}, {{"笔数", each Table.RowCount(_), Int64.Type}, {"亿美元", each List.Sum([亿美元]), type number}})),
+    #"Merged Queries" = Load("fxMerge")(#"Removed Duplicates",  #">>GroupedByWeek" ,  "YYW", "YYW", {"笔数", "亿美元"},{""},{"Keep"}),
+    #"Sorted Rows" = Table.Sort(#"Merged Queries",{{"YYW", Order.Descending}}),
+    #"Replaced Value" = Table.ReplaceValue(#"Sorted Rows",null,0,Replacer.ReplaceValue,Table.ColumnNames(#"Sorted Rows"))
+in
+    #"Replaced Value"

@@ -1,0 +1,61 @@
+(TableName as table) =>
+    let
+        Source = TableName,
+        PresentNoDataList = {
+            "定价",
+            "上市",
+            "IPG",
+            "FPG",
+            "主题",
+            "港分_ROLE",
+            "BISL_ROLE",
+            "澳分_ROLE",
+            "BOCOM_DEAL?",
+            "是否IG",
+            "备证行",
+            "货币细分",
+            "IS_CHART",
+            "ESG主题",
+            "发行品种",
+            "境内主体评级",
+            "区县",
+            "城市",
+            "发行人主上市地",
+            "行业二级",
+            "细分行业",
+            "板块二级",
+            "板块三级",
+            "担保人",
+            "维好协议提供人",
+            "IS_LEAD",
+            "IS_B&D",
+            "是否合名",
+            "主体备注",
+            "SPECIALs",
+            "收窄基点",
+            "备证分类",
+            "外部评审机构",
+            "外部评审方式",
+            "上市类型",
+            "YY类型"
+        },
+        ListToPresentNoData = List.Intersect({Table.ColumnNames(Source), PresentNoDataList}),
+        ReplaceNull = Table.ReplaceValue(Source, null, "--", Replacer.ReplaceValue, ListToPresentNoData),
+        ReplaceBlank = Table.ReplaceValue(ReplaceNull, "", "--", Replacer.ReplaceValue, ListToPresentNoData),
+        // 新规角色N/A
+        ToNA =
+            if
+                List.Contains(Table.ColumnNames(ReplaceBlank), "新规角色")
+                and List.Contains(Table.ColumnNames(ReplaceBlank), "定价日")
+            then
+                Table.ReplaceValue(
+                    ReplaceBlank,
+                    each null,
+                    each if [定价日] < #date(2022, 8, 5) then "n/a" else [新规角色],
+                    Replacer.ReplaceValue,
+                    {"新规角色"}
+                )
+            else
+                ReplaceBlank
+    in
+        ToNA

@@ -1,0 +1,78 @@
+// DMIDownload_headers
+let
+    Source = Excel.CurrentWorkbook(){[Name="DMIrange"]}[Content],
+    #"Filtered Rows" = Table.SelectRows(Source, each ([Column1] = "信用主体")),
+    #"Promoted Headers" = Table.ColumnNames(Table.PromoteHeaders(#"Filtered Rows", [PromoteAllScalars=true])),
+    #"Converted to Table" = Table.FromList(#"Promoted Headers", Splitter.SplitByNothing(), null, null, ExtraValues.Error),
+    #"Filtered Rows1" = Table.SelectRows(#"Converted to Table", each not Text.Contains([Column1], "Column")),
+    Column1 = #"Filtered Rows1"[Column1]
+in
+    Column1
+
+// Mode
+"\\10.10.1.215\dcm$\Team Folder\Execution Team\" meta [IsParameterQuery=true, List={"\\10.10.1.215\dcm$\Team Folder\Execution Team\", "C:\Users\ktkt2\OneDrive\EXE Team\", "C:\Users\kingsley.tong\OneDrive\EXE Team\"}, DefaultValue="\\10.10.1.215\dcm$\Team Folder\Execution Team\", Type="Any", IsParameterQueryRequired=true]
+
+// mDMI_headers
+let
+  Source = Excel.Workbook(
+    File.Contents(Mode &"DataHub\DEALs MASTER.xlsm")
+  ),
+    Colnames = Table.ColumnNames(Source{[Item="mDMI",Kind="Table"]}[Data]),
+    #"Converted to Table" = Table.FromList(Colnames, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
+    #"Replaced Value" = Table.ReplaceValue(#"Converted to Table","_DMI","",Replacer.ReplaceText,{"Column1"}),
+    Column1 = #"Replaced Value"[Column1]
+
+  in Column1
+
+// RemovedDMI_headers
+let
+    Source = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("VZBZDoJAEETvwrc3Itxl3EdwjQExAQ1GRRMXTFwGUE9Ddw+3EJiY6Ge/rkpVt65r0rqg06UTozDSjJquwWgigz46MTxHFSCvnqUvtWNJHsTAfQgteW5REirc22evOXrLfD6uAJq2vLUka8vrFvkD7egf0yWFhfXPgHdANL8xwAV6DJ0o91fAnhUua/lNaE+y1MXZRtkrEW12pY7vadj9OULeHkXRrzQTJohGMRVFldc9w3iLkaD0WET+MDi6MLCVK1mjOyXzjqyu3tGL8WSiH+DhrRnGBw==", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [Column1 = _t]),
+    Column1 = Source[Column1]
+in
+    Column1
+
+// dmiNewColumns
+let
+    Source = if List.Count( List.RemoveMatchingItems(DMIDownload_headers,mDMI_headers & RemovedDMI_headers) ) = 0 then {"本周DMI无新增列"} else  List.RemoveMatchingItems(DMIDownload_headers,mDMI_headers & RemovedDMI_headers)
+in
+    Source
+
+
+// Mode
+"\\10.10.1.215\dcm$\Team Folder\Execution Team\" meta [IsParameterQuery=true, List={"\\10.10.1.215\dcm$\Team Folder\Execution Team\", "C:\Users\ktkt2\OneDrive\EXE Team\", "C:\Users\kingsley.tong\OneDrive\EXE Team\"}, DefaultValue="\\10.10.1.215\dcm$\Team Folder\Execution Team\", Type="Any", IsParameterQueryRequired=true]
+
+// mDMI_headers
+let
+  Source = Excel.Workbook(
+    File.Contents(Mode &"DataHub\DEALs MASTER.xlsm")
+  ),
+    Colnames = Table.ColumnNames(Source{[Item="mDMI",Kind="Table"]}[Data]),
+    #"Converted to Table" = Table.FromList(Colnames, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
+    #"Replaced Value" = Table.ReplaceValue(#"Converted to Table","_DMI","",Replacer.ReplaceText,{"Column1"}),
+    Column1 = #"Replaced Value"[Column1]
+
+  in Column1
+
+// DMIDownload_headers
+let
+    Source = Excel.CurrentWorkbook(){[Name="DMIrange"]}[Content],
+    #"Filtered Rows" = Table.SelectRows(Source, each ([Column1] = "信用主体")),
+    #"Promoted Headers" = Table.ColumnNames(Table.PromoteHeaders(#"Filtered Rows", [PromoteAllScalars=true])),
+    #"Converted to Table" = Table.FromList(#"Promoted Headers", Splitter.SplitByNothing(), null, null, ExtraValues.Error),
+    #"Filtered Rows1" = Table.SelectRows(#"Converted to Table", each not Text.Contains([Column1], "Column")),
+    Column1 = #"Filtered Rows1"[Column1]
+in
+    Column1
+
+// Dummy_headers
+let
+    Source = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("i45W8sxLSa1QitWJVno6Z8PTnl1gZmhBSmJJfhGYHZKZm1pckphbAOY5Z6QmZyvFxgIA", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [Column1 = _t]),
+    Column1 = Source[Column1]
+in
+    Column1
+
+// dmiChangedColumns
+let
+ Source = List.RemoveMatchingItems(mDMI_headers,(DMIDownload_headers & Dummy_headers))
+in
+ Source

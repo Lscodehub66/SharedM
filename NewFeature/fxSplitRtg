@@ -1,0 +1,24 @@
+(TableName as table, RtgResultColName as text, SourceName as text) =>
+    let
+        Source = TableName,
+        McolName = SourceName & "_穆迪",
+        ScolName = SourceName & "_标普",
+        FcolName = SourceName & "_惠誉",
+        BeforeDelimiter = Table.AddColumn(
+            Source, McolName, each Text.BeforeDelimiter(Record.Field(_, RtgResultColName), "/"), type text
+        ),
+        BetweenDelimiter = Table.AddColumn(
+            BeforeDelimiter,
+            ScolName,
+            each Text.BetweenDelimiters(Record.Field(_, RtgResultColName), "/", "/"),
+            type text
+        ),
+        AfterDelimiter = Table.AddColumn(
+            BetweenDelimiter,
+            FcolName,
+            each Text.AfterDelimiter(Record.Field(_, RtgResultColName), "/", {0, RelativePosition.FromEnd}),
+            type text
+        ),
+        Output = if Text.Contains(SourceName, "DMI") then BetweenDelimiter else AfterDelimiter
+    in
+        Output

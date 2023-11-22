@@ -1,0 +1,29 @@
+(TableName as table) =>
+let
+    Source = TableName,
+    Prefix = try Prefix otherwise "Dummy",
+    CN_Source = Table.ColumnNames(Source),
+    HD = List.Intersect({{"年期", "发行期限(年)"}, CN_Source}),
+    DuplicatedCol = Table.DuplicateColumn(Source, HD{0}, Prefix & HD{0}),
+    NAToBlank = Table.ReplaceValue(  DuplicatedCol , "--", "", Replacer.ReplaceValue, {Prefix & HD{0}}),
+    ChangedType = Table.TransformColumnTypes(NAToBlank, {{Prefix & HD{0}, type number}}),
+    ReplacedErrors = Table.ReplaceErrorValues(ChangedType, {{Prefix & HD{0}, -1}}),
+    AddedCol1 = Table.AddColumn(
+        ReplacedErrors,
+        "年期分类",
+        each
+            if Record.Field(_, Prefix & HD{0}) = 0 or Record.Field(_, Prefix & HD{0}) = null then
+                "--"
+            else if Record.Field(_, Prefix & HD{0}) < 0 then
+                "永续"
+            else if Record.Field(_, Prefix & HD{0}) <= 1 then
+                "≤1年"
+            else if Record.Field(_, Prefix & HD{0}) <= 3 then
+                "1-3年"
+            else if Record.Field(_, Prefix & HD{0}) <= 5 then
+                "3-5年"
+            else
+                "≥5年"
+    )
+in
+    AddedCol1

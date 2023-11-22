@@ -1,0 +1,6 @@
+(Input as any, ReplaceValue as any) =>
+
+let
+Source = if Input = null  then  ReplaceValue else Input
+in
+Source

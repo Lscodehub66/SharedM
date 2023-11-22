@@ -1,0 +1,18 @@
+// Fn = Load("fxSafeTF") (Source, { "亿港币","亿美元" ,"亿元", "发行规模(亿)"},Number.Round,3),
+(
+    TableName as table,
+    _PredefinedList as list,
+    _Fn as function,
+    optional _SecondArgument as any,
+    optional _ThirdArgument as any
+) =>
+    let
+        Source = TableName,
+        CN_Source = Table.ColumnNames(Source),
+        Intersected = List.Intersect({CN_Source, _PredefinedList}),
+        Output = List.Accumulate(
+            Intersected, Source, (s, c) =>
+                Table.TransformColumns(s, {c, each _Fn(_, _SecondArgument, _ThirdArgument)})
+        )
+    in
+        Output

@@ -1,0 +1,55 @@
+let
+    DB_Name = "mCurated",
+    //【Input】Text//
+    InsertNewFromToporBelow = "Below",
+    //【Input】Top or Below
+    RemoveDupeMethod = "LIFO",
+    //【Input】LIFO or FIFO
+    Add_Source = Dynamic_PQAdd,
+    //【Input】PQ//
+    Add_CN_RemoveNARows = {"BISL_ROLE", "Check", "信用主体"},
+    //【Input】Eligibility to include in this database
+    Add_CN_DistinctCol = {"Check", "信用主体"},
+    //
+    DB_Source = CWB(DB_Name),
+    DB_Source_CN = Table.ColumnNames(DB_Source),
+    Add_HD_NoNA = List.Intersect(Add_CN_RemoveNARows, DB_Source_CN){0},
+    Add_HD = List.Intersect({Add_CN_DistinctCol, DB_Source_CN}){0},
+    //
+    Add_Filtered = Table.SelectRows(
+        Add_Source, each not List.Contains({"--", "", null}, Record.Field(_, Add_HD_NoNA))
+    ),
+    #"//Add_Direction//" =
+        if InsertNewFromToporBelow = "Top" then
+            {Add_Filtered, DB_Source}
+        else
+            {DB_Source, Add_Filtered},
+    Combined = Load("fxCombine")(#"//Add_Direction//", "Keep", DB_Source_CN),
+    #">>ShowDupe" = Table.Distinct(
+        Table.Buffer(
+            Table.Sort(
+                Load("fxShowDupe")(Combined, {Add_HD}), {{Add_HD, Order.Descending}, {"Timestamp", Order.Descending}}
+            )
+        ),
+        {Add_HD}
+    ),
+    RDupe_Checked =
+        if Add_HD = "Check" then
+            Table.ReplaceValue(
+                Combined,
+                each [Check],
+                each Load("fxCheck")([定价日], "yyMMdd", [ISIN], "Y"),
+                Replacer.ReplaceValue,
+                {"Check"}
+            )
+        else
+            Combined,
+    RDupe_Indexed = Table.AddIndexColumn(Combined, Prefix & "RDupeIndex", 1, 1),
+    #"//RDupe_Order//" = if RemoveDupeMethod <> "FIFO" then Order.Ascending else Order.Descending,
+    RDupe_Sorted = Table.Buffer(
+        Table.Sort(RDupe_Indexed, {{Add_HD, #"//RDupe_Order//"}, {Prefix & "RDupeIndex", #"//RDupe_Order//"}})
+    ),
+    RDupe_Removed = Table.Distinct(RDupe_Sorted, Add_HD),
+    ManagedDB = fxDBManager(RDupe_Removed, "m")
+in
+    ManagedDB

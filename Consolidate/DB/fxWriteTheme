@@ -1,0 +1,73 @@
+(TableName as table) =>
+    let
+        //
+        Source = TableName,
+        Prefix = Load("Prefix"),
+        CN_Source = Table.ColumnNames(Source),
+        //Prep
+        ColumnsReferenced = {"清算地", "货币细分", "ESG", "品种主题"},
+        ColumnsToAdd = {"ESG主题","主题" ,"发行品种"},
+        Prep1 = Table.RemoveColumns(Source, ColumnsToAdd, MissingField.Ignore),
+        Theme_Dummy1 = Table.DuplicateColumn(Prep1, "ESG", "ESG主题"),
+        Theme_Dummy2 = Table.AddColumn(Theme_Dummy1, Prefix & "2", each fxCleaner([品种主题], "品种"), type text),
+        Theme_Dummy3 = Table.AddColumn(
+            Theme_Dummy2,
+            Prefix & "3",
+            each if Text.Contains([清算地], "澳交所") then "澳交所" else if Text.Contains([清算地], "上清") then "玉兰" else "",
+            type text
+        ),
+        Theme_Dummy4 = Table.AddColumn(
+            Theme_Dummy3,
+            Prefix & "4",
+            each if Text.Contains([品种主题], "存款证") then "" else if [货币细分] = "自贸债" or [货币细分] = "点心债" then [货币细分] else "",
+            type text
+        ),
+        Theme_Merged = Table.AddColumn(
+            Theme_Dummy4,
+            "主题",
+            each
+                Text.Combine(
+                    {
+                        [ESG主题],
+                        Record.Field(_, Prefix & "2"),
+                        Record.Field(_, Prefix & "3"),
+                        Record.Field(_, Prefix & "4")
+                    },
+                    ""
+                ),
+            type text
+        ),
+        Theme_Suffix = Table.TransformColumns(
+            Theme_Merged,
+            {
+                {
+                    "主题",
+                    each
+                        if
+                            not Text.EndsWith(_, "债")
+                            and not Text.EndsWith(_, "券")
+                            and not Text.EndsWith(_, "据")
+                            and not Text.EndsWith(_, "股")
+                            and not Text.EndsWith(_, "证")
+                            and _ <> ""
+                        then
+                            _ & "债券"
+                        else
+                            _
+                }
+            }
+        ),
+        Theme_Final = Table.AddColumn(
+            Theme_Suffix,
+            "发行品种",
+            each
+                if [主题] = "" and Text.Contains([结构], "备证") then
+                    "信用增强债券"
+                else if [主题] <> "" then
+                    [主题]
+                else
+                    "高级债"
+        ),
+        Output = if Table.HasColumns(Source, ColumnsReferenced) then Theme_Final else Source
+    in
+        Output

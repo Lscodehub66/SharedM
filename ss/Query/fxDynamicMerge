@@ -1,0 +1,72 @@
+(
+    TableName as table,
+    TargetTableName as table,
+    SourceCol as text,
+    TargetCol as text,
+    TargetList as list,
+    optional OptionalOutputList as list,
+    optional OptionalDistinctCriteria as list
+) =>
+    let
+        Source = TableName,
+        Targettbl = TargetTableName,
+        //Definitions
+        DBExcList = {"Timestamp", "Updator", "Index"},
+        CrExcList = {"曾用名", "主体备注", "公司类型", "上市类型", "系"},
+        ExcList = DBExcList & CrExcList,
+        OutputList = if OptionalOutputList = {null} or OptionalOutputList = null then {""} else OptionalOutputList,
+        DistinctCriteria =
+            if OptionalDistinctCriteria = null or OptionalDistinctCriteria = {null} then
+                {""}
+            else
+                OptionalDistinctCriteria,
+        //
+        ExpandList =
+            if TargetList = {"Y"} then
+                List.RemoveItems(Table.ColumnNames(Targettbl), Table.ColumnNames(Source) & ExcList)
+            else if List.Contains(TargetList, "Y") then
+                List.RemoveItems(TargetList, ExcList & {"Y"})
+            else if TargetList = {"Ascending"} or TargetList = {"Descending"} or TargetList = {""} then
+                List.RemoveItems(Table.ColumnNames(Targettbl), Table.ColumnNames(Source) & DBExcList)
+            else if OutputList = {""} then
+                List.RemoveItems(TargetList, Table.ColumnNames(Source) & DBExcList)
+            else
+                TargetList,
+        RenamedList =
+            if OutputList = {""} or OutputList = {"Ascending"} or OutputList = {"Descending"} then
+                ExpandList
+            else
+                OutputList,
+        //Functions
+        MergedQ = Table.NestedJoin(Source, {SourceCol}, Targettbl, {TargetCol}, "Data", JoinKind.LeftOuter),
+        ExpandedQ = Table.ExpandTableColumn(MergedQ, "Data", ExpandList, RenamedList),
+        Distincted =
+            if List.ContainsAll(Table.ColumnNames(ExpandedQ), DistinctCriteria) then
+                Table.Distinct(ExpandedQ, DistinctCriteria)
+            else
+                Table.Distinct(ExpandedQ),
+        Sorted =
+            if TargetList = {"Ascending"} then
+                Table.Sort(Distincted, {{"SortValue", Order.Ascending}})
+            else if TargetList = {"Descending"} then
+                Table.Sort(Distincted, {{"SortValue", Order.Descending}})
+            else
+                Distincted,
+        Removed =
+            if TargetList = {"Ascending"} or TargetList = {"Descending"} then
+                Table.RemoveColumns(
+                    Sorted,
+                    List.RemoveItems(Table.ColumnNames(Distincted), Table.ColumnNames(Source)),
+                    MissingField.Ignore
+                )
+            else if TargetList = {"SortValue"} then
+                Table.SelectColumns(
+                    Sorted, List.Distinct(Table.ColumnNames(Source) & {"SortValue"}), MissingField.Ignore
+                )
+            else if TargetList = {null} then
+                Source
+            else
+                Sorted,
+        FormattedData = fxDataFormat(Removed)
+    in
+        FormattedData

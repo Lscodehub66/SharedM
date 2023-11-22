@@ -1,0 +1,30 @@
+( TableName as table ) =>
+ let
+  Source = TableName, 
+  // Join ESG External Review
+  JoinESG = fxDynamicMerge ( Source, Excel.CurrentWorkbook(){[ Name = "ESGExternalReview" ]}[Content], "Check", "Check", { "Y" }, { "" } ), 
+  // Join mBISL
+  JoinDBmBISL = fxDynamicMerge ( JoinESG, mBISL, "Check", "Check", { "Y" }, { "" } ), 
+  // Revalidate DMI
+  ReValidateDMI = { "发行场所", "筹款用途" }, 
+  MergedQ = Table.NestedJoin ( JoinDBmBISL, { "Check" }, mDMI, { "Check" }, "mDMI", JoinKind.LeftOuter ), 
+  ExpandedQ = Table.Distinct ( Table.ExpandTableColumn ( MergedQ, "mDMI", ReValidateDMI ) ), 
+  // SKIPPED
+  ReValidateListing = Table.ReplaceValue (
+   ExpandedQ, 
+   each [上市], 
+   each if [上市] = "--" and [发行场所] <> null then fxSmartListing ( [发行场所] ) else [上市], 
+   Replacer.ReplaceValue, 
+   { "上市" }
+  ), 
+  // SKIPPED
+  RevalidateESG = Table.ReplaceValue (
+   ExpandedQ, 
+   "--", 
+   each if Text.Contains ( [筹款用途], "绿" ) and [ESG] = "--" then "Green" else if Text.Contains ( [筹款用途], "可持续" ) and [ESG] = "--" then "Sustainable" else "--", 
+   Replacer.ReplaceValue, 
+   { "ESG" }
+  ), 
+  RemoveCol1 = Table.RemoveColumns ( RevalidateESG, { "发行场所", "发行人Temp" }, MissingField.Ignore )
+ in
+  RemoveCol1

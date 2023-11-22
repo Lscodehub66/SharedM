@@ -1,0 +1,15 @@
+let
+
+    DMIBank = Load("fxDMIBank")(fxConnect("银行")),
+    //
+    Source = Table.SelectRows(CWB("BankUniverse"), each [IS_SBLC] = "Y"),
+    Merged = Load("fxMerge")(Source, DMIBank, "信用主体", "发行人全称", {"描述", "穆迪/标普"}, {""}),
+    Sorted = Table.Sort(Merged, {{"SortValue", Order.Ascending}}),
+    AddedIndex = Table.AddIndexColumn(Sorted, "Index", 1, 1, Int64.Type),
+    SCol = Table.SelectColumns(
+        AddedIndex,
+        List.Distinct({"Index"} & List.RemoveItems(Table.ColumnNames(AddedIndex), {"SortValue"})),
+        MissingField.UseNull
+    )
+in
+    SCol

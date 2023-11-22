@@ -1,0 +1,27 @@
+// DMIFilters
+let
+ Source = Table.FromRows (
+  Json.Document (
+   Binary.Decompress (
+    Binary.FromText ( "dY9tCoJAEIbvsr89Sx1AvEtCkJIUoVBhCf4xpY81All3Wb3Mzn7coiVCC+rfzPs8M8y4LoKgUquFujPIlshBJm2kj20xnSDPcZHGc0VPA9b9UdFixDCjEJABwxprfrHhaKiDLxh/sVq2nW1/MNk9zLZUYQvBWeeRTHqIfu0wxV4S/NcTfa6SUhAmeGxTQa6QckGprDcmbuzAx+Hfb8MtU2ElEyzY7i15Tw==", BinaryEncoding.Base64 ), 
+    Compression.Deflate
+   )
+  ), 
+  let
+   _t = ( ( type nullable text ) meta [ Serialized.Text = true ] )
+  in
+   type table [ Header = _t, Keyword = _t, #"O/F" = _t ]
+ ), 
+ Removed = Table.SelectRows ( Source, each if 澳门Filter = "OFF" then not Text.Contains ( [Keyword], "澳门" ) else true ), 
+ Removed1 = Table.SelectRows ( Removed, each if 香港Filter = "OFF" then not Text.Contains ( [Keyword], "香港" ) else true ), 
+ Filtered = Table.SelectRows ( Removed1, each [#"O/F"] <> "OFF" ), 
+ SelectedCol = Table.SelectColumns ( Filtered, { "Keyword" } ), 
+ Keyword = SelectedCol[Keyword]
+in
+ Keyword
+
+// 澳门Filter
+"OFF" meta [IsParameterQuery=true, List={"ON", "OFF"}, DefaultValue="ON", Type="Text", IsParameterQueryRequired=true]
+
+// 香港Filter
+"ON" meta [IsParameterQuery=true, List={"ON", "OFF"}, DefaultValue="ON", Type="Text", IsParameterQueryRequired=true]

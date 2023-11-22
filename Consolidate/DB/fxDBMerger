@@ -1,0 +1,32 @@
+(TableName as table) =>
+    let
+        Source = TableName,
+        //Merge tables ESGExternal Review & DMI UOP is seperated as steps in deal_master
+        mCreditNOTBC = Load("fxDataFormat")(Excel.CurrentWorkbook(){[Name = "mCredit"]}[Content], 1),
+        JoinSBLC = Load("fxMerge")(Source, mCreditNOTBC, "备证行", "信用主体简称", {"板块三级", "板块标签"}, {"备证分类", "备证行标签"}),
+        SBLCTag = Table.ReplaceValue(
+            JoinSBLC,
+            each [备证行标签],
+            each if [备证行标签] = "" or [备证分类] = "" then "--" else [备证分类] & [备证行标签],
+            Replacer.ReplaceValue,
+            {"备证行标签"}
+        ),
+        CN_Source = Table.ColumnNames(Source),
+        AddSBLCSuffix =
+            if not List.Contains(CN_Source, "备证行") then
+                Source
+            else
+                Table.TransformColumns(SBLCTag, {{"备证分类", each if _ <> "" then _ & "备证" else _, type text}}),
+        //
+        JoinDBCredit = Load("fxMerge")(AddSBLCSuffix, mCreditNOTBC, "信用主体", "信用主体", {"Y"}, {""}),
+        NoNull =
+            if List.Contains(Table.ColumnNames(JoinDBCredit), "信用主体简称") then
+                Table.ReplaceValue(JoinDBCredit, null, "【】", Replacer.ReplaceValue, {"信用主体简称"})
+            else
+                JoinDBCredit,
+        SOECreds = Table.AddColumn(
+            NoNull, "投标资历分类", each if [中资属性] = "地方国企" and not Text.Contains([板块], "金融") then "SOE Creds" else "--"
+        ),
+        MergeDate = Load("fxMerge")(SOECreds, Load("DimDate"), "定价日", "A_Date", {""}, {""})
+    in
+        MergeDate

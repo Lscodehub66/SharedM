@@ -1,0 +1,10 @@
+( TextName as text, TextDelimiter as text, SortList as list ) =>
+ let
+  Source   = TextName, 
+  TextList = List.Distinct ( Text.Split ( Source, TextDelimiter ) ), 
+  Sorted   = List.Sort ( TextList, ( a, b ) => Value.Compare ( List.PositionOf ( SortList, a ), List.PositionOf ( SortList, b ) ) ), 
+  Output   = Text.Combine ( List.Transform ( Sorted, Text.From ), TextDelimiter )
+ in
+  Output
+
+  

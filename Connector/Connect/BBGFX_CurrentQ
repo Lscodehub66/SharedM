@@ -1,0 +1,15 @@
+
+let
+    Source = Load("BBGFX"),
+    Distincted = Table.Distinct(Source,{"Base Currency","Term Currency"}),
+    //
+        #"_Calculated Latest" = List.Max(Distincted[Date_QEnd]),
+    _CurrentEOQ = Date.EndOfQuarter(Date.From(DateTime.FixedLocalNow())),
+    _CurrentYYQQ = Text.From(Date.Year(_CurrentEOQ) - 2000 )& "Q"&Number.ToText(Date.QuarterOfYear(_CurrentEOQ),"0"),
+    //
+    #"Replaced Value" = if _CurrentEOQ >  #"_Calculated Latest" then
+     Table.ReplaceValue(Table.ReplaceValue(Distincted, "Actual", each "H " & [YYQQ],Replacer.ReplaceValue,{"IS_ACTUAL"}), each [YYQQ],    _CurrentYYQQ ,Replacer.ReplaceValue,{"YYQQ"}) else Distincted
+
+in
+
+    #"Replaced Value"

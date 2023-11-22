@@ -1,0 +1,99 @@
+// = Load("fxAddDAX")(Source, "当前","上周",{"Text","Trend","Trend_CN"},"Text_Suffix")
+(
+    TableName as table,
+    Current as text,
+    Past as text,
+    TextTrendCNList as list,
+    optional CurrentCNSuffix as text,
+    optional IndiceCol as text
+) =>
+    let
+        // TableName = Splited, Current ="当前" ,   Past = "上周", TextTrendCNList={"Text","Trend","Trend_CN"} ,AddTextColforCurrentIsTrue = true,
+        Source = TableName,
+        DAXRange = if Text.Contains(Past, "初") then Text.Select(Past, {"日", "周", "月", "季", "年"}) & "初至今" else Past,
+        DAXColName = "△" & DAXRange,
+        Text = TextTrendCNList{0},
+        Trend = TextTrendCNList{1},
+        TrendCN = TextTrendCNList{2},
+        BP_CN = {"持平", "收窄", "走阔"},
+        PT_CN = {"维持不变", "下跌", "上涨"},
+        ACol1 = Table.AddColumn(
+            Source,
+            "Text_" & Current,
+            each Load("fxNumText2")(Number.ToText(Record.Field(_, Current), Record.Field(_, Text))),
+            type text
+        ),
+        ACol2 =
+            if CurrentCNSuffix = null then
+                Source
+            else
+                Table.AddColumn(
+                    ACol1,
+                    "CN_" & Current,
+                    each
+                        if Record.Field(_, "Text_" & Current) = "/" then
+                            ""
+                        else if Record.Field(_, CurrentCNSuffix) = "" then
+                            "至" & Record.Field(_, "Text_" & Current)
+                        else
+                            "报" & Record.Field(_, "Text_" & Current) & Record.Field(_, CurrentCNSuffix)
+                ),
+        Measure1 = Table.AddColumn(
+            ACol2,
+            DAXColName,
+            each
+                if not Text.Contains(Record.Field(_, Text), "bp") and Text.Contains(Record.Field(_, Trend), "bp")
+                //i.e rates format
+                then
+                    Number.Round((Record.Field(_, Current) - Record.Field(_, Past)) * 10000, 1)
+                else if Text.Contains(Record.Field(_, Text), "bp") and Text.Contains(Record.Field(_, Trend), "bp") then
+                    //i.e SPD Format
+                    Number.Round(Record.Field(_, Current) - Record.Field(_, Past), 1)
+                else
+                    Number.Round((Record.Field(_, Current) - Record.Field(_, Past)) / Record.Field(_, Past), 3),
+            type number
+        ),
+        M1Text = Table.AddColumn(
+            Measure1,
+            "Text_" & DAXColName,
+            each Load("fxNumText2")(Number.ToText(Record.Field(_, DAXColName), Record.Field(_, Trend)))
+        ),
+        M1Text_CN =
+            if not Table.HasColumns(Source, "Trend_CN") then
+                Table.AddColumn(
+                    M1Text, "Trend_CN", each if Text.Contains(Record.Field(_, Trend), "bp") then BP_CN else PT_CN
+                )
+            else
+                M1Text,
+        M1Text_CN2 = Table.AddColumn(
+            M1Text_CN,
+            "CN_" & "Text_" & DAXColName,
+            each
+                if Text.StartsWith(Record.Field(_, "Text_" & DAXColName), "/") then
+                    [Trend_CN]{0}
+                else if Text.StartsWith(Record.Field(_, "Text_" & DAXColName), "-") then
+                    [Trend_CN]{1} & Text.AfterDelimiter(Record.Field(_, "Text_" & DAXColName), "-")
+                else
+                    [Trend_CN]{2} & Record.Field(_, "Text_" & DAXColName)
+        ),
+        Writer =
+            if IndiceCol = null then
+                M1Text_CN2
+            else
+                Table.AddColumn(
+                    M1Text_CN2,
+                    "CN_描述",
+                    each
+                        if [RESIDENCE] = "美国国债利率" then
+                            Record.Field(_, IndiceCol) & Record.Field(_, "CN_" & "Text_" & DAXColName)
+                        else
+                            Text.Combine(
+                                {
+                                    Record.Field(_, IndiceCol) & Record.Field(_, "CN_" & "Text_" & DAXColName),
+                                    Record.Field(_, "CN_" & Current)
+                                },
+                                "，"
+                            )
+                )
+    in
+        Writer

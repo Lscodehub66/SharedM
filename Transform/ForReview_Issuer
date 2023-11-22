@@ -1,0 +1,11 @@
+let
+    Source = DLD_Add,
+    YmeansExcludeFIMTN = "Y",
+    Filtered = Table.SelectRows(Source, each [IS_FIMTN] <> YmeansExcludeFIMTN),
+    HDText = "Review_wIssuer",
+    HD = Get("Header_S_Dynamic_" & HDText),
+    //   {"删除及隐藏", "ISIN", "定价日", "信用主体", "发行评级", "主体评级", "结构", "备证行", "港分_ROLE", "澳分_ROLE", "Check"}
+    SCol = Table.SelectColumns(Filtered, HD, MissingField.UseNull)
+
+in
+  SCol

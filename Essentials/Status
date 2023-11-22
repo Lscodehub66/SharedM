@@ -1,0 +1,15 @@
+// let LoadCode = Load("Status","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
+let
+    Monday = if OVRDMonday = "" or OVRDMonday = null  then CWB("Monday") else OVRDMonday,
+    Source  = #table({"Updator","Monday"}, {{ CWB("UpdatorWeekly"), Date.From(Monday)}}),
+    #"Added Custom1" = Table.AddColumn(Source, "当前", each Date.AddDays([Monday] ,-3),type date),
+    Custom1 = Table.AddColumn(#"Added Custom1", "上周", each Date.AddDays([当前] ,-7),type date),
+    Custom5 = Table.AddColumn(Custom1, "年初", each Load("fxNextWeekDay")(  Date.StartOfYear([Monday])),type date),
+    Custom2 = Table.AddColumn(Custom5, "近1年", each Load("fxNextWeekDay")(  Date.AddYears([Monday] ,-1)),type date),
+    Custom3 = Table.AddColumn(#"Custom2", "近5年", each Load("fxNextWeekDay")(  Date.AddYears([Monday] ,-5)),type date),
+    #"Merged Queries" = Table.NestedJoin(Custom3, {"当前"}, DimDate, {"A_Date"}, "DimDate", JoinKind.LeftOuter),
+    #"Expanded DimDate" = Table.ExpandTableColumn(#"Merged Queries", "DimDate", {"YYW"}, {"当前_YYW"}),
+    #"Merged Queries1" = Table.NestedJoin(#"Expanded DimDate", {"上周"}, DimDate, {"A_Date"}, "DimDate", JoinKind.LeftOuter),
+    #"Expanded DimDate1" = Table.ExpandTableColumn(#"Merged Queries1", "DimDate", {"YYW"}, {"上周_YYW"})
+in
+    #"Expanded DimDate1"

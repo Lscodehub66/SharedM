@@ -1,0 +1,210 @@
+// GNG
+let
+    Source =  if Table.RowCount ( Table.SelectRows ( Excel.CurrentWorkbook(){[Name="tbl_review_issuer"]}[Content], each not List.IsEmpty ( List.RemoveMatchingItems ( Record.FieldValues ( _ ), { "", null } ) ) ) ) >1 then "GO" else "NO-GO" 
+
+in
+    Source
+
+// Load
+let GPS  = try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Remote",  FilePath = if GPS = "Remote" then "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM\Load" else "\\10.10.1.215\dcm$\Team Folder\Execution Team\DataHub\SharedM\Load",  LoadCode = Text.FromBinary ( Binary.Buffer ( File.Contents ( FilePath ) ) ), EVA = Expression.Evaluate ( LoadCode, #shared ) in EVA
+
+// ReviewedConso
+let
+fxDBFinalization = Load("fxDBFinalization"),
+    Reviewed_credit = fxDataFormat(Table.PromoteHeaders ( Excel.CurrentWorkbook(){[ Name = "tbl_review_shortname" ]}[Content], [ PromoteAllScalars = true ] )),
+ Source      = Reviewed_issuer,
+    MReview = fxDynamicMerge(Source,Reviewed_curated, "Check","Check", {""} , {""}),
+     MCWB_BISL = fxDynamicMerge (MReview,Table.PromoteHeaders ( Excel.CurrentWorkbook(){[ Name = "tbl_review_BISL" ]}[Content], [ PromoteAllScalars = true ] ),"Check" ,   "Check" , {""} , {""}),
+ // Tocheck mastercredit database
+  MmCredit = fxDynamicMerge(MCWB_BISL , mCredit, "信用主体", "信用主体", {""}, {""}),
+ MDLDconso     = fxDynamicMerge  (   MmCredit , CWB_DLDconso, "Check" ,   "Check" , {""} , {""}),
+ //
+ InvokedPNum = fxtblPNum(MDLDconso ),
+    InvokedPText = fxtblPText(InvokedPNum),         
+MCWB_Credit = fxDynamicMerge(InvokedPText, Reviewed_credit, "信用主体","信用主体", {"SHORTNAMER","中资属性","板块"} , {"SHORTNAMER","中资属性","Sector"}),
+    Replaced    = fxDataFormat ( Table.ReplaceValue ( MCWB_Credit, "", each if   [SHORTNAMER] <> null then [SHORTNAMER] else   "", Replacer.ReplaceValue, { "信用主体简称" } )), 
+ Replaced1   = Table.ReplaceValue ( Replaced, "", each if [Sector] <> null then  [Sector] else "地方平台", Replacer.ReplaceValue, { "板块" } ), 
+ Custom2     = Table.ReplaceValue ( Replaced1, "", each if Text.Contains ( [增发判定], "增发" ) and [FPG] <> "" then [FPG] else [定价], Replacer.ReplaceValue, { "定价" } ), 
+ FinalizedDB = 
+  if GNG = "GO" then
+   fxDBFinalization ( Custom2 )
+  else
+   Table.SelectRows ( Source, each not List.IsEmpty ( List.RemoveMatchingItems ( Record.FieldValues ( _ ), { "", null } ) ) )
+ in
+ FinalizedDB
+
+// SharedM
+// SharedM
+let
+    GPS = try Excel.CurrentWorkbook(){[Name = "GPS"]}[Content][Column1]{0} otherwise "Remote",
+    Source =
+        try
+            Folder.Files(
+                if GPS = "Remote" then
+                    "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM"
+                else
+                    "\\10.10.1.215\dcm$\Team Folder\Execution Team\DataHub\SharedM"
+            ) otherwise Folder.Files("\\10.10.1.215\dcm$\Team Folder\Execution Team\DataHub\SharedM"),
+    Merged = Table.AddColumn(
+        Source,
+        "Path",
+        each
+            if
+                not Text.Contains([Name], "fx", Comparer.OrdinalIgnoreCase)
+                and not Text.StartsWith([Name], "q", Comparer.OrdinalIgnoreCase)
+            then
+                [Folder Path] & "Q" & [Name]
+            else
+                Text.Combine({[Folder Path], [Name]}, ""),
+        type text
+    ),
+    Filtered = Table.SelectRows(
+       Merged,
+        each
+             Text.StartsWith([Name], "q", Comparer.OrdinalIgnoreCase)
+                or Text.StartsWith([Name], "fx", Comparer.OrdinalIgnoreCase)
+            
+    ),
+    Removed = Table.SelectColumns(Filtered, {"Name", "Path"})
+in
+    Removed
+
+// fxShared
+// fxShared
+( FunctionFileName as text ) =>
+ let
+  Filtered = Table.SelectRows (SharedM, each [Name] = FunctionFileName ), 
+  Path     = Filtered[Path]{0}, 
+  Source   = Text.FromBinary ( File.Contents ( Path ) ) 
+
+ in
+  Source
+
+// fxDataFormat
+let 
+Source = fxShared("fxDataFormat"),
+    EVA = Expression.Evaluate(Source, #shared)    
+in
+    EVA
+
+// fxDynamicMerge
+let 
+Source = fxShared("fxDynamicMerge"),
+    EVA = Expression.Evaluate(Source, #shared)    
+in
+    EVA
+
+// fxtblPText
+let 
+Source = fxShared("fxtblPText"),
+    EVA = Expression.Evaluate(Source, #shared)    
+in
+    EVA
+
+// fxtblPNum
+let 
+Source = fxShared("fxtblPNum"),
+    EVA = Expression.Evaluate(Source, #shared)    
+in
+    EVA
+
+// Reviewed_issuer
+let
+    Source =  Excel.CurrentWorkbook(){[Name="tbl_review_issuer"]}[Content],
+  Promoted    = Table.PromoteHeaders ( Source ,[ PromoteAllScalars = true ] ), 
+ Filtered    = Table.SelectRows ( Promoted, each ( [定价日] <> null ) and [ISIN] <> null ),
+    Custom1 = if GNG = "GO" then Table.TransformColumns(Filtered, {{"主体评级", each if _ <> "【】" then Text.Replace(_,"【】","【--】") else _},
+{"发行评级", each if _ <> "【】" then Text.Replace(_,"【】","【--】") else _},
+{"信用主体", each if List.Count(Text.Split(_,"【"))>2 then Text.BeforeDelimiter(_,"【",{0, RelativePosition.FromEnd}) else _}} ) else Source
+in
+      Custom1
+
+// Reviewed_curated
+let
+    Source =  Excel.CurrentWorkbook(){[Name="tbl_review"]}[Content],
+    Promoted    = Table.PromoteHeaders ( Source ,[ PromoteAllScalars = true ] ), 
+ Filtered    = Table.SelectRows ( Promoted, each ( [定价日] <> null ) and [ISIN] <> null ),
+ Replaced = Table.ReplaceValue(Filtered, "【】" , each if [IPG] <> "" and  [IPG] <> "【】" and [FPG] ="【】" then [票息] else "", Replacer.ReplaceValue,{"FPG"}),
+ Renamed = Table.RenameColumns( Replaced ,{{"IPG","IPT_DMI"},{"FPG","FPG_DMI"},{"定价","定价_DMI"},{"收窄基点","收窄"}},MissingField.Ignore),
+    #"Removed Columns" = if GNG = "GO" then Table.RemoveColumns(Renamed,{"票息"}) else Source
+in
+  #"Removed Columns"
+
+// fxLauncher
+let 
+Source = fxShared("fxLauncher"),
+    EVA = Expression.Evaluate(Source, #shared)    
+in
+    EVA
+
+// mCredit
+let
+Source = fxLauncher("DataHub",null),
+    mCredit_Table = Source{[Item="mCredit",Kind="Table"]}[Data],
+    SelectedCol = Table.SelectColumns(mCredit_Table,{"信用主体", "信用主体简称","板块","DEBUT_DATE"})
+in
+    SelectedCol
+
+// CWB_DLDconso
+let
+    Source =  fxDataFormat(Excel.CurrentWorkbook(){[Name="DLDconso"]}[Content])
+in
+    Source
+
+// writer
+// writer
+let
+ Source           = ReviewedConso, 
+ FnNewIssueWriter = fxNewIssueWriter ( Source, "1周", "2主体", "3详情", "4品种", "5价格", "6担任" ), 
+ SelectedCol      = 
+  if Table.RowCount ( Table.SelectRows ( Source, each not List.IsEmpty ( List.RemoveMatchingItems ( Record.FieldValues ( _ ), { "", null } ) ) ) ) > 0 then
+   Table.SelectColumns ( FnNewIssueWriter, { "Index", "板块", "货币", "信用主体(备证行)", "描述", "Stats" }, MissingField.UseNull )
+  else
+   Table.SelectColumns (
+    Table.SelectRows ( Source, each not List.IsEmpty ( List.RemoveMatchingItems ( Record.FieldValues ( _ ), { "", null } ) ) ), 
+    { "Index", "板块", "货币", "信用主体(备证行)", "描述", "Stats" }, 
+    MissingField.UseNull
+   )
+in
+ SelectedCol
+
+// fxNewIssueWriter
+// fxNewIssueWriter
+let 
+Source = fxShared("fxNewIssueWriter"),
+    EVA = Expression.Evaluate(Source, #shared)    
+in
+    EVA
+
+// writer_fi
+let
+    Source = writer,
+    #"Filtered Rows" = Table.SelectRows(Source, each Text.Contains([板块],"金融"))
+in
+    #"Filtered Rows"
+
+// writer_others
+let
+    Source = writer,
+    #"Filtered Rows" = Table.SelectRows(Source, each not Text.Contains([板块],"金融"))
+in
+    #"Filtered Rows"
+
+// writer_CNH
+let
+    Source = writer,
+    #"Filtered Rows" = Table.SelectRows(Source, each not Text.Contains([板块],"金融") and Text.Contains([货币], "CNH"))
+in
+    #"Filtered Rows"
+
+// writer_NotCNH
+let
+    Source = writer,
+    #"Filtered Rows" = Table.SelectRows(Source, each not Text.Contains([板块],"金融") and not Text.Contains([货币], "CNH")),
+    #"Sorted Rows" = if Table.RowCount ( Table.SelectRows ( Source, each not List.IsEmpty ( List.RemoveMatchingItems ( Record.FieldValues ( _ ), { "", null } ) ) ) ) > 0 then
+ Table.Sort(#"Filtered Rows",{{"Index", Order.Ascending}})
+ else
+   Table.SelectRows ( Source, each not List.IsEmpty ( List.RemoveMatchingItems ( Record.FieldValues ( _ ), { "", null } ) ) )
+
+in
+    #"Sorted Rows"

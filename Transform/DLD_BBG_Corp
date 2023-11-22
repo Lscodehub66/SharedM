@@ -1,0 +1,28 @@
+// let LoadCode = Load("DLD_BBG_Corp","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+
+let
+    Source = DLD_SourcePQ,
+    Table = Source{[Item = "tbl_dmi_isin", Kind = "Table"]}[Data],
+RCol = Table.RemoveColumns(Table, {"Index"},MissingField.Ignore),
+    FBlank = Table.SelectRows(RCol, each not List.IsEmpty(List.RemoveMatchingItems(Record.FieldValues(_), {"", null}))),
+    FormattedData = Load("fxDataFormat")(FBlank ),
+    TFCols = Table.TransformColumns(
+        FormattedData, {{"发行评级", each fxCleaner(_, "Rtg")}, {"主体评级", each fxCleaner(_, "Rtg")}}
+    ),
+    JoinAddTap =
+        if TapLookup[Column3]{0} = "N" then
+            fxByeAllErrors(TFCols)
+        else
+            Table.Combine(
+                {
+                    fxByeAllErrors(TFCols),
+                    Table.SelectColumns(CWB_AddTap, Table.ColumnNames(TFCols), MissingField.UseNull)
+                }
+            ),
+    Crossroad =
+        if  not Text.Contains(Multi, "BBG")  then
+            CWB("DLD_BBG_Corp")
+        else
+            Load("fxCheckNDupe")(JoinAddTap)
+in
+    Crossroad

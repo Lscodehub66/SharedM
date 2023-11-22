@@ -1,0 +1,10 @@
+// let LoadCode = Load("wDealWriter","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
+
+let Source = Load("Status"),
+    #"Removed Other Columns" = Table.SelectColumns(Source,{"当前_YYW"},MissingField.UseNull),
+    MergedQ = Load("fxMerge")(#"Removed Other Columns",  Load("deal_master"),"当前_YYW","YYW" , {""}, {""}),
+    Filtered  = Table.Buffer(Table.SelectRows (  MergedQ, each [删除及隐藏] = "")),
+    WriteNewIssue            = Load("fxNewIssueWriter") ( Filtered, "1周", "2主体", "3详情", "4品种", "5价格", "6担任" ),
+    #"Removed Other Columns1" = Table.SelectColumns(WriteNewIssue,{"Index", "Writer"})
+in
+    #"Removed Other Columns1"

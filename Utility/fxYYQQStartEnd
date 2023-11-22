@@ -1,0 +1,35 @@
+(TableName as table, YYQQColName as text, optional SelectedCols as list) =>
+    let
+        Source = TableName,
+        AddCols = {"YYNum", "QNum", "Date_QStart", "Date_QEnd"},
+        Removed = Table.RemoveColumns(Source, AddCols, MissingField.Ignore),
+        #"Inserted Text Range" = Table.AddColumn(
+            Removed, "YYNum", each Text.Middle(Record.Field(_, YYQQColName), 0, 2), type text
+        ),
+        #"Inserted Last Characters" = Table.AddColumn(
+            #"Inserted Text Range", "QNum", each Text.End(Record.Field(_, YYQQColName), 1), type text
+        ),
+        #"Changed Type" = Table.TransformColumnTypes(
+            #"Inserted Last Characters", {{"YYNum", Int64.Type}, {"QNum", Int64.Type}}
+        ),
+        #"Multiplied Column" = Table.TransformColumns(
+            #"Changed Type",
+            {
+                {"YYNum", each _ + 2000, type number},
+                {"QNum", each if _ = 1 then 1 else if _ = 2 then 4 else if _ = 3 then 7 else 10, type number}
+            }
+        ),
+        #"Added Custom" = Table.AddColumn(
+            #"Multiplied Column", "Date_QStart", each #date(Record.Field(_, "YYNum"), Record.Field(_, "QNum"), 1)
+        ),
+        #"Inserted End of Quarter" = Table.AddColumn(
+            #"Added Custom", "Date_QEnd", each Date.EndOfQuarter(Record.Field(_, "Date_QStart")), type date
+        ),
+        Intersected = Table.ColumnNames(Source) &  List.Intersect({SelectedCols,  AddCols}),
+        SCol =
+            if SelectedCols = {null} or SelectedCols = null or List.Count(Intersected) = 0 then
+                #"Inserted End of Quarter"
+            else
+                Table.SelectColumns(#"Inserted End of Quarter", Intersected)
+    in
+         SCol 

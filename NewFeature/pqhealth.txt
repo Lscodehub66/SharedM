@@ -1,0 +1,6 @@
+pqhealth
+
+CN_CWB_DMI_Credit = CWB("DMI_Credit","CN"),
+Header_DMI_Credit = fxtblNList("DMI_Credit"),
+
+Check1 = if CN_CWB_DMI_Credit = Header_DMI_Credit then true else false,

@@ -1,0 +1,13 @@
+( TableNmae as table ) =>
+ let
+  Source       = TableNmae, 
+  SelectedCol  = Table.SelectColumns ( Source, { "定价日", "信用主体", "COMPARER" } ), 
+  RemovedDupe  = Table.Distinct ( SelectedCol, { "COMPARER" } ), 
+  Sorted       = Table.Buffer ( Table.Sort ( RemovedDupe, { { "定价日", Order.Ascending } } ) ), 
+  InstanceGp1  = Table.Group ( Sorted, { "信用主体" }, { { "Data", each _, type table [ 定价日 = date, COMPARER = text ] } } ), 
+  IGCustom1    = Table.AddColumn ( InstanceGp1, "Custom", each Table.AddIndexColumn ( [Data], "第N次担任", 1 ) ), 
+  IGRemoved1   = Table.SelectColumns ( IGCustom1, { "Custom" } ), 
+  IGExpanded1  = Table.ExpandTableColumn ( IGRemoved1, "Custom", Table.ColumnNames ( IGRemoved1[Custom]{0} ) ), 
+  SelectedCol1 = Table.SelectColumns ( IGExpanded1, { "COMPARER", "第N次担任" } )
+ in
+  SelectedCol1

@@ -1,0 +1,457 @@
+//
+(TableName as table, optional NumIndicator as nullable number) =>
+    let
+        Source = TableName,
+        fxSafeTF = Load("fxSafeTF"),
+        //Global RenameColumns
+        DBRenamed = Table.RenameColumns(
+            Source,
+            {
+                {"IN_板块", "板块"},
+                {"发行人注册地", "注册成立地"},
+                {"FLOATER_FORMULA", "计息基准"},
+                {"发行价格", "发行价"},
+                {"IN.中资属性", "中资属性"},
+                {"发行结构", "发行架构"},
+                {"FEATURED", "品种主题"}
+            },
+            MissingField.Ignore
+        ),
+        CN_RNSource = Table.ColumnNames(DBRenamed),
+        //DateTime ValueType
+        DateTime1 = {"Timestamp"},
+        //Date ValueType
+        Date1 = {
+            "CLIENT_SINCE",
+            "KYC Deadline",
+            "上会审批日",
+            "上市日期",
+            "兑付日",
+            "到期日",
+            "发行日",
+            "发行起始日",
+            "定价日",
+            "行权兑付日",
+            "起息日",
+            "起息日期",
+            "违约日期",
+            "项目定价日",
+            "首次付息日",
+            "首次违约日",
+            "Monday",
+            "LastFriday",
+            "LastMonday",
+            "OneWeekBefore",
+            "YearStart",
+            "OneYearAgo"
+        }
+            & List.Select(CN_RNSource, each Text.Contains(_, "date", Comparer.OrdinalIgnoreCase)),
+        //
+        //Number ValueTyp
+        ColNum_ZeroToNull = {"Δ1周", "Δ年初至今"},
+        ColNum_Zero = {"多笔", "多币种", "多品种", "多期限"},
+        ColNum_RoundTo5 = List.Select(CN_RNSource, each Text.StartsWith(_, "R_") or Text.StartsWith(_, "C_"))
+            & ColNum_ZeroToNull,
+        ColNum_RoundTo3 = {"亿港币", "亿美元", "亿元", "发行规模(亿)"},
+        ColNum_RoundTo2 = {"投资级", "高收益级", "iTraxx Asia", "VIX"}
+            & List.Select(
+                CN_RNSource, each Text.StartsWith(_, "S_") or Text.StartsWith(_, "Spd_") or Text.StartsWith(_, "I_")
+            ),
+        ColNum_RoundTo0 = {"FEE", "承销费原币"},
+        Num1 = {
+            "IPT_YIELD",
+            "定价YIELD_Num",
+            "IPT_SPD",
+            "WPIR",
+            "FPT_YIELD",
+            "FPT_SPD假设窄端",
+            "FPT_YIELD上限",
+            "FPT_SPD上限",
+            "FPT_SPD",
+            "SortValue",
+            "PRJ对账号",
+            "SGD",
+            "Size (MM)",
+            "TOTAL_FEE",
+            "Tranches",
+            "WEEKNUM",
+            "亿元",
+            "亿港币",
+            "亿美元",
+            "发行规模(亿)",
+            "多品种",
+            "多币种",
+            "多期限",
+            "多笔",
+            "定价息差",
+            "年份",
+            "当前",
+            "承销费原币",
+            "投资级",
+            "投资者账户数",
+            "浮息息差",
+            "票面利率",
+            "第N次担任",
+            "认购额(亿)",
+            "10年期",
+            "2年期",
+            "30年期",
+            "3个月",
+            "3年期",
+            "5年期",
+            "7年期",
+            "CNH",
+            "CNY",
+            "EUR",
+            "FEE",
+            "GBP",
+            "HKD",
+            "Index",
+            "iTraxx Asia",
+            "JPY",
+            "USD",
+            "USDCNH CCS 2Y",
+            "USDCNH CCS 3Y",
+            "USDCNH CCS 5Y",
+            "VIX",
+            "中国",
+            "人民币债券指数",
+            "付息周期_月",
+            "利差(bp)",
+            "台湾人民币存款余额",
+            "在岸即期价",
+            "实际发行总额_亿",
+            "平均利差(bp)",
+            "新加坡人民币存款余额",
+            "离岸即期价",
+            "美元指数",
+            "美国",
+            "香港人民币存款余额",
+            "高收益级",
+            "票息_DMI",
+            "收窄幅度(bp)",
+            "发行价",
+            "首日涨跌",
+            "认购倍数",
+            "亚洲占比",
+            "基金占比",
+            "债券余额",
+            "RangeStart",
+            "RangeEnd"
+        }
+            & ColNum_Zero
+            & ColNum_RoundTo5
+            & ColNum_RoundTo3
+            & ColNum_RoundTo2
+            & ColNum_RoundTo0
+            & List.Select(CN_RNSource, each Text.StartsWith(_, "Index_")),
+        //
+        //Text ValueType
+        Text1 = {
+            "主体",
+            "描述",
+            "SeriesCN_Indice",
+            "Series_Indice",
+            "SeriesCN",
+            "Series",
+            "是否IG",
+            "上市类型",
+            "KYC Status",
+            "补充OMAS updates",
+            "主体类型",
+            "主体类型_YY",
+            "YY类型",
+            "板块标签",
+            "Sector",
+            "SHORTNAMER",
+            "DataSource",
+            "公盘地址",
+            "团队成员",
+            "发行人名称中文",
+            "Record Keeping",
+            "DD Risk",
+            "DD Form",
+            "Worldcheck",
+            "Approved by RO",
+            "大股东持股",
+            "大股东",
+            "是否上市公司",
+            "行政级别",
+            "平台重要性",
+            "主营业务",
+            "删除及隐藏",
+            "KYC",
+            "发行方式",
+            "Project Name",
+            "担任角色",
+            "项目名称（集团全称）",
+            "临时isin",
+            "申万二级",
+            "FolderPath",
+            "英文简称",
+            "Bond Details",
+            "CCY",
+            "CLIENT对账号",
+            "FPG",
+            "FPG_DMI",
+            "IPG",
+            "IPT_DMI",
+            "SBLC提供者",
+            "Sync",
+            "Tap",
+            "TextCheck",
+            "TICKER",
+            "YYMM",
+            "主体评级",
+            "主题债券",
+            "交易状态",
+            "付息频率",
+            "债券简称",
+            "债券类型",
+            "债项初始评级",
+            "债项评级",
+            "偿还顺位",
+            "利率类型",
+            "发行人",
+            "发行人名称英文",
+            "发行场所",
+            "发行期限(年)",
+            "发行架构",
+            "发行评级",
+            "台账序号",
+            "境内主体评级",
+            "增发判定",
+            "备注",
+            "年期",
+            "序号",
+            "担保人",
+            "是否存单",
+            "是否永续债",
+            "期数",
+            "牵头经办人",
+            "特殊条款",
+            "特殊条款说明",
+            "省份",
+            "票息",
+            "维好协议提供者",
+            "联席全球协调人",
+            "行业",
+            "计息基准",
+            "评级分类",
+            "货币",
+            "通过分行",
+            "投资者类型",
+            "投资者分布",
+            "筹款用途",
+            "ISIN",
+            "信用主体",
+            "公司类型",
+            "细分行业",
+            "板块三级",
+            "板块二级",
+            "项目状态",
+            "公司名称",
+            "币种",
+            "承销团成员",
+            "项目进展",
+            "分行",
+            "区域",
+            "地区",
+            "城市",
+            "区县",
+            "评级类型",
+            "穆迪/标普",
+            "主体评级展望",
+            "定价_DMI",
+            "联席账簿管理人",
+            "Updator",
+            "Check",
+            "信用主体(备证行)",
+            "定价",
+            "定价基准",
+            "结构",
+            "上市",
+            "上市分类",
+            "ESG",
+            "货币细分",
+            "品种主题",
+            "注册成立地",
+            "发行人主上市地",
+            "PROJECT_CODE",
+            "PROJECT_NAME",
+            "COVERAGE",
+            "亮点",
+            "期限备注",
+            "SPECIALs",
+            "OTHER_ISIN",
+            "Stats",
+            "外部评审方式",
+            "外部评审机构",
+            "BISL_ROLE",
+            "是否合名",
+            "港分_ROLE",
+            "澳分_ROLE",
+            "BOCOM_DEAL?",
+            "新规角色",
+            "备证行标签",
+            "信用主体简称",
+            "中资属性",
+            "板块",
+            "行业二级",
+            "级别",
+            "投标资历分类",
+            "年",
+            "季",
+            "月",
+            "周",
+            "年月",
+            "是否首发",
+            "美元规模分类",
+            "Structure",
+            "结构分类",
+            "清算地",
+            "备证行",
+            "期限",
+            "币种单位",
+            "币种规模",
+            "ESG主题",
+            "备证分类",
+            "主体评级分类",
+            "角色",
+            "主题",
+            "发行品种",
+            "COMPARER",
+            "交易简称",
+            "发行规则",
+            "曾用名"
+        }
+            & List.Select(CN_RNSource, each Text.StartsWith(_, "IS_")),
+
+        ColText_FillDown = List.Select(CN_RNSource, each Text.EndsWith(_, "FillDown", Comparer.OrdinalIgnoreCase)),
+        //Type Transformation
+        Type_Dimtbl = Table.Buffer(
+            Table.FillDown(
+                Table.Distinct(
+                    Table.Combine(
+                        {
+                            Table.FromColumns({Date1, {"date"}}),
+                            Table.FromColumns({Num1, {"number"}}),
+                            Table.FromColumns({Text1, {"text"}}),
+                            Table.FromColumns({DateTime1, {"datetime"}})
+                        }
+                    )
+                ),
+                {"Column2"}
+            )
+        ),
+        Type_Mytbl = Table.SelectRows(Type_Dimtbl, each List.Contains(CN_RNSource, [Column1])),
+        Type_Mytbl_ValueType = Table.AddColumn(
+            Type_Mytbl,
+            "ValueType",
+            each
+                Value.Type(
+                    if [Column2] = "date" then
+                        #date(1991, 1, 1)
+                    else if [Column2] = "datetime" then
+                        #datetime(1991, 1, 1, 0, 0, 0)
+                    else if [Column2] = "number" then
+                        1 
+                    else
+                        "A"
+                )
+        ),
+        Type_MyList = Table.ToColumns(Table.Transpose(Table.RemoveColumns(Type_Mytbl_ValueType, {"Column2"}))),
+        Type_TF = Table.TransformColumnTypes(DBRenamed, Type_MyList),
+        // Replace all errors
+        Error_Mytbl = Table.AddColumn(
+            Table.FromList(CN_RNSource, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
+            "Replacement",
+            each null
+        ),
+        Error_MyList = Table.ToColumns(Table.Transpose(Error_Mytbl)),
+        Error_Bye = Table.ReplaceErrorValues(Type_TF, Error_MyList),
+        // List
+        ColText_Mytbl = Table.SelectRows(Type_Mytbl, each [Column2] = "text")[Column1],
+        ColText_NoNA = {"增发判定", "主题债券"},
+        ColText_TrimOnly = {"PROJECT_CODE", "期数", "外部评审机构", "外部评审方式", "FolderPath"},
+        ColText_UpperOnly = {
+            "Bond Details",
+            "CCY",
+            "信用主体",
+            "计息基准",
+            "ISIN",
+            "ISIN Code",
+            "IPT_DMI",
+            "FPG_DMI",
+            "发行人",
+            "担保人",
+            "备证行",
+            "维好协议提供者",
+            "TICKER",
+            "债券代码",
+            "发行人名称英文*",
+            "发行人名称英文"
+        },
+        ColText_NoSpace = {"Check", "ISIN", "信用主体", "IPT_DMI", "IPG", "FPG_DMI", "FPG", "发行评级", "主体评级", "境内主体评级"},
+        //Rounding Transformation
+        ReplacedZero = fxSafeTF(Error_Bye, ColNum_Zero, Replacer.ReplaceValue, null, 0),
+        RoundedTo5 = fxSafeTF(ReplacedZero, ColNum_RoundTo5, Number.Round, 5),
+        ReplacedNull = fxSafeTF(RoundedTo5, ColNum_ZeroToNull, Replacer.ReplaceValue, 0, null),
+        RoundedTo3 = fxSafeTF(ReplacedNull, ColNum_RoundTo3, Number.Round, 3),
+        RoundedTo2 = fxSafeTF(RoundedTo3, ColNum_RoundTo2, Number.Round, 2),
+        RoundedTo0 = fxSafeTF(RoundedTo2, ColNum_RoundTo0, Number.Round, 0),
+        //Text Transformation
+        FilledDown = Table.FillDown(
+            Table.ReplaceValue(RoundedTo0, "", null, Replacer.ReplaceValue, ColText_FillDown), ColText_FillDown
+        ),
+        ReplacedBlank = fxSafeTF(FilledDown, ColText_Mytbl, Replacer.ReplaceValue, null, ""),
+        TrimmedOnly = List.Accumulate(
+            List.Intersect({CN_RNSource, ColText_TrimOnly}),
+            ReplacedBlank,
+            (s, c) => Table.TransformColumns(s, {c, Text.Trim})
+        ),
+        UpperedOnly = List.Accumulate(
+            List.Intersect({CN_RNSource, ColText_UpperOnly}),
+            TrimmedOnly,
+            (s, c) => Table.TransformColumns(s, {c, Text.Upper})
+        ),
+        RemovedSpace = fxSafeTF(UpperedOnly, ColText_NoSpace, Text.Replace, " ", ""),
+        ReplacedNA = fxSafeTF(RemovedSpace, ColText_NoNA, Replacer.ReplaceValue, "--", ""),
+        // Other Transformation
+        EndComma_Removed =
+            if List.Contains(CN_RNSource, "筹款用途") then
+                Table.TransformColumns(
+                    ReplacedNA,
+                    {
+                        {
+                            "筹款用途",
+                            each
+                                if Text.EndsWith(_, "。") and _ <> null then
+                                    Text.BeforeDelimiter(_, "。", {0, RelativePosition.FromEnd})
+                                else
+                                    _,
+                            type text
+                        }
+                    }
+                )
+            else
+                ReplacedNA,
+        CNH_Replaced =
+            if List.Contains(CN_RNSource, "货币") then
+                Table.ReplaceValue(EndComma_Removed, "CNY", "CNH", Replacer.ReplaceValue, {"货币"})
+            else
+                EndComma_Removed,
+        // Optional
+        TBC_Removed =
+            if NumIndicator = 1 then
+                Table.ReplaceValue(
+                    Table.ReplaceValue(CNH_Replaced, "【", "", Replacer.ReplaceText, ColText_Mytbl),
+                    "】",
+                    "",
+                    Replacer.ReplaceText,
+                    ColText_Mytbl
+                )
+            else
+                CNH_Replaced
+    in
+        TBC_Removed

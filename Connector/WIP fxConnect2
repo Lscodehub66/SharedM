@@ -1,0 +1,54 @@
+let
+    Source = (optional NameFTextInput as text, optional InputPathorFNumInput as nullable text) =>
+        let
+            // NameFText = Source, InputPathorFNumInput = Monday,
+            TextContainsAny = Load("Text.ContainsAny"),
+            fxFindHeader = Load("fxFindHeader"),
+            fxRemoveBlankColumns = Load("fxRemoveBlankColumns"),
+            fxFText = Load("fxFText"),
+            //
+            fxFile = Load("fxFile"),
+            NameFText = fxFText(NameFTextInput),
+            //
+            Source = fxFile(NameFText, InputPathorFNumInput),
+            Output = if not Text.Contains(NameFText, "FOLDER") then Excel.Workbook(Source[Content]{0}) else Source
+        in
+            Output,
+    fnType = type function (
+        optional NameFText as (
+            type text meta [
+                Documentation.AllowedValues = {
+                    "DEALs MASTER",
+                    "1.Download",
+                    "2.Dynamic",
+                    "Directory",
+                    "Graph",
+                    "台账23",
+                    "台账23收入",
+                    "台账23合规",
+                    "KYC",
+                    "ESG Deal List",
+                    "Periodic",
+                    "Pipe_Folder",
+                    "Pipe_SOE",
+                    "Pipe_FI",
+                    "Pipe_POE",
+                    "RSPFolder",
+                    "RSPIndex",
+                    "DMI美元债一级",
+                    "DMI境外债券违约",
+                    "DMI银行指标数据",
+                    "YY金融主体",
+                    "YY产业主体",
+                    "YY城投主体",
+                    "YY研究主体"
+                }
+            ]
+        ),
+        optional InputPathorFNumInput as nullable text
+    ) as list meta [
+        Documentation.Name = "fxConnect"",
+        Documentation.Description = "One-stop connector to manage DCM data"
+    ]
+in
+    Value.ReplaceType(Source, fnType)

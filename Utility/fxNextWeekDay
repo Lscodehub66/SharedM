@@ -1,0 +1,10 @@
+
+    (InputDate as date) =>
+    let
+  
+        Source = Date.From(InputDate),
+        Num = Date.DayOfWeek(Source , Day.Monday),
+        // Monday is 0 
+        Output = if Num = 5 then Date.AddDays(Source, 2) else if Num = 6 then Date.AddDays(Source, 1) else Source
+    in
+        Output

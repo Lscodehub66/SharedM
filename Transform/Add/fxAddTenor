@@ -1,0 +1,20 @@
+( TableName as table ) =>
+ let
+  Source        = TableName, 
+  AddedDuration = Table.AddColumn ( Source, "年期", each if [兑付日] <> null and [起息日期] <> null then Duration.Days ( [兑付日] - [起息日期] ) else null ), 
+  AddedCustom   = Table.AddColumn (
+   AddedDuration, 
+   "期限备注", 
+   each if [年期] = null then "" else if [年期]<280 then Number.ToText([年期]/30,"0")&"个月" else if  [年期] < 365 then Number.ToText ( [年期], "0" ) & "天" else ""
+  ), 
+  RoundedOff    = Table.TransformColumns ( AddedCustom, { { "年期", each Number.Round ( _ / 365, 1 ), type number } } ), 
+  ChangedType   = Table.TransformColumnTypes ( RoundedOff, { { "年期", type text } } ), 
+  ReplacedValue = Table.ReplaceValue (
+   ChangedType, 
+   each [年期], 
+   each if [年期] = null then [#"发行期限(年)"] else if [是否永续债] = "是" then "PNC" & [年期] else [年期], 
+   Replacer.ReplaceValue, 
+   { "年期" }
+  )
+ in
+  ReplacedValue

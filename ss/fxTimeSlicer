@@ -1,0 +1,15 @@
+//Sample = fxTimeSlicer(Source,"定价日")
+(TableName as table, ColumnName as text) =>
+    let
+        Source = TableName,
+        RCol = Table.RemoveColumns(Source, {"年", "季", "月", "周", "年月"}, MissingField.Ignore),
+        ChangedType = Table.TransformColumnTypes(RCol, {{ColumnName, type date}}),
+        AddYear = Table.AddColumn(ChangedType, "年", each Date.ToText(Record.Field(_, ColumnName), "yy年"), type text),
+        AddQuarter = Table.AddColumn(
+            AddYear, "季", each Number.ToText(Date.QuarterOfYear(Record.Field(_, ColumnName)), "0Q")
+        ),
+        AddMonth = Table.AddColumn(AddQuarter, "月", Number.ToText(Date.Month(Record.Field(_, ColumnName)), "0月")),
+        AddWeek = Table.AddColumn(AddMonth, "周", each Number.ToText(Date.WeekOfYear(Record.Field(_, ColumnName)), "0周")),
+        Add年月 = Table.AddColumn(AddWeek, "年月", each [年] & [月], type text)
+    in
+        Add年月

@@ -1,0 +1,57 @@
+(TextName as nullable text) =>
+    let
+        ValueReplaced =
+            if List.Contains({"0.5bps", "1bps"}, TextName) then
+                Text.Replace(TextName, "bps", "bp")
+            else if TextName = "0bps" or TextName = "0.0%" then
+                "/"
+            else
+                TextName,
+        FindList = {".000%", ".00%", ".0%", "00%", "0%", ".0bps)", " "},
+        ReplaceList = {"%", "%", "%", "%", "%", "bps)", ""},
+        //
+        Source = ValueReplaced,
+        EndZero = if Text.End(  Source, 2) = ".0" then Text.Replace(  Source, ".0", "") else   Source,
+        ReplacerTable = Table.Buffer(Table.FromColumns({FindList, ReplaceList}, {"Find", "Replace"})),
+        FindReplaceList = Table.ToRows(ReplacerTable),
+        Counter = Table.RowCount(ReplacerTable),
+        // Re-iterate sub custom function
+        BulkReplaceValues = (TextToReplaceTemp, n) =>
+            let
+                ReplacedText = Text.Replace(
+                    TextToReplaceTemp,
+                    if FindReplaceList{n}{0} = null then
+                        ""
+                    else
+                        FindReplaceList{n}{0},
+                    if FindReplaceList{n}{1} = null then
+                        ""
+                    else
+                        FindReplaceList{n}{1}
+                )
+            in
+                if n = Counter - 1 then
+                    ReplacedText
+                else
+                    @BulkReplaceValues(ReplacedText, n + 1),
+        Output = BulkReplaceValues(EndZero, 0),
+        PtZero =
+            if Source = null then
+                "/"
+            else if
+                Text.End(Output, 3) <> "5%a"
+                and Text.End(Output, 4) <> ".01%"
+                and Text.End(Output, 4) <> ".02%"
+                and Text.End(Output, 4) <> ".03%"
+                and Text.End(Output, 4) <> ".04%"
+                and Text.End(Output, 4) <> ".05%"
+                and Text.End(Output, 4) <> ".06%"
+                and Text.End(Output, 4) <> ".07%"
+                and Text.End(Output, 4) <> ".08%"
+                and Text.End(Output, 4) <> ".09%"
+            then
+                Text.Replace(Output, ".0", "") else if Output = "%" then "/"
+            else
+                Output
+    in
+        PtZero

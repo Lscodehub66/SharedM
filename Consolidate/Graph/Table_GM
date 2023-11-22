@@ -1,0 +1,29 @@
+let
+    _Input = "GM",
+
+    //**
+    Source = Load("Dimtbl_Indice"),
+    IndexCol = "Index_"& _Input,
+    #"Filtered Rows" = Table.SelectRows(Source, each Record.Field(_, IndexCol) <> null),
+    #"Removed Other Columns" = Table.SelectColumns(#"Filtered Rows", {"PK", "市场指数"}),
+    Replaced = Table.ReplaceValue(
+        #"Removed Other Columns",
+        "美国国债利率",
+        each if Text.Contains(_Input, "UST") or Text.Contains(_Input, "CURVE") then "" else "美国国债利率",
+        Replacer.ReplaceText,
+        {"市场指数"}
+    ),
+    #"Added Index" = Table.AddIndexColumn(Replaced, "Index", 1, 1, Int64.Type),
+    Custom1 = Load("fxMerge")(#"Added Index", mTable, "PK", "PK", {""}, {""}),
+    SCol = Table.SelectColumns(
+        Custom1,
+        List.Distinct(
+            {IndexCol,"PK","市场指数"}
+                & List.Select(
+                    Table.ColumnNames(Custom1), each not List.ContainsAny(Text.ToList(_), {"A".."Z"}, Comparer.OrdinalIgnoreCase)
+                )
+        )
+    ),
+    #"Sorted Rows" = Table.Sort(SCol, {{IndexCol, Order.Ascending}})
+in
+    #"Sorted Rows"

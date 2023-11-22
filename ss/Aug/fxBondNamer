@@ -1,0 +1,148 @@
+(TableName as table) =>
+  let
+    Source = TableName, 
+    #"Replaced NA" = Table.ReplaceValue(
+      Source, 
+      "--", 
+      "", 
+      Replacer.ReplaceValue, 
+      {"ESG", "FTZ", "FEATURED"}
+    ), 
+    // FRN & Yulan
+    FRN = Table.ReplaceValue(
+      #"Replaced NA", 
+      "", 
+      each 
+        if Text.Contains([票息], "+") then
+          "FRN"
+        else if Text.StartsWith([ISIN], "CND") then
+          "Yulan"
+        else
+          [FEATURED], 
+      Replacer.ReplaceValue, 
+      {"FEATURED"}
+    ), 
+    // DIM SUM & SENIOR
+    #"Added Custom" = Table.AddColumn(
+      FRN, 
+      "OTHERS", 
+      each 
+        if not Text.StartsWith([ISIN], "G")
+          and Text.Contains([货币], "CNH")
+          and [ESG]
+          = "" and [FEATURED]
+          = ""
+        then
+          "DimSum"
+        else if not Text.Contains([货币], "CNH")
+          and not Text.StartsWith([ISIN], "G")
+          and [ESG]
+          = "" and [FEATURED]
+          = ""
+        then
+          "Senior"
+        else
+          ""
+    ), 
+    #"Replaced Value" = Table.ReplaceValue(
+      #"Added Custom", 
+      "", 
+      each if [FEATURED] = "" then [OTHERS] else [FEATURED], 
+      Replacer.ReplaceValue, 
+      {"FEATURED"}
+    ), 
+    // Senior -> SBLC / Add pp
+    #"Replaced PP" = Table.ReplaceValue(
+      #"Replaced Value", 
+      each [FEATURED], 
+      each 
+        if Text.Contains([BISL_ROLE], "PA") then
+          "PP"
+        else if [FEATURED] = "Senior" and Text.Contains([结构], "备证") then
+          "SBLC"     
+        else
+          [FEATURED], 
+      Replacer.ReplaceValue, 
+      {"FEATURED"}
+    ), 
+    // MERGE FTZ ESG FEATURED
+    #"Inserted Merged Column" = Table.AddColumn(
+      #"Replaced PP", 
+      "发行品种", 
+      each Text.Combine({[ESG], [FTZ], [FEATURED]}, ""), 
+      type text
+    ), 
+    // Translation by ReplaceValue
+    #"Replaced Value1" = Table.ReplaceValue(
+      #"Inserted Merged Column", 
+      each 
+        if [发行品种] = "Green" then
+          "Green"
+        else if [发行品种] = "Sustainable" then
+          "Sustainable"
+        else if [发行品种] = "SBLC" then
+          "SBLC"
+        else
+          "", 
+      each 
+        if [发行品种] = "Green" then
+          "绿色债券"
+        else if [发行品种] = "Sustainable" then
+          "可持续发展债券"
+        else if [发行品种] = "SBLC" then
+          "备证信用增强债券"
+        else
+          "", 
+      Replacer.ReplaceValue, 
+      {"发行品种"}
+    ), 
+    // Translation by ReplaceText
+    #"Invoked Replacer" = #"fxReplacerprop"(
+      #"Replaced Value1", 
+      {
+        "Sustainable", 
+        "Green", 
+        "AT1(PrefShare)", 
+        "AT1", 
+        "FTZ", 
+        "T2", 
+        "MOX", 
+        "PP", 
+        "LPN", 
+        "JuniorPerp", 
+        "SeniorPerp", 
+        "Social", 
+        "PrefShare", 
+        "SLB", 
+        "FRN", 
+        "DimSum", 
+        "Senior", 
+        "SBLC", 
+        "Yulan","Sovereign"
+      }, 
+      {
+        "可持续", 
+        "绿色", 
+        "额外一级优先股", 
+        "额外一级资本债", 
+        "明珠债", 
+        "二级资本债", 
+        "澳交所债券", 
+        "私募配售", 
+        "贷款支持票据", 
+        "次级永续债", 
+        "高级永续债", 
+        "社会责任债券", 
+        "境外优先股", 
+        "可持续挂钩债券", 
+        "浮息债", 
+        "点心债", 
+        "高级债", 
+        "备证信用增强债券", 
+        "玉兰债","主权债"
+      }, 
+      {"发行品种"}
+    ), 
+    #"Removed Columns" = Table.RemoveColumns(#"Invoked Replacer", {"OTHERS"})
+  in
+    #"Removed Columns"

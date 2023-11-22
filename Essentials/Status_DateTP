@@ -1,0 +1,11 @@
+// let LoadCode = Load("Status_DateTP","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
+
+let
+    Source = Load("Status"),
+    #"Removed Other Columns" = Table.SelectColumns(Source,{"当前", "上周", "年初"}),
+    #"Demoted Headers" = Table.DemoteHeaders(#"Removed Other Columns"),
+    #"Transposed Table" = Table.Transpose(#"Demoted Headers"),
+    #"Changed Type" = Table.TransformColumnTypes(#"Transposed Table",{{"Column2", type date}}),
+    #"Renamed Columns" = Table.RenameColumns(#"Changed Type",{{"Column2", "Date"}, {"Column1", "PK"}})
+in
+    #"Renamed Columns"

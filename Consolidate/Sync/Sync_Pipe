@@ -1,0 +1,9 @@
+// let LoadCode = Load("QSync_Pipe","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+ 
+    Source = CWB("Pipe_Folder"),
+    #"Filtered Rows" = Table.SelectRows(Source, each not Text.Contains([Name] ,"FI")),
+    #"Removed Other Columns" = Table.SelectColumns(#"Filtered Rows",{"公司名称", "简称"}),
+    Custom1 = Table.SelectRows(#"Removed Other Columns", each not List.Contains ( Sync_Credit[信用主体], [公司名称] ))
+in
+    Custom1

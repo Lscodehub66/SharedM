@@ -1,0 +1,73 @@
+(IssuerFullName as text) =>
+ let
+  Text  = Text.AfterDelimiter(IssuerFullName, "/"), 
+  Text1 = Text.Upper(Text), 
+  Text2 = fxClean(
+   Text1, 
+   {
+    " ", 
+    ",", 
+    ".", 
+    "NY", 
+    "THE", 
+    "HONGKONGBRANCH", 
+    "SINGAPOREBRANCH", 
+    "BRANCH", 
+    "MACAO"
+   }, 
+   {"", "", "", "", "", "香港分行", "新加坡分行", "", "MACAU"}
+  ), 
+  Text3 = fxClean(
+   Text2, 
+   {
+    "ABUDHABI", 
+    "ASTANA", 
+    "DUBAIDIFC", 
+    "DUBAI", 
+    "DIFC", 
+    "FRANKFURT", 
+    "HONGKONG", 
+    "HUNGARY", 
+    "JOHANNESBURG", 
+    "LONDON", 
+    "LUXEMBOURG", 
+    "MACAU", 
+    "NEWYORK", 
+    "PARIS", 
+    "SINGAPORE", 
+    "SYDNEY", 
+    "TAIPEI", 
+    "TOKYO"
+   }, 
+   {
+    "阿布达比分行", 
+    "阿斯塔纳分行", 
+    "迪拜分行", 
+    "迪拜分行", 
+    "迪拜分行", 
+    "法兰克福分行", 
+    "香港分行", 
+    "匈牙利分行", 
+    "约翰内斯堡分行", 
+    "伦敦分行", 
+    "卢森堡分行", 
+    "澳门分行", 
+    "纽约分行", 
+    "巴黎分行", 
+    "新加坡分行", 
+    "悉尼分行", 
+    "台北分行", 
+    "东京分行"
+   }
+  ), 
+  Text4 = 
+   if Text.Contains(Text3, "HONGKONGBRANCH") then
+    "香港分行"
+   else if Text.Contains(Text3, "SINGAPOREBRANCH") then
+    "新加坡分行"
+   else if Text.Contains(Text3, "QATAR") then
+    "卡塔尔分行"
+   else
+    Text3
+ in
+  Text4

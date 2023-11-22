@@ -1,0 +1,47 @@
+// 
+(TextName as text) =>
+    let
+       Source = TextName,
+        //
+        fxCleaner = Load("fxCleaner"),
+        //
+   ReplacerTable = Table.FromRows(
+                {
+                    {"香港交易所", "港交所"},
+                    {"新加坡交易所", "新交所"},
+                    {"中华（澳门）金融资产交易股份有限公司", "澳交所"},
+                    {"纳斯达克迪拜交易所", "迪拜"},
+                    {"伦敦证券交易所", "伦交所"},
+                    {"卢森堡交易所", "卢交所"},
+                    {"斯图加特证券交易所", "斯图加特"},
+                    {"法兰克福证券交易所", "法兰克福"},
+                    {"中欧国际交易所", "中欧"},
+                    {"巴黎泛欧交易所", "泛欧"},
+                    {"柏林证券交易所", "柏林"},
+                    {"泛欧交易所都柏林分部（原爱尔兰证券交易所）", "爱尔兰"},
+                    {"台北证券柜台买卖中心", "台北"},
+                    {"瑞士证券交易所", "瑞士"},
+                    {"马来西亚股票交易所", "马来西亚"},
+                    {"澳洲证券交易所", "澳洲"},
+                    {"证券交易所", ""},
+                    {"交易所", ""},
+                    {"开曼群岛", "开曼"},
+                    {"迪拜金融市场", "迪拜"},
+                    {"斯图加特", ""},
+                    {"TRACE", ""},
+                    {"柏林", ""},
+                    {"杜塞尔多夫", ""},
+                    {"慕尼黑", ""},
+                    {"TRADEGATE", ""}
+                },
+                {"Find", "Replace"}
+            ),
+            //Sort
+  SortList = { "港交所", "新交所", "澳交所", "伦交所", "伦交所(SBM)", "卢交所", "迪拜", "法兰克福", "中欧", "泛欧", "纽约泛欧", "纽约", "澳洲", "台北", "台湾", "欧盟MTF", "欧盟TLX", "爱尔兰", "汉堡", "瑞士", "布达佩斯", "汉诺威", "沙特", "开曼", "马来西亚" }, 
+  //Function
+   Output = fxCleaner(Source,null,  ReplacerTable[Find],ReplacerTable[Replace]),
+TextList = List.Distinct(List.RemoveItems(Text.Split ( Output, ";" ),{""})), 
+  Sorted = List.Sort ( TextList, ( a, b ) => Value.Compare ( List.PositionOf ( SortList, a ), List.PositionOf ( SortList, b ) ) ), 
+  Recombined = Text.Combine ( List.Transform ( Sorted, Text.From ), ";" )
+ in
+  Recombined

@@ -1,0 +1,11 @@
+//let LoadCode = Load("BaseDirectory_Directory","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+
+
+let
+
+    Source = Load("fxDimSheet")("DEALSMASTER"){[Item = "Directory"]}[Data],
+    #"Replaced Value" = Table.ReplaceValue( Load("fxDataFormat")(Source) ,"--",null,Replacer.ReplaceValue,{"收窄基点"}),
+    #"Changed Type" = Table.TransformColumnTypes(#"Replaced Value",{{"收窄基点", type number}})
+    
+in
+  #"Changed Type" 

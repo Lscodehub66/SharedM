@@ -1,0 +1,110 @@
+(TableName as table, optional FTextToIndicateFuture as nullable text) =>
+    let
+        Source = TableName,
+        Sheet = Source{[Item = "ECON", Kind = "Sheet"]}[Data],
+        Found = Load("fxFindHeader")(Sheet, "Column1", "Date Time"),
+        RCol = Table.RemoveColumns(Found, {"Column3", "Column4"}, MissingField.Ignore),
+        #"Inserted Text After Delimiter" = Table.AddColumn(
+            RCol,
+            "Time",
+            each if Text.Contains([Date Time], ":") then Text.AfterDelimiter([Date Time], " ") else null,
+            type text
+        ),
+        #"Extracted Text Before Delimiter" = Table.TransformColumns(
+            #"Inserted Text After Delimiter", {{"Date Time", each Text.BeforeDelimiter(_, " "), type text}}
+        ),
+        #"Renamed Columns" = Table.RenameColumns(
+            #"Extracted Text Before Delimiter", {{"Date Time", "Date"}, {"Column2", "Region"}, {"Column6", "Period"}}
+        ),
+        #"Changed Type2" = Table.TransformColumnTypes(
+            #"Renamed Columns", {{"Time", type time}, {"Date", type date}, {"Relevance", type number}}
+        ),
+        #"Rounded Off" = Table.TransformColumns(
+            #"Changed Type2", {{"Relevance", each Number.Round(_, 0), type number}}
+        ),
+        #"Filtered Rows1" = Table.SelectRows(
+            #"Rounded Off",
+            each
+                [Date] >= Date.AddDays(Date.FromText(Monday), -7)
+                and [Date] < Date.AddDays(Date.FromText(Monday), 7)
+        ),
+        #"Filtered Rows" = Table.SelectRows(
+            #"Filtered Rows1", each if [Region] = "US" then [Relevance] > RlvLvl + US_addon else [Relevance] > RlvLvl
+        ),
+        #"Added Conditional Column" = Table.AddColumn(
+            #"Filtered Rows", "Table", each if [Date] < Date.FromText(Monday) then "ECON" else "FUTURE"
+        ),
+        #"Uppercased Text" = Table.TransformColumns(
+            Table.TransformColumnTypes(#"Added Conditional Column", {{"Period", type text}}, "en-US"),
+            {{"Region", Text.Upper, type text}, {"Event", Text.Upper, type text}, {"Period", Text.Upper, type text}}
+        ),
+        #"中文区间" = Table.AddColumn(
+            #"Uppercased Text",
+            "区间",
+            each
+                if Text.Contains([Period], "1Q") then
+                    "一季度"
+                else if Text.Contains([Period], "2Q") then
+                    "二季度"
+                else if Text.Contains([Period], "3Q") then
+                    "三季度"
+                else if Text.Contains([Period], "4Q") then
+                    "四季度"
+                else if Text.Contains([Period], "JAN") then
+                    "一月"
+                else if Text.Contains([Period], "FEB") then
+                    "二月"
+                else if Text.Contains([Period], "MAR") then
+                    "三月"
+                else if Text.Contains([Period], "APR") then
+                    "四月"
+                else if Text.Contains([Period], "MAY") then
+                    "五月"
+                else if Text.Contains([Period], "JUN") then
+                    "六月"
+                else if Text.Contains([Period], "JUL") then
+                    "七月"
+                else if Text.Contains([Period], "AUG") then
+                    "八月"
+                else if Text.Contains([Period], "SEP") then
+                    "九月"
+                else if Text.Contains([Period], "OCT") then
+                    "十月"
+                else if Text.Contains([Period], "NOV") then
+                    "十一月"
+                else if Text.Contains([Period], "DEC") then
+                    "十二月"
+                else
+                    ""
+        ),
+        #"Added Custom" = Table.AddColumn(中文区间, "其他区间", each Text.Select([Period], {"0".."9"})),
+        #"Changed Type" = Table.TransformColumnTypes(#"Added Custom", {{"其他区间", Int64.Type}}),
+        #"Changed Type1" = Table.TransformColumnTypes(#"Changed Type", {{"其他区间", type date}}),
+        #"中文范围" = Table.AddColumn(
+            中文区间,
+            "范围",
+            each
+                if [Region] = "CH" and not Text.Contains([Event], "中国") then
+                    Text.Combine({"中国", [区间]}, "")
+                else if [Region] = "CH" and Text.Contains([Event], "中国") then
+                    [区间]
+                else if [Region] = "EC" and not Text.Contains([Event], "欧元区") then
+                    Text.Combine({"欧元区", [区间]}, "")
+                else if [Region] = "EC" and Text.Contains([Event], "欧元区") then
+                    [区间]
+                else if [Region] = "US" and not Text.Contains([Event], "美国") then
+                    Text.Combine({"美国", [区间]}, "")
+                else if [Region] = "US" and Text.Contains([Event], "美国") then
+                    [区间]
+                else
+                    Text.Combine({[Region], [区间]}, ""),
+            type text
+        ),
+        #"Inserted Merged Column" = Table.AddColumn(中文范围, "事件", each Text.Combine({[范围], [Event]}, ""), type text),
+        FText = if Load("fxFText")(FTextToIndicateFuture) = "FUTURE" then "FUTURE" else "ECON",
+        FTextCN = if FText = "FUTURE" then "未来一周主要经济数据" else "上周主要经济数据",
+        FRows = Table.SelectRows(#"Inserted Merged Column", each [Table] = FText),
+        Sorted0 = Table.Sort(FRows, {{"Region", Order.Ascending}, {"Relevance", Order.Descending}}),
+        Renamed = Table.RenameColumns(Sorted0, {{"事件", FTextCN}})
+    in
+        Renamed

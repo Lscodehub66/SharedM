@@ -1,0 +1,141 @@
+(TableName as table, Col1 as text, Col2 as text, Col3 as text, Col4 as text, Col5 as text, Col6 as text) =>
+    let
+        Source = TableName,
+        fxDebug = Load("fxDebug"),
+        NewCols = {"多笔", "信用主体及评级", "多笔主体", "描述", "描述2", "总述"} & {Col1, Col2, Col3, Col4, Col5, Col6},
+        RColprep = Table.RemoveColumns(Source, NewCols, MissingField.Ignore),
+        //
+        FnCount = Table.AddColumn(
+            RColprep, "多笔", each List.Sum(Load("fxCountMore")(RColprep, "信用主体简称", [信用主体简称], "ISIN")), type number
+        ),
+        ddd = Table.AddColumn(FnCount, Col1, each fxCleaner(Date.ToText([定价日], "ddd"), "DDDCN")),
+        EntityWRtg = Table.AddColumn(
+            ddd,
+            "信用主体及评级",
+            each if Text.Length(Text.Select([主体评级], {"A".."Z"})) > 0 then [信用主体简称] & "（" & [主体评级] & "）" else [信用主体简称],
+            type text
+        ),
+        EntityForMulti = Table.AddColumn(
+            EntityWRtg, "多笔主体", each if [多笔] > 1 and [通过分行] <> "" then "通过" & [通过分行] else [信用主体简称], type text
+        ),
+        Entity = Table.AddColumn(EntityForMulti, Col2, each if [多笔] > 1 then [多笔主体] else [信用主体及评级], type text),
+        #">>>Debug" = fxDebug(
+            Entity, Col2, null, List.RemoveMatchingItems(Table.ColumnNames(Entity), Table.ColumnNames(ddd)) & {
+                "主体评级"
+            }
+        ),
+        TapNew = Table.AddColumn(
+            Entity,
+            Col3,
+            each
+                if Text.Contains([增发判定], "增发") then
+                    [币种规模]
+                else if Text.Contains([期限], "年") and not Text.Contains([期限], "永续") then
+                    "定价" & [币种规模] & [期限] & "期"
+                else
+                    "定价" & [币种规模] & [期限]
+        ),
+        IssueRtg = Table.AddColumn(
+            TapNew, "SquareRtg", each if Text.Length(Text.Select([发行评级], {"A".."Z"})) > 0 then "（" & [发行评级] & "）" else
+                ""
+        ),
+        SBLC = Table.AddColumn(
+            IssueRtg, Col4, each if [备证行] <> "--" then [发行品种] & [SquareRtg] & "，" & [备证行] & "提供备证，" else [发行品种]
+                & [SquareRtg]
+        ),
+        RemovedNil = Table.ReplaceValue(SBLC, "--", null, Replacer.ReplaceValue, {"收窄基点"}),
+        Price = Table.AddColumn(
+            RemovedNil,
+            Col5,
+            each
+                if [定价] <> "--" and [收窄基点] = 0 then
+                    "价格" & [定价] & "，较IPG未有收窄"
+                else if [定价] <> "--" and [收窄基点] <> null then
+                    "价格" & [定价] & "，较IPG收窄" & Number.ToText([收窄基点]) & "个基点"
+                else if [定价] = "--" and [收窄基点] = 0 then
+                    "价格" & [票息] & "，较IPG未有收窄"
+                else if [定价] = "--" and [收窄基点] <> null then
+                    "价格" & [票息] & "，较IPG收窄" & Number.ToText([收窄基点]) & "个基点"
+                else if [定价] <> "--" and Text.Contains([增发判定], "增发") then
+                    "价格" & [定价]
+                else
+                    "价格" & [票息]
+        ),
+        Bocom = Table.AddColumn(
+            Price,
+            Col6,
+            each
+                if [是否合名] <> "--" then
+                    "，交通银行担任" & [港分_ROLE]
+                else if
+                    Text.Contains([BISL_ROLE], "GC")
+                    or Text.Contains([IS_LEAD], "Sole")
+                    and not Text.Contains([港分_ROLE], "GC")
+                    and not Text.Contains([澳分_ROLE], "GC")
+                then
+                    "，交银国际担任" & [角色]
+                else if [BISL_ROLE] <> "--" and [港分_ROLE] = "--" and [澳分_ROLE] = "--" then
+                    "，交银国际担任" & [角色]
+                else if [澳分_ROLE] = "JGC" or [港分_ROLE] = "JGC" then
+                    "，交通银行担任全球协调人"
+                else if [澳分_ROLE] = "JBR" or [港分_ROLE] = "JBR" then
+                    "，交通银行担任账簿管理人"
+                else
+                    ""
+        ),
+        Merged = Table.AddColumn(
+            Bocom,
+            "描述",
+            each
+                Load(
+                    "fxRemoveRepeated"
+                )(
+                    Record.Field(_, Col1)
+                        & "，"
+                        & Record.Field(_, Col2)
+                        & Record.Field(_, Col3)
+                        & Record.Field(_, Col4)
+                        & "，"
+                        & Record.Field(_, Col5)
+                        & Record.Field(_, Col6),
+                    "，"
+                )
+        ),
+        Stats = Table.AddColumn(Merged, "描述2", each if [Stats] <> "" then [描述] & "#(lf)" & [Stats] else [描述], type text),
+        Grouped = Table.Group(
+            Stats,
+            {"信用主体及评级"},
+            {
+                {"板块", each Text.Combine(List.Distinct([板块]), ""), type text},
+                {"货币", each Text.Combine(List.Distinct([货币]), ";"), type text},
+                {"增发判定", each Text.Combine(List.Distinct([增发判定]), ""), type text},
+                {
+                    "多笔",
+                    each if List.Sum([多笔]) / List.Count([多笔]) > 1 then List.Sum([多笔]) / List.Count([多笔]) else null,
+                    type number
+                },
+                {"描述", each Text.Combine(List.Distinct([描述2]), "#(lf)"), type text}
+            }
+        ),
+        #"Replaced Value" = Table.ReplaceValue(
+            Grouped, each [增发判定], each if [增发判定] = "" and [多笔] <> null then "定价" else [增发判定], Replacer.ReplaceValue,
+            {
+                "增发判定"
+            }
+        ),
+        #"Added Suffix" = Table.AddColumn(
+            #"Replaced Value",
+            "总述",
+            each
+                if [多笔] <> null then
+                    [信用主体及评级] & [增发判定] & Text.Replace(fxCleaner(Number.ToText([多笔]), "一二三"), "二", "双") & "批次离岸债券："
+                else
+                    "",
+            type text
+        ),
+        AddedCol = Table.AddColumn(#"Added Suffix", "Writer", each if [总述] <> "" then [总述] & "#(lf)" & [描述] else [描述]),
+        SCol = Table.SelectColumns(AddedCol, {"信用主体及评级", "板块", "货币", "Writer"}, MissingField.UseNull),
+        Sorted = Load("fxSortNIndex")(SCol),
+        Output = Table.Sort(Sorted, {{"板块", Order.Descending}})
+    in
+        Output

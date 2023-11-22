@@ -1,0 +1,46 @@
+(TableName as table, optional FilteredNum1 as number, optional SelectCNNum1 as number) =>
+    let
+        Source = Load("fxDataFormat")(TableName),
+        CN_Input = {"ISIN", "定价日", "信用主体", "主题债券", "IPT_DMI", "FPG_DMI", "联席全球协调人", "牵头经办人", "行业"},
+        Removed = Table.RemoveColumns(Source, {"IS_FIMTN"}, MissingField.Ignore),
+        Output = Table.AddColumn(
+            Removed,
+            "IS_FIMTN",
+            each
+                if [主题债券] <> "" and [主题债券] <> "点心债" and [主题债券] <> null then
+                    [主题债券]
+                else if Text.Contains([联席全球协调人], "BOCOM") or Text.Contains([牵头经办人], "BOCOM") then
+                    "IsBOCOM"
+                else if Text.Length([IPT_DMI]) >4 then
+                    "有IPG"
+                else if Text.Length([FPG_DMI]) >4  then
+                    "有FPG"
+                else if List.Count(Text.Split([联席全球协调人], ";")) > 2 then
+                    "JGC至少3家"
+                else if List.Count(Text.Split([牵头经办人], ";")) > 3 then
+                    "JBR至少4家"
+                else if [行业] <> "金融" then
+                    [行业] & "(DMI)"
+                else
+                    "Y"
+        ),
+        Replaced =
+            if List.Contains(Table.ColumnNames(Output), "DataSource") then
+                Table.ReplaceValue(
+                    Output,
+                    each [IS_FIMTN],
+                    each if Text.Contains([DataSource], "BBG", Comparer.OrdinalIgnoreCase) then "--" else [IS_FIMTN],
+                    Replacer.ReplaceValue,
+                    {"IS_FIMTN"}
+                )
+            else
+                Output,
+        Filtered = Table.SelectRows(Replaced, each if FilteredNum1 = 1 then [IS_FIMTN] <> "Y" else true),
+        SCol =
+            if SelectCNNum1 = 1 then
+                Table.SelectColumns(Filtered, CN_Input & {"IS_FIMTN"}, MissingField.UseNull)
+            else
+                Filtered
+    in
+        SCol
+ 

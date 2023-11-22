@@ -1,0 +1,20 @@
+let
+ Source = ( IsDateFirst as text, TextSource as text, DateSource as date, DateFormat as text ) =>
+  let
+   NoNull      = if TextSource = null or TextSource = "" then "【】" else TextSource, 
+   UpperText   = Text.Upper ( NoNull ), 
+   TextPart = if List.ContainsAny ( Text.ToList ( UpperText ), { "A" .. "Z" } ) then Text.Select ( UpperText, { "A" .. "Z", "0" .. "9" } ) else Text.Replace ( UpperText, " ", "" ), 
+   DatePart    = if DateSource = null then "【】" else Date.ToText ( DateSource, DateFormat ), 
+   Output      = if IsDateFirst = "N" then TextPart & DatePart else DatePart & TextPart
+  in
+   Output, 
+ //Defining a metadata-record for documentation purpose
+ fnType = type function (
+  IsDateFirst as ( type text meta [ Documentation.AllowedValues = { "Y", "N" } ] ), 
+  TextSource as text, 
+  DateSource as text, 
+  DateFormat as ( type text meta [ Documentation.AllowedValues = { "yyMMdd", "yyyyMMdd", "MMdd" } ] )
+ ) as list
+  meta [ Documentation.Name = "fxComparer", Documentation.Description = "Generate date-dependent identifiers to enhance data lookup" ]
+in
+ Value.ReplaceType ( Source, fnType )

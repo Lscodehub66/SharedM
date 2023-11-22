@@ -1,0 +1,17 @@
+ (TableName as table, NumColName as text,optional NewColName as text) =>
+ let
+ Source = TableName,
+ New = if NewColName = null then Text.Replace(NumColName,"亿美元","") &"占比" else NewColName,
+ #"Changed Type" = Table.TransformColumnTypes(Source, {{NumColName, type number}}), 
+  #"Added %" = Table.AddColumn(
+    #"Changed Type", 
+  New, 
+    each Record.Field(_, NumColName)  / List.Sum(Record.Field(#"Changed Type",NumColName))
+  ), 
+  #"Changed Type1" = Table.TransformColumnTypes(#"Added %", {{New, Percentage.Type}}), 
+  #"Rounded Off" = Table.TransformColumns(
+    #"Changed Type1", 
+    {{New, each if _ = null then 0 else Number.Round(_, 4), Percentage.Type}}
+  )
+  in
+ #"Rounded Off"

@@ -1,0 +1,33 @@
+// BBGcorp
+let
+    Source = DLD_SourcePQ,
+    tbl_dmi_isin_Table = Source{[Item = "tbl_dmi_isin", Kind = "Table"]}[Data],
+    RemovedErrors = Table.RemoveRowsWithErrors(tbl_dmi_isin_Table, {"定价日"}),
+    DemotedHeaders = Table.DemoteHeaders(RemovedErrors),
+    Filtered = Table.SelectRows(DemotedHeaders, each ([Column2] <> "")),
+    Promoted = Table.PromoteHeaders(Filtered, [PromoteAllScalars = true]),
+    ReplacedNil = Table.ReplaceValue(Promoted, "--", "", Replacer.ReplaceValue, Table.ColumnNames(Promoted)),
+    TFDates = Table.TransformColumns(
+        ReplacedNil, {{"兑付日", each Date.From(_)}, {"起息日期", each Date.From(_)}, {"行权兑付日", each Date.From(_)}}
+    ),
+    FormattedData = Load("fxDataFormat")(TFDates),
+    TFCols = Table.TransformColumns(
+        FormattedData, {{"发行评级", each fxCleaner(_, "Rtg")}, {"主体评级", each fxCleaner(_, "Rtg")}}
+    ),
+    JoinAddTap =
+        if TapLookup[Column3]{0} = "N" then
+            fxByeAllErrors(TFCols)
+        else
+            Table.Combine(
+                {
+                    fxByeAllErrors(TFCols),
+                    Table.SelectColumns(CWB_AddTap, Table.ColumnNames(TFCols), MissingField.UseNull)
+                }
+            ),
+    Crossroad =
+        if MultiSource = "OFF" then
+            Excel.CurrentWorkbook(){[Name = "BBGcorp"]}[Content]
+        else
+            Load("fxCheckNDupe")(JoinAddTap)
+in
+    Crossroad

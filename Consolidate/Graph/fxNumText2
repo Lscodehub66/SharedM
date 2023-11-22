@@ -1,0 +1,18 @@
+     (TextName as nullable text) =>
+    let
+        ValueReplaced =
+            if List.Contains({"0.5bps", "1bps"}, TextName) then
+                Text.Replace(TextName, "bps", "bp")
+            else if TextName = "0bps" or TextName = "0.0%" then
+                "/"
+            else
+             Text.Replace(TextName,  "0%","%"),
+
+             NoNull = if TextName = null then "/" else ValueReplaced
+
+             in
+
+             NoNull 
+
+
+         

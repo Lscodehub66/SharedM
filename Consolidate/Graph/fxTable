@@ -1,0 +1,7 @@
+//let _Which = "GM",Code = Load("Table_GM", "Code"), Code1 ="(FText as text) => let _Input = FText,"&Text.AfterDelimiter(Code, "//**"),EVA = Expression.Evaluate(Code, #shared) (_Which) in EVA
+
+let
+   Code = "(FText as text) => let _Input = FText,"&Text.AfterDelimiter(Load("Table_GM", "Code"), "//**"),
+    EVA = Expression.Evaluate(Code, #shared)
+in
+    EVA

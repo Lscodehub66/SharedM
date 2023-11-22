@@ -1,0 +1,10 @@
+(TableName as table) =>
+
+Source = TableName,
+MergedQ = Table.NestedJoin ( Source, { "细分行业" }, DMISectorMap, { "细分行业" }, "Data", JoinKind.LeftOuter ),
+ExpandedQ = Table.ExpandTableColumn ( MergedQ, "Data", {"行业二级"},{"二级"} ), 
+ReplacedNull =Table.ReplaceValue (ExpandedQ,null, "", Replacer.ReplaceValue, { "行业二级","二级" } ), 
+Replaced = Table.ReplaceValue (ReplacedNull, each [行业二级], each if [行业二级] <> [二级] and [二级] <> "" then [二级] else [行业二级], Replacer.ReplaceValue, { "行业二级" } ),
+SelectedCol = Table.SelectColumns(Replaced, Table.ColumnNames(Source))
+in
+SelectedCol

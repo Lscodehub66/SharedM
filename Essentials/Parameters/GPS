@@ -1,0 +1,4 @@
+let
+Source = try Excel.CurrentWorkbook(){[Name = "GPS"]}[Content][Column1]{0} otherwise "Remote" 
+in
+Source

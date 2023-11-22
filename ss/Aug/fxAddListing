@@ -1,0 +1,5 @@
+(TextName as text)=>
+let
+Text1 = each if fxCountDelimiter(TextName,";")>2 then "多地" else fxSmartClean(TextName,"Listing")
+in
+Text1

@@ -1,0 +1,5 @@
+let
+
+Source = try CWB("Sync_KYC_Load")[Column1]{0} otherwise "ON"
+in
+Source

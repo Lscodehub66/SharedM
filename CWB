@@ -1,0 +1,24 @@
+//let GPS      = try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Remote", Path = if GPS = "Remote" then "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM\CWB" else "\\10.10.1.215\dcm$\Team Folder\Execution Team\DataHub\SharedM\CWB",  LoadCode = Text.FromBinary ( Binary.Buffer ( File.Contents ( Path ) ) ),EVA = Expression.Evaluate ( LoadCode, #shared ) in EVA
+//
+(InputName as text, optional InputFnText as nullable text) =>
+    let
+        CurrentWorkbook = Excel.CurrentWorkbook(){[Name = InputName]}[Content],
+        FText = Text.Replace(Text.Upper(Text.Trim(InputName)), "_", ""),
+        FnFText = if InputFnText = null then "" else InputFnText,
+        Source = if InputFnText = "1" then Load("fxDataFormat")(CurrentWorkbook, 1) else Load("fxDataFormat")(CurrentWorkbook),
+        DefinedNames =
+            if List.Contains(
+                {"MONDAY", "UPDATORWEEKLY", "澳门FILTER", "香港FILTER", "WEEKLYFILTER", "IS_EXCH_FILTER", "MULTISOURCE","GPS"},
+                FText
+            ) then
+                Source[Column1]{0}
+            else
+                Source,
+        List =
+            if Text.StartsWith(FText, "CN") or Text.EndsWith(FText, "CN") or Text.StartsWith(FText, "HEADER") then
+                Table.ToList(DefinedNames)
+            else
+                DefinedNames,
+        GetCN = if Text.Contains(FnFText, "CN") then Table.ColumnNames(List) else List
+    in
+        GetCN

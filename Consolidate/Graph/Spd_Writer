@@ -1,0 +1,41 @@
+// let LoadCode = Load("Spd_Writer","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
+let
+    Source = Load("Spd_Analysis"),
+    #"Unpivoted Other Columns" = Table.UnpivotOtherColumns(Source, {"Trend"}, "Attribute", "Value"),
+    #"Merged Columns" = Table.CombineColumns(
+        #"Unpivoted Other Columns",
+        {"Trend", "Attribute"},
+        Combiner.CombineTextByDelimiter("", QuoteStyle.None),
+        "Column1"
+    ),
+    #"Removed Duplicates" = Table.Distinct(#"Merged Columns", {"Value"}),
+    #"Transposed Table" = Table.Transpose(#"Removed Duplicates"),
+    #"Promoted Headers" = Table.PromoteHeaders(#"Transposed Table", [PromoteAllScalars = true]),
+    #"Inserted Subtraction" = Table.AddColumn(
+        #"Promoted Headers", "Spd_Diff", each [Spd_Abs] - [PeakSpd_Abs], type number
+    ),
+    #"Inserted Date Subtraction" = Table.AddColumn(
+        #"Inserted Subtraction", "Date_Diff", each Duration.Days([Date] - [PeakDate]), Int64.Type
+    ),
+    Custom1 = Table.AddColumn(
+        #"Inserted Date Subtraction", "Column1", each "当前，中美利差约为" & Number.ToText(Record.Field(_, "Spd"), "0bps") & "，"
+    ),
+    Custom2 = Table.AddColumn(
+        Custom1,
+        "Column2",
+        each
+            "相较"
+                & Date.ToText(Record.Field(_, "PeakDate"), "yy年M月d日")
+                & "的最高点"
+                & Number.ToText(Record.Field(_, "PeakSpd"), "0bps"),
+        type text
+    ),
+    Custom3 = Table.AddColumn(
+        Custom2, "Column3", each if Record.Field(_, "Spd_Diff") < 0 then "有所收窄。" else "达到最高值。", type text
+    ),
+    Custom4 = Table.AddColumn(
+        Custom3, "Column4", each "自转向以来，中美利差平均约为" & Number.ToText(Record.Field(_, "Spd_Avg"), "0bps")
+    ),
+    #"Inserted Merged Column" = Table.AddColumn(Custom4, "描述", each Text.Combine({[Column1], [Column2], [Column3], [Column4]}, ""), type text)
+in
+    #"Inserted Merged Column"

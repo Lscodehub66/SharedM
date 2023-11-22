@@ -1,0 +1,35 @@
+let
+ Source      = #"Dim Sum", 
+ AddYear     = Table.AddColumn ( Source, "Year", each "20" & Text.BeforeDelimiter ( [年月], "年" ) & "年笔数" ), 
+ Filtered    = Table.SelectRows ( AddYear, each [定价日] > Date.From ( "2021/01/01" ) ), 
+ Replaced    = Table.ReplaceValue ( Filtered, "--", 0, Replacer.ReplaceValue, { "发行规模(亿)" } ), 
+ Grouped     = Table.Group ( Replaced, { "年期", "Year" }, { { "笔数", each Table.RowCount ( _ ), Int64.Type }, { "发行量(亿元)", each List.Sum ( [#"发行规模(亿)"] ), type nullable number } } ), 
+ Duplicated  = fxReplacer ( Table.DuplicateColumn ( Grouped, "Year", "Year_C" ), { "笔数" }, { "发行量(亿元)" }, { "Year_C" } ), 
+ Pivoted     = Table.Pivot ( Table.TransformColumnTypes ( Duplicated, { { "Year", type text } }, "en-HK" ), List.Distinct ( Table.TransformColumnTypes ( Duplicated, { { "Year", type text } }, "en-HK" )[Year] ), "Year", "笔数", List.Sum ), 
+ Pivoted1    = Table.Pivot (
+  Table.TransformColumnTypes ( Pivoted, { { "Year_C", type text } }, "en-HK" ), 
+  List.Distinct ( Table.TransformColumnTypes ( Pivoted, { { "Year_C", type text } }, "en-HK" )[#"Year_C"] ), 
+  "Year_C", 
+  "发行量(亿元)", 
+  List.Sum
+ ), 
+ Grouped1    = Table.Group (
+  Pivoted1, 
+  { "年期" }, 
+  {
+   { "2023年笔数", each if List.Sum ( [2023年笔数] ) = null then 0 else List.Sum ( [2023年笔数] ), type nullable number }, 
+   { "2022年笔数", each if List.Sum ( [2022年笔数] ) = null then 0 else List.Sum ( [2022年笔数] ), type nullable number }, 
+   { "2021年笔数", each if List.Sum ( [2021年笔数] ) = null then 0 else List.Sum ( [2021年笔数] ), type nullable number }, 
+   { "2023年发行量(亿元)", each if List.Sum ( [#"2023年发行量(亿元)"] ) = null then 0 else List.Sum ( [#"2023年发行量(亿元)"] ), type nullable number }, 
+   { "2022年发行量(亿元)", each if List.Sum ( [#"2022年发行量(亿元)"] ) = null then 0 else List.Sum ( [#"2022年发行量(亿元)"] ), type nullable number }, 
+   { "2021年发行量(亿元)", each if List.Sum ( [#"2021年发行量(亿元)"] ) = null then 0 else List.Sum ( [#"2021年发行量(亿元)"] ), type nullable number }
+  }
+ ), 
+ AddedPt     = Table.AddColumn ( Grouped1, "2021年占总笔数%", each Number.Round ( ( [2021年笔数] / List.Sum ( Grouped1[2021年笔数] ) ), 2 ) ), 
+ AddedPt1    = Table.AddColumn ( AddedPt, "2022年占总笔数%", each Number.Round ( ( [2022年笔数] / List.Sum ( Grouped1[2022年笔数] ) ), 2 ) ), 
+ AddedPt2    = Table.AddColumn ( AddedPt1, "2023年占总笔数%", each Number.Round ( ( [2023年笔数] / List.Sum ( Grouped1[2023年笔数] ) ), 2 ) ), 
+ ChangedType = Table.TransformColumnTypes ( AddedPt2, { { "2021年占总笔数%", Percentage.Type }, { "2022年占总笔数%", Percentage.Type }, { "2023年占总笔数%", Percentage.Type } } ), 
+ Reordered   = Table.ReorderColumns ( ChangedType, { "板块", "2023年发行量(亿元)", "2022年发行量(亿元)", "2021年发行量(亿元)", "2023年笔数", "2022年笔数", "2021年笔数", "2021年占总笔数%", "2022年占总笔数%", "2023年占总笔数%" } ), 
+ Sorted      = Table.Sort ( Reordered, { { "2022年占总笔数%", Order.Descending } } )
+in
+ Sorted

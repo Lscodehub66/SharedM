@@ -1,0 +1,48 @@
+(
+    optional DateNumInput1 as nullable number,
+    optional DateNumInput2 as nullable number,
+    optional TableName as table,
+    optional ColName as text
+) =>
+    let
+        // DateNumInput1 = 202806,    DateNumInput2 = 20250607,
+        NumInput1 =
+            if DateNumInput1 = null and DateNumInput2 = null then
+                0
+            else if DateNumInput1 = null and DateNumInput2 <> null then
+                DateNumInput2
+            else
+                DateNumInput1,
+        NumInput2 =
+            if DateNumInput1 = null and DateNumInput2 = null then
+                0
+            else if DateNumInput2 = null and DateNumInput1 <> null then
+                DateNumInput1
+            else
+                DateNumInput2,
+        NumStart =
+            if NumInput1 < 9999 and NumInput1 > 0 then
+                NumInput1 * 10000 + 101
+            else if NumInput1 > 99999 and NumInput1 < 999999 then
+                NumInput1 * 100 + 1
+            else
+                NumInput1,
+        NumEnd =
+            if NumInput2 < 9999 and NumInput2 > 0 then
+                NumInput2 * 10000 + 1231
+            else if NumInput2 > 99999 and NumInput2 < 999999 then
+                NumInput2 * 100 + 1
+            else
+                NumInput2,
+        NumSorted = List.Sort({NumStart, NumEnd}, Order.Ascending),
+        Start = Date.From(Number.ToText(NumSorted{0})),
+        End = Date.EndOfMonth(Date.From(Number.ToText(NumSorted{1}))),
+        Output = if NumSorted = {0, 0} then {null, null} else {Start, End},
+        NullOutput = Table.SelectRows(TableName, each true),
+        FilteredOuput = Table.SelectRows(
+            Table.TransformColumnTypes(TableName, {{ColName, type date}}),
+            each Record.Field(_, ColName) >= Output{0} and Record.Field(_, ColName) <= Output{1}
+        ),
+        tblOutput = if TableName = null or ColName = null or Output = {null, null} then NullOutput else FilteredOuput
+    in
+        tblOutput

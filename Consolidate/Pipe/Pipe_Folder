@@ -1,0 +1,17 @@
+//let LoadCode = Load("QPipe_Folder","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    Source = Load("fxConnect")("PipeF"),
+    fxPipe_Transform = Load("fxPipe_Transform"),
+    CWB_tbl = CWB("Pipe_Folder"),
+    //
+    BDelimiter = Table.TransformColumns(Source, {{"Name", each Text.BeforeDelimiter(_, " "), type text}}),
+    Fn = Table.AddColumn(BDelimiter, "Data", each fxPipe_Transform([Content])),
+    Replaced = Table.ReplaceValue(
+        Fn, each [Name], each [Name] & DateTime.ToText([#"Date modified"], " MM/dd"), Replacer.ReplaceValue, {"Name"}
+    ),
+    SCol = Table.SelectColumns(Replaced, {"Name", "Data"}, MissingField.Ignore),
+    Expanded = Table.ExpandTableColumn(SCol, "Data", Table.ColumnNames(SCol[Data]{0})),
+    CWB_combined = Load("fxCombine")({Expanded, CWB_tbl}, {"简称"}),
+    Output = try CWB_combined otherwise try Expanded otherwise CWB_tbl
+in
+    Output

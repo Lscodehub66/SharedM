@@ -1,0 +1,21 @@
+//let LoadCode = Load("QDMI_Credit","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    Source = Load("fxConnect")("DMI"),
+    //References
+    CWB_DMI_Credit = CWB("DMI_Credit"),
+    Header_DMI_Credit = Get("DMI_Credit"),
+    // {"信用主体", "债券简称", "穆迪/标普", "公司类型", "行业", "细分行业", "省份", "城市", "区县", "定价日"}
+    // Function
+    Fn = Load("fxDMI")(Source),
+    SCol = Table.SelectColumns(Fn, Header_DMI_Credit, MissingField.UseNull),
+    Sorted = Table.Buffer(Table.Sort(SCol, {{"定价日", Order.Ascending}})),
+    RemovedDupe = Table.Distinct(Sorted, {"信用主体"}),
+    BDelimiter = Table.TransformColumns(RemovedDupe, {{"债券简称", each Text.BeforeDelimiter(_, " "), type text}}),
+    Renamed = Table.RenameColumns(BDelimiter, {{"定价日", "DEBUT_DATE"}}),
+    // if SourceQRC does not have this item then maintain current CWB data to append
+    CWBtbl = CWB_DMI_Credit,
+    ToAppend = Table.SelectRows(CWBtbl, each not List.Contains(Renamed[信用主体], [信用主体])),
+    Combined = Load("fxCombine")({Renamed, ToAppend}, {"信用主体"}),
+    SIndexed = Load("fxSortNIndex")(Combined, "DEBUT_DATE", "信用主体", "", "", "Y")
+in
+     SIndexed

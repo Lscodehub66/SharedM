@@ -1,0 +1,29 @@
+let
+ Source = ( TableName as table ) =>
+  let
+   Source       = TableName, 
+   收益率Num       = Table.TransformColumnTypes (
+    Source, 
+    { { "定价息差", type number }, { "票息_DMI", type number }, { "IPT_SPD", type number }, { "IPT_YIELD", type number }, { "FPT_YIELD", type number }, { "FPT_YIELD上限", type number } }
+   ), 
+   YieldDecimal = Table.TransformColumns ( 收益率Num, { { "IPT_YIELD", each _ / 100, type number }, { "票息_DMI", each _ / 100, type number }, { "FPT_YIELD", each _ / 100, type number } } ), 
+   PYieldNum    = Table.AddColumn (
+    YieldDecimal, 
+    "定价_YIELD_计算用", 
+    each if [IPT_BMK] = "%" and [WPIR] <> null then [FPT_YIELD] - ( [WPIR] / 10000 ) else if [IPT_BMK] = "%" and [WPIR] = null and [FPT_BMK] = "%" then [FPT_YIELD] else [票息_DMI]
+   ), 
+   RoundedOff   = Table.TransformColumns (
+    PYieldNum, 
+    { { "定价_YIELD_计算用", each Number.Round ( _, 4 ), type number }, { "IPT_YIELD", each Number.Round ( _, 4 ), type number }, { "FPT_YIELD", each Number.Round ( _, 4 ), type number } }
+   ), 
+   TigtenNum    = Table.AddColumn (
+    RoundedOff, 
+    "收窄基点", 
+    each if [IPT] <> "" and [IPT] <> null and [定价息差] <> null then [IPT_SPD] - [定价息差] else if [定价_BMK] = "%" and [IPT] <> "" and [IPT] <> null then ( [IPT_YIELD] - [定价_YIELD_计算用] ) * 10000 else null, 
+    type number
+   ), 
+   RoundedOff1  = Table.TransformColumns ( TigtenNum, { { "收窄基点", each if _  < 0 then null else Number.Round ( _, 1 ), type number } } )
+  in
+   RoundedOff1
+in
+ Source
