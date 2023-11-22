@@ -1,16 +1,22 @@
-(TableName as table, Col1 as text, Col2 as text, Col3 as text, Col4 as text, Col5 as text, Col6 as text) =>
+(TableName as table) =>
     let
-    // TableName = Filtered, Col1 = "1周", Col2 = "2主体", Col3="3详情",  Col4 = "4品种", Col5="5价格", Col6="6担任",
+        // TableName = Filtered, Col1 = "1周", Col2 = "2主体", Col3="3详情",  Col4 = "4品种", Col5="5价格", Col6="6担任",
         Source = TableName,
-        fxDebug = Load("fxDebug"),
+        Col1 = "1周",
+        Col2 = "2主体",
+        Col3 = "3详情",
+        Col4 = "4品种",
+        Col5 = "5价格",
+        Col6 = "6担任",
         NewCols = {"多笔", "信用主体及评级", "多笔主体", "描述", "描述2", "总述"} & {Col1, Col2, Col3, Col4, Col5, Col6},
         RColprep = Table.RemoveColumns(Source, NewCols, MissingField.Ignore),
-        //
-        FnCount = fx("AddMultiCount")(RColprep ,"信用主体简称"),
-        ddd = Table.AddColumn(FnCount, Col1, each Date.ToText([定价日], "ddd"), type text),
+        ddd = Table.AddColumn(RColprep, Col1, each Date.ToText([定价日], "ddd"), type text),
         dddcn = fx("Replace")(ddd, {Col1}, "DDDCN"),
+        FnDupeCount = Table.RenameColumns(
+            fx("DupeCount")(dddcn, "信用主体简称"), {"Dupe.Count", "多笔"}, MissingField.UseNull
+        ),
         EntityWRtg = Table.AddColumn(
-            dddcn,
+            FnDupeCount,
             "信用主体及评级",
             each if Text.Length(Text.Select([主体评级], {"A".."Z"})) > 0 then [信用主体简称] & "（" & [主体评级] & "）" else [信用主体简称],
             type text
@@ -19,11 +25,6 @@
             EntityWRtg, "多笔主体", each if [多笔] > 1 and [通过分行] <> "" then "通过" & [通过分行] else [信用主体简称], type text
         ),
         Entity = Table.AddColumn(EntityForMulti, Col2, each if [多笔] > 1 then [多笔主体] else [信用主体及评级], type text),
-        #">>>Debug" = fxDebug(
-            Entity, Col2, null, List.RemoveMatchingItems(Table.ColumnNames(Entity), Table.ColumnNames(ddd)) & {
-                "主体评级"
-            }
-        ),
         TapNew = Table.AddColumn(
             Entity,
             Col3,
@@ -39,7 +40,7 @@
             TapNew, "SquareRtg", each if Text.Length(Text.Select([发行评级], {"A".."Z"})) > 0 then "（" & [发行评级] & "）" else
                 ""
         ),
-          SBLC = Table.AddColumn(
+         SBLC = Table.AddColumn(
             IssueRtg, Col4, each if [备证行] <> "--" then [发行品种] & [SquareRtg] & "，" & [备证行] & "提供备证，" else [发行品种]
                 & [SquareRtg]
         ),
@@ -87,8 +88,9 @@
             Bocom,
             "描述",
             each
-                fx("PowerTrim")
-                (
+                fx(
+                    "PowerTrim"
+                )(
                     Record.Field(_, Col1)
                         & "，"
                         & Record.Field(_, Col2)
@@ -108,11 +110,7 @@
                 {"板块", each Text.Combine(List.Distinct([板块]), ""), type text},
                 {"货币", each Text.Combine(List.Distinct([货币]), ";"), type text},
                 {"增发判定", each Text.Combine(List.Distinct([增发判定]), ""), type text},
-                {
-                    "多笔",
-                    each if List.Sum([多笔]) / List.Count([多笔]) > 1 then List.Sum([多笔]) / List.Count([多笔]) else null,
-                    type number
-                },
+                {"多笔", each if List.Count([ISIN]) > 1 then Number.Round(List.Count([ISIN]),0) else null, type number},
                 {"描述", each Text.Combine(List.Distinct([描述2]), "#(lf)"), type text}
             }
         ),

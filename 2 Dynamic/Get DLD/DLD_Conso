@@ -2,7 +2,6 @@
 let
     Source = Load("DLD_DMI"),
     //
-
     Add_BISL = Table.AddColumn(
         Source,
         "BISL_ROLE",
@@ -62,29 +61,42 @@ let
     // facilitate FIMTN Review
     Add_FIMTN = Table.TransformColumns(Load("fxIsFIMTN")(Crossroad), {{"IS_FIMTN", each if _ = "Y" then "【Y】" else _}}),
     //
-    CWBSelfJoin_Merged = fx(
-        "Merge"
-    )(
-        Add_FIMTN, CWB("DLD_Conso"), "Check", "Check", {"IS_FIMTN"}, {"Dummy" & "IS_FIMTN"}
+    CWBConso = Table.PrefixColumns(
+        Table.SelectColumns(
+            CWB("DLD_Conso"),
+            {"IS_FIMTN", "IPT_DMI", "FPG_DMI", "认购额(亿)", "投资者账户数", "投资者类型", "投资者分布", "Check"},
+            MissingField.UseNull
+        ),
+        "Dummy"
     ),
-    CWBSelfJoin_Replaced =
-        try
+    Joined = Table.Join(Add_FIMTN, "Check", CWBConso, "Dummy.Check", JoinKind.LeftOuter),
+    #"Replaced null" =  List.Accumulate({"认购额(亿)", "投资者账户数"},  Joined, (x,y) =>  Table.ReplaceValue(
+       x, null, each Record.Field(_, "Dummy." & y), Replacer.ReplaceValue, {y}
+    )),
+     #"Replaced Blank" =  List.Accumulate({"IPT_DMI", "FPG_DMI", "投资者类型", "投资者分布"},   #"Replaced null", (x,y) =>  Table.ReplaceValue(
+       x,"", each Record.Field(_, "Dummy." & y), Replacer.ReplaceValue, {y}
+    )), 
+    #"Replaced both Non-blank" = List.Accumulate(
+        {"IS_FIMTN", "IPT_DMI", "FPG_DMI", "认购额(亿)", "投资者账户数", "投资者类型", "投资者分布"},
+       #"Replaced Blank",
+        (x, y) =>
             Table.ReplaceValue(
-                CWBSelfJoin_Merged,
-                each [IS_FIMTN],
+                x,
+                each if not List.Contains({null,""}, Record.Field(_, y)) then Record.Field(_, y) else Record.Field(_, "Dummy." & y),
                 each
-                    if
-                        Record.Field(_, "Dummy" & "IS_FIMTN") <> [IS_FIMTN]
-                        and Record.Field(_, "Dummy" & "IS_FIMTN") <> null
-                        and Record.Field(_, "Dummy" & "IS_FIMTN") <> ""
-                    then
-                        Record.Field(_, "Dummy" & "IS_FIMTN")
+                    if not List.Contains({null, ""}, y) and not List.Contains({null, ""}, "Dummy." & y) then
+                        Record.Field(_, "Dummy." & y)
                     else
-                        [IS_FIMTN],
+                        Record.Field(_, y),
                 Replacer.ReplaceValue,
-                {"IS_FIMTN"}
-            ) otherwise Add_FIMTN,
-    Checked =fx("CheckNDupe")(CWBSelfJoin_Replaced),
+                {y}
+            )
+    ),
+    Checked = fx(
+        "CheckNDupe"
+    )(
+        if List.IsEmpty(List.Intersect({Add_FIMTN[Check], CWBConso[Dummy.Check]})) then Add_FIMTN else #"Replaced Blank"
+    ),
     Sorted = fx("SortNIndex")(Checked),
     //
     CN_FIMTN_Review = Get("Header_S_Dynamic_FIMTN"),

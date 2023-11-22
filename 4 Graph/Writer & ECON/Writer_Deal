@@ -4,7 +4,7 @@ let
     #"Removed Other Columns" = Table.SelectColumns(Source,{"当前_YYW"},MissingField.UseNull),
     MergedQ = fx("Merge")(#"Removed Other Columns",  Load("deal_master"),"当前_YYW","YYW" , {""}, {""}),
     Filtered  = Table.Buffer(Table.SelectRows (  MergedQ, each [删除及隐藏] = ""and  [定价日] <> null)),
-    WriteNewIssue            = Load("fxNewIssueWriter") ( Filtered, "1周", "2主体", "3详情", "4品种", "5价格", "6担任" ),
+    WriteNewIssue            = Load("fxWeeklyDealWriter") ( Filtered),
      #"Renamed Columns" = Table.RenameColumns(  WriteNewIssue   ,{{"货币", "Column1"}, {"板块", "Column0"}, {"Writer", "Column2"}},MissingField.UseNull),
      #"Merged Queries" = Table.NestedJoin(       #"Renamed Columns"  , {"Column0"}, Load("dd_板块"), {"板块"}, "dd_板块", JoinKind.LeftOuter),
     #"Expanded dd_板块" = Table.ExpandTableColumn(#"Merged Queries", "dd_板块", {"SortValue"}, {"SortValue"}),

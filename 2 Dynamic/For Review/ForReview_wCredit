@@ -20,7 +20,7 @@ let
     ),
     Replaced = Table.ReplaceValue(TFCol, null, each [信用主体], Replacer.ReplaceValue, {"债券简称"}),
     MergedQ = Table.NestedJoin(
-        Replaced, {"信用主体"}, fx("Excel")("DEALSMASTER_mCredit"), {"信用主体"}, Prefix & "Data", JoinKind.LeftAnti
+        Replaced, {"信用主体"}, fx("Excel")("DEALSMASTER_mCredit"), {"信用主体"}, "Dummy" & "Data", JoinKind.LeftAnti
     ),
     Function = Table.AddColumn(MergedQ, "SHORTNAMER", each fx("SNBankCorp")([债券简称])),
     SCol1 = Table.SelectColumns(
