@@ -1,5 +1,6 @@
 (TableName as table, optional DB_Name as text, optional InventoryMethod as text) =>
     let
+       // TableName = , DB_Name ="mBISL",InventoryMethod=null,
         SourceDB = TableName,
         // Definitions fx("DBManager")(Source,"mCredit","LIFO")
         //

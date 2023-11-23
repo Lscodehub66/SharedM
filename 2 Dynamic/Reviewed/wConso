@@ -5,7 +5,7 @@ let
     Merged = fx("Merge")(Source, Load("wBISL"), "Check", "Check", {""}, {""}, null, 1),
     Combined = fx("Combine")({Merged, Load("wChart")}, null, {10}),
     Merged1 = fx("Merge")(Combined, Load("wCredit"), "信用主体", "信用主体", {""}, {""}, null, 1),
-    Removed = Table.RemoveColumns(Merged1, {"Updator", "Timestamp"}, MissingField.Ignore),
+    Removed = Table.RemoveColumns(Merged1, {"Updator", "Timestamp","JGC","JBR"}, MissingField.Ignore),
     Joined = Table.Join(Removed,"Check",Load("wBISL_JLM"),"DummyCheck",JoinKind.LeftOuter),
     Managed = fx("DBManager")(Joined, "wConso"),
     Custom1 = Table.SelectRows(Managed, each [定价日] >= wRangeStart)

@@ -95,7 +95,7 @@ let
     Checked = fx(
         "CheckNDupe"
     )(
-        if List.IsEmpty(List.Intersect({Add_FIMTN[Check], CWBConso[Dummy.Check]})) then Add_FIMTN else #"Replaced Blank"
+        if List.IsEmpty(List.Intersect({Add_FIMTN[Check], CWBConso[Dummy.Check]})) then Add_FIMTN else    #"Replaced both Non-blank"
     ),
     Sorted = fx("SortNIndex")(Checked),
     //

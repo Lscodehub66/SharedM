@@ -5,7 +5,8 @@
         DBRenamed = Table.RenameColumns(
             Source,
             {
-                {"IN_板块", "板块"},{"浮动息差","FLOATER_FORMULA"},
+                {"IN_板块", "板块"},
+                {"浮动息差", "FLOATER_FORMULA"},
                 {"发行人注册地", "发行人成立地"},
                 {"FLOATER_FORMULA", "计息基准"},
                 {"发行价格", "发行价"},
@@ -84,7 +85,6 @@
             "年份",
             "当前",
             "投资者账户数",
-         
             "票面利率",
             "第N次担任",
             "认购额(亿)",
@@ -128,7 +128,7 @@
         Text_Trim = {"PROJECT_CODE", "期数", "外部评审机构", "外部评审方式", "FolderPath"},
         Text_Upper = {
             "Bond Details",
-            "CCY",   
+            "CCY",
             "信用主体",
             "计息基准",
             "ISIN",
@@ -148,11 +148,16 @@
         Text_NoNA = {"增发判定", "主题债券"},
         Text1 = {
             "主体",
-            "EXE","浮息息差","FLOATER_FORMULA",
-
+            "EXE",
+            "浮息息差",
+            "FLOATER_FORMULA",
+            "JGC",
+            "JBR",
             "系",
             "mCredit",
-            "mCurated", "PROJECT_CN","定价会时段",
+            "mCurated",
+            "PROJECT_CN",
+            "定价会时段",
             "mBISL",
             "描述",
             "SeriesCN_Indice",
