@@ -1,0 +1,7 @@
+let
+    CWBSource = try CWB("mBISL") otherwise fx("Excel")("DEALSMASTER_=MBISL"),
+    SCol = Table.SelectColumns(CWBSource, {"信用主体", "定价日", "PROJECT_CODE","Check"}, MissingField.UseNull),
+    Inserted = Table.AddColumn(SCol, "Comparer", each fx("Comparer")("Y", [PROJECT_CODE], [定价日], "yyMMdd")),
+    SCol1 = Table.SelectColumns(Inserted, {"信用主体", "Comparer","Check"})
+in
+    SCol1

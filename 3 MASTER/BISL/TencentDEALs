@@ -1,0 +1,22 @@
+let
+    SourceTF = Load("TFtbl_DEALs","CSV"),
+    #"Filtered Rows" = Table.SelectRows(SourceTF, each ([Is_Dummy] = "")),
+    Joined = Table.Join(#"Filtered Rows","From",Load("DLD_DEALs_Sheet"),"Column1",JoinKind.LeftOuter),
+    #"Removed Columns" = Table.RemoveColumns(Joined,{"From", "Is_Dummy", "Column1"},MissingField.Ignore),
+    #"Transposed Table1" = Table.Transpose(#"Removed Columns"),
+    Fn = fx("SheetTotbl")( #"Transposed Table1",{"Column2","PROJECT_CODE",null}),
+    #"Filtered Rows1" = Table.SelectRows(Fn, each ([视图] = "Closing" or [视图] = "Completed")),
+    #"Extracted Last Characters" = Table.TransformColumns(#"Filtered Rows1", {{"EXE", each Text.End(_, 2), type text}}),
+    RepalceValue = List.Accumulate({"无","n/a","n/a(挂名)","--","[Input]"},#"Extracted Last Characters", (x,y) => Table.ReplaceValue(x, y,"",Replacer.ReplaceValue,Table.ColumnNames(#"Extracted Last Characters"))),
+    ReplaceText = List.Accumulate({{"交行","","交行及独家订单"},{",","；"&"#(lf)","项目亮点"}}, RepalceValue, (x,y) => Table.ReplaceValue(x,y{0},y{1},Replacer.ReplaceText,{y{2}})),
+    DataType = fx("Data")(ReplaceText),
+      #"Inserted Time" = Table.AddColumn(    DataType, "定价会时间", each DateTime.Time([定价会日期时间]) , type time),
+    #"Merged Queries1" = Table.NestedJoin(#"Inserted Time", {"定价会时间"}, Load("DimTime"), {"Time"}, "Data", JoinKind.LeftOuter),
+    #"Expanded DimTime" = Table.ExpandTableColumn(#"Merged Queries1", "Data", {"DayPeriod"}, {"定价会时段"}),
+    #"Inserted Date" = Table.AddColumn(#"Expanded DimTime", "定价日", each if [定价会时段] = "午夜后" then Date.AddDays(DateTime.Date([定价会日期时间]),-1) else DateTime.Date([定价会日期时间]), type date),
+    #"Inserted Comparer" = Table.AddColumn( #"Inserted Date", "Comparer", each fx("Comparer")("Y",[PROJECT_CODE],[定价日],"yyMMdd")),
+    mBISL_Comparer = Load("mBISL_Comparer"),      #"Merged Queries2" = fx("Merge")(     #"Inserted Comparer" ,    mBISL_Comparer, "Comparer","Comparer",{""},{""}),
+    #"Removed Other Columns" = Table.SelectColumns(#"Merged Queries2",{"Check", "PROJECT_CN", "EXE", "Settlement",  "BOCOM下单量", "BOCOM分配量", "交行及独家订单", "项目亮点", "Date_Onboarded", "定价会时间" },MissingField.UseNull),
+    Custom2 = Table.PrefixColumns(fx("Data")(#"Removed Other Columns"), "Dummy")
+in
+    Custom2

@@ -2,10 +2,9 @@
     let
         SourceDB = TableName,
         // Definitions fx("DBManager")(Source,"mCredit","LIFO")
-
         //
         CN_Source = Table.ColumnNames(SourceDB),
-        HD = List.Intersect({{"Check", "信用主体", "信用主体(备证行)", "Date","Timestamp", "板块二级", "BISL_ROLE"}, CN_Source}),
+        HD = List.Intersect({{"Check", "信用主体", "信用主体(备证行)", "Date", "Timestamp", "板块二级", "BISL_ROLE"}, CN_Source}),
         HD_Count = List.Count(HD),
         MorW = if not List.Contains(HD, "Timestamp") then "W" else "M",
         // Filter out blank rows & invoke dataformat
@@ -13,7 +12,9 @@
             if HD_Count = 0 then
                 fx("Data")(SourceDB)
             else
-                fx("Data")(
+                fx(
+                    "Data"
+                )(
                     Table.SelectRows(
                         SourceDB,
                         each
@@ -45,24 +46,27 @@
                 Table.Buffer(Table.Sort(Indexed, {{HD{0}, Order}, {"Dummy" & "Index", Order}}))
             else
                 Indexed,
-        RemovedDupe = if HD_Count = 0 or HD{0} = "Timestamp" then Table.Distinct(SortedDupe) else Table.Distinct(SortedDupe, {HD{0}}),
+        RemovedDupe =
+            if HD_Count = 0 or HD{0} = "Timestamp" then
+                Table.Distinct(SortedDupe)
+            else
+                Table.Distinct(SortedDupe, {HD{0}}),
         // Weekly
         // Remember to check the referenced name if you revise previous steps **Referenced Dummy Step **
         _CROSSROAD = if MorW = "W" then Load("fxUpdatorTS")(RemovedDupe) else RemovedDupe,
         // Revalidate mCurated
-        
         // Revalidate mBISL BISL_Ancient
-        BISL_对帐号 =
-            if List.Contains(CN_Source, "台账序号") and MorW = "M" then
-                Load("fxPRJSync")( _CROSSROAD, "台账序号", "定价日", "PRJ对账号")
+        BISL_对帐号 = Load("fxPRJSync")(_CROSSROAD, "台账序号", "定价日", "PRJ对账号"),
+        DB_mBISL =
+            if List.Contains(CN_Source, "IS_KYC_DONE") and MorW = "M" then
+                fx("fxDEALs_ToReplace")(BISL_对帐号)
             else
                 _CROSSROAD,
         //  **Referenced Dummy Step ** This step is referenced by the conditional mCredit Manager step as Source !
-        DB_Entity = if List.Contains(HD, "板块二级") and MorW = "M" then Load("fxDB_Entity")(BISL_对帐号) else BISL_对帐号,
+        DB_Entity = if List.Contains(HD, "板块二级") and MorW = "M" then Load("fxDB_Entity")(DB_mBISL) else DB_mBISL,
         //  **Referenced Dummy Step ** This step is referenced by the conditional sort step - better not to change it !
         FnDBUpdated = if MorW = "M" then fx("DBUpdator")(DB_Entity) else DB_Entity,
-     
-        PresentedNull =  fx("PresentNoData")(  FnDBUpdated ),
+        PresentedNull = fx("PresentNoData")(FnDBUpdated),
         //Sort as last step
         RCol = Table.RemoveColumns(
             PresentedNull,
