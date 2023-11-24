@@ -1,0 +1,28 @@
+(TableName as table, BMKCol as text, NumTextCol as text) =>
+    let
+        Source = TableName,
+        #"Changed TypeText" = Table.TransformColumnTypes(Source, {{BMKCol, type text}, {NumTextCol, type text}}),
+        #"Trimmed Text1" = Table.TransformColumns(
+            Source, {{BMKCol, Text.Trim, type text}, {NumTextCol, Text.Trim, type text}}
+        ),
+        #"Replaced Value" = Table.ReplaceValue(#"Trimmed Text1", " ", "", Replacer.ReplaceText, {BMKCol, NumTextCol}),
+        #"Duplicated Column1" = Table.DuplicateColumn(#"Replaced Value", NumTextCol, "Lower_Num"),
+        #"Changed Type" = Table.TransformColumnTypes(#"Duplicated Column1", {{"Lower_Num", type number}}),
+        #"Replaced Errors" = Table.ReplaceErrorValues(#"Changed Type", {{"Lower_Num", null}}),
+        NumToText = Table.TransformColumns(
+            #"Replaced Errors", {{"Lower_Num", each if _ = null then "" else Number.ToText(_), type text}}
+        ),
+        #"Added Custom" = Table.AddColumn(
+            NumToText,
+            "BMKandNum",
+            each
+                if Record.Field(_, BMKCol) ="" then "" else if Record.Field(_, BMKCol) = "【】" then
+                    "【】"
+                else if Record.Field(_, BMKCol) = "%" then
+                    [Lower_Num] & "%"
+                else
+                    Record.Field(_, BMKCol) & "+" & [Lower_Num]
+        ),
+        #"Removed Columns4" = Table.RemoveColumns(#"Added Custom", {"Lower_Num"})
+    in
+        #"Removed Columns4"

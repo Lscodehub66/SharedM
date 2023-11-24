@@ -1,0 +1,120 @@
+(TableName as table, optional ColName as nullable text) =>
+    let
+        Source = TableName,
+        #"Inserted DupeColumn" = Table.AddColumn(
+            Source,
+            "DupeCol2",
+            each
+                if
+                    List.Contains(
+                        {
+                            "100.00，另加2020年11月12日（含）至2020年12月2日（不含）的应计利息",
+                            "160/165bps",
+                            "140bps",
+                            "SOR+75bp",
+                            "5Y +150a (+/-2.5)",
+                            "101.625区域",
+                            "3.725",
+                            "10.875",
+                            "+200-205bps区域",
+                            "Tap Price(100%)+应计利息（从包括2019年10月18日起算至2020年2月6日，但2020年2月6日不计算在内）",
+                            "6.4%+2019年9月12日（在内）至增发日当天（除外）的应计利息",
+                            "12.125%+2019年12月12日(在内)至2022年1月21日(除外)应计利息",
+                            "90bp(+/-2，WPIR)/105bp(+/-2，WPIR)/125bp(+/-2，WPIR)",
+                            "+155（+/- 5bp区域）",
+                            "3ml+110bps区域（+/-2.5bps）",
+                            "13.250%区域+2020年9月4日(含)至新票据交割日(不含)的应计利息",
+                            "按100发行，加上2021年7月28日（含）至新票据交割日（不含）的应计利息"
+                        },
+                        Record.Field(_, (ColName ?? "FPG_DMI"))
+                    )
+                    or Text.Contains(Record.Field(_, (ColName ?? "FPG_DMI")), "TapPrice")
+                then
+                    "【】"
+                else
+                    Record.Field(_, (ColName ?? "FPG_DMI")),
+            type text
+        ),
+        #"Inserted TBCCol" = Table.AddColumn(
+            #"Inserted DupeColumn",
+            "TBCCol1",
+            each
+                if
+                    Text.Contains([DupeCol2], "%/")
+                    or Text.Contains([DupeCol2], "bps/")
+                    or Text.Contains([DupeCol2], "|")
+                then
+                    "【" & Text.BeforeDelimiter([DupeCol2], "，") & "】"
+                else
+                    Text.BeforeDelimiter([DupeCol2], "，"),
+            type text
+        ),
+        #"Removed Columns" = Table.RemoveColumns(#"Inserted TBCCol", {"DupeCol2"}),
+        Replaced = fx(
+            "Replacer"
+        )(
+            #"Removed Columns", {"TBCCol1"}, {"（", "）", ",+", "~", "％"}, {"(", ")", "+", "-", "%"}
+        ),
+        #"Trimmed Text" = Table.TransformColumns(Replaced, {{"TBCCol1", each fx("PowerTrim")(_), type text}}),
+        #"Inserted WPIR_bpsText" = Table.AddColumn(
+            #"Trimmed Text",
+            "WPIR_bpsText",
+            each Text.Select(Text.AfterDelimiter([TBCCol1], "+/-"), {"0".."9", "-", "."}),
+            type text
+        ),
+        #"Inserted String_NoWIPR" = Table.AddColumn(
+            #"Inserted WPIR_bpsText",
+            "String_NoWPIR",
+            each Text.BeforeDelimiter(Text.BeforeDelimiter([TBCCol1], "+/-"), "("),
+            type text
+        ),
+        #"Removed Columns1" = Table.RemoveColumns(#"Inserted String_NoWIPR", {"TBCCol1"}),
+        Fn = fx("ExtractBMK")(#"Removed Columns1", "String_NoWPIR", "BMK"),
+        #"Inserted String_BeforeMinus" = Table.AddColumn(
+            Fn, "String_BeforeMinus", each Text.BeforeDelimiter([String_NoWPIR], "-"), type text
+        ),
+        #"Inserted Upper_NumText" = Table.AddColumn(
+            #"Inserted String_BeforeMinus",
+            "Upper_NumText",
+            each
+                if Text.Contains([String_NoWPIR], "【") then
+                    "【】"
+                else if [BMK] = "%" then
+                    Text.BeforeDelimiter(Text.AfterDelimiter([String_NoWPIR], "-"), "%")
+                else
+                    Text.Select(Text.AfterDelimiter(Text.AfterDelimiter([String_NoWPIR], "+"), "-"), {"0".."9", "."}),
+            type text
+        ),
+        #"Removed Columns2" = Table.RemoveColumns(#"Inserted Upper_NumText", {"String_NoWPIR"}),
+        #"Inserted Lower_NumText" = Table.AddColumn(
+            #"Removed Columns2",
+            "Lower_NumText",
+            each
+                if Text.Contains([String_BeforeMinus], "【") then
+                    "【】"
+                else if [BMK] = "%" then
+                    Text.BeforeDelimiter([String_BeforeMinus], "%")
+                else
+                    Text.BeforeDelimiter(
+                        Text.Select(Text.AfterDelimiter([String_BeforeMinus], "+"), {"0".."9", "-", "."}), "-"
+                    ),
+            type text
+        ),
+        #"Removed Columns3" = Table.RemoveColumns(#"Inserted Lower_NumText", {"String_BeforeMinus"}),
+        #"Reordered Columns" = Table.ReorderColumns(
+            #"Removed Columns3", {"FPG_DMI", "BMK", "Lower_NumText", "Upper_NumText", "WPIR_bpsText"}
+        ),
+        Fn1 = fx("fxBMKandNumText")(#"Reordered Columns", "BMK", "Lower_NumText"),
+        Fn2 = fx("UpperString")(Fn1, "BMK", "Upper_NumText"),
+        Fn3 = fx("WPIRString")(Fn2, "WPIR_bpsText"),
+        #"Merged Columns" = Table.CombineColumns(
+            Fn3,
+            {"BMKandNum", "Upper_String", "WPIR_String"},
+            Combiner.CombineTextByDelimiter("", QuoteStyle.None),
+            "FPG"
+        ),
+        #"Removed Columns4" = Table.RemoveColumns(
+            #"Merged Columns", {"BMK", "Lower_NumText", "Upper_NumText", "WPIR_bpsText"}
+        )
+    in
+        #"Removed Columns4"

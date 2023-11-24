@@ -1,0 +1,18 @@
+(TableName as table, WPIRCol as text) =>
+    let
+        Source = TableName,
+        #"Changed TypeText" = Table.TransformColumnTypes(Source, {{WPIRCol, type text}}),
+        #"Trimmed Text1" = Table.TransformColumns(Source, {{WPIRCol, Text.Trim, type text}}),
+        #"Replaced Value" = Table.ReplaceValue(#"Trimmed Text1", " ", "", Replacer.ReplaceText, {WPIRCol}),
+        #"Duplicated Column1" = Table.DuplicateColumn(#"Replaced Value", WPIRCol, "WPIR_Num"),
+        #"Changed Type" = Table.TransformColumnTypes(#"Duplicated Column1", {{"WPIR_Num", type number}}),
+        #"Replaced Errors" = Table.ReplaceErrorValues(#"Changed Type", {{"WPIR_Num", null}}),
+        NumToText = Table.TransformColumns(
+            #"Replaced Errors", {{"WPIR_Num", each if _ = null then "" else Number.ToText(_), type text}}
+        ),
+        #"Added Custom" = Table.AddColumn(
+            NumToText, "WPIR_String", each if [WPIR_Num] = "" then "" else "(+/-" & [WPIR_Num] & ")", type text
+        ),
+        RCol = Table.RemoveColumns(#"Added Custom", {"WPIR_Num"})
+    in
+        RCol

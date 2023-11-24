@@ -1,0 +1,15 @@
+(TableName as table, ColName as text, NewColName as text) =>
+let
+    Source =TableName,
+    #"Duplicated Column" = Table.DuplicateColumn( Source , ColName, "DupeCol1"),
+    #"Replaced Value" = fx("Replacer")(#"Duplicated Column",{"DupeCol1"},{"％","$"},{"%",""}),
+    #"Extracted Text Before Delimiter" = Table.TransformColumns(#"Replaced Value", {{"DupeCol1", each Text.BeforeDelimiter(_, "，"), type text}}),
+    #"Extracted Text Before Delimiter1" = Table.TransformColumns(#"Extracted Text Before Delimiter", {{"DupeCol1",  each if Text.Contains(_,"利息") or Text.Contains(_,"年") then Text.BeforeDelimiter(_, if  Text.Contains(_,"+") then "+" else "(") else _, type text}}),
+    #"Inserted Text Before Delimiter" = Table.AddColumn(#"Extracted Text Before Delimiter1", "BMK1", each if Text.Contains([DupeCol1],"【") then "【】" else if Text.Contains([DupeCol1],"+") then Text.BeforeDelimiter([DupeCol1], "+") else if  Text.Contains([DupeCol1],"%") then "%" else [DupeCol1], type text),
+    #"Added Conditional Column" = Table.AddColumn(#"Inserted Text Before Delimiter", "BMK2", each if Text.Contains([BMK1], "SOFR") then "SOFR" else if Text.Contains([BMK1], "SONIA") then "SONIA" else if Text.Contains([BMK1], "MID", Comparer.OrdinalIgnoreCase) then "MS" else [BMK1]),
+    #"Trimmed Text" = Table.TransformColumns(#"Added Conditional Column",{{"BMK2", Text.Trim, type text}}),
+    #"Replaced CT" = Table.TransformColumns(#"Trimmed Text",{{"BMK2", each if Text.StartsWith(_,"CT") then Text.Replace(_,"CT","T") else if  Text.StartsWith(_,"UST") then Text.Replace(_,"UST","T")else _, type text}}),
+    #"Removed Columns" = Table.RemoveColumns(#"Replaced CT",{"DupeCol1", "BMK1"}),
+    #"Renamed Columns" = Table.RenameColumns(#"Removed Columns",{{"BMK2", NewColName}})
+in
+    #"Renamed Columns"
