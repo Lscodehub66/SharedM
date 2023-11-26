@@ -24,6 +24,7 @@ let
         if #"//GNG_Multi" <> "GO" then
             try CWB("DLD_BBG_Corp") otherwise fx("CheckNDupe")(TBC_Replaced)
         else
-           fx("CheckNDupe")(TBC_Replaced)
+            fx("CheckNDupe")(TBC_Replaced),
+    Renamed1 = Table.RenameColumns(Crossroad, {{"SBLC_Provider_Name", "SBLC提供者"}}, MissingField.Ignore)
 in
-    Crossroad
+    Renamed1

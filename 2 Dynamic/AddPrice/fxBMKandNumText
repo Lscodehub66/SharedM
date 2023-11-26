@@ -3,26 +3,35 @@
         Source = TableName,
         #"Changed TypeText" = Table.TransformColumnTypes(Source, {{BMKCol, type text}, {NumTextCol, type text}}),
         #"Trimmed Text1" = Table.TransformColumns(
-            Source, {{BMKCol, Text.Trim, type text}, {NumTextCol, Text.Trim, type text}}
+            #"Changed TypeText", {{BMKCol, Text.Trim, type text}, {NumTextCol, Text.Trim, type text}}
         ),
         #"Replaced Value" = Table.ReplaceValue(#"Trimmed Text1", " ", "", Replacer.ReplaceText, {BMKCol, NumTextCol}),
-        #"Duplicated Column1" = Table.DuplicateColumn(#"Replaced Value", NumTextCol, "Lower_Num"),
+        // ** skipped ** 
+        #"Duplicated Column1" = Table.DuplicateColumn(#"Trimmed Text1", NumTextCol, "Lower_Num"),
         #"Changed Type" = Table.TransformColumnTypes(#"Duplicated Column1", {{"Lower_Num", type number}}),
         #"Replaced Errors" = Table.ReplaceErrorValues(#"Changed Type", {{"Lower_Num", null}}),
-        NumToText = Table.TransformColumns(
-            #"Replaced Errors", {{"Lower_Num", each if _ = null then "" else Number.ToText(_), type text}}
+        NumToText = Table.AddColumn(
+            #"Replaced Errors",
+            "Lower_Text",
+            each if [Lower_Num] = null then "" else if [Lower_Num] > 1000 then "【】" else Number.ToText(
+                Number.Round([Lower_Num] , 4)
+            ),
+            type text
         ),
         #"Added Custom" = Table.AddColumn(
             NumToText,
             "BMKandNum",
             each
-                if Record.Field(_, BMKCol) ="" then "" else if Record.Field(_, BMKCol) = "【】" then
+                if Record.Field(_, BMKCol) = "" then
+                    ""
+                else if Record.Field(_, BMKCol) = "【】" then
                     "【】"
                 else if Record.Field(_, BMKCol) = "%" then
-                    [Lower_Num] & "%"
+                    [Lower_Text] & "%"
                 else
-                    Record.Field(_, BMKCol) & "+" & [Lower_Num]
+                    Record.Field(_, BMKCol) & "+" & [Lower_Text],
+            type text
         ),
-        #"Removed Columns4" = Table.RemoveColumns(#"Added Custom", {"Lower_Num"})
+        #"Removed Columns4" = Table.RemoveColumns(#"Added Custom", {"Lower_Num", "Lower_Text"})
     in
         #"Removed Columns4"

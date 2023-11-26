@@ -13,9 +13,9 @@ let
     Replaced1 = Table.ReplaceValue(
            Replaced ," ","", Replacer.ReplaceText,  {"IPG", "FPG","票息","定价" }),
     Renamed = Table.RenameColumns(
-        Replaced1, {{"IPG", "IPT_DMI"}, {"FPG", "FPG_DMI"}, {"定价", "定价_DMI"}, {"收窄基点", "收窄"}}, MissingField.Ignore
+        Replaced1, {{"IPG", "IPT_DMI"}, {"FPG", "FPG_DMI"}}, MissingField.Ignore
     ),
-    ACol = Table.AddColumn(Renamed, "计息基准", each if Text.Contains([票息], "+") then [票息] else "", type text),
-    #"Removed Columns" = if GNG = "GO" then Table.RemoveColumns(ACol, {"票息"}) else Source
+   
+    #"Removed Columns" = if GNG = "GO" then   Renamed else Source
 in
     #"Removed Columns"

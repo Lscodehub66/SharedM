@@ -10,7 +10,7 @@
         #"Changed Type" = Table.TransformColumnTypes(#"Duplicated Column1", {{"Upper_Num", type number}}),
         #"Replaced Errors" = Table.ReplaceErrorValues(#"Changed Type", {{"Upper_Num", null}}),
         NumToText = Table.TransformColumns(
-            #"Replaced Errors", {{"Upper_Num", each if _ = null then "" else Number.ToText(_), type text}}
+            #"Replaced Errors", {{"Upper_Num", each if _ = null then "" else Number.ToText(Number.Round(_,4)), type text}}
         ),
         #"Added Custom" = Table.AddColumn(
             NumToText,

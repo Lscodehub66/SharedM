@@ -1,0 +1,64 @@
+(TableName as table, optional InitialCol as text, optional PricedCol as text) =>
+    let
+        Source = TableName,
+        // InitialCol = null, PricedCol = null,
+        ColToAdd = {"InitialNumText", "PricedNumText", "Tighten_BMK"},
+        PrepRemoval = Table.RemoveColumns(Source, ColToAdd, MissingField.Ignore),
+        #"Inserted Text Between Delimiters" = Table.AddColumn(
+            PrepRemoval,
+            "InitialNumText",
+            each
+                if
+                    not Text.Contains(Record.Field(_, (InitialCol ?? "IPG")), "【")
+                    and not Text.Contains(Record.Field(_, (PricedCol ?? "定价")), "【")
+                    and Text.Contains(Record.Field(_, (InitialCol ?? "IPG")), "+")
+                    and Text.Contains(Record.Field(_, (PricedCol ?? "定价")), "+")
+                then
+                    Text.BetweenDelimiters(Record.Field(_, (InitialCol ?? "IPG")), "+", "a")
+                else
+                    "",
+            type text
+        ),
+        #"Inserted Text After Delimiter" = Table.AddColumn(
+            #"Inserted Text Between Delimiters",
+            "PricedNumText",
+            each
+                if
+                    not Text.Contains(Record.Field(_, (InitialCol ?? "IPG")), "【")
+                    and not Text.Contains(Record.Field(_, (PricedCol ?? "定价")), "【")
+                    and Text.Contains(Record.Field(_, (InitialCol ?? "IPG")), "+")
+                    and Text.Contains(Record.Field(_, (PricedCol ?? "定价")), "+")
+                then
+                    Text.AfterDelimiter(Record.Field(_, (PricedCol ?? "定价")), "+")
+                else
+                    "",
+            type text
+        ),
+        #"Changed Type" = Table.TransformColumnTypes(
+            #"Inserted Text After Delimiter", {{"InitialNumText", type number}, {"PricedNumText", type number}}
+        ),
+        #"Inserted Subtraction" = Table.AddColumn(
+            #"Changed Type", "Tighten_BMK", each Number.Round([InitialNumText] - [PricedNumText], 1), type number
+        ),
+        #"Replaced Value1" = Table.ReplaceValue(
+            #"Inserted Subtraction",
+            each [Tighten_BMK],
+            each if [Tighten_BMK] > 100 or [Tighten_BMK] < 0 then null else [Tighten_BMK],
+            Replacer.ReplaceValue,
+            {"Tighten_BMK"}
+        ),
+        #"Removed Columns" = Table.RemoveColumns(#"Replaced Value1", {"InitialNumText", "PricedNumText"}),
+        #"Changed Type1" = Table.TransformColumnTypes(#"Removed Columns", {{"Tighten_BMK", type number}}),
+        #"Inserted TigentenConso" = Table.AddColumn(
+            Table.RemoveColumns(#"Changed Type1", {"收窄基点"}, MissingField.Ignore),
+            "收窄基点",
+            each if [Tighten_BMK] = null then [Tighten_Pt] else [Tighten_BMK],
+            type number
+        ),
+        RemovedCol =
+            if Table.HasColumns(#"Changed Type1", "Tighten_Pt") then
+                Table.RemoveColumns(#"Inserted TigentenConso", {"Tighten_Pt", "Tighten_BMK"}, MissingField.Ignore)
+            else
+                #"Changed Type1"
+    in
+        RemovedCol

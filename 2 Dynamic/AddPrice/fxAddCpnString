@@ -1,0 +1,25 @@
+(TableName as table, optional ColName as nullable text) =>
+    let
+        Source = TableName,
+        ColToAdd = {"票息"},
+        PrepRemoval = Table.RemoveColumns(Source, ColToAdd, MissingField.Ignore),
+        #"Duplicated Column" = Table.DuplicateColumn(PrepRemoval, ColName ?? "票息_DMI", "DupeCol4"),
+        #"Changed Type" = Table.TransformColumnTypes(#"Duplicated Column", {{"DupeCol4", type number}}),
+        #"Replaced Errors" = Table.ReplaceErrorValues(#"Changed Type", {{"DupeCol4", null}}),
+        #"Inserted NumText" = Table.AddColumn(
+            #"Replaced Errors",
+            "票息",
+            each if [DupeCol4] = null or [DupeCol4] = 0 then "【】" else Number.ToText(Number.Round([DupeCol4], 4))
+                & "%",
+            type text
+        ),
+        #"Removed Col" = Table.RemoveColumns(#"Inserted NumText", {"DupeCol4"}),
+        #"Replaced Value" = Table.ReplaceValue(
+            #"Removed Col",
+            each [票息],
+            each if not List.Contains({null, ""}, [浮息定价]) and not Text.Contains([浮息定价], "【") then [浮息定价] else [票息],
+            Replacer.ReplaceValue,
+            {"票息"}
+        )
+    in
+        #"Replaced Value"

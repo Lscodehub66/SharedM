@@ -1,0 +1,48 @@
+(TableName as table, optional ColName as nullable text) =>
+    let
+        Source = TableName,
+        ColToAdd = {"浮息定价", "NoTBC", "DupeCol3", "BMK", "NumText", "BMKandNum"},
+        PrepRemoval = Table.RemoveColumns(Source, ColToAdd, MissingField.Ignore),
+        Prep = Table.ReplaceValue(
+            Table.TransformColumnTypes(PrepRemoval, {{(ColName ?? "计息基准"), type text}}),
+            null,
+            "",
+            Replacer.ReplaceValue,
+            {(ColName ?? "计息基准")}
+        ),
+        #"Inserted NoTBC" = fx(
+            "Replacer"
+        )(
+            Table.DuplicateColumn(Prep, ColName ?? "计息基准", "NoTBC"), {"NoTBC"},  {"【", "】","--"}, {"", "",""}
+        ),
+        #"Duplicated Column" = Table.DuplicateColumn(#"Inserted NoTBC", "NoTBC", "DupeCol3"),
+        #"Extracted Text Before Delimiter" = Table.TransformColumns(
+            #"Duplicated Column",
+            {
+                {
+                    "DupeCol3",
+                    each Text.Select(Text.Upper(Text.BeforeDelimiter(_, "+")), {"A".."Z", "0".."9"}),
+                    type text
+                }
+            }
+        ),
+        Custom1 = fx("ExtractBMK")(#"Extracted Text Before Delimiter", "DupeCol3", "BMK"),
+        #"Inserted Text After Delimiter" = Table.AddColumn(
+            Custom1, "NumText", each Text.Select(Text.AfterDelimiter(Record.Field(_,(ColName??"计息基准")), "+"), {"0".."9", "."}), type text
+        ),
+        Custom3 = fx("BMKandNumText")(#"Inserted Text After Delimiter", "BMK", "NumText"),
+        #"Renamed Columns" = Table.RenameColumns(Custom3, {{"BMKandNum", "浮息定价"}}),
+        #"Removed Columns" = Table.RemoveColumns(#"Renamed Columns", {"DupeCol3", "NoTBC", "BMK", "NumText"}),
+        #"FRN TBC" =
+            if Table.HasColumns(#"Removed Columns", "利率类型") then
+                Table.ReplaceValue(
+                    #"Removed Columns",
+                    "",
+                    each if Text.Contains([利率类型] ?? "", "浮") then "【】" else "",
+                    Replacer.ReplaceValue,
+                    {"浮息定价"}
+                )
+            else
+                #"Removed Columns"
+    in
+        #"FRN TBC"

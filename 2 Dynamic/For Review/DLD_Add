@@ -1,52 +1,46 @@
 // let LoadCode = Load("DLD_Add","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-    Source = try CWB("DLD_Conso") otherwise Load("DLD_Conso"),
+    Source = try CWB("DLD_Conso","1") otherwise Load("DLD_Conso"),
     CN_Source = List.Buffer(Table.ColumnNames(Source)),
-  
+    #"Removed and Renamed" = Table.RenameColumns(
+        Table.RemoveColumns(Source, {"计息基准","IPT_DMI","FPG_DMI"}, MissingField.Ignore),
+        {{"IPG", "IPT_DMI"}, {"FPG", "FPG_DMI"}, {"浮息定价", "计息基准"}},
+        MissingField.Ignore
+    ),
     //
     Clean_TBC =
         if List.Contains(CN_Source, "IS_FIMTN") then
-           fx("Replace")(Source, {"IS_FIMTN"},  "RTBC") 
+            fx("Replace")(#"Removed and Renamed", {"IS_FIMTN"}, "RTBC")
         else
-            Source,
-    Clean_Structure = fx("Replace")(Table.DuplicateColumn(Clean_TBC,"发行架构","结构") ,{"结构"},"结构"),  
-        Add_Tap = Table.AddColumn(    Clean_Structure , "增发判定", each if [起息日期] = null then "" else if [定价日] > [起息日期] then "[增发]" else "", type text),
-    
-    Added= List.Accumulate( 
-            {"SBLC","Exchange","BankBranch","BBGFX","Stats","BCM","PriceNum","PriceText","Tenor","ESGMore"}, 
-           Add_Tap,
-           ( x, y ) => 
-            fx("Add"& y)(x)),
-                      
-    #">>HD_S" = {"Check", "ISIN", "定价日", "信用主体", "票息", "IPG", "FPG", "定价", "定价基准", "收窄基点"},
-    #">>HD_R" = {
-        "浮息_SPD",
-        "浮息_BMK",
-        "IPT",
-        "IPT_SPD",
-        "IPT_YIELD",
-        "FPT1",
-        "WPIR",
-        "FPT2",
-        "FPT_SPD",
-        "FPT_SPD上限",
-        "FPT_SPD假设窄端",
-        "FPT_YIELD",
-        "FPT_YIELD上限",
-        "IPT_BMK",
-        "FPT_BMK",
-        "定价YIELD_Num",
-        "FPG1", "票息100DMI"
-    },
-     #">>SCol" = Table.RemoveColumns(Added,#">>HD_R", MissingField.Ignore),
-   WeeklyAddTapSwith = CWB("WeeklyAddTap"),
-    Appended =
-        if  WeeklyAddTapSwith = "OFF" then
-        #">>SCol" 
-        else
-            fx("Combine")({#">>SCol" , Load("wAddTapPQ")},{null},{0}),
+            #"Removed and Renamed",
+    Clean_Structure = fx("Replace")(Table.DuplicateColumn(Clean_TBC, "发行架构", "结构"), {"结构"}, "结构"),
+    Add_Tap = Table.AddColumn(
+        Clean_Structure, "增发判定", each if [起息日期] = null then "" else if [定价日] > [起息日期] then "[增发]" else "", type text
+    ),
+    Added = List.Accumulate(
+        {
+            "SBLC",
+            "Exchange",
+            "BankBranch",
+            "BBGFX",
+            "Stats",
+            "BCM",
+            "FRNString",
+            "CpnString",
+            "IPGString",
+            "FPGString",
+            "SpdTighten",
+            "PtTighten",
+            "Tenor",
+            "ESGMore"
+        },
+        Add_Tap,
+        (x, y) => fx("Add" & y)(x)
+    ),
+    WeeklyAddTapSwith = CWB("WeeklyAddTap"),
+    Appended = if WeeklyAddTapSwith = "OFF" then Added else fx("Combine")({Added, Load("wAddTapPQ")}, {null}, {0}),
     //
-    Checked = fx("CheckNDupe")(    Appended ),
+    Checked = fx("CheckNDupe")(Appended),
     Sorted = fx("SortNIndex")(Checked)
 in
     Sorted

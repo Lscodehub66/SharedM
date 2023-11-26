@@ -1,0 +1,172 @@
+(TableName as table, optional ColName as nullable text) =>
+    let
+        Source = TableName,
+        ColToAdd = {"IPG", "NoTBC", "DupeCol1", "Count", "BMKString", "BeforeBracket", "BMK", "NumText", "BMKandNum"},
+        PrepRemoval = Table.RemoveColumns(Source, ColToAdd, MissingField.Ignore),
+        Prep = Table.ReplaceValue(
+            Table.TransformColumnTypes(PrepRemoval, {{(ColName ?? "IPT_DMI"), type text}}),
+            null,
+            "",
+            Replacer.ReplaceValue,
+            {(ColName ?? "IPT_DMI")}
+        ),
+        #"Inserted NoTBC" = fx(
+            "Replacer"
+        )(
+            Table.DuplicateColumn(Prep, ColName ?? "IPT_DMI", "NoTBC"), {"NoTBC"}, {"【", "】", "--"}, {"", "", ""}
+        ),
+        #"Inserted DupeColumn" = Table.AddColumn(
+            #"Inserted NoTBC",
+            "DupeCol1",
+            each
+                if
+                    List.Contains(
+                        {"100.5区域", "170bps区域", "190bps区域", "7.65区域", "10Y+110bps", "7Y+90bps", "5Y+80bps"}, [NoTBC]
+                    )
+                    or Text.Contains([NoTBC], "TapPrice")
+                then
+                    "【" & [NoTBC] & "】"
+                else
+                    [NoTBC],
+            type text
+        ),
+        RCol = Table.RemoveColumns(#"Inserted DupeColumn", {"NoTBC"}),
+        #"Replaced Value" = fx(
+            "Replacer"
+        )(
+            RCol,
+            {"DupeCol1"},
+            {"（", "）", ",+", "~", "％", "$", "%%", "Mid-Swap"},
+            {"(", ")", "+", "-", "%", "", "%", "MS"}
+        ),
+        #"Extracted and Removed Tap" = Table.TransformColumns(
+            #"Replaced Value",
+            {
+                {
+                    "DupeCol1",
+                    each
+                        if Text.Contains(_, "利息") or Text.Contains(_, "年") then
+                            Text.BeforeDelimiter(
+                                _, if Text.Contains(_, "，") then "，" else if Text.Contains(_, "+") then "+" else "("
+                            )
+                        else
+                            _,
+                    type text
+                }
+            }
+        ),
+        #"TBC Multi-tranche" = Table.TransformColumns(
+            #"Extracted and Removed Tap",
+            {
+                {
+                    "DupeCol1",
+                    each if Text.Contains(_, "，") and not Text.Contains(_, "【") then "【" & _ & "】" else _,
+                    type text
+                }
+            }
+        ),
+        #"Added Count" = Table.AddColumn(
+            #"TBC Multi-tranche",
+            "Count",
+            each
+                if List.Contains({null, "", "--"}, [DupeCol1]) then
+                    null
+                else if Text.Contains([DupeCol1], "【") then
+                    100
+                else
+                    List.Count(Text.Split([DupeCol1], if Text.Contains([DupeCol1], "+") then "+" else "%")) - 1,
+            type number
+        )
+        // if string is TBC then Count is null
+        ,
+        #"Inserted BMKString" = Table.AddColumn(
+            #"Added Count",
+            "BMKString",
+            each
+                if [Count] = null then
+                    ""
+                else if [Count] > 1 then
+                    "【】"
+                else if Text.Contains([DupeCol1], "%") then
+                    "%"
+                else
+                    Text.BeforeDelimiter([DupeCol1], "+"),
+            type text
+        ),
+        #"Inserted BMK" = Table.AddColumn(
+            #"Inserted BMKString",
+            "BMK",
+            each
+                if Text.Contains([BMKString], "SOFR") then
+                    "SOFR"
+                else if Text.Contains([BMKString], "SONIA") then
+                    "SONIA"
+                else if Text.Contains([BMKString], "MID", Comparer.OrdinalIgnoreCase) then
+                    "MS"
+                else
+                    [BMKString]
+        ),
+        #"Trimmed Text" = Table.TransformColumns(#"Inserted BMK", {{"BMK", Text.Trim, type text}}),
+        #"Replaced CT" = Table.TransformColumns(
+            #"Trimmed Text",
+            {
+                {
+                    "BMK",
+                    each
+                        if Text.StartsWith(_, "CT") then
+                            Text.Replace(_, "CT", "T")
+                        else if Text.StartsWith(_, "UST") then
+                            Text.Replace(_, "UST", "T")
+                        else
+                            _,
+                    type text
+                }
+            }
+        ),
+        RCol1 = Table.RemoveColumns(#"Replaced CT", {"BMKString"}),
+        #"Inserted BeforeBracket" = Table.AddColumn(
+            RCol1,
+            "BeforeBracket",
+            each
+                if [Count] = null then
+                    ""
+                else if [Count] <> 1 and not Text.Contains([DupeCol1], "【") then
+                    "【" & [DupeCol1] & "】"
+                else
+                    Text.BeforeDelimiter([DupeCol1], "("),
+            type text
+        ),
+        #"Inserted NumText" = Table.AddColumn(
+            #"Inserted BeforeBracket",
+            "NumText",
+            each
+                if Text.Contains([BeforeBracket], "【") then
+                    "【】"
+                else if [BMK] = "%" then
+                    Text.BeforeDelimiter([BeforeBracket], "%")
+                else
+                    Text.Select(Text.AfterDelimiter([BeforeBracket], "+"), {"0".."9", "."}),
+            type text
+        ),
+        RCol2 = Table.RemoveColumns(#"Inserted NumText", {"BeforeBracket"}),
+        Fn = fx("BMKandNumText")(RCol2, "BMK", "NumText"),
+        RCol3 = Table.RemoveColumns(Fn, {"Count", "BMK", "NumText"}),
+        #"Added Area" = Table.AddColumn(
+            RCol3,
+            "IPG",
+            each
+                if Text.Contains([DupeCol1], "【") then
+                    [DupeCol1]
+                else if
+                    not List.Contains({null, "", "--"}, [BMKandNum])
+                    and not Text.EndsWith(([BMKandNum] ?? ""), "a")
+                    and not Text.EndsWith(([BMKandNum] ?? ""), "】")
+                then
+                    [BMKandNum] & "a"
+                else
+                    [BMKandNum],
+            type text
+        ),
+        RCol4 = Table.RemoveColumns(#"Added Area", {"DupeCol1", "BMKandNum"})
+    in
+        RCol4

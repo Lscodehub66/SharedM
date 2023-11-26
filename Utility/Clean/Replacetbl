@@ -282,6 +282,7 @@ let
     国家城市 = {
         {"ABUDHABI", "^AUH^", "AUH", "阿布达比"},
         {"ASTANA", "^NQZ^", "NQZ", "阿斯塔纳"},
+        {"DIFC", "^DXB^", "DXB", "迪拜"},
         {"DUBAI", "^DXB^", "DXB", "迪拜"},
         {"FRANKFURT", "^FRA^", "FRA", "法兰克福"},
         {"HONGKONG", "^HK^", "HK", "香港"},

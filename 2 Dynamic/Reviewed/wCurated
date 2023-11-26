@@ -1,19 +1,20 @@
 // let LoadCode = Load("wCurated","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
-
-
 let
-
-
- Source      = Load("Reviewed_IssuerPQ"),
- ColNow_mCurated = Table.ColumnNames(fx("Excel")("DEALSMASTER_=mCurated")),  
-    MReview = fx("Merge")(Source,Load("Reviewed_CuratedPQ"), "Check","Check", {""} , {""},null,1),
-     MDLD_Add     = fx("Merge")  (   MReview ,CWB("DLD_Add"), "Check" ,   "Check" , {""} , {""}),
- //
- InvokedPNum = fx("AddPriceNum")(MDLD_Add ),
-    InvokedPText = fx("AddPriceText")(InvokedPNum),         
-Custom2     = Table.ReplaceValue ( InvokedPText, "", each if Text.Contains ( [增发判定], "增发" ) and [FPG] <> "" then [FPG] else [定价], Replacer.ReplaceValue, { "定价" } ),
-
- SelectedCol = Table.SelectColumns ( Custom2, ColNow_mCurated, MissingField.UseNull ),
+    Source = Load("Reviewed_IssuerPQ"),
+    ReviewedCurated = Load("Reviewed_CuratedPQ"),
+    ColNow_mCurated = Table.ColumnNames(fx("Excel")("DEALSMASTER_=mCurated")),
+    MReview = fx("Merge")(Source, ReviewedCurated, "Check", "Check", {""}, {""}, null, 1),
+    MDLD_Add = fx("Merge")(MReview, CWB("DLD_Add"), "Check", "Check", {""}, {""}),
+    //
+    Added = List.Accumulate(
+        {"IPGString", "FPGString", "SpdTighten", "PtTighten"}, MDLD_Add, (x, y) => fx("Add" & y)(x)
+    ),
+    Custom2 = Table.ReplaceValue(
+        Added, "", each if Text.Contains([增发判定], "增发") and [FPG] <> "" then [FPG] else [定价], Replacer.ReplaceValue, {
+            "定价"
+        }
+    ),
+    SelectedCol = Table.SelectColumns(Custom2, ColNow_mCurated, MissingField.UseNull),
     ACol = Table.AddColumn(SelectedCol, "mCurated", each "Y")
 in
- ACol
+    ACol

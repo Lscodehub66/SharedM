@@ -164,7 +164,8 @@
         //
         CombinedName = Load("fxNameCombiner")(Written_BISLRole),
         // Add Comparer
-        AddedComp = Table.AddColumn(CombinedName, "COMPARER", each Text.From([YYMMDD]) & [信用主体简称]),
+        AddedComp = Table.AddColumn(CombinedName, "COMPARER", each if [PROJECT_NAME] <> "" then Text.From([YYMMDD]) & Text.Upper(Text.Remove([PROJECT_NAME]," ")) else 
+        Text.From([YYMMDD]) &[信用主体简称],type text),
         ////////////////////////
         Junction = if not List.ContainsAll(CN_Source, {"上市", "主体评级", "BISL_ROLE"}) then Junction_Start else AddedComp,
         /////////////////////////

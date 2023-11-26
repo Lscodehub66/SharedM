@@ -6,11 +6,15 @@ Sub RefreshDownload()
     '
     ActiveWorkbook.Connections("Query - DimMonday").Refresh
     ActiveWorkbook.Connections("Query - CSOE_SASAC").Refresh
-    ActiveWorkbook.Connections("Query - DLD_QRC_23").Refresh
     ActiveWorkbook.Connections("Query - DLD_Conso").Refresh
     ActiveWorkbook.Connections("Query - DMI_NewColumn").Refresh
     ActiveWorkbook.Connections("Query - DMI_ChangedColumn").Refresh
     ActiveWorkbook.Connections("Query - DMIHeaders").Refresh
+
+    If Range("GPS") = "Global" Then
+        ActiveWorkbook.Connections("Query - DLD_QRC_23").Refresh
+
+    End If
 End Sub
 
 

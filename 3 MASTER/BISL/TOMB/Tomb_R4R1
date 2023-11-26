@@ -1,8 +1,8 @@
 //Tombstones to Merge with Directory to use rich fields
 //let LoadCode = Load("QTomb_R4R1","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-    Source = Load("QTomb_R2R3"),
-    MergeSource =  CWB("Directory"),
+    Source = Load("Tomb_R2R3"),
+       MergeSource =  CWB("Directory"),
  //**   
     Header_DirectoryToTombsWriter = Get("Header_DirectoryToTombsWriter"),
     MergedQ = fx("Merge")(Source, CWB("Directory"), "COMPARER", "COMPARER", Header_DirectoryToTombsWriter,null,{"COMPARER"}),
@@ -10,7 +10,7 @@ let
     AddedR1 = Table.AddColumn(
         MergedQ,
         "P1",
-        each
+        each 
             if [备证行] <> "--" then
                 [信用主体简称] & "#(lf)" & "(" & [备证行] & "备证)"
             else if Text.Contains([通过分行], "分行") then
