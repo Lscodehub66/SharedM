@@ -1,0 +1,62 @@
+(TableName as table) =>
+    let
+        Source = TableName,
+        NewCol = {"增发判定", "ISIN_TEMP"},
+        Prep = Table.RemoveColumns(Source, NewCol, MissingField.Ignore),
+        增发 = Table.AddColumn(
+            Prep,
+            "增发判定",
+            each
+                if [发行方式] = "增发" then
+                    "增发"
+                else if [起息日期] = null then
+                    ""
+                else if [定价日] > [起息日期] then
+                    "增发"
+                else if [mIssue] = "新增" and [mBond] = "已收录" then
+                    "【增发】"
+                else
+                    "",
+            type text
+        ),
+        #"Grouped Rows" = Table.Group(
+            增发,
+            {"债券简称", "发行规模(亿)", "定价日"},
+            {{"Count", each Table.RowCount(_), Int64.Type}, {"Custom", each _, type table}}
+        ),
+        Custom2 = Table.AddColumn(
+            #"Grouped Rows",
+            "ISIN_TEMP",
+            each if [Count] >1 then 
+                Text.Combine(
+                    List.Distinct(
+                        Table.Column(Table.SelectRows([Custom], each [mBond] = "新增" and [mIssue] = "新增"), "ISIN")
+                    )
+                ) else ""
+        ),
+        #"Removed Other Columns" = fx("Exp")(Table.SelectColumns(Custom2, {"Custom", "ISIN_TEMP"}), "Custom"),
+        #"Revised TapRow" = Table.ReplaceValue(
+            #"Removed Other Columns",
+            each [增发判定],
+            each
+                if [ISIN] <> [ISIN_TEMP] and not List.Contains({null, "", "--"}, [ISIN_TEMP]) then
+                    "增发(临时ISIN)"
+                else
+                    [增发判定],
+            Replacer.ReplaceValue,
+            {"增发判定"}
+        ),
+        #"Revised DupeRow" = List.Accumulate(
+            {{"删除及隐藏", "【删除】"}, {"mBond", "n/a"}},
+            #"Revised TapRow",
+            (x, y) =>
+                Table.ReplaceValue(
+                    x,
+                    each Record.Field(_, y{0}),
+                    each if [ISIN] = [ISIN_TEMP] then y{1} else Record.Field(_, y{0}),
+                    Replacer.ReplaceValue,
+                    {y{0}}
+                )
+        )
+    in
+        #"Revised DupeRow"

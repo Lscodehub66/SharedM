@@ -1,31 +1,48 @@
 //fxAddFX
-(TableName as table, optional FTextUSDCNHHKD as text) =>
+(TableName as table, optional FTextUSDCNHHKD as text, optional Collist as any) =>
     let
+        // FTextUSDCNHHKD = "USD", Collist = {"原始规模(亿)", "原始"},
         Source = fx("Data")(TableName),
-        AddedCol = {"YYQQ", "亿美元", "亿元", "亿港币"},
-        Prep = Table.RemoveColumns(Source, AddedCol, MissingField.Ignore),
-        AddedYYQQ = fx("Merge")(Prep, Load("DimDate"), "定价日", "A_Date", {"YYQQ"}, {"YYQQ"}),
+        CN_Source = List.Buffer(Table.ColumnNames(Source)),
+        NewCol = List.Transform({"亿美元", "亿元", "亿港币"}, each Prefix & _),
+        DummyNewCol = {"USD", "CNH", "HKD"},
+        List = List.Zip({DummyNewCol, NewCol}),
+        Col = if Collist = null then {"发行规模(亿)", ""} else Collist,
+        Prefix = if Col{1} <> "" then Col{1} & "." else "",
+        RefCol = Col{0},
+        Prep = Table.RemoveColumns(Source, NewCol & DummyNewCol & {"Data"}, MissingField.Ignore),
+        AddedYYQQ =
+            if List.Contains(CN_Source, "YYQQ") then
+                Table.DuplicateColumn(Prep, "YYQQ", "DummyCol1")
+            else
+                fx("MergeDimDate")(Prep, "定价日", {"YYQQ"}, {"DummyCol1"}),
         #"Merged Queries" = Table.NestedJoin(
-            AddedYYQQ, {"YYQQ", "货币"}, Load("DimFX", "CSV"), {"YYQQ", "Base Currency"}, "DimFX", JoinKind.LeftOuter
+            AddedYYQQ, {"DummyCol1", "货币"}, Load("DimFX", "CSV"), {"YYQQ", "Base Currency"}, "DimFX",
+            JoinKind.LeftOuter
         ),
         #"Expanded DimFX" = Table.ExpandTableColumn(#"Merged Queries", "DimFX", {"USD", "CNH", "HKD"}),
         #"Changed Type" = Table.TransformColumnTypes(
             #"Expanded DimFX",
-            {{"USD", type number}, {"CNH", type number}, {"HKD", type number}, {"发行规模(亿)", type number}}
+            {{"USD", type number}, {"CNH", type number}, {"HKD", type number}, {RefCol, type number}}
         ),
         AddedFX = List.Accumulate(
-            {{"USD", "亿美元"}, {"CNH", "亿元"}, {"HKD", "亿港币"}},
+            List,
             #"Changed Type",
             (x, y) =>
                 if Text.Contains((FTextUSDCNHHKD ?? "USDCNHHKD"), y{0}) then
                     Table.AddColumn(
                         x,
                         y{1},
-                        each if [货币] = y{0} then 1 * [#"发行规模(亿)"] else Record.Field(_, y{0}) * [#"发行规模(亿)"],
+                        each
+                            if [货币] = y{0} then
+                                1 * Record.Field(_, RefCol)
+                            else
+                                Record.Field(_, y{0}) * Record.Field(_, RefCol),
                         type number
                     )
                 else
                     x
-        )
+        ),
+        Output = Table.SelectColumns(AddedFX, List.Distinct(CN_Source & NewCol), MissingField.Ignore)
     in
-        AddedFX
+        Output

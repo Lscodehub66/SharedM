@@ -1,0 +1,19 @@
+(optional TableName as table, optional _input as list) =>
+    let
+        text = "ISIN_TEMP",
+        Col = {"ISIN", "定价日", "债券简称", "信用主体", "发行规模(亿)", "货币", "发行方式", "发行规则", "ISIN_TEMP", "债券余额", "利率类型", "交易状态"},
+        Source = TableName ?? (fx("Source")("DMI")),
+        #"Removed Other Columns" = Table.SelectColumns(
+            Source,
+            if _input = null then
+                {text}
+            else if _input = {""} then
+                Col
+            else
+                List.Distinct(Col & _input),
+            MissingField.Ignore
+        ),
+        #"Filtered Rows" = Table.SelectRows(#"Removed Other Columns", each ([ISIN_TEMP] <> "")),
+        Output = if _input = null then Table.Distinct(#"Filtered Rows", {text}) else #"Filtered Rows"
+    in
+        Output

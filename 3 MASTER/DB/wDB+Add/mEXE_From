@@ -1,0 +1,12 @@
+let
+    Source = CWB("mBISL_Legacy"),
+    Custom2 = fx("Merge")(Source , CWB("deal_master"), "Check", "Check", {"交易简称"}, {"债券简称"}),
+    HD = {"台账序号","定价日",  "债券简称", "EXE", "新规角色","COVERAGE","项目亮点",  "交行及独家订单",  "BOCOM下单量", "BOCOM分配量","Date_Onboarded", 
+    "定价会时间", "IS_KYC_DONE","FolderName","PRJ对账号","Timestamp"},
+    #"###" = fx("ToM")({"定价日", "ISIN", "债券简称"}&List.RemoveItems(CWB("mBISL","CN"),HD)& {"Check","Timestamp"}),
+    #"Removed Other Columns" = Table.SelectColumns(Custom2,HD),
+    Custom3 = Table.SelectRows( #"Removed Other Columns", each [定价日] < #date(2021, 1, 1)),
+    #"Filtered Rows" = Table.SelectRows( #"Removed Other Columns", each [定价日] >= #date(2021, 1, 1) and  not List.Contains({null,"","--"},[PRJ对账号])),
+    Custom4 = fx("DBManager3")(#"Filtered Rows","PRJ对账号")
+in
+    Custom4

@@ -1,0 +1,74 @@
+(_input as text) =>
+    let
+        wBond = {
+            "Index",
+            "mBond",
+            "ISIN",
+            "定价日",
+            "信用主体",
+            "发行评级",
+            "主体评级",
+            "结构",
+            "备证行全称",
+            "ESG",
+            "货币",
+            "年期",
+            "票息",
+            "品种主题",
+            "上市"
+        },
+        wIssue = {
+            "Index",
+            "删除及隐藏",
+            "债券简称",
+            "ISIN",
+            "定价日",
+            "增发判定",
+            "ISIN_TEMP",
+            "发行规模(亿)",
+            "IPG",
+            "FPG",
+            "定价",
+            "收窄基点",
+            "港分_ROLE",
+            "澳分_ROLE",
+            "Check",
+            "信用主体"
+        },
+        wStats = {"Index", "mStats", "定价日", "ISIN", "债券简称", "最终账簿(亿)", "账户数", "地区分布", "类型分布", "Check"},
+        wCredit = {"Index", "mCredit", "信用主体", "信用主体简称", "板块", "板块二级", "板块三级", "中资属性", "级别", "地区", "城市", "区县"},
+        wChart = {"Index", "删除及隐藏", "定价日", "ISIN", "信用主体", "发行评级", "货币", "发行规模(亿)", "年期", "Check", "mChart"},
+        wBOCOM = {
+            "Index",
+            "债券简称",
+            "ISIN",
+            "定价日",
+            "台账序号",
+            "Project Name",
+            "EXE",
+            "COVERAGE",
+            "新规角色",
+            "PROJECT_CODE",
+            "期数",
+            "BISL_ROLE",
+            "IS_LEAD",
+            "IS_B&D",
+            "是否合名",
+            "Check"
+        },
+        List1 = {
+            {"wBond", wBond},
+            {"wIssue", wIssue},
+            {"wStats", wStats},
+            {"wCredit", wCredit},
+            {"wChart", wChart},
+            {"wBOCOM", wBOCOM}
+        },
+        //
+        Select = List.Accumulate(
+            List1,
+            Table.FromRows(List1),
+            (x, y) => if Text.Contains(_input, y{0}, Comparer.OrdinalIgnoreCase) then y{1} else x
+        )
+    in
+        Select

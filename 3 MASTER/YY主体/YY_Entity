@@ -1,0 +1,31 @@
+let
+    Fn = List.Accumulate(
+       {"金融", "产业", "城投"}, // 
+        #table({""}, {{""}}),
+        (x, y) =>
+            fx(
+                "Combine"
+            )(
+                {
+                    x,
+                    let
+                        Source = fx("Source")("YY_" & y),
+                        Duplicated =
+                            if Table.HasColumns(Source, "行业") then
+                                Table.RemoveColumns(Table.DuplicateColumn(Source, "行业", "行业" & ".Dummy"), {"行业"})
+                            else
+                                Source,
+                        Output = Table.AddColumn(Duplicated, "行业", each y, type text)
+                    in
+                        Output
+                },
+                null,
+                {10}
+            )
+    ),
+    Custom1 = fx("TransformYY")(Fn)
+   //**
+    ,
+        Sorted = fx("SortNIndex")(Custom1)
+in
+   Sorted 

@@ -1,0 +1,43 @@
+(TableName as table) =>
+    let
+        Source = TableName,
+        RefCol = {"Stats"},
+        NewCol = {"最终账簿(亿)", "账户数", "地区分布", "类型分布"},
+        Prep = Table.RemoveColumns(Source, NewCol, MissingField.Ignore),
+        #"Inserted Text Before Delimiter1" = Table.AddColumn(
+            Prep,
+            "账户数",
+            each
+                if Text.Contains([Stats], "账户参与") then
+                    Text.Select(Text.BeforeDelimiter([Stats], "，"), {"0".."9"})
+                else
+                    "",
+            type text
+        ),
+        #"Inserted Text Before Delimiter" = Table.AddColumn(
+            #"Inserted Text Before Delimiter1",
+            "最终账簿(亿)",
+            each
+                if Text.Contains([Stats], "账户参与") then
+                    Text.Select(Text.BetweenDelimiters([Stats], "，", "，"), {"0".."9", "."})
+                else if Text.StartsWith([Stats], "认购额超") then
+                    Text.Select(Text.BeforeDelimiter([Stats], "，"), {"0".."9", "."})
+                else
+                    "",
+            type text
+        ),
+        #"Inserted Text Between Delimiters" = Table.AddColumn(
+            #"Inserted Text Before Delimiter",
+            "地区分布",
+            each Text.Trim(Text.BetweenDelimiters([Stats], "地区分布：", "；")),
+            type text
+        ),
+        #"Inserted Text After Delimiter" = Table.AddColumn(
+            #"Inserted Text Between Delimiters",
+            "类型分布",
+            each Text.Trim(Text.AfterDelimiter([Stats], "类型分布：")),
+            type text
+        ),
+        Output = if Table.HasColumns(Source, RefCol) then #"Inserted Text After Delimiter" else Source
+    in
+        Output

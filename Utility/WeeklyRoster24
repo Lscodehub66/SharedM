@@ -1,0 +1,57 @@
+let
+    InputMakerList = {"ES", "CL", "CY"},
+    InputFirstMonday = #date(2024, 1, 8),
+    HKHolidaytbl = Table.Buffer(fx("Data")(Load("HKHolidays", "CSV"))),
+    Makertbl = Table.AddIndexColumn(
+        Table.FromColumns({List.Repeat(InputMakerList, Number.RoundUp(52 / List.Count(InputMakerList)))}, {"Maker_DD"}),
+        "Index",
+        1,
+        1
+    ),
+    Source = List.Generate(
+        () => InputFirstMonday,
+        each Date.DayOfWeek(InputFirstMonday) = 1 and Date.Year(_) = 2024,
+        each Date.AddDays(_, 7)
+    ),
+    #"Converted to Table" = Table.FromColumns({Source}, {"Monday_date"}),
+    #"Changed Type" = Table.TransformColumnTypes(#"Converted to Table", {{"Monday_date", type date}}),
+    #"Added Index" = Table.AddIndexColumn(#"Changed Type", "Index", 1, 1, Int64.Type),
+    #"Added Custom1" = Table.AddColumn(
+        #"Added Index", "Sunday_date", each Date.AddDays([Monday_date], -1), type date
+    ),
+    #"Inserted Start Date" = Table.AddColumn(
+        #"Added Custom1", "Start_date", each fx("PreviousWorkDay")([Sunday_date], HKHolidaytbl, "Date"), type date
+    ),
+    #"Inserted Start DayName" = Table.AddColumn(
+        #"Inserted Start Date",
+        "Start_DayName",
+        each if Date.DayOfWeek([Start_date]) <> 5 then Date.ToText([Start_date], "ddd") else "",
+        type text
+    ),
+    #"Inserted Due Date" = Table.AddColumn(
+        #"Inserted Start DayName", "Due_date", each fx("NextWorkDay")([Sunday_date], HKHolidaytbl, "Date"), type date
+    ),
+    #"Inserted Due DayName" = Table.AddColumn(
+        #"Inserted Due Date",
+        "Due_DayName",
+        each if Date.DayOfWeek([Due_date]) <> 1 then Date.ToText([Due_date], "ddd") else "",
+        type text
+    ),
+    #"Added Custom2" = Table.AddColumn(
+        #"Inserted Due DayName", "Name", each Date.DayOfWeekName([Start_date]) & "Run", type text
+    ),
+    #"Added Custom3" = Table.AddColumn(#"Added Custom2", "Template", each "【Weekly】", type text),
+    #"Added Custom4" = Table.AddColumn(
+        #"Added Custom3",
+        "TaskName",
+        each Text.Replace([Template] & Text.From([Index]) & " (" & [Due_DayName] & ")", " ()", ""),
+        type text
+    ),
+    #"Added Custom" = Table.AddColumn(
+        #"Added Custom4", "Description", each "Weekly Folder Name: " & Date.ToText([Monday_date], "yyyyMMdd"), type text
+    ),
+    #"Removed Columns" = Table.RemoveColumns(#"Added Custom", {"Sunday_date", "Monday_date","Start_DayName"}),
+    Merged = fx("Merge")(#"Removed Columns", Makertbl, "Index", "Index", {""}),
+    Custom1 = fx("PreviousRow")(Merged, "Maker_DD", "Checker_DD")
+in
+    Custom1

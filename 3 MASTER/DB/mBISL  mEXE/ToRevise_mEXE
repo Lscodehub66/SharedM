@@ -1,0 +1,8 @@
+let
+    Source=Load("合规_23_22"),
+    #"Added Custom" = fx("FolderPath")(Source),
+    #"Added Custom1" = Table.AddColumn(#"Added Custom", "补齐.IS_KYC_DONE", each if not List.Contains({null,"","--"},[KYC]) then  "Y" else ""),
+    #"Renamed Columns" = Table.RenameColumns(#"Added Custom1",{{"FolderName", "补齐.FolderName"}}),
+   SCol  = Table.SelectColumns(#"Renamed Columns",{"PRJ对账号","补齐.FolderName","补齐.IS_KYC_DONE"},MissingField.UseNull)
+in
+    SCol

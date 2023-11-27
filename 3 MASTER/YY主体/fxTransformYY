@@ -1,0 +1,62 @@
+(TableName as table, optional _input as list) =>
+    // = fx("TransformYY")( Fn, {"Clean","YY"})
+    let
+        Source = TableName,
+        Filtered = Table.SelectRows(Source, each [主体] <> "" and not Text.Contains([主体], "数据来源")),
+        SelectedCol = Table.SelectColumns(
+            Filtered, {"主体", "行业", "行业.Dummy", "区域", "行政级别", "平台重要性", "主营业务","企业性质"}, MissingField.UseNull
+        ),
+        #">>ShowedDupe" = fx("ShowDupe")(SelectedCol, {"主体"}),
+        ABDelimiter = Table.AddColumn(SelectedCol, "行业二级", each Text.BeforeDelimiter([行业.Dummy], "-"), type text),
+        ABDelimiter1 = Table.AddColumn(ABDelimiter, "细分行业", each Text.AfterDelimiter([行业.Dummy], "-"), type text),
+        ACol = Table.AddColumn(ABDelimiter1, "Count区域", each List.Count(Text.Split([区域], "-"))),
+        ABDelimiter2 = Table.AddColumn(ACol, "省份", each Text.BeforeDelimiter([区域], "-"), type text),
+        ADelimiter = Table.AddColumn(
+            ABDelimiter2,
+            "城市",
+            each
+                if [Count区域] >= 3 then
+                    Text.BetweenDelimiters(
+                        [区域], "-", "-", {0, RelativePosition.FromStart}, {0, RelativePosition.FromStart}
+                    )
+                else
+                    Text.AfterDelimiter([区域], "-"),
+            type text
+        ),
+        ADelimiter1 = Table.AddColumn(
+            ADelimiter,
+            "区县",
+            each
+                if [Count区域] = 4 then
+                    Text.AfterDelimiter([区域], "-", {1, RelativePosition.FromEnd})
+                else if [Count区域] = 3 then
+                    Text.AfterDelimiter([区域], "-", {0, RelativePosition.FromEnd})
+                else
+                    "",
+            type text
+        ),
+        // Replaced = Table.TransformColumns(Cleaned2, {{"行政级别", each fx("Clean")(_, {"归属", "地"}, {"", ""})}}),
+        ACol1 = Table.AddColumn(ADelimiter1, "级别", each Text.Replace(Text.Remove([行政级别], "地"), "归属", "")),
+        RemovedCol = Table.RemoveColumns(ACol1, {"行业.Dummy", "区域"}, MissingField.Ignore),
+        Reordered = Table.ReorderColumns(
+            RemovedCol,
+            {"主体", "行业", "行业二级", "细分行业", "主营业务", "平台重要性", "级别", "Count区域", "省份", "城市", "区县","企业性质"},
+            MissingField.Ignore
+        ),
+        Cleaned2 =
+            if _input = null then
+                Reordered
+            else if List.Contains(_input, "Clean", Comparer.OrdinalIgnoreCase) then
+                fx("Replace")(fx("Replace")(ADelimiter1, {"省份"}, "地区"), {"城市", "区县"}, "区县")
+            else
+                Reordered,
+    Renamed = Table.RenameColumns(Cleaned2, {{"主体", "信用主体"},{"企业性质", "公司类型"}}, MissingField.Ignore),
+        Prexied =
+            if _input = null then
+                Renamed
+            else if List.Contains(_input, "YY", Comparer.OrdinalIgnoreCase) then
+                Table.PrefixColumns(Renamed, "YY")
+            else
+                Renamed
+    in
+      Prexied

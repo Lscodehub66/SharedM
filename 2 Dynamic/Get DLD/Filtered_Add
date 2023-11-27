@@ -1,0 +1,61 @@
+// let LoadCode = Load("Filtered_Add","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    Source = Load("Filtered_wFIMTN"),
+    CN_Source = List.Buffer(Table.ColumnNames(Source)),
+    Clean_TBC = if List.Contains(CN_Source, "IS_FIMTN") then fx("Replace")(Source, {"IS_FIMTN"}, "RTBC") else Source,
+    Clean_Structure = fx("Replace")(Table.DuplicateColumn(Clean_TBC, "发行架构", "结构"), {"结构"}, "结构"),
+    Added = List.Accumulate(
+        {
+            "Reopen",
+            "SBLC",
+            "Exchange",
+            "BankBranch",
+            "BBGFX",
+            "Stats2",
+            "BCM",
+            "FRNString",
+            "CpnString",
+            "IPGString",
+            "FPGString",
+            "Price_FPGRange",
+            "SpdTighten",
+            "PtTighten",
+            "Tenor",
+            "ESGMore"
+        },
+        Clean_Structure,
+        (x, y) => fx("Add" & y)(x)
+    ),
+    Replaced = Table.ReplaceValue(
+        Added,
+        each [债券简称],
+        each
+            if List.Contains({null, "", "--"}, [债券简称]) and not List.Contains({null, "", "--"}, [信用主体]) then
+                [信用主体]
+            else
+                [债券简称],
+        Replacer.ReplaceValue,
+        {"债券简称"}
+    ),
+    DM = {"mIssue", "mStats", "mBISL", "mEXE", "mCredit"},
+    #"Operational Columns" = List.Accumulate(
+        DM, Replaced, (x, y) => if not Table.HasColumns(x, y) then Table.AddColumn(x, y, each "", type text) else x
+    ),
+    WeeklyAddTapSwith = CWB("WeeklyAddTap"),
+    Appended =
+        if WeeklyAddTapSwith = "OFF" then
+            #"Operational Columns"
+        else
+            fx("Combine")({#"Operational Columns", Load("wAddTapPQ")}, {null}, {0}),
+    //
+    HD2 = {"Index", "债券简称", "删除及隐藏", "mIssue", "mBond", "mStats", "mBISL", "mEXE", "mCredit"},
+    //  & {"Filter_Credit", "Filter_Bond", "Filter_Exch", "IS_FIMTN"}
+    Reordered = fx(
+        "1st"
+    )(
+        try Table.ReorderColumns(Appended, CWB("Filtered_Add", "CN"), MissingField.Ignore) otherwise Appended, HD2
+    ),
+    Checked = fx("CheckNDupe")(Reordered),
+    Sorted = fx("SortNIndex")(Checked)
+in
+    Sorted

@@ -1,0 +1,48 @@
+let
+    dd_覆盖地区 = CWB("dd_覆盖地区"),
+    Source = CWB("mCredit", "1"),
+    NewCol = {"投标资历分类", "覆盖地区", "覆盖分类", "覆盖团队"},
+    RefCol = {"板块", "中资属性", "城市", "地区"},
+    Prep = Table.RemoveColumns(Source, NewCol, MissingField.Ignore),
+    GroupCreds = Table.AddColumn(
+        Prep, "投标资历分类", each if [板块] = "金融机构" then "FI Creds" else if [中资属性] = "地方国企" then "SOE Creds" else "--"
+    ),
+    CN_Source = Table.ColumnNames(Source),
+    #"Added Conditional Column" = Table.AddColumn(
+        GroupCreds,
+        "覆盖地区",
+        each
+            if Text.Contains([板块], "金融") then
+                "【FI】"
+            else if List.Contains({"其他"}, [中资属性]) or ([板块] = "房地产" and [中资属性] <> "民企") then
+                "【Others】"
+            else if Text.Contains([中资属性], "央") then
+                "【CSOE】"
+            else if Text.Contains([中资属性], "民企") then
+                "【民企】"
+            else if Text.Contains([城市], "宁波") then
+                "宁波市"
+            else if Text.Contains([城市], "无锡") then
+                "无锡市"
+            else if Text.Contains([城市], "苏州") then
+                "苏州市"
+            else
+                [地区],
+        type text
+    ),
+    Custom2 = fx("Merge")(#"Added Conditional Column", dd_覆盖地区, "覆盖地区", "覆盖地区", {"COVERAGE"}, {"覆盖分类"}),
+    #"Replaced Value" = Table.ReplaceValue(Custom2, null, each [覆盖地区], Replacer.ReplaceValue, {"覆盖分类"}),
+    #"Added Conditional Column0" = Table.AddColumn(
+        #"Replaced Value",
+        "覆盖团队",
+        each
+            if Text.Contains(([覆盖分类] ?? ""), "FI") or Text.Contains(([覆盖分类] ?? ""), "CSOE") then
+                "FI组"
+            else if Text.Contains(([覆盖分类] ?? ""), "SOE") then
+                "SOE组"
+            else
+                "POE组"
+    ),
+    KeysTagged_Credit = Table.AddKey(#"Added Conditional Column0", {"信用主体"}, true)
+in
+    KeysTagged_Credit

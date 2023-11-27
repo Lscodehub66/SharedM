@@ -1,0 +1,74 @@
+// let LoadCode = Load("DLD_Conso","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    Source = Load("DLD_DMI"),
+    Fn = fx("ShowFilter")(Source),
+    Fn1 = Load("fxIsFIMTN")(Fn),
+    Fn1_R = Table.ReplaceValue(
+        Fn1, "Y", each if [Filter_Bond] <> "" or [Filter_Exch] <> "" then "" else "【Y】", Replacer.ReplaceValue, {
+            "IS_FIMTN"
+        }
+    ),
+    Fn1_R1 = Table.ReplaceValue(
+        Fn1_R,
+        each [Filter_Bond],
+        each if [DataSource] = "BBG" then "" else [Filter_Bond],
+        Replacer.ReplaceValue,
+        {"Filter_Bond"}
+    ),
+    Fn2 = List.Accumulate(
+        {
+            {"Credit", "信用主体", {"Index", "信用主体简称", "板块", "板块二级", "板块三级", "中资属性", "级别"}},
+            {"Bond", "ISIN", {"Index"}},
+            {"Issue", "Check", {"Index"}}
+        },
+        Fn1_R1,
+        (x, y) =>
+            let
+                DBName = "m" & y{0},
+                //DBName & ColName
+                DBtbl = CWB("m" & y{0}),
+                PK = y{1},
+                ToExp = y{2},
+                Target = List.Transform(y{2}, each if _ = "Index" then "DBIndex_" & y{0} else _),
+                SourceM = Table.NestedJoin(x, {PK}, DBtbl, {PK}, "Data" & PK, JoinKind.LeftOuter),
+                Exp = Table.ExpandTableColumn(SourceM, "Data" & PK, ToExp, Target),
+                Prep = Table.RemoveColumns(Exp, {DBName}, MissingField.Ignore),
+                ACol = Table.AddColumn(
+                    Prep,
+                    DBName,
+                    each
+                        if Record.Field(_, "DBIndex_" & y{0}) <> null then
+                            "已收录"
+                        else if y{0} = "Credit" and Record.Field(_, "级别") = "【】" then
+                            "修改"
+                        else
+                            "新增",
+                    type text
+                )
+            in
+                ACol
+    ),
+    _HD = {
+        "Index",
+        "Filter_Bond",
+        "Filter_Exch",
+        "IS_FIMTN",
+        "ISIN",
+        "定价日",
+        "债券简称",
+        "货币",
+        "发行规模(亿)",
+        "mIssue",
+        "mBond",
+        "mCredit"
+    },
+    #"Filtered Rows" = Table.SelectRows(Fn2, each List.Contains({"", "*", "**"}, [Filter_Credit])),
+    Revised = fx(
+        "SelfJoin_R"
+    )(
+        #"Filtered Rows", Table.SelectColumns(CWB("DLD_Conso"), _HD, MissingField.Ignore), {"ISIN"}
+    ),
+    #"Sorted Rows" = fx("SortNIndex")(Revised),
+    #"Reordered" = fx("1st")(#"Sorted Rows", _HD)
+in
+    #"Reordered"

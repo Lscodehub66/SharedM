@@ -1,9 +1,9 @@
-(Input as nullable text) =>
+(_input as nullable text) =>
     let
         
-        Input_ExcelKey = Text.Remove(Text.BeforeDelimiter(Text.Upper(Input??""), "_"),{" "}),
-        Input_SheetKey = Text.Replace(Text.AfterDelimiter(Text.Upper(Input??""), "_"), "=", ""),
-        IsEqual = if Text.Contains( (Input??"") , "=") then true else false,
+        Input_ExcelKey = Text.Remove(Text.BeforeDelimiter(Text.Upper(_input??""), "_"),{" "}),
+        Input_SheetKey = Text.Replace(Text.AfterDelimiter(Text.Upper(_input??""), "_"), "=", ""),
+        IsEqual = if Text.Contains( (_input??"") , "=") then true else false,
         DimSource = Load("DimSource"),
                S_Excel = Table.SelectRows(   DimSource , each [Excel_Key] = Input_ExcelKey),
         S_Sheet = Table.SelectRows(
@@ -14,7 +14,7 @@
                 else
                     Text.Contains([PK_Sheet], Input_SheetKey) or Text.Contains(Input_SheetKey, [PK_Sheet])
         ),
-    Crossroad = if (Input??"") = "" then DimSource else if Input_ExcelKey = "DEALSMASTER" then Table.FirstN(S_Sheet, 2) else  Table.FirstN(S_Sheet, 1),
+    Crossroad = if (_input??"") = "" then DimSource else if Input_ExcelKey = "DEALSMASTER" then Table.FirstN(S_Sheet, 2) else  Table.FirstN(S_Sheet, 1),
     Joined_FilesContent = Table.Join(Crossroad,{"FolderInput","PK_Excel"},Load("DimSource_Content"),{"Folder Path","PK_Excel2"}),
     #"Removed Columns" = Table.RemoveColumns(Joined_FilesContent,{"Index", "FolderInput", "PK_Excel", "PK_Excel2", "Folder Path"},MissingField.Ignore),
         FnExcel = Table.AddColumn(#"Removed Columns", "ExcelWB", each fx("ExcelWB")([Content])),
@@ -55,7 +55,7 @@
                 FnSheet,
         CN_ColumnToExpand = Table.ColumnNames(#"ErrorRows Removed"[Table]{0}),
         #"Table Column Expanded" =
-            if Input = "" or Input = null then
+            if _input = "" or _input = null then
                 Table.RemoveColumns(#"ErrorRows Removed", {"Sheet", "ExcelWB"}, MissingField.Ignore)
             else if List.ContainsAll(CN_ColumnToExpand, {"Item", "Data"}) then
                 

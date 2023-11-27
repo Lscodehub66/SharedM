@@ -1,4 +1,4 @@
-(TableName as table) =>
+(TableName as table, optional _input as text) =>
     let
         // TableName = Filtered, Col1 = "1周", Col2 = "2主体", Col3="3详情",  Col4 = "4品种", Col5="5价格", Col6="6担任",
         Source = TableName,
@@ -25,42 +25,58 @@
             EntityWRtg, "多笔主体", each if [多笔] > 1 and [通过分行] <> "" then "通过" & [通过分行] else [信用主体简称], type text
         ),
         Entity = Table.AddColumn(EntityForMulti, Col2, each if [多笔] > 1 then [多笔主体] else [信用主体及评级], type text),
-        TapNew = Table.AddColumn(
-            Entity,
-            Col3,
+        TapOrNewSize = Table.AddColumn(
+            Entity, Col3 & "规模", each if Text.Contains([增发判定], "增发") then [币种规模] else "定价" & [币种规模], type text
+        ),
+        PerpOrTenor = Table.AddColumn(
+            TapOrNewSize,
+            Col3 & "期限",
             each
                 if Text.Contains([增发判定], "增发") then
-                    [币种规模]
+                    ""
                 else if Text.Contains([期限], "年") and not Text.Contains([期限], "永续") then
-                    "定价" & [币种规模] & [期限] & "期"
+                    [期限] & "期"
                 else
-                    "定价" & [币种规模] & [期限]
+                    [期限],
+            type text
+        ),
+        TapNew = Table.AddColumn(
+            PerpOrTenor, Col3, each Record.Field(_, Col3 & "规模") & Record.Field(_, Col3 & "期限"), type text
         ),
         IssueRtg = Table.AddColumn(
             TapNew, "SquareRtg", each if Text.Length(Text.Select([发行评级], {"A".."Z"})) > 0 then "（" & [发行评级] & "）" else
                 ""
         ),
-         SBLC = Table.AddColumn(
+        SBLC = Table.AddColumn(
             IssueRtg, Col4, each if [备证行] <> "--" then [发行品种] & [SquareRtg] & "，" & [备证行] & "提供备证，" else [发行品种]
                 & [SquareRtg]
         ),
-        TightenToNumber = Table.TransformColumnTypes(Table.ReplaceValue(SBLC,"--",null,Replacer.ReplaceValue,{"收窄基点"}),{{"收窄基点", type number}}),
-        Price = Table.AddColumn(
-            TightenToNumber,
-            Col5,
-            each
-                if [定价] <> "--" and [收窄基点] = 0 then
-                    "价格" & [定价] & "，较IPG未有收窄"
-                else if [定价] <> "--" and [收窄基点] <> null then
-                    "价格" & [定价] & "，较IPG收窄" & Number.ToText([收窄基点]) & "个基点"
-                else if [定价] = "--" and [收窄基点] = 0 then
-                    "价格" & [票息] & "，较IPG未有收窄"
-                else if [定价] = "--" and [收窄基点] <> null then
-                    "价格" & [票息] & "，较IPG收窄" & Number.ToText([收窄基点]) & "个基点"
-                else if [定价] <> "--" and Text.Contains([增发判定], "增发") then
+        TightenToNumber = Table.TransformColumnTypes(
+            Table.ReplaceValue(SBLC, "--", null, Replacer.ReplaceValue, {"收窄基点"}), {{"收窄基点", type number}}
+        ),
+        Price0 = Table.AddColumn(
+            TightenToNumber, Col5 & "票息", each
+                if not List.Contains({null, "", "--"}, [定价]) then
                     "价格" & [定价]
                 else
                     "价格" & [票息]
+        ),
+        Price1 = Table.AddColumn(
+            Price0,
+            Col5 & "收窄",
+            each if [收窄基点] = 0 then "较IPG未有收窄" else if [收窄基点] <> null then "较IPG收窄" & Number.ToText([收窄基点]) & "个基点" else
+                "",
+            type text
+        ),
+        Price = Table.AddColumn(
+            Price1,
+            Col5,
+            each
+                if Record.Field(_, Col5 & "收窄") <> "" then
+                    Record.Field(_, Col5 & "票息") & "， " & Record.Field(_, Col5 & "收窄")
+                else
+                    Record.Field(_, Col5 & "票息"),
+            type text
         ),
         Bocom = Table.AddColumn(
             Price,
@@ -84,8 +100,9 @@
                 else
                     ""
         ),
+        #"Translated BOCOM" = fx("Replace")(Bocom, {Col6}, "角色"),
         Merged = Table.AddColumn(
-            Bocom,
+            #"Translated BOCOM",
             "描述",
             each
                 fx(
@@ -107,18 +124,27 @@
             Stats,
             {"信用主体及评级"},
             {
+                {"定价日", each List.Max([定价日]), type date},
                 {"板块", each Text.Combine(List.Distinct([板块]), ""), type text},
                 {"货币", each Text.Combine(List.Distinct([货币]), ";"), type text},
                 {"增发判定", each Text.Combine(List.Distinct([增发判定]), ""), type text},
-                {"多笔", each if List.Count([ISIN]) > 1 then Number.Round(List.Count([ISIN]),0) else null, type number},
-                {"描述", each Text.Combine(List.Distinct([描述2]), "#(lf)"), type text}
+                {"多笔", each if List.Count([ISIN]) > 1 then Number.Round(List.Count([ISIN]), 0) else 0, type number},
+                {"描述", each Text.Combine(List.Distinct([描述2]), "#(lf)"), type text},
+                {"Custom", each _, type table}
             }
         ),
         #"Replaced Value" = Table.ReplaceValue(
-            Grouped, each [增发判定], each if [增发判定] = "" and [多笔] <> null then "定价" else [增发判定], Replacer.ReplaceValue,
-            {
-                "增发判定"
-            }
+            Grouped,
+            each [增发判定],
+            each
+                if Text.Contains([增发判定], "原始") and Text.Contains([增发判定], "增发") then
+                    "定价及增发"
+                else if Text.Contains([增发判定], "增发") then
+                    "增发"
+                else
+                    "定价",
+            Replacer.ReplaceValue,
+            {"增发判定"}
         ),
         MultiTrancheCN = fx(
             "Replace"
@@ -130,10 +156,11 @@
         #"Added Suffix" = Table.AddColumn(
             MultiTrancheCN,
             "总述",
-            each if [多笔] <> null then [信用主体及评级] & [增发判定] & Text.Replace([多笔中文], "二", "双") & "批次离岸债券：" else "",
+            each if [多笔] > 1 then [信用主体及评级] & [增发判定] & Text.Replace([多笔中文], "二", "双") & "批次离岸债券：" else "",
             type text
         ),
         AddedCol = Table.AddColumn(#"Added Suffix", "Writer", each if [总述] <> "" then [总述] & "#(lf)" & [描述] else [描述]),
-        SCol = Table.SelectColumns(AddedCol, {"信用主体及评级", "板块", "货币", "Writer"}, MissingField.UseNull)
+        List = {"信用主体及评级", "定价日", "板块", "货币", "Writer"},
+        SCol = Table.SelectColumns(AddedCol, if _input = null then List else List & {"Custom"}, MissingField.UseNull)
     in
         SCol

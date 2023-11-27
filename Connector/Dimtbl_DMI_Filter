@@ -1,6 +1,3 @@
-// Get
-let GPS  = try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Remote",  FilePath = if GPS = "Remote" then "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM\Get" else "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\SharedM\Get",  LoadCode = Text.FromBinary ( Binary.Buffer ( File.Contents ( FilePath ) ) ), EVA = Expression.Evaluate ( LoadCode, #shared ) in EVA
-
 // Dimtbl_DMI_Filter
 let
     Source = Get("Dimtbl_DMI_Filter"),

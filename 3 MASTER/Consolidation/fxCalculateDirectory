@@ -1,0 +1,37 @@
+(TableName as table, optional _inputkey as nullable text) =>
+    let
+        Key = Text.Upper(Text.Trim(_inputkey ?? "")),
+        Source = TableName,
+        MergedQ = fx("Merge")(Source, CWB("Table_PRJMerge"), "COMPARER", "COMPARER", {"承销费原币"}, {""}),
+        NthMandate = fx("NthMandated")(MergedQ, {"YYMMDD", "信用主体简称"}),
+        #"Count Multi-Tranche" = fx("AddMultiCount")(NthMandate),
+        #"Merged Queries1" = Table.NestedJoin(
+            #"Count Multi-Tranche", {"定价会时间"}, Load("DimTime"), {"Time"}, "Data", JoinKind.LeftOuter
+        ),
+        #"Expanded DimTime" = Table.ExpandTableColumn(#"Merged Queries1", "Data", {"DayPeriod"}, {"定价会时段"}),
+        ExeTime =
+            if Table.HasColumns(#"Expanded DimTime", "Date_Onboarded") then
+                Table.AddColumn(
+                    #"Expanded DimTime",
+                    "执行周期",
+                    each
+                        if not List.Contains({[定价日], [Date_Onboarded]}, null) and [定价日] >= [Date_Onboarded] then
+                            Duration.Days([定价日] - [Date_Onboarded])
+                        else
+                            null,
+                    type number
+                )
+            else
+                #"Expanded DimTime",
+        QRC合规 = Table.RenameColumns(Load("合规_23_22", null, {"PRJ对账号", "发行人"}), {{"发行人", "修改.发行人"}}),
+        Issuer_revised = fx("DB_Revise")(ExeTime, QRC合规, "PRJ对账号"),
+        ReplacedCCY = Table.ReplaceValue(Issuer_revised, "美元债", "", Replacer.ReplaceValue, {"货币细分"}),
+        CN_Base = List.Buffer(CWB("BaseDirectory_CN")),
+        CN_CWB = List.Buffer(CWB("Directory", "CN")),
+        Reordered = Table.ReorderColumns(
+            ReplacedCCY, CN_Base & List.RemoveItems(CN_CWB, CN_Base), MissingField.Ignore
+        ),
+        SCol = Table.SelectColumns(ReplacedCCY, CN_Base, MissingField.Ignore),
+        Output = if Text.Contains(Key, "BASE") then SCol else Reordered
+    in
+        Output

@@ -1,0 +1,18 @@
+ // fx("MCCY")({Source, "货币"},{"CCY.Name","CCY.Name_CN","货币名"})
+ (tblNtext  as list, _input as list)=> 
+ let
+ Source = tblNtext {0},
+  tbl = Table.FromRows ( { {"MOP", "澳门币", "澳门币"}, {"AUD", "澳元", "澳元"}, {"HKD", "港币", "港币"}, {"USD", "美元", "美元"}, {"EUR", "欧元", "欧元"}, {"JPY", "日元", "日元"}, {"SGD", "新币", "新币"}, {"CNH", "人民币", "元"}, {"NZD", "新西兰币", "新西兰币"} } ,   { "CCY.Name", "CCY.Name_CN", "CCY.Suffix"} ),
+ AddedKey = Table.AddKey(tbl,{"CCY.Name"},true),
+
+ MergeKey = tblNtext {1},
+ tbl_Mergekey = if not Table.HasColumns(tbl, _input{0}) then "CCY.Name" else tbl, _input{0},
+ tbl_targetkey = if not Table.HasColumns(tbl, _input{1}) else {"CCY.Name_CN"}  else {_input {1} },
+ tbl_exp = if List.Count(_input) = 2 then {tbl_targetkey} else {_input{2}},
+
+ RCol = Table.RemoveColumns(Source, tbl_exp, MissingField.Ignore),
+ Merged= fx("Merge")( RCol, AddedKey, MergeKey,tbl_targetkey, tbl_targetkey , tbl_exp)
+in
+
+ Merged
+ 

@@ -10,7 +10,7 @@
     let
         // TableName = Splited, Current ="当前" ,   Past = "上周", TextTrendCNList={"Text","Trend","Trend_CN"} ,AddTextColforCurrentIsTrue = true,
         Source = TableName,
-        DAXRange = if Text.Contains(Past, "初") then Text.Select(Past, {"日", "周", "月", "季", "年"}) & "初至今" else Past,
+        DAXRange = if Text.Contains(Past, "初") then Text.Select(Past,{ "上","前","去"}) & Text.Select(Past, {"日", "周", "月", "季", "年"}) & "初至今" else Past,
         DAXColName = "△" & DAXRange,
         Text = TextTrendCNList{0},
         Trend = TextTrendCNList{1},
@@ -37,7 +37,7 @@
                             "至" & Record.Field(_, "Text_" & Current)
                         else
                             "报" & Record.Field(_, "Text_" & Current) & Record.Field(_, CurrentCNSuffix)
-                ),
+      ,type text          ),
         Measure1 = Table.AddColumn(
             ACol2,
             DAXColName,
@@ -56,12 +56,12 @@
         M1Text = Table.AddColumn(
             Measure1,
             "Text_" & DAXColName,
-            each Load("fxNumText2")(Number.ToText(Record.Field(_, DAXColName), Record.Field(_, Trend)))
+            each Load("fxNumText2")(Number.ToText(Record.Field(_, DAXColName), Record.Field(_, Trend))),type text
         ),
         M1Text_CN =
             if not Table.HasColumns(Source, "Trend_CN") then
                 Table.AddColumn(
-                    M1Text, "Trend_CN", each if Text.Contains(Record.Field(_, Trend), "bp") then BP_CN else PT_CN
+                    M1Text, "Trend_CN", each if Text.Contains(Record.Field(_, Trend), "bp") then BP_CN else PT_CN,type text
                 )
             else
                 M1Text,
@@ -74,7 +74,7 @@
                 else if Text.StartsWith(Record.Field(_, "Text_" & DAXColName), "-") then
                     [Trend_CN]{1} & Text.AfterDelimiter(Record.Field(_, "Text_" & DAXColName), "-")
                 else
-                    [Trend_CN]{2} & Record.Field(_, "Text_" & DAXColName)
+                    [Trend_CN]{2} & Record.Field(_, "Text_" & DAXColName),type text
         ),
         Writer =
             if IndiceCol = null then
@@ -93,7 +93,9 @@
                                     Record.Field(_, "CN_" & Current)
                                 },
                                 "，"
-                            )
-                )
+                            ),type text
+                ),
+
+          Output =       Table.TransformColumns(Writer, {{ "CN_描述", each if Text.Contains(_,"亿美元") or Text.Contains(_,"笔") then Text.Replace(_,"报","")else _ ,type text}})
     in
-        Writer
+      Output 

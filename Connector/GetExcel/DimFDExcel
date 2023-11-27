@@ -1,7 +1,9 @@
 // DimFDExcel
 let
     //Has_NumInPath Parameters - create here then add to Folder Step
-    YYYYMMDD = Text.Replace(Load("MondayText"), "/", "") & "\",
+    NewMon = fx("Parameter")("Monday"),
+    OldMon = Load("MondayText"),
+    YYYYMMDD = Text.Replace(NewMon, "/", "") & "\",
     // Adjust here to override
     // Folder
     Root = {"C:\Users\ktkt2\OneDrive\EXE Team\DataHub\", "\\itd-m09-fs02\dcm$\"},
@@ -42,6 +44,7 @@ let
             {"ESG Deal List", "ESG", "Team_ESG"},
             {"DCM Existing KYC Master List", "KYC", "QRC"},
             {"DCM台账2023", "台账23", "QRC"},
+            {"DCM台账2024", "台账24", "QRC"},
             {"美元债一级", "DMI", "Team_DH_DL"},
             {"境外债券违约", "违约", "Team_DH_DL"},
             {"银行指标数据", "银行", "Team_DH_DL"},

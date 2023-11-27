@@ -4,7 +4,14 @@
     let
         //NameInput = "", PathInput = null,
         GPS = try Table.Buffer(Excel.CurrentWorkbook(){[Name = "GPS"]}[Content])[Column1]{0} otherwise "Remote",
-        Name_File = if not Text.StartsWith(NameInput,"fx") then "fx" & NameInput else NameInput,
+        _RFinput = if Text.Contains(NameInput, ".") then Text.AfterDelimiter(NameInput, ".") else "",
+        Name_File =
+            if Text.Contains(NameInput, ".") then
+                Text.BeforeDelimiter(NameInput, ".")
+            else if not Text.StartsWith(NameInput, "fx") then
+                "fx" & NameInput
+            else
+                NameInput,
         //
         FolderPath =
             if GPS = "Remote" then
@@ -20,6 +27,7 @@
         File_Code = Text.FromBinary(Binary.Buffer(File_Content)),
         EVA_Existing = Expression.Evaluate(Name_File, #shared),
         EVA_Code = Expression.Evaluate(File_Code, #shared),
-        EVA = try EVA_Existing otherwise EVA_Code
+        EVA = try EVA_Existing otherwise EVA_Code,
+        RF = if _RFinput <> "" then Record.Field(EVA, _RFinput) else EVA
     in
-        EVA
+        RF

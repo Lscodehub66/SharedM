@@ -1,0 +1,62 @@
+(TableName as table) =>
+    let
+        Source = TableName,
+        RefCol = {"最终账簿(亿)", "账户数", "地区分布", "类型分布", "发行规模(亿)", "货币"},
+        Division = Table.AddColumn(
+            Source, "超额认购倍数", each if [#"最终账簿(亿)"] <> null then ([#"最终账簿(亿)"] / [#"发行规模(亿)"]) else null, type number
+        ),
+        RoundedOff = Table.TransformColumns(
+            Division,
+            {
+                {"最终账簿(亿)", each Number.Round(_, 1), type number},
+                {"超额认购倍数", each Number.Round(_, 1), type number},
+                {"账户数", each Number.Round(_, 0), type number}
+            }
+        ),
+        AddCol0 = Table.AddColumn(
+            RoundedOff, "账户描述", each if [账户数] <> null then "超" & Number.ToText([账户数]) & "个账户参与，" else ""
+        ),
+        AddCol = Table.AddColumn(
+            AddCol0,
+            "认购额描述",
+            each
+                if [#"最终账簿(亿)"] <> null then
+                    "认购额超" & Number.ToText([#"最终账簿(亿)"]) & "亿" & [货币] & "，超额认购约" & Number.ToText([超额认购倍数]) & "倍；"
+                else
+                    ""
+        ),
+        ReplacedCrcy = fx("Replace")(AddCol, {"认购额描述"}, "货币"),
+        Merged1 = Table.TransformColumns(
+            Table.CombineColumns(
+                ReplacedCrcy, {"账户描述", "认购额描述"}, Combiner.CombineTextByDelimiter("", QuoteStyle.None), "Dummy认购描述"
+            ),
+            {{"Dummy认购描述", each Text.Replace(Text.Replace(_, ".0倍", "倍"), "0倍", "倍")}}
+        ),
+        DupeCol = Table.DuplicateColumn(Table.DuplicateColumn(Merged1, "地区分布", "Dummy地区分布"), "类型分布", "Dummy类型分布"),
+        TF = Table.TransformColumns(
+            DupeCol,
+            {
+                {"Dummy地区分布", each if (_ ?? "") <> "" then "地区分布：" & _ & "；" else "", type text},
+                {"Dummy类型分布", each if (_ ?? "") <> "" then "类型分布：" & _ & "；" else "", type text}
+            }
+        ),
+        Merged = Table.AddColumn(
+            TF,
+            "Stats",
+            each fx("PowerTrim")(Text.Combine({[Dummy认购描述], [Dummy地区分布], [Dummy类型分布]}, "#(lf)"), "#(lf)"),
+            type text
+        ),
+        RemovedEnd = Table.TransformColumns(
+            Merged,
+            {
+                {
+                    "Stats",
+                    each if Text.EndsWith(_, "；") then Text.BeforeDelimiter(_, "；", {0, RelativePosition.FromEnd}) else
+                        _,
+                    type text
+                }
+            }
+        ),
+        Output = if Table.HasColumns(Source, RefCol) then RemovedEnd else Source
+    in
+        Output

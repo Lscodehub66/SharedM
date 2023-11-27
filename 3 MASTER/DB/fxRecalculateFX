@@ -1,0 +1,41 @@
+(TableName as table) =>
+    let
+        Source = TableName,
+        RefCol = {"发行规模(亿)", "货币", "亿元", "亿港币", "亿美元"},
+        #"Added Multiplier" = Table.AddColumn(
+            Source,
+            "Dummy系数",
+            each
+                if [货币] = "USD" then
+                    [#"发行规模(亿)"] / [亿美元]
+                else if [货币] = "CNH" then
+                    [#"发行规模(亿)"] / [亿元]
+                else if [货币] = "HKD" then
+                    [#"发行规模(亿)"] / [亿港币]
+                else
+                    1
+        ),
+        #"Recalculated FX" = List.Accumulate(
+            {"亿元", "亿港币", "亿美元"},
+            #"Added Multiplier",
+            (x, y) =>
+                Table.ReplaceValue(
+                    Table.AddColumn(
+                        Table.DuplicateColumn(x, y, "Dummy.C" & y),
+                        "Dummy" & y,
+                        each Record.Field(_, y) * [Dummy系数],
+                        type number
+                    ),
+                    each Record.Field(_, y),
+                    each Record.Field(_, "Dummy" & y),
+                    Replacer.ReplaceValue,
+                    {y}
+                )
+        ),
+        Output =
+            if Table.HasColumns(Source, RefCol) then
+                Table.SelectColumns(#"Recalculated FX", Table.ColumnNames(Source))
+            else
+                Source
+    in
+        Output

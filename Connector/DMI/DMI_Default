@@ -1,4 +1,3 @@
-
 //let LoadCode = Load("DMI_Default","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
     Source = fx("Source")("违约"),
@@ -7,8 +6,10 @@ let
     Rename_DMI违约 = Get("Rename_DMIDefault"),
     SCol = Table.SelectColumns(Source, Header_DMI违约, MissingField.UseNull),
     //{"ISIN码", "发行人名称", "违约日期", "违约类型", "地区"}
+    //** skipped
     Filtered = Table.SelectRows(SCol, each ([违约类型] <> "技术性违约")),
-    BufferSorted = Table.Buffer(Table.Sort(Filtered, {{"违约日期", Order.Ascending}})),
+    //** skipped
+    BufferSorted = Table.Buffer(Table.Sort(SCol, {{"违约日期", Order.Ascending}})),
     RemovedDupe = Table.Distinct(BufferSorted, {"发行人名称"}),
     Renamed = Table.RenameColumns(RemovedDupe, Rename_DMI违约, MissingField.Ignore),
     // {{"ISIN码", "ISIN"}, {"违约日期", "首次违约日"}, {"违约类型", "境外债违约"}, {"企业性质", "公司类型"}}

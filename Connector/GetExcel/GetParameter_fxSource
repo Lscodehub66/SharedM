@@ -1,0 +1,20 @@
+let
+    Custom1 = fx("Merge")(Load("DimFDExcel"), Get("Dimtbl_Sheet"), "Excel_Key", "Excel_Key.1", {""}),
+    #"Replaced Value" = Table.ReplaceValue(Custom1, "*SOLE*", "", Replacer.ReplaceText, {"PK_Sheet"}),
+    #"Inserted Text After Delimiter" = Table.AddColumn(
+        #"Replaced Value", "Merged", each if [Excel_Key.1] <> [PK_Sheet] then [Excel_Key.1] & "_" & [PK_Sheet] else ""
+    ),
+    #"Replaced Value1" = Table.ReplaceValue(
+        #"Inserted Text After Delimiter", "_", "", Replacer.ReplaceValue, {"Merged"}
+    ),
+    #"Removed Other Columns1" = Table.SelectColumns(#"Replaced Value1", {"Excel_Key", "FileName", "Merged"}),
+    #"Unpivoted Other Columns" = Table.UnpivotOtherColumns(
+        #"Removed Other Columns1", {"FileName"}, "Attribute", "Value"
+    ),
+    #"Sorted Rows" = Table.Sort(#"Unpivoted Other Columns", {{"Value", Order.Ascending}}),
+    #"Removed Other Columns2" = Table.SelectColumns(#"Sorted Rows", {"Value"}),
+    #"Removed Duplicates" = Table.Distinct(#"Removed Other Columns2"),
+    #"Filtered Rows2" = Table.SelectRows(#"Removed Duplicates", each ([Value] <> "")),
+    output = fx("ToM")(#"Filtered Rows2"[Value])
+in
+    output

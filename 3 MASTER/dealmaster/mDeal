@@ -1,0 +1,25 @@
+//let LoadCode = Load("mDeal","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    SourceDB = CWB("mIssue", "1"),
+    RemovedCol = Table.RemoveColumns(SourceDB, Get("Header_MergeRemoval") & {"债券简称"}, MissingField.Ignore),
+    Filtered_null = Table.SelectRows(RemovedCol, each not List.Contains({"", null, "--", "ISIN"}, [ISIN])),
+    KeysTagged = Table.AddKey(Filtered_null, {"Check"}, true),
+    //
+    #"DimDate Joined" = fx("MDate")({KeysTagged}, {"定价日"}),
+    //
+    mStats = CWB("mStats"),
+    mBond = Load("mISIN+Coverage+SBLC"),
+    mBOCOM = Load("mBOCOM"),
+    #">>>Key" = Table.Keys(mStats){0}[Columns],
+    #">>>Key1" = Table.Keys(mBond){0}[Columns],
+    #">>>Key2" = Table.Keys(mBOCOM){0}[Columns],
+    //
+    Merged = List.Accumulate(
+        {{mStats, "Check"}, {mBOCOM, "Check"}, {mBond, "ISIN"}},
+        #"DimDate Joined",
+        (x, y) => fx("Merge")(x, y{0}, y{1}, y{1}, {""}, {""})
+    ),
+    #"Fn Calculated" = fx("DBCalculate")(Merged),
+    Reordered = Table.ReorderColumns(#"Fn Calculated", Get("Header_deal_master"), MissingField.Ignore)
+in
+    Reordered

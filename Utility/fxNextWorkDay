@@ -1,0 +1,19 @@
+//= Table.AddColumn( #"Added Custom1", "FridayRun_date", each fx("PreviousWorkDay")([Sunday_date], HKHolidaytbl, "Date"), type date)
+
+let
+    Source = (_Date as date, HolidayTable as table, HolidayColumnName as text) =>
+Date.AddDays(
+  _Date, 
+  1
+    + List.Count(
+        List.Generate(
+            () => [ x = Date.AddDays( _Date, 1 ), 
+                    y = Table.Column( HolidayTable, HolidayColumnName ) ], 
+             each Date.DayOfWeek( [x], Day.Monday ) >= 5 
+                or List.Contains( [y], [x] ), 
+             each [x = Date.AddDays( [x], 1), y = [y] ]
+        )
+      )
+)
+in
+    Source

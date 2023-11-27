@@ -1,24 +1,39 @@
 // let LoadCode = Load("DLD_DMI_Missing","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
- Source = fx("Source")("DOWNLOAD_美元债一级"), 
- Filtered = Table.SelectRows ( Source, each [ISIN] <> "" and [信用主体] <> "" and [定价日] <> "" and [债券简称] = "" and [货币] = "" ), 
- #"//GNG" = if Table.RowCount ( Table.SelectRows (Filtered, each not List.IsEmpty ( List.RemoveMatchingItems ( Record.FieldValues ( _ ), { "", null } ) ) ) ) > 0 then "GO" else "NO-GO", 
- #"//IDHeaders" = {"ISIN","定价日","信用主体"},
- SelectedCol =  Table.SelectColumns ( Filtered, #"//IDHeaders"  ),
- MergedQ = fx("Merge") (  SelectedCol , Load("DLD_BBG_Corp"), "ISIN", "ISIN", { "" }, { "" } ), 
-  #"//BBGHeaders" =List.RemoveItems(Table.ColumnNames ( MergedQ), #"//IDHeaders"),
- MergedQ1 = fx("Merge") ( MergedQ, fx("Excel")("DEALSMASTER_DMI_Credit"), "信用主体", "信用主体", { "" }, { "" } ), 
-   #"//DMICrHeaders" =List.RemoveItems(Table.ColumnNames ( MergedQ1),   #"//BBGHeaders" ),
- SelectedCol1 = Table.SelectColumns ( MergedQ1, List.Distinct(#"//IDHeaders"&  #"//DMICrHeaders"&{"主题债券","发行架构" ,"IPT","FPG","联席全球协调人"}&#"//BBGHeaders" ), MissingField.UseNull), 
- AddedCol = Table.AddColumn ( SelectedCol1, "DataSource", each "BBG" ), 
- TFColumns = 
-  if #"//GNG" = "GO" then
-    Table.TransformColumns (
-    AddedCol, 
-    { { "IPT", each if _ = null then "【】" else _ }, { "FPG", each if _ = null then "【】" else _ }, { "发行架构", each if _ = null then "【】" else _ }, { "主题债券", each if _ = null then "【】" else _ } ,{"联席全球协调人", each if _ = null then  "【】" else _ }}
-   )
-  else
-   Table.SelectRows ( Filtered, each not List.IsEmpty ( List.RemoveMatchingItems ( Record.FieldValues ( _ ), { "", null } ) ) ),
-    Custom1 = fx("Data")(TFColumns)
+    // Get ISIN
+    Source = fx("Source")("DOWNLOAD_美元债一级"),
+    需填写 = {"ISIN", "定价日", "信用主体"},
+    需留空 = {"债券简称", "货币"},
+    Bracket1 = {"主题债券", "发行架构", "IPT", "FPG", "联席全球协调人"},
+    Bracket2 = {"省份", "城市", "区县"},
+    Filtered = Table.SelectRows(
+        Source,
+        each
+            List.Accumulate(
+                需填写 & 需留空,
+                true,
+                (x, y) =>
+                    if List.Contains(需填写, y) then
+                        not List.Contains({"", null, "--"}, Record.Field(_, y))
+                    else
+                        List.Contains({"", null, "--"}, Record.Field(_, y)) and x
+            )
+    ),
+    SCol = Table.SelectColumns(Filtered, 需填写 & Bracket1),
+    // Merge & TF
+    Custom1 = fx("Merge")(SCol, CWB("Entity_DMIYY"), "信用主体", "信用主体", {""}, {""}),
+    TF = List.Accumulate(
+        Bracket1 & Bracket2,
+        Custom1,
+        (x, y) =>
+            try
+                Table.TransformColumns(x, {{y, each if List.Contains({"", null, "--"}, _) then "【】" else _}})
+            otherwise
+                x
+    ),
+    Custom2 = fx("Merge")(TF, Load("DLD_BBG_Corp"), "ISIN", "ISIN", {""}, {""}),
+    // Custom5 = List.Intersect({Table.ColumnNames(Custom2), Table.ColumnNames(DLD_DMI)}), SCol1 = Table.SelectColumns(Custom2, Custom5),
+    Custom3 = fx("RemoveBlankColumns")(Custom2, true),
+    ACol3 = Table.AddColumn(Custom3, "DataSource",each "BBG", type text)
 in
-    Custom1
+    ACol3

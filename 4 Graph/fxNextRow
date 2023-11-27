@@ -1,4 +1,4 @@
-let func =   
+
  (MyTable as table, MyColumnName as text, optional NewNewColNameInput as text) =>
 let
     Source = MyTable,
@@ -7,18 +7,4 @@ let
     NewColName = if NewNewColNameInput = null then "NextRow" else NewNewColNameInput,
     Custom2 = Table.FromColumns(Custom1, Table.ColumnNames(Source) & {NewColName})
 in
-    Custom2 ,
-documentation = [
-Documentation.Name =  " Table.PreviousRow ",
-Documentation.Description = " Superfast way to reference previous row ",
-Documentation.LongDescription = " Superfast way to reference previous row ",
-Documentation.Category = " Table ",
-Documentation.Source = " www.TheBIccountant.com .  http://tiny.cc/hhus5y . ",
-Documentation.Version = " 1.0 ",
-Documentation.Author = " Imke Feldmann: www.TheBIccountant.com. http://tiny.cc/hhus5y . ",
-Documentation.Examples = {[Description =  "  ",
-Code = "  ",
-Result = "  "]}]
-  
- in  
-  Value.ReplaceType(func, Value.ReplaceMetadata(Value.Type(func), documentation))  
+    Custom2 

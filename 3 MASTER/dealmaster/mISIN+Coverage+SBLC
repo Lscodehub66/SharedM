@@ -1,0 +1,23 @@
+let
+    Source = Load("mISIN(ESG+DMI)"),
+    CN_mISIN = List.Buffer(Table.ColumnNames(Source)),
+    //
+    mSBLC = CWB("SBLCUniverse"),
+    #"Transformed SBLCName" = Table.RenameColumns(
+        fx("FormerName")(Source, "备证行全称"), {"Dummy.信用主体", "Dummy.SBLC"}, MissingField.UseNull
+    ),
+    SBLC_Joined = fx("Merge")(#"Transformed SBLCName", mSBLC, "Dummy.SBLC", "备证行全称", {""}, {""}),
+    RCol = fx("RCol")(SBLC_Joined),
+    //
+    Crossroad = if List.IsEmpty(List.Select(CN_mISIN, each Text.Contains(_, "备证行"))) then Source else RCol,
+    //
+    mCoverage = Load("mCoverage"),
+    #"Transformed FormerName" = fx("FormerName")(Crossroad, "信用主体"),
+    mCoverage_Joined = fx("Merge")(#"Transformed FormerName", mCoverage, "Dummy.信用主体", "信用主体", {"Y"}, {""}),
+    NoNull =
+        if List.Contains(Table.ColumnNames(mCoverage_Joined), "信用主体简称") then
+            Table.ReplaceValue(mCoverage_Joined, null, "【】", Replacer.ReplaceValue, {"信用主体简称"})
+        else
+            mCoverage_Joined
+in
+    NoNull

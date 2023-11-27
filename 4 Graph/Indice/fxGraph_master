@@ -1,0 +1,7 @@
+//  = fx("Graph_master")("mIndice")
+(Name as text) =>
+    let
+        Source = fx("Excel")("DEALSMASTER_=" & Name),
+        Custom1 = fx("NotWeeklyDate")(Source, if Name = "mIndice" then "Date" else "定价日")
+    in
+        Custom1

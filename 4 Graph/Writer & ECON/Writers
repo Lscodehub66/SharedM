@@ -1,5 +1,6 @@
 // let LoadCode = Load("Writers","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
-let    Source = Load("Indice_Table_Data"),
+let
+    Source = Load("Indice_Table_Data"),
     #"Grouped Rows" = Table.Group(
         Table.SelectRows(Source, each [Index_Writer] <> null),
         {"Index_Writer"},
@@ -8,22 +9,37 @@ let    Source = Load("Indice_Table_Data"),
             {"Column2", each "上周，" & Text.Combine(List.Distinct([CN_描述]), "，"), type text}
         }
     ),
+    Sorted = Table.Sort(#"Grouped Rows", {{"Index_Writer", Order.Ascending}}),
     Custom1 = Table.TransformColumns(
-        #"Grouped Rows", {{"Column2", each Text.Replace(Text.Replace(_,"上周，3个月","年期方面，3个月"), "美国国债利率",""), type text}}
+        Sorted, {{"Column2", each Text.Replace(Text.Replace(_, "上周，3个月", "年期方面，3个月"), "美国国债利率", ""), type text}}
     ),
-    #"Merged Queries" = Table.NestedJoin(
-        Custom1, {"Index_Writer"}, Load("Spd_TrendPQ"), {"Index_Writer"}, "Data", JoinKind.LeftOuter
+    #"Renamed Columns" = Table.RenameColumns(Custom1, {{"Index_Writer", "Column0"}}),
+    Inserted = Table.InsertRows(
+        #"Renamed Columns",
+        4,
+        {
+            [
+                Column0 = 5,
+                Column1 = "中美利差",
+                Column2 = Load("Spd_TrendPQ")[描述]{0}
+            ],
+            [
+                Column0 = 6,
+                Column1 = "较IPG收窄平均",
+                Column2 = Load("AvgTighten_Writer")[描述]{0}
+            ],
+            [
+                Column0 = 7,
+                Column1 = "较IPG收窄最高",
+                Column2 = fx("MaxTighten_Writer")("近3月")[描述]{0}
+            ],
+            [
+                Column0 = 8,
+                Column1 = "新发行活动跟踪",
+                Column2 = Load("wNIMSum_Writer")[描述]{0}
+            ]
+        }
     ),
-    #"Expanded Data" = Table.ExpandTableColumn(#"Merged Queries", "Data", {"描述"}, {"描述"}),
-    Replaced = Table.ReplaceValue(
-        #"Expanded Data",
-        each [Column2],
-        each if not List.Contains({null, "", "--"}, [描述]) then [描述] else [CN_描述],
-        Replacer.ReplaceValue,
-        {"Column2"}
-    ),
-    #"Removed Columns" = Table.RemoveColumns(Replaced, {"描述"}),
-    #"Renamed Columns" = Table.RenameColumns(#"Removed Columns",{{"Index_Writer", "Column0"}}),
-    #"Appended Query" = Table.Combine({#"Renamed Columns", Load("Writer_DealPQ")})
+    #"Appended Query" = Table.Combine({Inserted, Load("Writer_DealPQ")})
 in
     #"Appended Query"

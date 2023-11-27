@@ -1,0 +1,4 @@
+let
+    Source = Table.SelectRows(CWB("DLD_Filter_Credit", "1"), each not List.Contains({"", "*","**"}, [Filter_Credit]))
+in
+    Source

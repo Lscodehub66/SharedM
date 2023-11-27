@@ -1,0 +1,6 @@
+let
+   TableName = fx("Source")("DMI"),
+    #"Removed Other Columns" = Table.SelectColumns(TableName,{"ISIN", "债券余额", "交易状态"}),
+    #"Removed Duplicates" = Table.Distinct(#"Removed Other Columns", {"ISIN"})
+in
+    #"Removed Duplicates"

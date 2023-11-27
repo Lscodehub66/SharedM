@@ -1,0 +1,70 @@
+//
+(TableName as table, _FirstItemMinusBySecondItem as list) =>
+    let
+        Source = TableName,
+        //
+        Subtrahend = _FirstItemMinusBySecondItem{0},
+        //被减数
+        Minuend = _FirstItemMinusBySecondItem{1},
+        //减数
+        Prefix = if List.Count(_FirstItemMinusBySecondItem) =3 then _FirstItemMinusBySecondItem{2} else "",
+        _SpdCol = Prefix& "SPD",
+        _spdDiff =_SpdCol & "_AVG",   
+       NewCol = { "TREND","Dummy" & "_NextRow"},
+       Prep = Table.RemoveColumns(Source, {_SpdCol ,_spdDiff}& NewCol , MissingField.Ignore),
+       
+        #"Inserted Substraction" = Table.AddColumn(
+               Prep,
+            _SpdCol,
+            each Number.Round((Record.Field(_, Subtrahend) - Record.Field(_, Minuend)) * 10000, 0),
+            type number
+        ),
+          #"Inserted Abs" = Table.AddColumn(
+        #"Inserted Substraction", _SpdCol & "_ABS", each Number.Abs(Record.Field(_,   _SpdCol)), type number
+    ),
+        #"Inserted Trend" = Table.AddColumn(
+                   #"Inserted Abs" , "TREND", each if Record.Field(_, _SpdCol) < 0 then "倒挂" else "正值", type text
+        ),
+        #"Invoked NextRow" = Load("fxNextRow")(#"Inserted Trend", "TREND", "Dummy" & "_NextRow"),
+        #"Inserted Compare" = Table.AddColumn(
+            #"Invoked NextRow",
+            "Dummy" & "_转向",
+            each
+                if
+                    Record.Field(_, "TREND") <> Record.Field(_, "Dummy" & "_NextRow")
+                    and Record.Field(_, "Dummy" & "_NextRow") <> null
+                then
+                    "Y"
+                else
+                    null
+        ),
+        Replaced = Table.ReplaceValue(
+            #"Inserted Compare",
+            each Record.Field(_, "TREND"),
+            each
+                if
+                    Record.Field(_, "TREND") <> Record.Field(_, "Dummy" & "_NextRow")
+                    and Record.Field(_, "Dummy" & "_NextRow") <> null
+                then
+                    "转向"
+                else
+                    Record.Field(_, "TREND"),
+            Replacer.ReplaceValue,
+            {"TREND"}
+        ),
+        Avg1_Filtered = Table.SelectRows(
+            Table.FillDown(Replaced, {"Dummy" & "_转向"}),
+            each Record.Field(_, "Dummy" & "_转向") = Table.Column(Replaced, "Dummy" & "_转向"){0}
+        ),
+        Avg1_Value = Number.Round(List.Average(Table.Column(Avg1_Filtered, _SpdCol)), 0),
+        Avg2_Filtered = Table.SelectRows(
+            Table.FillDown(Replaced, {"Dummy" & "_转向"}),
+            each Record.Field(_, "Dummy" & "_转向") <> Table.Column(Replaced, "Dummy" & "_转向"){0}
+        ),
+        Avg2_Value = Number.Round(List.Average(Table.Column(Avg2_Filtered, _SpdCol)), 0),
+        Avg_Spd = Table.AddColumn(
+            Replaced, _spdDiff, each if Record.Field(_, _SpdCol) <= 0 then Avg1_Value else Avg2_Value, Int64.Type
+        ),
+        RCol = fx("RCol")(Table.ReorderColumns(Avg_Spd,{  _SpdCol,   _spdDiff , "TREND"},MissingField.Ignore))
+    in
+        RCol

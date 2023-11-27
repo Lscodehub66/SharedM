@@ -74,6 +74,6 @@ let
     Avg_Spd = Table.AddColumn(
         Replaced, "Spd" & "_Avg", each if Record.Field(_, "Spd") <= 0 then Avg1_Value else Avg2_Value, Int64.Type
     ),
-    RCol = Load("fxRemoveCol")(Avg_Spd)
+    RCol = Load("fxRCol")(Avg_Spd)
 in
     RCol

@@ -1,0 +1,60 @@
+// let LoadCode = Load("mBond","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    Source = CWB("mCurated"),
+    #"Renamed Columns" = Table.RenameColumns(Source, {{"ISIN_TEMP", "ISIN_144A"}}),
+    #"Replaced Value" = Table.ReplaceValue(
+        #"Renamed Columns",
+        each [ISIN_144A],
+        each if Text.Contains([增发判定], "ISIN") then "" else [ISIN_144A],
+        Replacer.ReplaceValue,
+        {"ISIN_144A"}
+    ),
+    Custom = fx(
+        "Merge"
+    )(
+        #"Replaced Value",
+        let
+            Source = CWB("mCurated"),
+            SCol = Table.SelectColumns(Source, {"发行人", "发行人成立地"}),
+            Filtered = Table.SelectRows(SCol, each [发行人成立地] <> ""),
+            Distincted = Table.Distinct(Filtered, {"发行人"})
+        in
+            Distincted,
+        "发行人",
+        "发行人",
+        {"发行人成立地"},
+        {"Dummy.发行人成立地"}
+    ),
+    Replaced = Table.ReplaceValue(
+        Custom, "", each if [Dummy.发行人成立地] <> null then [Dummy.发行人成立地] else "", Replacer.ReplaceValue, {"发行人成立地"}
+    ),
+    #"Removed Columns" = Table.RemoveColumns(
+        Replaced,
+        {"删除及隐藏", "首次付息日","TICKER","发行人成立地",
+            "增发判定",
+            "Check",
+            "IPG",
+            "FPG",
+            "定价",
+            "定价基准",
+            "发行价",
+            "发行规模(亿)",
+            "发行方式",
+            "筹款用途",
+            "发行人主上市地","付息频率",
+            "收窄基点",
+            "港分_ROLE",
+            "澳分_ROLE",
+            "亿美元",
+            "亿元",
+            "亿港币",
+            "起息日期","亮点",
+            "Stats","DataSource" 
+        },
+        MissingField.Ignore
+    ),
+    Sorted = Table.Buffer(Table.Sort(#"Removed Columns", {{"ISIN", Order.Ascending}, {"定价日", Order.Ascending}})),
+    Distincted = Table.Distinct(Sorted, {"ISIN"}),
+    #"Sorted Rows" = fx("SortNIndex")(Distincted, "定价日")
+in
+    #"Sorted Rows"

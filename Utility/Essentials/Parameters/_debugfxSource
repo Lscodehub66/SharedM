@@ -1,0 +1,2 @@
+
+null meta [IsParameterQuery=true, List={"BBGFX", "BBGFX_VALUE", "DEALSMASTER", "DIRECTORY", "DMI", "DOWNLOAD", "DOWNLOAD_ECON", "DOWNLOAD_美元债一级", "DYNAMIC", "ESG", "GRAPH", "KYC", "KYC_MASTER", "YY", "YY_产业", "YY_城投", "YY_金融", "台账21", "台账22", "台账23", "台账23_合规", "台账23_收入情况2023", "违约", "银行"}, DefaultValue=null, Type="Text", IsParameterQueryRequired=false]

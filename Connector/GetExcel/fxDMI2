@@ -1,0 +1,64 @@
+//Indicate "Y" in second argument to enable clean steps - best for load small number of rows - such as weekly
+// let Code = Load("fxDMI","Code"), EVA = Expression.Evaluate(Code,#shared)(Source) in EVA
+// let TableName =  Source, _inputkey= "Y",RangeStartNum=null,RangeEndNum = null, DMIFiltertbl_PutFilterOutValueInColumn1 = Get("Dimtbl_DMI_Filter"),
+(TableName as table, optional _inputkey as nullable text) =>
+    let
+        Source = TableName,
+        //【3】Rename Columns
+        Renamed = Table.RenameColumns(
+            Source,
+            {
+                {"定价", "定价_DMI"},
+                {"IPT", "IPT_DMI"},
+                {"FPG", "FPG_DMI"},{"行业", "DMI行业"},
+                {"发行结构", "发行架构"},
+                {"票息", "票息_DMI"},
+                {"ticker", "TICKER"},
+                {"交易所", "发行场所"}
+            },
+            MissingField.Ignore
+        ),
+        CN_RNSource = List.Buffer(Table.ColumnNames(Renamed)),
+        Revalidated = Table.ReplaceValue(
+            Renamed,
+            each [计息基准],
+            each if not Text.Contains([利率类型], "浮") and not List.Contains({null, "", "--"}, [计息基准]) then "" else [
+                计息基准
+            ],
+            Replacer.ReplaceValue,
+            {"计息基准"}
+        ),
+        Output_Junction = Revalidated,
+        // Clean
+        Replace_blank = Table.ReplaceValue(Output_Junction, "", each [信用主体], Replacer.ReplaceValue, {"债券简称"}),
+        Clean_TF = Table.TransformColumns(
+            Replace_blank,
+            {
+                {
+                    "信用主体",
+                    each
+                        if Text.Contains(_, "银行") and Text.Contains(_, "公司") and Text.Contains(_, "分行") then
+                            Text.Replace(_, Text.BetweenDelimiters(_, "公司", "分行") & "分行", "")
+                        else
+                            _
+                }
+            }
+        ),
+        Clean_Entity_Rtg = List.Accumulate(
+            {{{"信用主体", "发行人", "担保人", "维好协议提供者"}, "主体"}, {{"穆迪/标普", "债项评级", "境内主体评级"}, "评级"}, {{"区县"}, "区县"}},
+            Clean_TF,
+            (x, y) => fx("Replace")(x, List.Intersect({CN_RNSource, y{0}}), y{1})
+        ),
+        Clean_ACol = fx(
+            "Replace"
+        )(
+            Table.DuplicateColumn(Table.RemoveColumns(Clean_Entity_Rtg, {"地区"}, MissingField.Ignore), "省份", "地区"),
+            {"地区"},
+            "地区"
+        ),
+        Output_Junction_End = if _inputkey = "Y" then Clean_ACol else Output_Junction,
+        // Try Filter out Exchange deals
+        Checked = fx("CheckNDupe")(Output_Junction_End),
+        Sorted = fx("SortNIndex")(Checked)
+    in
+        Sorted

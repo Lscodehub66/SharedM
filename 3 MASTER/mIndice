@@ -1,0 +1,64 @@
+// let LoadCode = Load("mIndice","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    DB_Name = "mIndice",
+    //【Input】Eligibility to include in this database
+    Add_HD = "Date",
+    //
+    Add_From = "Below",
+    //【Input】Insert New From Top or Below
+    RDupe_Method = "LIFO",
+    //【Input】LIFO or FIFO
+    Add_Source = wIndicePQ,
+    //【Input】PQ//
+    DB_Source = CWB(DB_Name),
+    //
+    DB_Source_CN = Table.ColumnNames(DB_Source),
+    Combined = Load(
+        "fxCombine"
+    )(
+        if Add_From = "Top" then {Add_Source, DB_Source} else {DB_Source, Add_Source}, {"Keep"}, DB_Source_CN
+    ),
+    #">>ShowDupe" = Table.Distinct(
+        Table.Buffer(
+            Table.Sort(
+                fx("ShowDupe")(Combined, {Add_HD}), {{Add_HD, Order.Descending}, {"Timestamp", Order.Descending}}
+            )
+        ),
+        {Add_HD}
+    ),
+    RDupe_Removed =
+        let
+            RDupe_Indexed = Table.AddIndexColumn(Combined, "Dummy" & "RDupeIndex", 1, 1),
+            #"LIFO Is Ascending" = if RDupe_Method <> "FIFO" then Order.Ascending else Order.Descending,
+            RDupe_Sorted = Table.Buffer(
+                Table.Sort(
+                    RDupe_Indexed, {{Add_HD, #"LIFO Is Ascending"}, {"Dummy" & "RDupeIndex", #"LIFO Is Ascending"}}
+                )
+            ),
+            Output = Table.Distinct(RDupe_Sorted, Add_HD)
+        in
+            Output,
+    #"Sorted Rows" = Table.Sort(RDupe_Removed, {{"Date", Order.Descending}}),
+    HD_Curves =
+        let
+            _SpdTenor = Record.Field(Load("Controltext"), "_SpdTenor"),
+            _InputCurves = {"CGB", "UST"},
+            // First Item minus by Second Item
+            SCGB = List.Select(
+                DB_Source_CN, each Text.Contains(_, _InputCurves{0}) and Text.Contains(_, _SpdTenor & "Y")
+            ),
+            SUST = List.Select(
+                DB_Source_CN, each Text.Contains(_, _InputCurves{1}) and Text.Contains(_, _SpdTenor & "Y")
+            ),
+            Prefix = {"S_DAX_CGBUST"},
+            CurveHD = SCGB & SUST & Prefix
+        in
+            List.Buffer(CurveHD),
+    #"Calculated DAX" = Table.Buffer(fx("Avg_SpdDiff")(#"Sorted Rows", HD_Curves)),
+    RecentNIM = Load("RecentNIM_Indice"),
+    #">>CheckKey" = fx("Key")(RecentNIM),
+    Merged = fx("Merge")(#"Calculated DAX", RecentNIM, "Date", "Date", {""}),
+    Managed = fx("DBManager")(Merged, "m"),
+    Reordered = Table.ReorderColumns(Managed, DB_Source_CN, MissingField.Ignore)
+in
+    Reordered

@@ -1,0 +1,72 @@
+(TableName as table) =>
+    let
+        Source = TableName,
+        CN_Source = Table.ColumnNames(Source),
+        NewCol = {"地区覆盖", "覆盖分类", "团队", "Count_BISLDeal", "Count_JBR", "Count_JGC"},
+        Prep = Table.RemoveColumns(Source, NewCol, MissingField.Ignore),
+        #"Added Conditional Column" = Table.AddColumn(
+            Prep,
+            "地区覆盖",
+            each
+                if Text.Contains([板块], "金融") then
+                    "【FI】"
+                else if List.Contains({"其他"}, [中资属性]) or ([板块] = "房地产" and [中资属性] <> "民企") then
+                    "【Others】"
+                else if Text.Contains([中资属性], "央") then
+                    "【CSOE】"
+                else if Text.Contains([中资属性], "民企") then
+                    "【民企】"
+                else if Text.Contains([城市], "宁波") then
+                    "宁波市"
+                else if Text.Contains([城市], "无锡") then
+                    "无锡市"
+                else if Text.Contains([城市], "苏州") then
+                    "苏州市"
+                else
+                    [地区],
+            type text
+        ),
+        Custom2 = fx("Merge")(#"Added Conditional Column", CWB("dd_地区覆盖"), "地区覆盖", "地区覆盖", {"COVERAGE"}, {"覆盖分类"}),
+        #"Replaced Value" = Table.ReplaceValue(Custom2, null, each [地区覆盖], Replacer.ReplaceValue, {"覆盖分类"}),
+        #"Added Conditional Column0" = Table.AddColumn(
+            #"Replaced Value",
+            "团队",
+            each
+                if Text.Contains(([覆盖分类] ?? ""), "FI") or Text.Contains(([覆盖分类] ?? ""), "CSOE") then
+                    "FI组"
+                else if Text.Contains(([覆盖分类] ?? ""), "SOE") then
+                    "SOE组"
+                else
+                    "POE组"
+        ),
+        Output =
+            if List.ContainsAll(CN_Source, {"Check", "板块", "中资属性", "城市", "地区"}) then
+                #"Added Conditional Column0"
+            else
+                Prep,
+        #"Added Conditional Column1" = Table.AddColumn(
+            Output, "Count_BISLDeal", each if not List.Contains({"--", null, ""}, [BISL_ROLE]) then 1 else null, type number
+        ),
+        #"Added Conditional Column2" = Table.AddColumn(
+            #"Added Conditional Column1",
+            "Count_JGC",
+            each if Text.Contains(([BISL_ROLE] ?? ""), "GC") then 1 else null,
+            type number
+        ),
+        #"Added Conditional Column3" =
+            if List.Contains(CN_Source, "BISL_ROLE") then
+                Table.AddColumn(
+                    #"Added Conditional Column2",
+                    "Count_JBR",
+                    each if [IS_BISLDeal] = "Y" and [Count_JGC] <> 1 then 1 else null,
+                    type number
+                )
+            else
+                Output,
+        Final =
+            if List.Contains(CN_Source, {"地区覆盖", "覆盖分类", "团队", "Count_BISLDeal", "Count_JBR", "Count_JGC"}) then
+                Source
+            else
+                #"Added Conditional Column3"
+    in
+        Final

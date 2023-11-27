@@ -1,0 +1,21 @@
+(TableName as table, name as text, _inpulist as list, _mergekeylist as list) =>
+    let
+        Source = TableName,
+        Custom1 = CWB(name),
+        #"Filtered Rows" = List.Accumulate(
+            _inpulist,
+            Custom1,
+            (x, y) =>
+                try
+                    Table.SelectRows(
+                        x,
+                        each
+                            List.Contains({"Y", "【Y】"}, Record.Field(_, y)) or Text.Contains(Record.Field(_, y), "【")
+                    ) otherwise x
+        ),
+        Merged = Table.NestedJoin(
+            Source, _mergekeylist, #"Filtered Rows", _mergekeylist, "DummyData", JoinKind.LeftAnti
+        ),
+        RCol = fx("RCol")(Merged)
+    in
+        RCol

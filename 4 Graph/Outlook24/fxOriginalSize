@@ -1,0 +1,54 @@
+(TableName as table, optional ExpCol as list) =>
+    let
+        _defaultExp = {
+            "Nth_ISIN",
+            "定价日",
+            "债券简称",
+            "发行规模(亿)",
+            "货币",
+            "发行方式",
+            "发行规则",
+            "ISIN_TEMP",
+            "债券余额",
+            "信用主体",
+            "利率类型",
+            "交易状态"
+        },
+        Source = TableName,
+        #"Grouped Rows" = Table.Group(
+            Source, {"ISIN"}, {{"Custom", each _, type table}, {"Count_ISIN", each Table.RowCount(_), Int64.Type}}
+        ),
+        #"Added Custom" = Table.TransformColumns(
+            #"Grouped Rows",
+            {
+                {
+                    "Custom",
+                    each
+                        Table.AddIndexColumn(Table.Sort(_, {{"定价日", Order.Ascending}}), "Nth_ISIN", 1, 1, Int64.Type)
+                }
+            }
+        ),
+        Custom1 = Table.AddColumn(#"Added Custom", "总规模(亿)", each[Custom][#"发行规模(亿)"]{0}),
+        #"Added Index" = Table.AddColumn(Custom1, "增发规模(亿)", each List.Sum(Table.Skip([Custom], 1)[#"发行规模(亿)"])),
+        #"Removed Columns" = Table.RemoveColumns(#"Added Index", {"ISIN"}),
+        #"Expanded Custom" = Table.ExpandTableColumn(
+            #"Removed Columns",
+            "Custom",
+            if ExpCol = null then
+                List.Distinct(Table.ColumnNames(#"Removed Columns"[Custom]{0}))
+            else
+                _defaultExp
+        ),
+        Custom2 = fx("Data")(#"Expanded Custom"),
+        #"Added Custom1" = Table.AddColumn(
+            Custom2,
+            "是否增发",
+            each if [Count_ISIN] = 1 then "" else if [Nth_ISIN] = 1 and [Count_ISIN] > 1 then "原始" else "增发",
+            type text
+        ),
+        #"Added Custom2" = Table.AddColumn(
+            #"Added Custom1", "原始规模(亿)", each if [是否增发] = "原始" then [#"总规模(亿)"] - [#"增发规模(亿)"] else [#"发行规模(亿)"],
+            type number
+        )
+    in
+        #"Added Custom2"

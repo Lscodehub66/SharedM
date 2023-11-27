@@ -1,0 +1,49 @@
+(_input as list, optional _Mergeinput as list) =>
+    let
+        Source = Load("Control"),
+        Start = Record.Field(Source, _input{0}),
+        End = Record.Field(Source, _input{1}),
+        DateList = List.Reverse(List.Generate(() => Start, each _ <= End, each Date.AddDays(_, 1))),
+        Datetbl = #table(type table [A_Date = date], List.Transform(DateList, each {_})),
+        Fulldatetbl =
+            if _Mergeinput{2} = {""} then
+                fx("DateFromRecord")(DateList)
+            else
+                fx("DateFromRecord")(DateList, _Mergeinput{2}),
+        FullPrefixedtbl =
+            if List.Count(_Mergeinput) = 4 then
+                Table.RenameColumns(
+                    Table.PrefixColumns(Fulldatetbl, _Mergeinput{3}), {{_Mergeinput{3} & ".A_Date", "A_Date"}}
+                )
+            else
+                Fulldatetbl, //= fx("DateRange")({"Now.Date", "NextTwoYearEnd.Date"},{ CWB("deal_master"),"兑付日", {""},"兑付日"})
+        //
+        Merged = Table.NestedJoin(
+            _Mergeinput{0},
+            {_Mergeinput{1}},
+            if List.Count(_Mergeinput) = 2 then
+                Datetbl
+            else
+                FullPrefixedtbl,
+            {"A_Date"},
+            "DummyData",
+            JoinKind.Inner
+        ),
+        Removed = Table.RemoveColumns(Merged, {"DummyData"}, MissingField.Ignore),
+        Exp = Table.ExpandTableColumn(
+            Merged,
+            "DummyData",
+            List.RemoveItems(Table.ColumnNames(Merged[DummyData]{0}), Table.ColumnNames(_Mergeinput{0}))
+        ),
+        Output =
+            if _Mergeinput = null then
+                DateList
+            else if _Mergeinput = {""} then
+                Datetbl
+                // fx("DateRange")({"Monday.Date", "Now.Date"},{""}),
+            else if List.Count(_Mergeinput) = 2 then
+                Removed
+            else
+                Exp
+    in
+        Output

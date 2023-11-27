@@ -1,0 +1,20 @@
+(TableName as table, optional _inputcol as list) =>
+    let
+        Source = TableName,
+        default = _inputcol ?? {"ISIN", "清算地"},
+        NewCol = default{1},
+        RefCol = default{0},
+        Prep = Table.RemoveColumns(Source, NewCol, MissingField.Ignore),
+        #"Added Col" = Table.AddColumn(
+            Prep,
+            NewCol,
+            each
+                List.Accumulate(
+                    {{"GB", "--"}, {"G", "中债登"}, {"MO", "澳交所"}, {"HK", "CMU"}, {"CND", "上清所"}, {"XS", "欧清/明讯"}},
+                    "--",
+                    (x, y) => if Text.StartsWith(Record.Field(_, RefCol), y{0}) then y{1} else x
+                )
+        ),
+        Output = if not Table.HasColumns(Source, RefCol) then Source else #"Added Col"
+    in
+        Output

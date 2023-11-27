@@ -1,0 +1,27 @@
+(TableName as table, _collist as list) =>
+    let
+        Source = TableName,
+        #"Transformed MannualInput" = List.Accumulate(
+            _collist,
+            Source,
+            (x, y) =>
+                if Table.HasColumns(Source, y) then
+                    Table.TransformColumns(
+                        x,
+                        {
+                            {
+                                y,
+                                each
+                                    if Text.StartsWith(_ ?? "", "0.") and not Text.Contains(_ ?? "", "%") then
+                                        Number.ToText(Number.From(_) * 100, "0.000") & "%"
+                                    else
+                                        _,
+                                type text
+                            }
+                        }
+                    )
+                else
+                    x
+        )
+    in
+        #"Transformed MannualInput"

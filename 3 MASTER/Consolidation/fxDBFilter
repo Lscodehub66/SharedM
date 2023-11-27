@@ -1,0 +1,65 @@
+// fx("DBFilter")({{"YYYY",">=",2022}},{{"删除及隐藏","not",{"删除","隐藏"}})
+//  {"","删除","隐藏","FIMTN","22_IsExch","22_PBOC"}
+(optional ThreeTextItemsList_ofList as list, optional TwoText_1List_ofList as list, optional _tbl as any) =>
+    let
+        Source =
+            if _tbl = null then
+               
+                  CWB("deal_master") 
+               
+            else
+                _tbl,
+        Filtered =
+            if ThreeTextItemsList_ofList = {null} or ThreeTextItemsList_ofList = null then
+                Source
+            else
+                List.Accumulate(
+                    ThreeTextItemsList_ofList,
+                    Source,
+                    (x, y) =>
+                        if Table.HasColumns(x, y{0}) then
+                            Table.SelectRows(
+                                x,
+                                each
+                                    if y{1} = "=" then
+                                        Record.Field(_, y{0}) = y{2}
+                                    else if y{1} = ">" then
+                                        Record.Field(_, y{0}) > y{2}
+                                    else if y{1} = ">=" then
+                                        Record.Field(_, y{0}) >= y{2}
+                                    else if y{1} = "<" then
+                                        Record.Field(_, y{0}) < y{2}
+                                    else if y{1} = "<=" then
+                                        Record.Field(_, y{0}) <= y{2}
+                                    else if y{1} = "not" then
+                                        not Text.Contains(Record.Field(_, y{0}), y{2})
+                                    else if y{1} = null then
+                                        Text.Contains(Record.Field(_, y{0}), y{2})
+                                    else
+                                        Record.Field(_, y{0}) <> y{2}
+                            )
+                        else
+                            x
+                ),
+        Filtered1 =
+            if TwoText_1List_ofList = null then
+                Filtered
+            else
+                List.Accumulate(
+                    TwoText_1List_ofList,
+                    Filtered,
+                    (x, y) =>
+                        if Table.HasColumns(x, y{0}) then
+                            Table.SelectRows(
+                                x,
+                                each
+                                    if y{1} = "not" then
+                                        not List.Contains(y{2}, Record.Field(_, y{0}))
+                                    else
+                                        List.Contains(y{2}, Record.Field(_, y{0}))
+                            )
+                        else
+                            x
+                )
+    in
+        Filtered1

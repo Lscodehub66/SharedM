@@ -40,7 +40,7 @@
                     "高收益",
             type text
         ),
-        RCol = fx("RemoveCol")(Output),
+        RCol = fx("RCol")(Output),
         Optional = if ENoutputIndicator = "EN" then fx("Replace")(RCol, {NewColName}, "评级分类") else RCol
     in
         Optional

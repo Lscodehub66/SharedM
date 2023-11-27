@@ -1,7 +1,7 @@
 // let LoadCode = Load("Spd_Analysis","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
 let
     Source = Spd_Avg,
-    #"Removed Columns" = Table.RemoveColumns(Source,{"R_UST_3Y", "R_CGB_3Y"}),
+    #"Removed Columns" = Table.RemoveColumns(Source,{"R_UST_3Y", "R_CGB_3Y","Index"}),
     #"Added Index" = Table.AddIndexColumn(#"Removed Columns", "Index", 1, 1, Int64.Type),
     #"RowNum Filtred" = Table.SelectRows(    #"Added Index" , each Text.Contains([Trend], "转向")),
     Index =   #"RowNum Filtred" {0}[Index],

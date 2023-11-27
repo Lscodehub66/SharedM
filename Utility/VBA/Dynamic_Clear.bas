@@ -11,6 +11,19 @@ Private Sub Worksheet_Change(Byval Target As Range)
         ' Display a message when one of the designated cells has been
         ' changed.
         ' Place your code here.
+        Sheet3.Activate
+
+
+        Application.Goto Reference:="DLD_Filter_Credit"
+        Selection.ClearContents
+        Application.Goto Reference:="DLD_Conso"
+        Selection.ClearContents
+        Application.Goto Reference:="DMIHeaders_Check"
+        Selection.ClearContents
+
+
+
+
 
         Sheet6.Activate
         Application.Goto Reference:="tbl_review_issuer"
@@ -23,13 +36,28 @@ Private Sub Worksheet_Change(Byval Target As Range)
         Selection.ClearContents
 
 
-        Sheet5.Activate
-        Application.Goto Reference:="ForReview_Issuer"
+
+        Sheet1.Activate
+        Application.Goto Reference:="ForReview_wBond"
         Selection.ClearContents
-        Application.Goto Reference:="ForReview_wCurated"
+
+        Sheet8.Activate
+        Application.Goto Reference:="ForReview_wIssue"
         Selection.ClearContents
+
+        Sheet9.Activate
+        Application.Goto Reference:="ForReview_wStats"
+        Selection.ClearContents
+        Application.Goto Reference:="wConso"
+        Selection.ClearContents
+
+
+
+        Sheet15.Activate
         Application.Goto Reference:="ForReview_wBOCOM"
         Selection.ClearContents
+
+        Sheet14.Activate
         Application.Goto Reference:="ForReview_wCredit"
         Selection.ClearContents
 
@@ -37,11 +65,10 @@ Private Sub Worksheet_Change(Byval Target As Range)
         Application.Goto Reference:="wNews_Input_ToClear"
         Selection.ClearContents
 
-        Sheet3.Activate
-        Application.Goto Reference:="DLD_Conso"
+        Sheet20.Activate
+        Application.Goto Reference:="ForReview_wChart"
         Selection.ClearContents
-        Application.Goto Reference:="DLD_QRC_23"
-        Selection.ClearContents
+
 
         Sheet18.Activate
         Application.Goto Reference:="ISIN_Search"
@@ -57,4 +84,8 @@ Private Sub Worksheet_Change(Byval Target As Range)
 
     End If
 End Sub
+
+
+
+
 

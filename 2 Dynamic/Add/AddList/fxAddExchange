@@ -4,8 +4,23 @@
         Source = TableName,
         #"Duplicated Column" = Table.DuplicateColumn(Source, "发行场所", "上市"),
         Replaced = fx("Replace")(#"Duplicated Column", {"上市"}, "上市地"),
+        #"Extracted After StartsWith" = Table.TransformColumns(
+            Replaced, {{"上市", each if Text.StartsWith(_, ";") then Text.AfterDelimiter(_, ";") else _, type text}}
+        ),
+        #"Extracted Before EndsWith" = Table.TransformColumns(
+            #"Extracted After StartsWith",
+            {
+                {
+                    "上市",
+                    each if Text.EndsWith(_, ";") then Text.BeforeDelimiter(_, ";", {0, RelativePosition.FromEnd}) else
+                        _,
+                    type text
+                }
+            }
+        ),
         Splitted = Table.TransformColumns(
-            Replaced, {{"上市", each List.Distinct(List.RemoveItems(Text.Split(_, ";"), {""})), type text}}
+            #"Extracted Before EndsWith",
+            {{"上市", each List.Distinct(List.RemoveItems(Text.Split(_, ";"), {""})), type text}}
         ),
         SortList = List.Buffer(
             {
@@ -50,6 +65,7 @@
         ),
         Recombined = Table.TransformColumns(
             Sorted, {{"上市", each Text.Combine(List.Transform(_, Text.From), ";"), type text}}
-        )
+        ),
+        #"Removed Strange Exchange" = fx("ClearFrankfurt")(Recombined)
     in
-        Recombined
+        #"Removed Strange Exchange"

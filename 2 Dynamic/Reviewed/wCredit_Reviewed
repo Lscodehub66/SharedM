@@ -1,0 +1,9 @@
+
+let
+Source            = CWB("ForReview_wCredit" ), 
+ DMI_Credit = fx("Excel")("DEALSMASTER_DMI_CREDIT"),
+ Filtered          = Table.Distinct(Table.SelectRows ( Source, each [信用主体] <> null and [信用主体] <> "" )), 
+ Renamed           = Table.RenameColumns (  Filtered , { { "IN_板块", "板块" }, { "IN.中资属性", "中资属性" }, { "SHORTNAMER", "信用主体简称" } }, MissingField.Ignore ),
+    MergedQ2 = fx("Merge")( Renamed ,  DMI_Credit, "信用主体", "信用主体", {"DEBUT_DATE"}, { "DEBUT_DATE"})
+in
+    MergedQ2

@@ -1,0 +1,14 @@
+// SBLCBankLEAG
+let
+    Input = CWB("SBLCBankLEAG" & "_Input"),
+    RangeStartNum = Input[RangeStart]{0},
+    RangeEndNum =
+        if Input[RangeEnd]{0} = null then
+            Number.From(Date.ToText(Date.From(DateTime.FixedLocalNow()), "yyyyMMdd"))
+        else
+            Input[RangeEnd]{0},
+    Source = SBLC,
+    LoadCode = Load("fxSBLCLEAG", "Code"),
+    EVA = Expression.Evaluate(LoadCode, #shared)(Source, RangeStartNum, RangeEndNum)
+in
+    EVA

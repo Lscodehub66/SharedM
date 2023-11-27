@@ -1,21 +1,25 @@
 //let LoadCode = Load("DLD_DMI","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-    Source = fx("Source")("DOWNLOAD_美元债一级"),
-    wRangeStart = List.Buffer(Load("Controller")[wFilter_PreviousMon_Date]){0},
-    ACol = Table.AddColumn(Source, "DataSource", each "DMI"),
-    CN_ACol = Table.ColumnNames(ACol),
-    #"//GNG_Multi" =
-        if Text.Contains(Load("Controller")[Multi]{0}, "BBG") or Load("Controller")[Multi]{0} = "ON" then
-            "GO"
-        else
-            "NO-GO",
-    Appended1 = if #"//GNG_Multi" <> "GO" then ACol else fx(
-        "Combine"
-    )(
-        {ACol, Load("DLD_DMI_Missing")}, {null}, CN_ACol
-    ),
-    Code1 = Load("fxDMI", "Code"),
-    EVA1 = Expression.Evaluate(Code1, #shared)(Appended1, "Y"),
-    Filtered = Table.SelectRows(EVA1, each [定价日] >= wRangeStart and [债券简称] <> null)
+    DMI = Table.AddColumn(fx("Source")("DOWNLOAD_美元债一级"), "DataSource", each "DMI", type text),
+    Source = Table.Buffer(DMI),
+    CN_Source = List.Buffer(Table.ColumnNames(Source)),
+    bbg = fx("Excel")("DOWNLOAD_tbl_dmi_isin"),
+    //
+    ToCombine =
+        let
+            Getisin = fx("DMIMissing")(Source),
+            Custom2 = fx("Merge")(Getisin, bbg, "ISIN", "ISIN", {""}, {""}),
+            ACol3 =
+                if Table.HasColumns(Custom2, "DataSource") then
+                    Table.ReplaceValue(Custom2, "DMI", "BBG", Replacer.ReplaceValue, {"DataSource"})
+                else
+                    Table.AddColumn(Custom2, "DataSource", each "BBG", type text),
+            SCol = Table.SelectColumns(ACol3, CN_Source, MissingField.UseNull)
+        in
+            Table.Buffer(SCol),
+    Date = fx("DateRange")({"PreviousMon.Date", "Sunday.Date"}),
+    #"//GNG_Multi" = if fx("Parameter")("MultiSource") = "ON" then "GO" else "NO-GO",
+    Appended1 = if #"//GNG_Multi" <> "GO" then Source else Table.Combine({ToCombine, Source}),
+    Custom1 = fx("DMI2")(Appended1, "Y")
 in
-    Filtered
+    Custom1

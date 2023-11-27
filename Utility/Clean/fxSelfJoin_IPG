@@ -1,0 +1,38 @@
+(TableName as table) =>
+    let
+        Source = TableName,
+        CN_Source = List.Buffer(Table.ColumnNames(Source)),
+        List1 = {"IPT_DMI", "FPG_DMI", "计息基准"},
+        List2 = {"IPG", "FPG", "浮息定价"},
+        Replaced = Table.ReplaceValue(
+            Source,
+            "【】",
+            each if [IPG] <> "" and [定价] <> "" and [定价] <> "【】" then [定价] else [票息],
+            Replacer.ReplaceValue,
+            {"FPG"}
+        ),
+        Replaced1 = Table.ReplaceValue(Replaced, " ", "", Replacer.ReplaceText, {"IPG", "FPG", "票息", "定价"}),
+        Replaced2 = Table.ReplaceValue(
+            Replaced1,
+            "",
+            each
+                if
+                    not List.Contains({null, "", "【】", "--"}, [IPG])
+                    and not List.Contains({null, "", "【】", "--"}, [FPG])
+                then
+                    [FPG]
+                else
+                    "",
+            Replacer.ReplaceValue,
+            {"定价"}
+        ),
+        
+        Renamed = Table.RenameColumns(
+            Table.RemoveColumns(Replaced2, List1, MissingField.Ignore), List.Zip({List2, List1}),
+            MissingField.UseNull
+        ),
+        Added = List.Accumulate(
+            {"IPGString", "FPGString", "SpdTighten", "PtTighten"}, Renamed, (x, y) => fx("Add" & y)(x)
+        )
+    in
+        Added

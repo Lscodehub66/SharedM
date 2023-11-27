@@ -1,0 +1,5 @@
+(tbl as table) =>
+    let
+        Source = Table.Keys(tbl), NoKey = if List.IsEmpty(Source) then {"NoKey"} else Source{0}[Columns]
+    in
+        NoKey

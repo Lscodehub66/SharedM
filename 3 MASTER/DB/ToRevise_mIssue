@@ -1,0 +1,7 @@
+let
+    Source=CWB("mIssue"),
+        #"Filtered Rows" = Table.SelectRows( Source, each [FPG] <> "--" and (Text.Contains([FPG], "-") or Text.Contains([FPG], "(") )),
+    #"Filtered Rows1" = Table.SelectRows(#"Filtered Rows", each ([定价] = "--"))
+in
+    #"Filtered Rows1"
+  

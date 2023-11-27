@@ -1,0 +1,59 @@
+// let LoadCode = Load("DLD_Add","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    Source = Load("DLD_Filtered"),
+    CN_Source = List.Buffer(Table.ColumnNames(Source)),
+    List1 = {"IPT_DMI", "FPG_DMI", "计息基准"},
+    List2 = {"IPG", "FPG", "浮息定价"},
+    List3 = {"认购额(亿)", "投资者账户数", "投资者类型", "投资者分布"},
+    CWBRenamed = Table.RenameColumns(
+        Table.RemoveColumns(CWB("DLD_priceNstats"), List1, MissingField.Ignore),
+        List.Zip({List2, List1}),
+        MissingField.UseNull
+    ),
+    RCol1 = Table.RemoveColumns(Source, List1 & List3, MissingField.Ignore),
+    Merged1 = fx("Merge")(RCol1, CWBRenamed, "Check", "Check", {""}),
+    Clean_TBC = if List.Contains(CN_Source, "IS_FIMTN") then fx("Replace")(Merged1, {"IS_FIMTN"}, "RTBC") else Merged1,
+    Clean_Structure = fx("Replace")(Table.DuplicateColumn(Clean_TBC, "发行架构", "结构"), {"结构"}, "结构"),
+    Add_Tap = Table.AddColumn(
+        Clean_Structure,
+        "增发判定",
+        each
+            if [发行方式] = "增发" then
+                "增发"
+            else if [起息日期] = null then
+                ""
+            else if [定价日] > [起息日期] then
+                "增发"
+            else if [Filter_Issue] = "" and [Filter_Bond] = "*" then
+                "【增发】"
+            else
+                "",
+        type text
+    ),
+    Added = List.Accumulate(
+        {
+            "SBLC",
+            "Exchange",
+            "BankBranch",
+            "BBGFX",
+            "Stats2",
+            "BCM",
+            "FRNString",
+            "CpnString",
+            "IPGString",
+            "FPGString",
+            "SpdTighten",
+            "PtTighten",
+            "Tenor",
+            "ESGMore"
+        },
+        Add_Tap,
+        (x, y) => fx("Add" & y)(x)
+    ),
+    WeeklyAddTapSwith = CWB("WeeklyAddTap"),
+    Appended = if WeeklyAddTapSwith = "OFF" then Added else fx("Combine")({Added, Load("wAddTapPQ")}, {null}, {0}),
+    //
+    Checked = fx("CheckNDupe")(Appended),
+    Sorted = fx("SortNIndex")(Checked)
+in
+    Sorted

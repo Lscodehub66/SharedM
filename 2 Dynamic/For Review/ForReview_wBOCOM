@@ -1,43 +1,59 @@
 // let LoadCode = Load("ForReview_wBOCOM","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
-
-
 let
-    Source = try CWB("DLD_Conso") otherwise Load("DLD_Conso"),
-   Prep =  if not List.Contains(Table.ColumnNames(Source),"BISL_ROLE") then Table.AddColumn(
-        Source ,
-        "BISL_ROLE",
-        each
-            if Text.Contains([联席全球协调人], "BOCOM") then
-                "JGC"
-            else if Text.Contains([牵头经办人], "BOCOM") then
-                "JBR"
-            else if Text.Contains([联席全球协调人], "【") then
-                "【】"
-            else
-                "--"
-    ) else Source,
-    MergedQ = fx("Merge")(  Prep, try CWB("DLD_QRC_23") otherwise Load("DLD_QRC_23"), "ISIN", "ISIN", {""}, {""}),
-    Filtered = Table.SelectRows(MergedQ, each [BISL_ROLE] <> "--" or [担任角色] <> ""),
-    #">>ExpandedList" = List.RemoveItems(Table.ColumnNames(MergedQ), Table.ColumnNames(  Prep)),
-    Replaced = Table.ReplaceValue(
-        Filtered,
-        each [BISL_ROLE],
-        each
-            if [担任角色] <> "" and [BISL_ROLE] ="【】" then [担任角色] 
-            else if [担任角色] <> "" and  [BISL_ROLE] <> [担任角色] then
-                "【" & [BISL_ROLE] & "】" & "#(lf)" & "【" & [担任角色] & "】"
-            else
-                [BISL_ROLE],
-        Replacer.ReplaceValue,
-        {"BISL_ROLE"}
+    _input = "wBOCOM",
+    _PK = "Check",
+    Name = "m" & Text.AfterDelimiter(_input, "w"),
+    HD = fx("ForReviewHD")(_input),
+    Source = Load("DLD_Filtered"),
+    Prep =
+        if not List.Contains(Table.ColumnNames(Source), "BISL_ROLE") then
+            Table.AddColumn(
+                Source,
+                "BISL_ROLE",
+                each
+                    if Text.Contains([联席全球协调人], "BOCOM") then
+                        "JGC"
+                    else if Text.Contains([牵头经办人], "BOCOM") then
+                        "JBR"
+                    else if Text.Contains([联席全球协调人], "【") then
+                        "【】"
+                    else
+                        "--"
+            )
+        else
+            Source,
+    DLD_QRC = Table.Buffer(Load("DLD_QRC_24")),
+    MergedQ = try fx("Merge")(Prep, DLD_QRC, "ISIN", "ISIN", {""}, {""}) otherwise Prep,
+    Filtered = Table.SelectRows(
+        MergedQ,
+        each if Table.HasColumns(MergedQ, "担任角色") then [BISL_ROLE] <> "--" or [担任角色] <> "" else [BISL_ROLE] <> "--"
     ),
-    BlankToNil = Table.ReplaceValue(
-        Replaced, "", "nil", Replacer.ReplaceValue, List.RemoveItems(#">>ExpandedList", {"新规角色", "COVERAGE"})
-    ),
-
-    SelectCol = fx("Data")(Table.SelectColumns( BlankToNil ,Get("wBISL"), MissingField.UseNull)),
+    #">>ExpandedList" = List.RemoveItems(Table.ColumnNames(MergedQ), Table.ColumnNames(Prep)),
+    SCol = fx("Data")(Table.SelectColumns(Filtered, HD, MissingField.UseNull)),
+    Replaced =
+        if Table.HasColumns(Filtered, "担任角色") then
+            Table.ReplaceValue(
+                SCol,
+                each [BISL_ROLE],
+                each
+                    if [担任角色] <> "" and [BISL_ROLE] = "【】" then
+                        [担任角色]
+                    else if [担任角色] <> "" and [BISL_ROLE] <> [担任角色] then
+                        "【" & [BISL_ROLE] & "】" & "#(lf)" & "【" & [担任角色] & "】"
+                    else
+                        [BISL_ROLE],
+                Replacer.ReplaceValue,
+                {"BISL_ROLE"}
+            )
+        else
+            SCol,
+    BlankToNil =
+        try
+            Table.ReplaceValue(
+                Replaced, "", "nil", Replacer.ReplaceValue, List.RemoveItems(#">>ExpandedList", {"新规角色", "COVERAGE"})
+            ) otherwise Replaced,
     BlankToInput = Table.ReplaceValue(
-        SelectCol, "", "【】", Replacer.ReplaceValue, {"EXE","PROJECT_CODE", "期数", "新规角色", "COVERAGE"}
+        BlankToNil, "", "【】", Replacer.ReplaceValue, {"台账序号", "EXE", "PROJECT_CODE", "期数", "新规角色", "COVERAGE"}
     ),
     BlankToInput1 = Table.ReplaceValue(
         BlankToInput, "", each if [BISL_ROLE] <> "JBR" then "【】" else "", Replacer.ReplaceValue, {
@@ -45,11 +61,8 @@ let
             "IS_B&D"
         }
     ),
-     BlankToInput2 = Table.ReplaceValue(
-        BlankToInput1, "", "--", Replacer.ReplaceValue, {
-            "是否合名"
-          
-        }
-    )
+    BlankToInput2 = Table.ReplaceValue(BlankToInput1, "", "--", Replacer.ReplaceValue, {"是否合名"}),
+    SelfJoined = fx("SelfJoin_R")(BlankToInput2, CWB("ForReview_" & _input), {_PK}),
+    Sorted = fx("SortNIndex")(SelfJoined)
 in
-    BlankToInput2
+    Sorted

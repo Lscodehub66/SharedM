@@ -244,7 +244,7 @@ let //
         "亮点",
         "期限备注",
         "SPECIALs",
-        "OTHER_ISIN",
+        "ISIN_144A",
         "Stats",
         "外部评审方式",
         "外部评审机构",

@@ -1,0 +1,5 @@
+let
+S = "1fdsgdfgdf",
+L= Text.AfterDelimiter((S??""), "1") 
+
+in L

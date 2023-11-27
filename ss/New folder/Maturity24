@@ -1,0 +1,84 @@
+//let LoadCode = Load("Maturity24","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    MonitorName = "MATURITY2024",
+    Source = fx("DBNewIssue")(CWB("deal_master"), MonitorName),
+    #"Grouped Rows1" = Table.Group(
+        Source,
+        {"ISIN"},
+        {   {"Count_BISLDeal", each List.Sum([Count_BISLDeal]), type number},
+            {"Count_JGC", each List.Sum([Check_JGC]), type number},
+            {"Count_JBR", each List.Sum([Count_JBR]), type number},
+            
+           
+            {"Data", each _, type table}
+        }
+    ),
+    #"Transformed Col" = Table.TransformColumns(
+        #"Grouped Rows1",
+        {
+            {
+                "Data",
+                each
+                    Table.RemoveColumns(
+                        Table.SelectRows(_, each not Text.Contains([#"信用主体(备证行)"], "*")),
+                        {"ISIN", "发行规模(亿)", "亿美元"},
+                        MissingField.Ignore
+                    )
+            }
+        }
+    ),
+    #"Expanded Data" = Table.ExpandTableColumn(
+        #"Transformed Col",
+        "Data",
+        List.RemoveItems(Table.ColumnNames(#"Transformed Col"[Data]{0}), Table.ColumnNames(#"Transformed Col"))
+    ),
+    #"Added OutstandingUSD" = fx("OutstandingUSD")(#"Expanded Data"),
+    // **skipped
+    #"Added Conditional Column" = Table.AddColumn(
+        #"Expanded Data",
+        "地区覆盖",
+        each
+            if Text.Contains([板块], "金融") then
+                "【FI】"
+            else if List.Contains({"其他"}, [中资属性]) or ([板块] = "房地产" and [中资属性] <> "民企") then
+                "【Others】"
+            else if Text.Contains([中资属性], "央") then
+                "【CSOE】"
+            else if Text.Contains([中资属性], "民企") then
+                "【民企】"
+            else if Text.Contains([城市], "宁波") then
+                "宁波市"
+            else if Text.Contains([城市], "无锡") then
+                "无锡市"
+            else if Text.Contains([城市], "苏州") then
+                "苏州市"
+            else
+                [地区],
+        type text
+    ),
+    Custom2 = fx("Merge")(#"Added Conditional Column", CWB("dd_地区覆盖"), "地区覆盖", "地区覆盖", {"COVERAGE"}, {"覆盖分类"}),
+    #"Replaced Value" = Table.ReplaceValue(Custom2, null, each [地区覆盖], Replacer.ReplaceValue, {"覆盖分类"}),
+    #"Added Conditional Column0" = Table.AddColumn(
+        #"Replaced Value",
+        "团队",
+        each
+            if Text.Contains(([覆盖分类] ?? ""), "FI") or Text.Contains(([覆盖分类] ?? ""), "CSOE") then
+                "FI组"
+            else if Text.Contains(([覆盖分类] ?? ""), "SOE") then
+                "SOE组"
+            else
+                "POE组"
+    ),
+    #"Added Conditional Column1" = Table.AddColumn(
+        #"Added Conditional Column0", "Count_BISLDeal", each if [IS_BISLDeal] = "Y" then 1 else null, type number
+    ),
+    // **skipped
+    #"Removed Duplicates" = Table.Distinct(#"Added OutstandingUSD", {"ISIN"}),
+    #"Sorted Rows" = Table.Sort(
+        #"Removed Duplicates", {{"地区", Order.Descending}, {"信用主体(备证行)", Order.Descending}, {"兑付日", Order.Descending}}
+    ),
+    #"Removed Columns" = Table.RemoveColumns(#"Sorted Rows", {"Index"}),
+    #"Added Index" = Table.AddIndexColumn(#"Removed Columns", "Index", 1, 1, Int64.Type),
+    #"Reordered Columns1" = Table.ReorderColumns(#"Added Index", Get("Header_Maturity2024"), MissingField.Ignore)
+in
+    #"Reordered Columns1"

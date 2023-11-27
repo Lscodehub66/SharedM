@@ -1,9 +1,9 @@
 // let Code = Load("fxddtbl","Code"), EVA = Expression.Evaluate(Code, #shared)("mCredit", "地方平台", "板块","板块二级") in EVA
 (_SourceName as text, _IndirectName as text, optional _Preceding as text, optional _Dependent as text) =>
     let
-        //_SourceName = "mCredit",    _IndirectName = "地方平台",    _Preceding = "板块",   _Dependent = "板块二级",  
-        QryNCWBName =  Text.Replace("dd_" & _IndirectName,"&", "_"),
-        CWBQryLoad = try CWB(QryNCWBName) otherwise CWB(QryNCWBName&"_1"),
+        //_SourceName = "mCredit",    _IndirectName = "地方平台",    _Preceding = "板块",   _Dependent = "板块二级",
+        QryNCWBName = Text.Replace("dd_" & _IndirectName, "&", "_"),
+        CWBQryLoad = try CWB(QryNCWBName) otherwise CWB(QryNCWBName & "_1"),
         Source = CWB(_SourceName),
         IfThenFilter = Table.SelectRows(
             Source,
@@ -20,12 +20,18 @@
                 DistinctedSCol
             else
                 Table.RenameColumns(DistinctedSCol, {{_Dependent, _IndirectName}}),
-        MergedQ = fx("Merge")(
-            IfThenRename, CWBQryLoad , _IndirectName, _IndirectName, {"SortValue"}, {"SortValue"}, {_Dependent}
-        ),
+        MergedQ =
+            try
+                fx(
+                    "Merge"
+                )(
+                    IfThenRename, CWBQryLoad, _IndirectName, _IndirectName, {"SortValue"}, {"SortValue"}, {
+                        _Dependent
+                    }
+                ) otherwise Table.AddColumn(IfThenRename, "SortValue", each null, type number),
         NoBlank = Table.SelectRows(
             MergedQ, each not List.IsEmpty(List.RemoveMatchingItems(Record.FieldValues(_), {"", null}))
         ),
-        Sorted =  Table.Sort(NoBlank, {{"SortValue", Order.Ascending}}) 
+        Sorted = Table.Sort(NoBlank, {{"SortValue", Order.Ascending}})
     in
         Sorted

@@ -1,0 +1,23 @@
+// let LoadCode = Load("Entity_DMIYY","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+
+let
+    List1 = {"DMI_Credit", "YY_Entity"},
+    _SHD = {"信用主体", "债券简称", "公司类型", "行业", "细分行业", "省份", "城市", "区县", "DEBUT_DATE", "Meta.Source"},
+    NoSort = "  in Custom1",
+    Fn = List.Accumulate(
+        List1,
+        #table({""}, {{""}}),
+        (x, y) =>
+            let
+                Source1 = Load(y, "Code"),
+                AlteredCode = Text.BeforeDelimiter(Source1, "//**") & NoSort,
+                EVA = Expression.Evaluate(AlteredCode, #shared),
+                Output = Table.AddColumn(EVA, "Meta.Source", each Text.BeforeDelimiter(y, "_"), type text),
+                Combined = fx("Combine")({x, Output}, {null}, _SHD)
+            in
+                Combined
+    ),
+    #"Removed Duplicates" = Table.Distinct(Fn, {"信用主体"}),
+    SIndexed = fx("SortNIndex")(   #"Removed Duplicates" , "DEBUT_DATE", "省份", "", "", "Y")
+in
+      SIndexed

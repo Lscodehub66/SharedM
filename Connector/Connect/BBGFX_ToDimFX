@@ -41,12 +41,14 @@ let
         "Term Currency",
         "FX_Rate"
     ),
-    MergedQ = fx("Merge")(
+    MergedQ = fx(
+        "Merge"
+    )(
         #"Pivoted Column",
         DimDate,
         "YYQQ_Value",
         "YYQQ",
-        {"YYQQ_EndDate"},
+        {"QEndDate"},
         {"Date_FX"},
         {"Base Currency", "Term Currency", "YYQQ_Value"}
     ),

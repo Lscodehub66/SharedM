@@ -1,0 +1,8 @@
+let
+    Source = CWB("mBISL"),
+    mBISL = fx("mBISLCount")(Source),
+    Source2 = CWB("mEXE"),
+    KeysTagged = Table.AddKey(Source2, {"PRJ对账号"}, true),
+    mEXE_Joined = fx("Merge")(mBISL, KeysTagged, "PRJ对账号", "PRJ对账号", {"Y"}, {""})
+in
+    mEXE_Joined

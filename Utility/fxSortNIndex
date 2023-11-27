@@ -9,39 +9,51 @@
     let
         Source = fx("Data")(TableName),
         Order = if IsReversedIndex <> "N" then Order.Ascending else Order.Descending,
-           Prep  = Table.RemoveColumns(Source, {"Index"}, MissingField.Ignore),
+        Prep = Table.RemoveColumns(Source, {"Index"}, MissingField.Ignore),
         HeaderList = List.Intersect(
             {List.RemoveItems({DateCol, SortCol1, SortCol2, SortCol3}, {"", null}), CN_Source}
         ),
         HD_Count = List.Count(HeaderList),
         CN_Source = List.Buffer(Table.ColumnNames(Source)),
-        Entity_CN = List.Select(CN_Source, each Text.Contains(_, "信用主体")),
+        Entity_CN = List.Select(CN_Source, each Text.Contains(_, "信用主体") or _ = "债券简称"),
         Entity_CN_Count = List.Count(Entity_CN),
         Entity_CN1 = List.First(Entity_CN),
-         // *Remove DummyCol*
-         RCol = Table.RemoveColumns(    Prep  , List.Select(CN_Source, each Text.Contains(_, "Dummy")),MissingField.Ignore),
-         //
+        // *Remove DummyCol*
+        RCol = Table.RemoveColumns(Prep, List.Select(CN_Source, each Text.Contains(_, "Dummy")), MissingField.Ignore),
+        //
         DefaultSort =
-            if List.ContainsAll(CN_Source, {"定价日", "货币", "年期"}) and Entity_CN_Count > 0 then
-                Table.Sort(    RCol , {{"定价日", Order}, {Entity_CN1, Order}, {"货币", Order}, {"年期", Order}})
+          if List.ContainsAll(CN_Source, {"余额美元规模分类"}) then
+                Table.Sort(
+                    RCol,
+                    List.Zip(
+                        {
+                            {"覆盖团队", "覆盖分类", "覆盖地区", "信用主体", "兑付日"},
+                            {Order, Order.Descending, Order.Descending, Order, Order.Descending}
+                        }
+                    )
+                )  
+                
+        
+            else if List.ContainsAll(CN_Source, {"定价日", "货币", "年期"}) and Entity_CN_Count > 0 then
+                Table.Sort(RCol, {{"定价日", Order}, {Entity_CN1, Order}, {"货币", Order}, {"年期", Order}})
             else if List.Contains(CN_Source, "定价日") and Entity_CN_Count > 0 then
-                Table.Sort(    RCol , {{"定价日", Order}, {Entity_CN1, Order}})
-            else if List.ContainsAll(CN_Source, {"DEBUT_DATE","Timestamp"}) and Entity_CN_Count > 0 then
-                Table.Sort(    RCol , {{"DEBUT_DATE", Order},{"Timestamp", Order},  {Entity_CN1, Order}})
-                else if List.ContainsAll(CN_Source, {"Date","Timestamp"})  then
-                Table.Sort(    RCol , {{"Timestamp", Order}, {"Date", Order}})
+                Table.Sort(RCol, {{"定价日", Order}, {Entity_CN1, Order}})
+            else if List.ContainsAll(CN_Source, {"DEBUT_DATE", "Timestamp"}) and Entity_CN_Count > 0 then
+                Table.Sort(RCol, {{"DEBUT_DATE", Order}, {"Timestamp", Order}, {Entity_CN1, Order}})
+            else if List.ContainsAll(CN_Source, {"Date", "Timestamp"}) then
+                Table.Sort(RCol, {{"Timestamp", Order}, {"Date", Order}})
             else
-                    RCol ,
+                RCol,
         Result =
             if HD_Count = 0 and IsReversedIndex = null then
                 DefaultSort
             else if HD_Count = 1 then
-                Table.Sort(    RCol , {{List.First(HeaderList), Order}})
+                Table.Sort(RCol, {{List.First(HeaderList), Order}})
             else if HD_Count = 2 then
-                Table.Sort(    RCol , {{List.First(HeaderList), Order}, {List.FirstN(HeaderList, 2){1}, Order}})
+                Table.Sort(RCol, {{List.First(HeaderList), Order}, {List.FirstN(HeaderList, 2){1}, Order}})
             else if HD_Count = 3 then
                 Table.Sort(
-                        RCol ,
+                    RCol,
                     {
                         {List.First(HeaderList), Order},
                         {List.FirstN(HeaderList, 3){1}, Order},
@@ -50,7 +62,7 @@
                 )
             else if HD_Count = 4 then
                 Table.Sort(
-                        RCol ,
+                    RCol,
                     {
                         {List.First(HeaderList), Order},
                         {List.FirstN(HeaderList, 3){1}, Order},
@@ -59,7 +71,7 @@
                     }
                 )
             else
-                    RCol ,
+                RCol,
         AddedIndex = Table.AddIndexColumn(Result, "Index", 1, 1, Int64.Type),
         Reversed = Table.Sort(AddedIndex, {"Index", Order.Descending}),
         Reorder = Table.ReorderColumns(

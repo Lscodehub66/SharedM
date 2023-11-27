@@ -1,0 +1,13 @@
+// let LoadCode = Load("ForReview_wStats","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+ let
+ _input = "wStats",
+    _PK = "Check",
+    Name = "m" & Text.AfterDelimiter(_input, "w"),
+    HD = fx("ForReviewHD")(_input),
+    Consotbl = Load("DLD_Filtered"),
+    Filtered = Table.SelectRows(Consotbl, each not List.Contains({"n/a"}, Record.Field(_,Name))),
+    SelfJoined = fx("SelfJoin_R")(Filtered, CWB("ForReview_" & _input), {_PK}),
+    SCol = Table.SelectColumns(    SelfJoined, HD, MissingField.UseNull),
+    Sorted = fx("SortNIndex")(SCol)
+in
+    Sorted

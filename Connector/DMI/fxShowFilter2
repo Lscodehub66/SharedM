@@ -1,0 +1,82 @@
+(TableName as table, optional _inputkey as nullable text) =>
+    let
+      Key = Text.Upper(Text.Trim(_inputkey ?? "")),
+            Source = TableName,
+
+        NewHD =  {"Filter_Credit", "Filter_Bond", "Filter_Exch", "Filter_Maturity"},
+                NewCol =   if Text.Contains(Key, "MATURITY") then  NewHD else List.RemoveLastN(NewHD,1),
+        Prep = Table.RemoveColumns(Source, NewCol, MissingField.Ignore),
+        Merged = fx("Merge")(Prep, Load("DMI_Entity_NonCN", "CSV"), "信用主体", "信用主体", {""}),
+        Merged1 = fx("Merge")( Merged, CWB("mCredit"), "信用主体", "信用主体", { "信用主体简称", "板块", "中资属性", "级别","首次违约日"}, {""}),
+
+ Custom1 = Table.AddColumn(
+            Merged1,
+            NewCol{0},
+            each
+                List.Accumulate(
+                    {{"是否中资主体", "非中资"}, {"信用主体", "中国人民银行"}, {"省份", "台湾省"}, {"省份", "其他地区"},{"级别", "【】"}},
+                    "",
+                    (x, y) => try if Record.Field(_, y{0}) = y{1} then "【" & y{1} & "】" else x otherwise ""
+                ),
+            type text
+        ),
+        Custom2 = Table.AddColumn(
+            Custom1,
+            NewCol{1},
+            each
+                List.Accumulate(
+                    {{"定价日", null}, {"发行规模(亿)", null}, {"利率类型", "零息"}, {"利率类型", "已替换"}, {"利率类型", "实物支付"},{"债券类型", "可转债"}},
+                    "",
+                    (x, y) =>
+                        try if Record.Field(_, y{0}) = y{1} then "【" & (y{1} ?? (y{0} & "为空值")) & "】" else x
+                    otherwise
+                        ""
+                ),
+            type text
+        ),
+
+        Custom3 = Table.AddColumn(
+         Custom2,
+            NewCol{2},
+            each
+                List.Accumulate(
+                    {"交换", "交換", "EXCH"}, "", (x, y) =>
+                        if Text.Contains([特殊条款说明], y) then
+                            "特殊条款说明有" & "【" & y & "】词出现"
+                        else
+                            x
+                ),
+            type text
+        ),
+        Custom4 = Table.ReplaceValue(
+            Custom3,
+            "",
+            each if [首次违约日] <> null and [定价日] > [首次违约日] then "【定价日晚于违约日期】" else "",
+            Replacer.ReplaceValue,
+            {NewCol{2}}
+        ),
+         Custom5 =    try Table.AddColumn(
+         Custom4,
+            NewCol{3},
+            each
+                List.Accumulate(
+                    {{"评级类型", "违约"}, {"债券余额", 0}},
+                    "",
+                    (x, y) =>
+                        try if Record.Field(_, y{0}) = y{1} then "【" & Text.From(y{1} ) & "】" else x
+                    otherwise
+                        ""
+                ),
+            type text
+        ) otherwise Custom4,
+        Output =
+            if Text.Contains(Key, "NOT") then
+                List.Accumulate(
+                    NewCol,
+                      Custom5 ,
+                    (x, y) => Table.SelectRows(x, each List.Contains({null, "", "--"}, Record.Field(_, y)))
+                )
+            else
+                Table.ReorderColumns(  Custom5 , List.Distinct(NewCol & Table.ColumnNames(  Custom5 )), MissingField.Ignore)
+    in
+        Output

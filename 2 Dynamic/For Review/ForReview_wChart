@@ -1,0 +1,9 @@
+// let LoadCode = Load("ForReview_wChart","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+Source = Load("Filtered_Add"),
+Filtered = Table.SelectRows(Source, each [删除及隐藏] = "FIMTN" ),
+SCol = Table.SelectColumns(Filtered, Get("CN_mChart"),MissingField.Ignore),
+    ACol = Table.AddColumn(SCol, "mChart", each "Y"),
+    Custom1 = fx("SelfJoin_R")(ACol, CWB("ForReview_wChart"), {"ISIN"})
+in
+ Custom1

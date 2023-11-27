@@ -1,5 +1,5 @@
 (_input as text) =>
-    let
+    let     //_input = _debugfxSource,
         _excelkey = Text.Remove(Text.BeforeDelimiter(Text.Upper(_input ?? ""), "_"), {" "}),
         _sheetkey = Text.Replace(Text.AfterDelimiter(Text.Upper(_input ?? ""), "_"), "=", ""),
         _dimfdexcel = Load("DimFDExcel"),

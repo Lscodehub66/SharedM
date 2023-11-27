@@ -1,18 +1,14 @@
 // let LoadCode = Load("SBLCBankLEAG","Code"), EVA = Expression.Evaluate(LoadCode ,#shared)  in EVA
-
-
-
 let
-    Source = fx("Excel")("DEALSMASTER_=SBLCBankLEAG"),
-    #"Removed Columns" =   Table.RemoveColumns(Source,{"占比","金额排名"},MissingField.Ignore) ,
-
-AddedPt = Load("fxAddpt" )( #"Removed Columns"  ,"笔数"),
-    Custom1 = fx("SortNIndex")(AddedPt),
-    #"Sorted Rows" = Table.Sort(Custom1,{{"Index", Order.Ascending}})
+    MonitorName = "SBLC",
+    Fn = fx("DBMonitor")(MonitorName),
+    Grouped = Table.Group(
+        Fn, {"备证行"}, {{"亿美元", each List.Sum([亿美元]), type number}, {"笔数", each Table.RowCount(_), Int64.Type}}
+    ),
+    Sorted = Table.Buffer(Table.Sort(Grouped, {{"笔数", Order.Descending}})),
+    AddedIndex = Table.AddIndexColumn(Sorted, "笔数排名", 1, 1, Int64.Type),
+    Filtered = Table.SelectRows(AddedIndex, each [笔数排名] <= 10),
+    Reordered = Table.ReorderColumns(Filtered, List.Distinct({"笔数排名"} & Table.ColumnNames(Filtered))),
+    CalculatedPt = Load("fxAddpt")(Reordered, "笔数")
 in
-
-
-
-
- 
-#"Sorted Rows"
+    CalculatedPt

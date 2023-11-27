@@ -1,0 +1,27 @@
+let
+    Source = List.Distinct(
+        List.Accumulate(
+            {"mIssue", "mBond", "mBISL", "mCredit", "deal_master"},
+            Get("Header_Graph_Deal_Weekly"),
+            (x, y) => x & CWB(y, "CN")
+        )
+    ),
+    date = List.RemoveItems(Table.ColumnNames(Load("DimDate")), Get("Header_MergeRemoval")),
+    Custom2 = List.RemoveItems(Source, date & Get("Header_MergeRemoval") & {"Check"}),
+    Is = List.Sort(
+        List.Select(
+            Custom2,
+            each
+                Text.StartsWith(_, "IS_")
+                or Text.StartsWith(_, "ISIN_")
+                or Text.StartsWith(_, "Count_")
+                or Text.StartsWith(_, "是否")
+                or Text.EndsWith(_, "分类")
+                or Text.Contains(_, "细分")
+        )
+    ),
+    Distincted = List.Distinct(
+        {"Index", "定价日", "ISIN", "信用主体(备证行)"} & List.RemoveItems(Custom2, Is) & date & Is & {"Check"}
+    )
+in
+    Distincted

@@ -1,0 +1,29 @@
+let
+    M1 = Date.From(fx("Parameter")("Monday")) ?? Date.StartOfWeek(Date.From(DateTime.FixedLocalNow()), Day.Monday),
+    Record = [
+        wNIMStart.Date = #date(2013, 1, 1),
+        StartOfRecent.Date = #date(2022, 1, 1),
+        23年初 = #date(2023, 1, 1),
+        Now.Date = Date.From(DateTime.FixedLocalNow()),
+        Monday.Date = Date.StartOfWeek(M1, Day.Monday),
+        PreviousMon.Date = Date.StartOfWeek(Date.AddDays(M1, -7), Day.Monday),
+        Sunday.Date = Date.AddDays(Date.StartOfWeek(M1, Day.Monday), -1),
+        NextTwoYearEnd.Date = Date.EndOfYear(Date.AddYears(M1, 2)),
+        当前 = Date.AddDays(M1, -3),
+        上周 = Date.AddDays(M1, -10),
+        近1季度 = Date.AddQuarters(M1, -1),
+        近半年 = Date.AddQuarters(M1, -2),
+        近3季度 = Date.AddQuarters(M1, -3),
+        年初 = fx("NextWeekDay")(Date.StartOfYear(M1)),
+        去年初 = if Date.QuarterOfYear(M1) = 1 then fx("NextWeekDay")(Date.StartOfYear(Date.AddYears(M1, -1))) else null,
+        近1年 = fx("NextWeekDay")(Date.AddYears(M1, -1)),
+        近5年 = fx("NextWeekDay")(Date.AddYears(M1, -5)),
+        近3月 = fx("NextWeekDay")(Date.AddMonths(M1, -3)),
+        BeforePreviousMon.Date = Date.StartOfWeek(Date.AddDays(M1, -10), Day.Monday),
+        wFilter_PreviousMon.Date = if fx("Parameter")("WeeklyFilter") <> "" then
+            Date.StartOfWeek(Date.AddDays(M1, -3), Day.Monday)
+        else
+            #date(1991, 2, 20)
+    ]
+in
+    Record

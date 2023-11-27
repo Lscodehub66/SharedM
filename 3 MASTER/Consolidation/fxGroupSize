@@ -1,0 +1,27 @@
+// 仅replace更小分类： fx("GroupSize")(Source, {"","合计余额美元规模分类"},1)
+(TableName as table, optional TwoItemColumnNameList as list, optional SmallerSlicer as any) =>
+    let
+        Source = fx("Data")(TableName),
+        default = {"亿美元", "美元规模分类"},
+        List = if TwoItemColumnNameList = null or TwoItemColumnNameList = {null} then default else TwoItemColumnNameList,
+        仅替换更小分类 = Table.HasColumns(Source, List) and SmallerSlicer <> null,
+        Prep = Table.RemoveColumns(Source, List{1}, MissingField.Ignore),
+        #"Conditional BBGFX" = if not Table.HasColumns(Source, List{0}) then fx("AddBBGFX")(Prep,"USD") else Prep,
+        Slicer_Size0 = fx("GroupRange")(#"Conditional BBGFX", List, {"--", 2, 3, 5}, "亿"),
+        Slicer_Size =
+            if SmallerSlicer <> null then
+                Table.ReplaceValue(
+                    if 仅替换更小分类 = true then
+                        Source
+                    else
+                        Slicer_Size0,
+                    "≤2亿",
+                    each if Record.Field(_, List{0}) <= 1 then "≤1亿" else "1-2亿",
+                    Replacer.ReplaceValue,
+                    {List{1}}
+                )
+            else
+                Slicer_Size0,
+        Output = fx("RCol")(Slicer_Size)
+    in
+        Output

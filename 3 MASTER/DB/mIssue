@@ -1,0 +1,12 @@
+//let LoadCode = Load("mISIN","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    AddCode = Load("fxAddToDB", "Code"),
+    ManagerCode = Load("fxDBManager3", "Code"),
+    DB = "mIssue",
+    DB_Source = CWB(DB),
+    // DB_Source =   fx("DB_Revise")(    C1, CWB("ToRevise_mIssue","CWB"), "Check"),
+    Parameter = fx("Parameter")("RemoveFrom_DB") ?? "",
+    Added = if Text.Contains(Parameter, "Stop") then DB_Source else fx("AddToDB")(DB, Load("wDynamicPQ"), Parameter),
+    Managed = fx("DBManager3")(Added, "Check")
+in
+    Managed

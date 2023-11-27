@@ -1,0 +1,56 @@
+// let LoadCode = Load("QRC_Income","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    Source = Table.Buffer(fx("Excel")("台账24")),
+    Sheetlist = Table.SelectRows(Source, each Text.StartsWith([Item], "项目收入情况")),
+    #"Added Custom" = Table.AddColumn(Sheetlist, "HD", each fx("QRC_HD")([Data])),
+    #"Added Custom1" = Table.AddColumn(#"Added Custom", "Data1", each fx("QRC_MHD")([Data], [HD])),
+    #"Sorted Rows" = Table.Sort(#"Added Custom1", {{"Item", Order.Descending}}),
+    #"Removed Columns" = Table.SelectColumns(#"Sorted Rows", {"Item", "Data1"}),
+    Custom1 = fx("Combine")(#"Removed Columns"[Data1], {null}, {10}),
+    #"Filtered Rows" = Table.SelectRows(
+        Custom1, each not List.Contains({null, "", "--"}, [Project Name]) and not Text.Contains([Project Name], "【")
+    ),
+    Custom2 = fx("PRJSync")(#"Filtered Rows", "序号", "项目定价日", "PRJ对账号"),
+    #"Merged Queries" = fx("Merge")(Custom2, CWB("Directory"), "PRJ对账号", "PRJ对账号", {"货币"}),
+    #"Replaced Value" = Table.AddColumn(
+        #"Merged Queries",
+        "承销费原币",
+        each
+            if [货币] = "CNH" and [#"承销费(RMB)"] <> null then
+                [#"承销费(RMB)"]
+            else if [#"承销费(USD)"] <> null then
+                [#"承销费(USD)"]
+            else
+                [承销费],
+        type number
+    ),
+    #"Removed Columns1" = Table.RemoveColumns(#"Replaced Value", {"承销费"}),
+    #"Reordered Columns" = Table.ReorderColumns(
+        #"Removed Columns1",
+        {
+            "PRJ对账号",
+            "序号",
+            "项目定价日",
+            "ISIN",
+            "Project Name",
+            "项目名称(集团全称)",
+            "担任角色",
+            "新规角色",
+            "团队",
+            "项目状态",
+            "承销费原币",
+            "承销费(USD)",
+            "承销费(RMB)",
+            "分配金额总计",
+            "下单但无分配"
+        },
+        MissingField.Ignore
+    ),
+    #"Sorted Rows1" = Table.Sort(#"Reordered Columns", {{"PRJ对账号", Order.Descending}}),
+    #"Added Index" = Table.AddIndexColumn(#"Sorted Rows1", "Index", 1, 1, Int64.Type),
+    Reordered = fx("1st")(#"Added Index", {"Index"}),
+    Output = if fx("Parameter")("GPS") = "Remote" then CWB("QRC_Income") else try
+        Reordered otherwise CWB("QRC_Income"),
+    Sorted = Table.Sort(Output, {{"PRJ对账号", Order.Descending}})
+in
+    Sorted
