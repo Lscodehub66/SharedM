@@ -1,6 +1,6 @@
 // let LoadCode = Load("DLD_Add","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-    Source = try CWB("DLD_Conso","1") otherwise Load("DLD_Conso"),
+    Source = try CWB("DLD_Conso") otherwise Load("DLD_Conso"),
     CN_Source = List.Buffer(Table.ColumnNames(Source)),
     #"Removed and Renamed" = Table.RenameColumns(
         Table.RemoveColumns(Source, {"计息基准","IPT_DMI","FPG_DMI"}, MissingField.Ignore),

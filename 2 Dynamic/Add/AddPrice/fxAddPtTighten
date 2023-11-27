@@ -4,8 +4,9 @@
         // InitialCol = null, PricedCol = null,
         ColToAdd = {"InitialNumText", "PricedNumText", "Tighten_Pt"},
         PrepRemoval = Table.RemoveColumns(Source, ColToAdd, MissingField.Ignore),
+        #"Remove FilledTBC" = Table.TransformColumns(PrepRemoval, {{PricedCol??"定价", each if _ <> "【】" then Text.Remove(Text.Remove(_,"】"),"【") else _, type text}}),
         #"Inserted Text Between Delimiters" = Table.AddColumn(
-            PrepRemoval,
+                  #"Remove FilledTBC" ,
             "InitialNumText",
             each
                 if
@@ -25,7 +26,7 @@
             each
                 if
                     not Text.Contains(Record.Field(_, (InitialCol ?? "IPG")), "【")
-                    and not Text.Contains(Record.Field(_, (PricedCol ?? "定价")), "【")
+                              and not Text.Contains(Record.Field(_, (PricedCol ?? "定价")), "【")
                     and Text.Contains(Record.Field(_, (InitialCol ?? "IPG")), "%")
                     and Text.Contains(Record.Field(_, (PricedCol ?? "定价")), "%")
                 then
@@ -50,7 +51,10 @@
         #"Removed Columns" = Table.RemoveColumns(#"Replaced Value1", {"InitialNumText", "PricedNumText"}),
         #"Changed Type1" = Table.TransformColumnTypes(#"Removed Columns", {{"Tighten_Pt", type number}}),
         #"Inserted TigentenConso" = Table.AddColumn(
-            Table.RemoveColumns(#"Changed Type1", {"收窄基点"},MissingField.Ignore), "收窄基点", each if [Tighten_BMK] = null then [Tighten_Pt] else [Tighten_BMK], type number
+            Table.RemoveColumns(#"Changed Type1", {"收窄基点"}, MissingField.Ignore),
+            "收窄基点",
+            each if [Tighten_BMK] = null then [Tighten_Pt] else [Tighten_BMK],
+            type number
         ),
         RemovedCol =
             if Table.HasColumns(#"Changed Type1", "Tighten_BMK") then

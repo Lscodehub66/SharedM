@@ -80,7 +80,7 @@
         Revalidated = Table.ReplaceValue(
             Filtered_ValueKey,
             each [计息基准],
-            each if not Text.Contains([利率类型], "浮") and [计息基准] <> "" and [计息基准] <> null then "" else [计息基准],
+            each if not Text.Contains([利率类型], "浮") and not List.Contains({null,"","--"},[计息基准] ) then "" else [计息基准],
             Replacer.ReplaceValue,
             {"计息基准"}
         ),
