@@ -94,14 +94,7 @@ let
                 "【】"
     ),
     //
-    CWBConso = Table.PrefixColumns(
-        Table.SelectColumns(
-            CWB("DLD_Conso"),
-            {"IS_FIMTN", "IPG", "FPG", "定价", "认购额(亿)", "投资者账户数", "投资者类型", "投资者分布", "Check"},
-            MissingField.UseNull
-        ),
-        "Dummy"
-    ),
+    CWBConso = Load("DLD_ConsoPrice_CWB"),
     Joined = Table.Join(#"Inserted FinalPrice", "Check", CWBConso, "Dummy.Check", JoinKind.LeftOuter),
     #"Replaced Value" = List.Accumulate(
         {"Dummy.IS_FIMTN", "Dummy.IPG", "Dummy.FPG", "Dummy.定价", "Dummy.投资者类型", "Dummy.投资者分布", "Dummy.Check"},
