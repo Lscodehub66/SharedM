@@ -14,9 +14,10 @@ let
             // { "发行前认证", "第二方意见", "验证" }
         }
     ),
-    Checked =fx("CheckNDupe")(SortedText),
+    Checked = fx("CheckNDupe")(SortedText),
     SCol = Table.SelectColumns(Checked, CWB("ESG_ExternalReview", "CN"), MissingField.UseNull),
     Output = try fx("Combine")({SCol, CWB("ESG_ExternalReview")}, {"Check"}) otherwise CWB("ESG_ExternalReview"),
-    RBlank1 = Table.SelectRows(Output, each [外部评审方式] <> "" or [外部评审机构] <> "")
+    Replaced = fx("Replacer")(Output, {"外部评审机构"}, {"Sustainable Fitch"}, {"惠誉常青"}),
+    RBlank1 = Table.SelectRows(Replaced, each [外部评审方式] <> "" or [外部评审机构] <> "")
 in
- RBlank1
+    RBlank1

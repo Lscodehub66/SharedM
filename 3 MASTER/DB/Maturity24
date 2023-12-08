@@ -1,0 +1,62 @@
+//let LoadCode = Load("Maturity24","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+
+let
+    MonitorName = "MATURITY2024",
+    Source = fx("DBNewIssue")(CWB("deal_master"), MonitorName),
+    #"Grouped Rows1" = Table.Group(
+        Source,
+        {"ISIN"},
+        {
+            {"发行规模(亿)", each List.Sum([#"发行规模(亿)"]), type number},
+            {"亿美元", each List.Sum([#"亿美元"]), type number},
+            {"Data", each _, type table}
+        }
+    ),
+    #"Transformed Col" = Table.TransformColumns(
+        #"Grouped Rows1",
+        {
+            {
+                "Data",
+                each
+                    Table.RemoveColumns(
+                        Table.SelectRows(_, each not Text.Contains([#"信用主体(备证行)"], "*")),
+                        {"ISIN", "发行规模(亿)", "亿美元"},
+                        MissingField.Ignore
+                    )
+            }
+        }
+    ),
+    #"Expanded Data" = Table.ExpandTableColumn(
+        #"Transformed Col",
+        "Data",
+        List.RemoveItems(Table.ColumnNames(#"Transformed Col"[Data]{0}), Table.ColumnNames(#"Transformed Col"))
+    ),
+    #"Added Conditional Column" = Table.AddColumn(
+        #"Expanded Data",
+        "地区覆盖",
+        each 
+            if Text.Contains([板块], "金融") then
+                "【FI】" else
+                if List.Contains({"其他"},[中资属性]) then
+                "【Others】" 
+            else if Text.Contains([中资属性], "央") then
+                "【CSOE】"
+            else if Text.Contains([中资属性], "民企") then
+                "【民企】"
+            else if Text.Contains([城市], "宁波") then
+                "宁波市"
+            else if Text.Contains([城市], "无锡") then
+                "无锡市"
+            else if Text.Contains([城市], "苏州") then
+                "苏州市"
+            else
+                [地区],
+        type text
+    ),
+    Custom2 = fx("Merge")(#"Added Conditional Column", CWB("dd_地区覆盖"), "地区覆盖", "地区覆盖", {"COVERAGE"}, {"覆盖分类"}),
+    #"Replaced Value" = Table.ReplaceValue(Custom2, null, each [地区覆盖], Replacer.ReplaceValue, {"覆盖分类"}),
+    #"Reordered Columns" = Table.ReorderColumns(#"Replaced Value", Table.ColumnNames(Source), MissingField.Ignore),
+    Sorted = fx("SortNIndex")(#"Reordered Columns")
+
+in
+    Sorted

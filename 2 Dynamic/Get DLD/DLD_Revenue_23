@@ -1,0 +1,43 @@
+//let LoadCode = Load("DLD_Revenue_23","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    Source = fx("Source")("台账23_收入情况2023"),
+    Renamed = Table.RenameColumns(
+        Source,
+        {{"序号", "台账序号"}, {"团队", "COVERAGE"}, {"ISIN Code", "ISIN"}, {"Column24", "承销费_RMB"}, {"承销费(USD)", "承销费_USD"}},
+        MissingField.Ignore
+    ),
+    #"Filtered Rows" = Table.SelectRows(Renamed, each ([台账序号] <> "序号")),
+    SCol = Table.SelectColumns(
+        #"Filtered Rows",
+        {
+            "Project Name",
+            "ISIN",
+            "项目名称（集团全称）",
+            "台账序号",
+            "担任角色",
+            "新规角色",
+            "COVERAGE",
+            "项目定价日",
+            "承销费_USD",
+            "承销费_RMB",
+            "项目状态"
+        },
+        MissingField.UseNull
+    ),
+    Replaced2 = Table.ReplaceValue(
+        SCol,
+        each [COVERAGE],
+        each if not List.Contains({null, "", "--"}, [COVERAGE]) then [COVERAGE] & "组" else "--",
+        Replacer.ReplaceValue,
+        {"COVERAGE"}
+    ),
+    DataFormatted = fx("Data")(Replaced2),
+    #"Added Conditional Column" = Table.AddColumn(
+        DataFormatted, "IS_JGC", each if Text.Remove([担任角色] ?? "", " ") = "JGC" then "Y" else "", type text
+    ),
+    #"Added Conditional Column1" = Table.AddColumn(
+        #"Added Conditional Column", "承销费", each if [承销费_USD] = null then [承销费_RMB] else [承销费_USD], type number
+    ),
+    Sorted = Table.Sort(#"Added Conditional Column1", {{"项目定价日", Order.Descending}})
+in
+    Sorted

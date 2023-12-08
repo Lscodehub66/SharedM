@@ -405,7 +405,8 @@ let
                 "发行评级",
                 "主体评级",
                 "ESG_Indicator",
-                "计息基准","SBLC提供者"
+                "计息基准",
+                "SBLC提供者"
             },
             Header_S_Dynamic_FIMTN_Review = {
                 "Index",
@@ -471,8 +472,8 @@ let
                 "ESG",
                 "IPG",
                 "FPG",
+                "定价",
                 "收窄基点",
-                "定价",            
                 "增发判定",
                 "货币",
                 "发行规模(亿)",
@@ -760,6 +761,7 @@ let
                 "中资属性",
                 "板块",
                 "地区",
+                "城市",
                 "IS_CLIENT",
                 "IS_BISLDeal",
                 "信用主体",
