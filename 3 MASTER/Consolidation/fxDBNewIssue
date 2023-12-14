@@ -59,9 +59,10 @@
         SCol8 = Table.SelectColumns(Filtered8, Header8, MissingField.UseNull),
         //9Mature2024
         Header9 = Get("Header_Maturity2024"),
-        //  {"Index", "ISIN", "信用主体(备证行)","发行评级","货币", "发行规模(亿)","兑付日","期限","票息", "发行品种", "中资属性","板块", "地区","城市","IS_CLIENT", "IS_BISLDeal", "信用主体","亿美元","定价日" ,"Check"},
+        //  {"Index", "ISIN", "信用主体(备证行)","发行评级","货币", "发行规模(亿)","债券余额","兑付日","期限","票息", "发行品种", "中资属性","板块", "地区","城市","IS_CLIENT", "IS_BISLDeal", "信用主体","亿美元","定价日" ,"Check"},
         Filtered9 = Table.SelectRows(NoHide_Source, each Date.Year([兑付日]) = 2024  
-        and List.Contains({null,""},[IS_DEFAULT]) and not List.Contains({"中华人民共和国财政部"},[信用主体])),
+        and List.Contains({null,""},[IS_DEFAULT]) and not List.Contains({"中华人民共和国财政部"},[信用主体])
+        and [债券余额]>0),
         BISLCheck = List.Buffer((try CWB("Directory") otherwise fx("Excel")("DEALSMASTER_=DIRECTORY"))[Check]),
         BISL_DEAL = Table.AddColumn(
             Filtered9, "IS_BISLDeal", each if List.Contains(BISLCheck, [Check]) then "Y" else "", type text
