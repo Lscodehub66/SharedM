@@ -18,7 +18,6 @@
         tblFilter_List = List.Buffer(
             List.Distinct(Table.SelectRows(tblFilter, each tblFilter[Column2] <> "OFF")[Column1])
         ),
-
         // 【2】Data Range
         Filered_Dates = Load("fxRangeDate")(RangeStartNum, RangeEndNum, TableName, "定价日"),
         //【3】Rename Columns
@@ -30,7 +29,8 @@
                 {"FPG", "FPG_DMI"},
                 {"发行结构", "发行架构"},
                 {"票息", "票息_DMI"},
-                {"ticker", "TICKER"}
+                {"ticker", "TICKER"},
+                {"交易所", "发行场所"}
             },
             MissingField.Ignore
         ),
@@ -80,7 +80,9 @@
         Revalidated = Table.ReplaceValue(
             Filtered_ValueKey,
             each [计息基准],
-            each if not Text.Contains([利率类型], "浮") and not List.Contains({null,"","--"},[计息基准] ) then "" else [计息基准],
+            each if not Text.Contains([利率类型], "浮") and not List.Contains({null, "", "--"}, [计息基准]) then "" else [
+                计息基准
+            ],
             Replacer.ReplaceValue,
             {"计息基准"}
         ),
@@ -113,7 +115,7 @@
         ),
         Output_Junction_End = if NullAsDefaultNoCleanOR_Y = "Y" then Clean_ACol else Output_Junction,
         // Try Filter out Exchange deals
-        Checked =fx("CheckNDupe")(Output_Junction_End),
+        Checked = fx("CheckNDupe")(Output_Junction_End),
         Sorted = Table.Sort(
             Checked,
             {

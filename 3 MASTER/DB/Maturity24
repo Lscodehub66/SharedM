@@ -36,7 +36,7 @@ let
         each
             if Text.Contains([板块], "金融") then
                 "【FI】"
-            else if List.Contains({"其他"}, [中资属性]) then
+            else if List.Contains({"其他"}, [中资属性]) or ([板块] = "房地产" and [中资属性] <> "民企") then
                 "【Others】"
             else if Text.Contains([中资属性], "央") then
                 "【CSOE】"
@@ -54,8 +54,19 @@ let
     ),
     Custom2 = fx("Merge")(#"Added Conditional Column", CWB("dd_地区覆盖"), "地区覆盖", "地区覆盖", {"COVERAGE"}, {"覆盖分类"}),
     #"Replaced Value" = Table.ReplaceValue(Custom2, null, each [地区覆盖], Replacer.ReplaceValue, {"覆盖分类"}),
+    #"Added Conditional Column0" = Table.AddColumn(
+        #"Replaced Value",
+        "团队",
+        each
+            if Text.Contains(([覆盖分类] ?? ""), "FI") or Text.Contains(([覆盖分类] ?? ""), "CSOE") then
+                "FI组"
+            else if Text.Contains(([覆盖分类] ?? ""), "SOE") then
+                "SOE组"
+            else
+                "POE组"
+    ),
     #"Added Conditional Column1" = Table.AddColumn(
-        #"Replaced Value", "Count_BISLDeal", each if [IS_BISLDeal] = "Y" then 1 else null, type number
+        #"Added Conditional Column0", "Count_BISLDeal", each if [IS_BISLDeal] = "Y" then 1 else null, type number
     ),
     #"Reordered Columns" = Table.ReorderColumns(
         #"Added Conditional Column1", Table.ColumnNames(Source), MissingField.Ignore

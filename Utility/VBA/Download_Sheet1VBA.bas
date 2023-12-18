@@ -12,10 +12,7 @@ Private Sub Worksheet_Change(ByVal Target As Range)
         ' changed.
         ' Place your code here.
 
-        Sheet2.Activate
-        ActiveSheet.Range("A3:CA70").Select
-        Selection.ClearContents
-
+       
         Sheet15.Activate
         ActiveSheet.Range("C3:CA150").Select
         Selection.ClearContents

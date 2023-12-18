@@ -15,6 +15,7 @@
                 {"FEATURED", "品种主题"},
                 {"ticker", "TICKER"},
                 {"行业", "DMI行业"},
+                {"交易所", "发行场所"},
                 {"临时isin", "OTHER_ISIN"}
             },
             MissingField.Ignore
@@ -60,7 +61,7 @@
             & List.Select(
                 CN_RNSource, each Text.StartsWith(_, "S_") or Text.StartsWith(_, "Spd_") or Text.StartsWith(_, "I_")
             ),
-        Num0 = {"FEE", "承销费原币", "Relevance","承销费_RMB","承销费_USD","承销费"},
+        Num0 = {"FEE", "承销费原币", "Relevance", "承销费_RMB", "承销费_USD", "承销费"},
         Num = {
             "IPT_YIELD",
             "定价YIELD_Num",
@@ -113,7 +114,8 @@
             "美元指数",
             "美国",
             "香港人民币存款余额",
-            "票息_DMI","票息_BBG",
+            "票息_DMI",
+            "票息_BBG",
             "收窄幅度(bp)",
             "发行价",
             "首日涨跌",
@@ -143,7 +145,8 @@
         },
         Text_NoSpace = {"Check", "ISIN", "发行评级", "主体评级", "境内主体评级"},
         Text_NoNA = {"增发判定", "主题债券"},
-        Text1 = {"地区覆盖",
+        Text1 = {
+            "地区覆盖",
             "主体",
             "计息基准",
             "浮息定价",
