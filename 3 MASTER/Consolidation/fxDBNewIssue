@@ -67,6 +67,7 @@
         BISL_DEAL = Table.AddColumn(
             Filtered9, "IS_BISLDeal", each if List.Contains(BISLCheck, [Check]) then "Y" else "", type text
         ),
+        //** skipped
         Replaced_ISIN = Table.ReplaceValue(
             BISL_DEAL,
             each [ISIN],
@@ -74,7 +75,8 @@
             Replacer.ReplaceValue,
             {"ISIN"}
         ),
-        SCol9 = Table.SelectColumns(Replaced_ISIN, Header9, MissingField.UseNull),
+           //** skipped
+        SCol9 = Table.SelectColumns( BISL_DEAL, Header9, MissingField.UseNull),
         //******
         Output =
             if Text.Contains(Key, "ESG") then

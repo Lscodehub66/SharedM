@@ -40,9 +40,12 @@
                 )
             else
                 RFolderPath,
+        Slicer_Size0 = Load("fxGroupRange")(Calculated_DEBUT, {"亿美元", "美元规模分类"}, {"--", 2, 3, 5}, "亿"),
         Slicer_Size =
             if Table.HasColumns(Source, "亿美元") then
-                Load("fxGroupRange")(Calculated_DEBUT, {"亿美元", "美元规模分类"}, {"--", 2, 3, 5}, "亿")
+                Table.ReplaceValue(
+                    Slicer_Size0, "≤2亿", each if [亿美元] <= 1 then "≤1亿" else "1-2亿", Replacer.ReplaceValue, {"美元规模分类"}
+                )
             else
                 Calculated_DEBUT,
         Slicer_Tenor =
@@ -52,26 +55,32 @@
                 Slicer_Size,
         Slicer_BondRtg =
             if Table.HasColumns(Source, "发行评级") then
-                fx("RtgSlicer")(Slicer_Tenor, "发行评级", "评级分类") 
+                fx("RtgSlicer")(Slicer_Tenor, "发行评级", "评级分类")
             else
                 Slicer_Tenor,
         //
         Calculated_CCY =
             if Table.HasColumns(Source, {"ISIN", "货币"}) then
-               fx("Replace")( Table.AddColumn(
-                    Slicer_BondRtg,
-                    "货币细分",
-                    each
-                        if [ISIN] = null then
-                            "--"
-                        else if Text.StartsWith([ISIN], "G") and not Text.StartsWith([ISIN], "GB") then
-                            "自贸债"
-                        else if Text.Contains([货币], "CNH") then
-                            "点心债"
-                        else
-                            [货币] &"债",
-                    type text
-                ), {"货币细分"},"货币")
+                fx(
+                    "Replace"
+                )(
+                    Table.AddColumn(
+                        Slicer_BondRtg,
+                        "货币细分",
+                        each
+                            if [ISIN] = null then
+                                "--"
+                            else if Text.StartsWith([ISIN], "G") and not Text.StartsWith([ISIN], "GB") then
+                                "自贸债"
+                            else if Text.Contains([货币], "CNH") then
+                                "点心债"
+                            else
+                                [货币] & "债",
+                        type text
+                    ),
+                    {"货币细分"},
+                    "货币"
+                )
             else
                 Slicer_BondRtg,
         Calculated_Clearing =
@@ -100,7 +109,7 @@
         /////////////////////////
         Junction_Start = Calculated_Clearing,
         /////////////////////////
-        Slicer_EntityRtg =          fx("RtgSlicer")(   Junction_Start, "主体评级", "主体评级分类","EN") ,
+        Slicer_EntityRtg = fx("RtgSlicer")(Junction_Start, "主体评级", "主体评级分类", "EN"),
         Slicer_IsIG = Table.AddColumn(
             Slicer_EntityRtg,
             "是否IG",
@@ -158,23 +167,33 @@
         ),
         Written_CCYSize = Load("fxWriteCCYSize")(Written_Tenor, "发行规模(亿)", "货币", "增发判定"),
         Written_Theme = Load("fxWriteTheme")(Written_CCYSize),
-        Written_BISLRole = fx("Replace")(Table.AddColumn(
-            Written_Theme, "角色", each [IS_LEAD] & [BISL_ROLE] & [#"IS_B&D"], type text
-        ),{"角色"},"ROLE"),
+        Written_BISLRole = fx(
+            "Replace"
+        )(
+            Table.AddColumn(Written_Theme, "角色", each [IS_LEAD] & [BISL_ROLE] & [#"IS_B&D"], type text), {"角色"},
+            "ROLE"
+        ),
         //
         CombinedName = Load("fxNameCombiner")(Written_BISLRole),
         // Add Comparer
-        AddedComp = Table.AddColumn(CombinedName, "COMPARER", each if [PROJECT_NAME] <> "" then Text.From([YYMMDD]) & Text.Upper(Text.Remove([PROJECT_NAME]," ")) else 
-        Text.From([YYMMDD]) &[信用主体简称],type text),
+        AddedComp = Table.AddColumn(
+            CombinedName,
+            "COMPARER",
+            each
+                if [PROJECT_NAME] <> "" then
+                    Text.From([YYMMDD]) & Text.Upper(Text.Remove([PROJECT_NAME], " "))
+                else
+                    Text.From([YYMMDD]) & [信用主体简称],
+            type text
+        ),
         ////////////////////////
         Junction = if not List.ContainsAll(CN_Source, {"上市", "主体评级", "BISL_ROLE"}) then Junction_Start else AddedComp,
         /////////////////////////
         RCol = Table.RemoveColumns(
-            Junction , List.Select(Table.ColumnNames(Junction ), each Text.Contains(_, "Dummy")), MissingField.Ignore
+            Junction, List.Select(Table.ColumnNames(Junction), each Text.Contains(_, "Dummy")), MissingField.Ignore
         ),
-        Checked =fx("CheckNDupe")(RCol),
-        Sorted = fx("SortNIndex")( Checked),
+        Checked = fx("CheckNDupe")(RCol),
+        Sorted = fx("SortNIndex")(Checked),
         Presented = fx("PresentNoData")(Sorted)
-        
     in
-      Presented
+        Presented
