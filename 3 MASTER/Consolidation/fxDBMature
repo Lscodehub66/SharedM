@@ -1,0 +1,29 @@
+(optional _inputkey as nullable text) =>
+    let
+        // _inputkey = _inputkey,
+        Key = Text.Upper(Text.Trim(_inputkey ?? "")),
+        NumText = Text.Select(Key, {"0".."9"}),
+        //
+        Source = fx("MergeDimDate")(CWB("deal_master"), "兑付日", {""}, {""}, "兑付日"),
+        C0 = {{"债券余额", ">", 0}, {"是否债券违约", "<>", "Y"}, {"IS_DEFAULT", "<>", "Y"}, {"信用主体(备证行)", "not", "*"}},
+        C1 = if not Text.Contains(Key, "MOF") then {{"信用主体", "<>", "中华人民共和国财政部"}} else {{null}},
+        C2 = if NumText <> "" then {{"兑付日.YYYY", null, NumText}} else {{null}},
+        C3 = if Text.Contains(Key, "SOE") then {{"投标资历分类", "=", "SOE Creds"}} else {{null}},
+        #"Filtered Output" = fx("DBFilter")(List.RemoveItems((C0 & C1 & C2 & C3), {{null}}), null, Source),
+        #"Grouped IssueSizeNRole" = fx("GroupISIN2")(#"Filtered Output"),
+        #"Grouped Outstanding" = fx("OutstandingUSD")(#"Grouped IssueSizeNRole"),
+        List1 = {{"合计亿美元", "合计美元规模分类"}, {"余额亿美元", "余额美元规模分类"}},
+        #"Conditional Replace" = List.Accumulate(List1, #"Grouped Outstanding", (x, y) => fx("GroupSize")(x, y, 1)),
+        List1a = List.Transform(List1, each _{1}),
+        List1b = List.Transform(List1a, each _ & "SOE"),
+        Renamed =
+            if Text.Contains(Key, "SOE") then
+                Table.RenameColumns(#"Conditional Replace", List.Zip({List1a, List1b}))
+            else
+                #"Grouped Outstanding",
+        List3 = Get(Key),
+        SCol = if List3 <> {""} then Table.SelectColumns(Renamed, List3, MissingField.UseNull) else Renamed,
+        FnSort = fx("SortNIndex")(SCol),
+        Output = if not Text.Contains(Key, "MATUR") and Key <> "" then fx("DBMonitor")(_inputkey) else FnSort
+    in
+        Output

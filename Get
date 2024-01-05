@@ -393,6 +393,8 @@ let
                 "货币",
                 "货币细分",
                 "板块",
+                "年",
+                "月",
                 "删除及隐藏",
                 "Check"
             },
@@ -605,6 +607,7 @@ let
                 "主体评级",
                 "境内主体评级",
                 "货币细分",
+                "备证年期分类",
                 "信用主体",
                 "亿美元",
                 "年",
@@ -636,10 +639,12 @@ let
                 "信用主体",
                 "评级分类",
                 "主体评级分类",
+                "点心债年期分类",
                 "付息频率",
                 "年月",
                 "Check"
             },
+            Header_RMB = List.ReplaceMatchingItems(Header_DimSum, {{"点心债年期分类", "货币细分"}}),
             Header_IGLGFV = {
                 "Index",
                 "ISIN",
@@ -747,13 +752,32 @@ let
                 "亿元",
                 "Check"
             },
+            Header_USDCNH_Tighten = {
+                "Index",
+                "ISIN",
+                "定价日",
+                "信用主体简称",
+                "信用主体",
+                "货币",
+                "亿美元",
+                "评级分类",
+                "币种规模",
+                "发行品种",
+                "板块",
+                "收窄基点",
+                "收窄Num",
+                "YYQQ",
+                "YY",
+                "Check",
+                "Num"
+            },
             Header_Maturity2024 = {
                 "Index",
                 "ISIN",
                 "信用主体(备证行)",
                 "发行评级",
                 "货币",
-                "发行规模(亿)",
+                "合计发行规模(亿)",
                 "债券余额",
                 "兑付日",
                 "期限",
@@ -763,20 +787,190 @@ let
                 "板块",
                 "地区",
                 "城市",
-                "IS_CLIENT",
-                "IS_BISLDeal",
                 "投标资历分类",
                 "年期分类",
-                "美元规模分类",
+                "合计美元规模分类",
+                "余额美元规模分类",
                 "结构分类",
                 "评级分类",
+                "覆盖地区",
+                "覆盖分类",
+                "覆盖团队",
+                "角色",
+                "IS_BISLDeal",
+                "Count_BISLDeal",
+                "Count_JBR",
+                "Count_JGC",
                 "信用主体",
-                "亿美元",
+                "合计亿美元",
+                "余额亿美元",
                 "定价日",
+                "月",
                 "Check"
             },
+            Header_Maturity2024_SOE = List.Transform(
+                Header_Maturity2024, each if List.Contains({"合计美元规模分类", "余额美元规模分类"}, _) then _ & "SOE" else _
+            ),
             Header_MergeRemoval = {"Timestamp", "Updator", "曾用名", "主体备注", "Index", "公司类型", "上市类型", "系"},
             Header_Sync_KYC = {"KYC对账号", "发行人", "KYC Status", "KYC expiry date", "信用主体"},
+            Header_deal_master = {
+                "Index",
+                "定价日",
+                "ISIN",
+                "信用主体(备证行)",
+                "发行评级",
+                "货币",
+                "发行规模(亿)",
+                "年期",
+                "票息",
+                "IPG",
+                "收窄基点",
+                "结构",
+                "主题",
+                "板块",
+                "地区",
+                "BOCOM_DEAL?",
+                "亿美元",
+                "删除及隐藏",
+                "债券简称",
+                "增发判定",
+                "FPG",
+                "定价",
+                "发行价",
+                "港分_ROLE",
+                "澳分_ROLE",
+                "最终账簿(亿)",
+                "账户数",
+                "地区分布",
+                "类型分布",
+                "起息日期",
+                "信用主体",
+                "主体评级",
+                "境内主体评级",
+                "上市",
+                "兑付日",
+                "通过分行",
+                "发行人",
+                "担保人",
+                "维好协议提供者",
+                "备证行全称",
+                "ESG",
+                "品种主题",
+                "期限备注",
+                "SPECIALs",
+                "Date_Onboarded",
+                "EXE",
+                "PROJECT_CN",
+                "PROJECT_CODE",
+                "期数",
+                "BISL_ROLE",
+                "新规角色",
+                "COVERAGE",
+                "Settlement",
+                "BOCOM下单量",
+                "BOCOM分配量",
+                "交行及独家订单",
+                "项目亮点",
+                "定价会时间",
+                "台账序号",
+                "FolderPath",
+                "JGC",
+                "JBR",
+                "PRJ对账号",
+                "信用主体简称",
+                "板块二级",
+                "板块三级",
+                "板块标签",
+                "中资属性",
+                "级别",
+                "城市",
+                "区县",
+                "首次违约日",
+                "DEBUT_DATE",
+                "DMI行业",
+                "YY类型",
+                "合计亿美元",
+                "合计亿元",
+                "合计亿港币",
+                "合计发行规模(亿)",
+                "亿元",
+                "亿港币",
+                "首次付息日",
+                "TICKER",
+                "付息频率",
+                "PROJECT_NAME",
+                "Stats",
+                "利率类型",
+                "筹款用途",
+                "外部评审方式",
+                "外部评审机构",
+                "覆盖地区",
+                "覆盖团队",
+                "债券余额",
+                "备证行",
+                "备证行标签",
+                "兑付日.YearNum",
+                "货币细分",
+                "清算地",
+                "超额认购倍数",
+                "期限",
+                "币种单位",
+                "币种规模",
+                "ESG主题",
+                "发行品种",
+                "角色",
+                "COMPARER",
+                "交易简称",
+                "A_Date",
+                "YYYY",
+                "YY",
+                "MM",
+                "WeekNum",
+                "WeekStartDate",
+                "每周第一天",
+                "YYW",
+                "年",
+                "季",
+                "YYQQ",
+                "QEndDate",
+                "月",
+                "周",
+                "年月",
+                "YYMMDD",
+                "DayName",
+                "DayShortName",
+                "周几",
+                "Count_BISLDeal",
+                "Count_JBR",
+                "Count_JGC",
+                "ISIN_144A",
+                "ISIN_BISLDeal",
+                "ISIN_JBR",
+                "ISIN_JGC",
+                "ISIN_TEMP",
+                "IS_B&D",
+                "IS_BISLDeal",
+                "IS_CLIENT",
+                "IS_DEFAULT",
+                "IS_ISSUER",
+                "IS_KYC_DONE",
+                "IS_LEAD",
+                "IS_SBLC",
+                "上市分类",
+                "主体评级分类",
+                "备证分类",
+                "年期分类",
+                "投标资历分类",
+                "是否IG",
+                "是否债券违约",
+                "是否合名",
+                "是否首发",
+                "美元规模分类",
+                "结构分类",
+                "覆盖分类",
+                "评级分类",
+                "Check"
+            },
             //   CN = ColumnNames
             CN_BaseDirectory_Deal = Table.ColumnNames(fx("Excel")("DIRECTORY_TBL_DEAL")),
             CN_mChart = Table.ColumnNames(fx("Excel")("DEALSMASTER_MCHART")),
@@ -835,6 +1029,12 @@ let
             HeaderSource =
                 if Text.Contains(Key, "WISSUER") then
                     Header_S_Dynamic_wIssuer
+                else if Text.Contains(Key, "RMB") then
+                    Header_RMB
+                else if Text.Contains(Key, "FI") then
+                    Header_FI
+                else if Text.Contains(Key, "ESG") then
+                    Header_ESG
                 else if Text.Contains(Key, "DLDTBLDMIISIN") then
                     HD_DLD_TBLDMIISIN
                 else if Text.Contains(Key, "DMINOTINUSE") then
@@ -865,10 +1065,6 @@ let
                     Header_DimSum60
                 else if Text.Contains(Key, "TODO") then
                     Header_S_ToDo
-                else if Text.Contains(Key, "FI") then
-                    Header_FI
-                else if Text.Contains(Key, "ESG") then
-                    Header_ESG
                 else if Text.Contains(Key, "SBLC") then
                     Header_SBLC
                 else if Text.Contains(Key, "DIMSUM") then
@@ -876,9 +1072,11 @@ let
                 else if Text.Contains(Key, "IGLGFV") then
                     Header_IGLGFV
                 else if Text.Contains(Key, "FTZ") then
-                    Header_IGLGFV
+                    Header_FTZ
                 else if Text.Contains(Key, "GRAPH") and (Text.Contains(Key, "WEEKLY") or Text.Contains(Key, "DEAL")) then
                     Header_Graph_Deal_Weekly
+                else if Text.Contains(Key, "USDCNHTIGHTEN") then
+                    Header_USDCNH_Tighten
                 else if Text.Contains(Key, "MERGE") and Text.Contains(Key, "REMOV") then
                     Header_MergeRemoval
                 else if Text.Contains(Key, "DMI") and Text.Contains(Key, "CREDIT") then
@@ -889,8 +1087,12 @@ let
                     Header_Sync_KYC
                 else if Text.Contains(Key, "SYNC") and Text.Contains(Key, "DIRECTORY") then
                     Header_Sync_Directory
-                else if Text.Contains(Key, "MATURITY") and Text.Contains(Key, "2024") then
+                else if Text.Contains(Key, "MATURITY") and Text.Contains(Key, "SOE") then
+                    Header_Maturity2024_SOE
+                else if Text.Contains(Key, "MATURITY") and Key <> "MATURITY" then
                     Header_Maturity2024
+                else if Text.Contains(Key, "DEALMASTER") then
+                    Header_deal_master
                 else
                     {""},
             Selected =

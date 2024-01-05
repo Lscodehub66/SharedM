@@ -1,13 +1,16 @@
-// mDMI
+// let LoadCode = Load("mDMI","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
- Source        = CWB_mDMI, 
- #">>ShowDupe" = fx("ShowDupe")( Source, { "Check" } ), 
- ManagedDB     = fx("DBManager") ( Source, "m", "LIFO" ), 
- Custom1       = fx("Merge") ( ManagedDB, DMI_all, "Check", "Check", { "临时isin", "发行方式" }, { "" } ), 
- SyncedDMI     = 
-  if List.Contains ( Table.ColumnNames ( Custom1 ), "IsInDMI" ) then
-   Table.ReplaceValue ( Custom1, each [IsInDMI], each if [临时isin] = null then "N" else "", Replacer.ReplaceValue, { "IsInDMI" } )
-  else
-   Table.AddColumn ( Custom1, "IsInDMI", each if [临时isin] = null then "N" else "" )
+    Source = CWB("mDMI"),
+    Weekly = fx("Source")("DOWNLOAD_美元债一级"),
+    Combined =
+        if Date.DayOfWeek(Load("MondayDate")) <> 1 then
+            Source
+        else
+            fx("Combine")({Weekly, Source}, {"ISIN", "定价日"}, {0}),
+    #"Merged Queries" = Table.NestedJoin(
+        Combined, {"ISIN", "定价日"}, fx("Source")("DMI"), {"ISIN", "定价日"}, "Data", JoinKind.LeftAnti
+    ),
+    Removed = Table.RemoveColumns(#"Merged Queries", {"Data"}, MissingField.Ignore),
+    Sorted = fx("SortNIndex")(Removed)
 in
- SyncedDMI
+    Sorted

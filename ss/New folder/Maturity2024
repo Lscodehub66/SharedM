@@ -1,0 +1,17 @@
+//let LoadCode = Load("Maturity2024","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    MonitorName = "MATURITY2024",
+   Fn = fx("DBMonitor")(MonitorName),
+    #"Added OutstandingUSD" = fx("OutstandingUSD")(  Fn ),
+    #"Sorted" = Table.Buffer(
+        Table.Sort(#"Added OutstandingUSD", {{"ISIN", Order.Ascending}, {"定价日", Order.Ascending}})
+    ),
+    #"Removed Duplicates" = Table.Distinct(#"Sorted", {"ISIN"}),
+    #"Sorted Rows" = Table.Sort(
+        #"Removed Duplicates", {{"地区", Order.Descending}, {"信用主体(备证行)", Order.Descending}, {"兑付日", Order.Descending}}
+    ),
+    #"Removed Columns" = Table.RemoveColumns(#"Sorted Rows", {"Index"}),
+    #"Added Index" = Table.AddIndexColumn(#"Removed Columns", "Index", 1, 1, Int64.Type),
+    #"Reordered Columns1" = Table.ReorderColumns(#"Added Index", Get("Header_Maturity2024"), MissingField.Ignore)
+in
+    #"Reordered Columns1"

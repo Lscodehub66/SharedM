@@ -1,0 +1,71 @@
+(TableName as table, _inputkey as text) =>
+    let
+        Key = Text.Upper(Text.Trim(_inputkey ?? "")),
+        Source = TableName,
+
+        
+        主题字段 = List.Accumulate(
+            {{"FTZ", "自贸"}, {"DIMSUM", "点心"}},
+              Source ,
+            (x, y) =>
+                if Text.Contains(Key, y{0}) then
+                    Table.ReplaceValue(
+                        Table.ReplaceValue(x, y{1} & "债", "--", Replacer.ReplaceValue, {"主题"}),
+                        y{1} & "债",
+                        "债券",
+                        Replacer.ReplaceText,
+                        {"主题"}
+                    )
+                else
+                    x
+        ),
+        ESG主题字段 =
+            if Text.Contains(Key, "ESG") and Table.HasColumns(Source, "ESG主题") then
+                Table.TransformColumns(主题字段, {{"ESG主题", each if not Text.Contains(_, "债") then _ & "债券" else _}})
+            else
+                主题字段,
+        Added =
+            if Text.Contains(Key, "USDCNH_TIGHTEN") then
+                Table.RemoveRowsWithErrors(
+                    Table.TransformColumnTypes(
+                        Table.DuplicateColumn(ESG主题字段, "收窄基点", "收窄Num"), {{"收窄Num", type number}}
+                    ),
+                    {"收窄Num"}
+                )
+            else
+                ESG主题字段,
+        Regrouped = List.Accumulate(
+            {{"DIMSUM", "点心债年期分类", {"3", "2", "5"}}, {"SBLC", "备证年期分类", {"3", "2.9", "1"}}},
+            Added,
+            (x, y) =>
+                if Text.Contains(Key, y{0}) then
+                    Table.AddColumn(
+                        x, y{1}, each if List.Contains(y{2}, [年期]) then Text.From([年期], "en-US") & "年" else "其他",
+                        type text
+                    )
+                else
+                    x
+        ),
+        Regrouped1 =
+            if Text.Contains(Key, "RECENT_SOE") then
+                fx("GroupSize")(Regrouped, {"亿美元", "美元规模分类SOE"}, 1)
+            else if Text.Contains(Key, "DIRECTORY") then
+                fx("CalculateDirectory")(Regrouped, Key)
+            else if Text.Contains(Key, "USDCNH_DATA") then
+                fx(
+                    "Combine"
+                )(
+                    {
+                        try
+                            CWB("chart_master")
+                        otherwise
+                            try Load("chart_master") otherwise fx("Excel")("DEALSMASTER_CHART_MASTER"),
+                        Regrouped
+                    },
+                    {"Check"},
+                    {0}
+                )
+            else
+                Regrouped
+    in
+        Regrouped1

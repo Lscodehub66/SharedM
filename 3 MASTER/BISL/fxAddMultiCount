@@ -32,6 +32,6 @@
                     {"Dummy" & y{0}}
                 )
         ),
-        RCol = if Table.HasColumns(Source, Referenced) then fx("RemoveCol")(Added) else Source
+        RCol = if Table.HasColumns(Source, Referenced) then fx("RCol")(Added) else Source
     in
         RCol

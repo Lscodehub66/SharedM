@@ -1,0 +1,21 @@
+//let LoadCode = Load("mDeal","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    SourceDB = CWB("mIssue", "1"),
+    RemovedCol = Table.RemoveColumns(SourceDB, Get("Header_MergeRemoval") & {"债券简称"}, MissingField.Ignore),
+    Filtered_null = Table.SelectRows(RemovedCol, each not List.Contains({"", null, "--", "ISIN"}, [ISIN])),
+    DimDate_Joined = fx("MergeDimDate")(Filtered_null, "定价日"),
+    //
+    mBond = Load("mBond_ISIN+Entity"),
+    mBond_Joined = fx("Merge")(DimDate_Joined, mBond, "ISIN", "ISIN", {""}, {""}),
+    MaturityDate_Joined = fx("MergeDimDate")(mBond_Joined, "兑付日", {"YYYY"}, {"兑付日.YearNum"}),
+    //
+    mBISL = fx("mBISLCount")(CWB("mBISL")),
+    mBISL_Joined = fx("Merge")(MaturityDate_Joined, mBISL, "Check", "Check", {"Y"}, {""}),
+    //
+    QRC合规 = Table.RenameColumns(Load("合规_23_22", null, {"PRJ对账号", "发行人"}), {{"发行人", "修改.发行人"}}),
+    Issuer_revised = fx("DB_Revise")(mBISL_Joined, QRC合规, "PRJ对账号"),
+    //
+    #"Fn Calculated" = fx("DBCalculate")(Issuer_revised),
+    Reordered = Table.ReorderColumns(#"Fn Calculated", Get("Header_deal_master"), MissingField.Ignore)
+in
+    Reordered

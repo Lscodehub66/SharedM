@@ -1,0 +1,12 @@
+let 
+KeyDate = List.Buffer(Load("Controller")[近3月]) ,
+Source = fx("DBMonitor")(null),
+Filtered = Table.SelectRows( Source   , each [定价日] > KeyDate{0} ),
+    #"Duplicated Column" = Table.DuplicateColumn(Filtered, "收窄基点", "Num"),
+    #"Changed Type" = Table.TransformColumnTypes(#"Duplicated Column",{{"Num", type number}}),
+    #"Removed Errors" = Table.RemoveRowsWithErrors(#"Changed Type", {"Num"}),
+MaxNum =  List.Max(List.Buffer(#"Removed Errors"[Num])),
+ MaxFound = Table.SelectRows( #"Removed Errors", each [Num] = MaxNum ),
+    Custom1 = fx("WeeklyDealWriter")(MaxFound)
+
+in   Custom1

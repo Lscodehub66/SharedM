@@ -1,5 +1,5 @@
 let
-Source = Load("YY"),
+Source = Load("YY_Entity"),
        Filtered = Table.SelectRows(Source , each [YY_行业] <> ""),
     #">>ShowedDupe" = fx("ShowDupe")(    Filtered , {"YY_主体"}),
     SelectedCol = Table.SelectColumns(Filtered, {"YY_主体", "YY_行业","YY_子行业"}, MissingField.UseNull)

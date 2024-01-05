@@ -28,10 +28,11 @@ let
     ColToAdd = {
         {"当前", Date.AddDays(Mon_Date, -3), type date},
         {"上周", Date.AddDays(Mon_Date, -10), type date},
-        {"年初", Load("fxNextWeekDay")(Date.StartOfYear(Mon_Date)), type date},
-        {"22年初", Load("fxNextWeekDay")(Date.StartOfYear(Date.AddYears(Mon_Date, -1))), type date},
-        {"近1年", Load("fxNextWeekDay")(Date.AddYears(Mon_Date, -1)), type date},
-        {"近5年", Load("fxNextWeekDay")(Date.AddYears(Mon_Date, -5)), type date},
+        {"年初", fx("NextWeekDay")(Date.StartOfYear(Mon_Date)), type date},
+        {"22年初", fx("NextWeekDay")(Date.StartOfYear(Date.AddYears(Mon_Date, -1))), type date},
+        {"近1年", fx("NextWeekDay")(Date.AddYears(Mon_Date, -1)), type date},
+        {"近5年", fx("NextWeekDay")(Date.AddYears(Mon_Date, -5)), type date},
+        {"近3月", fx("NextWeekDay")(Date.AddMonths(Mon_Date, -3)), type date},
         {"当前_YYW", Load("fxYYW")(Date.AddDays(Mon_Date, -3)), type text},
         {"上周_YYW", Load("fxYYW")(Date.AddDays(Mon_Date, -10)), type text}
     },

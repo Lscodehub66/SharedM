@@ -1,7 +1,0 @@
-let
-   TableName = fx("Source")("DMI"),
-    Custom1 = fx("DMI")(TableName),
-    #"Filtered Rows" = Table.SelectRows(Custom1, each ([OTHER_ISIN] <> "")),
-    #"Removed Other Columns" = Table.SelectColumns(#"Filtered Rows",{"信用主体", "英文简称", "ISIN", "定价日", "发行规模(亿)", "货币", "发行方式", "OTHER_ISIN", "债券余额", "利率类型", "交易状态"})
-in
-    #"Removed Other Columns"

@@ -1,0 +1,144 @@
+let
+    Source = Web.BrowserContents("https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm"),
+    #"Extracted Table From Html" = Html.Table(
+        Source,
+        {
+            {"Column1", "H4 *"},
+            {"Column2", ".fomc-meeting:nth-child(2) .fomc-meeting__month *"},
+            {"Column3", ".fomc-meeting:nth-child(2) .fomc-meeting__date"},
+            {"Column4", ".row:nth-child(3) .fomc-meeting__date"},
+            {"Column5", ".row:nth-child(4) .fomc-meeting__month *"},
+            {"Column6", ".row:nth-child(4) .fomc-meeting__date"},
+            {"Column7", ".row:nth-child(5) .fomc-meeting\-\-shaded *"},
+            {"Column8", ".row:nth-child(5) .fomc-meeting__date"},
+            {"Column9", ".row:nth-child(6) .fomc-meeting__month *"},
+            {"Column10", ".row:nth-child(6) .fomc-meeting__date"},
+            {"Column11", ".row:nth-child(7) .fomc-meeting__month *"},
+            {"Column12", ".row:nth-child(7) .fomc-meeting__date"},
+            {"Column13", ".row:nth-child(8) .fomc-meeting__month *"},
+            {"Column14", ".row:nth-child(8) .fomc-meeting__date"},
+            {"Column15", ".row:nth-child(9) .fomc-meeting__month *"},
+            {"Column16", ".row:nth-child(9) .fomc-meeting__date"},
+            {"Column17", ".panel-footer"},
+            {"Column18", ".row:nth-child(3) .fomc-meeting__month *"},
+            {"Column19", ".row:nth-child(7) A:nth-child(1)"},
+            {"Column20", ".row:nth-child(6) A:nth-child(1)"},
+            {"Column21", ".fomc-meeting:nth-child(2) A:nth-child(1)"},
+            {"Column22", ".row:nth-child(3) STRONG:nth-child(3)"},
+            {"Column23", ".row:nth-child(3) A:nth-child(5)"},
+            {"Column24", ".row:nth-child(4) A:nth-child(6)"},
+            {"Column25", ".row:nth-child(5) A:nth-child(1)"},
+            {"Column26", ".row:nth-child(5) STRONG:nth-child(3)"},
+            {"Column27", ".row:nth-child(5) A:nth-child(5)"},
+            {"Column28", ".row:nth-child(6) A:nth-child(6)"},
+            {"Column29", ".row:nth-child(7) STRONG:nth-child(3)"},
+            {"Column30", ".row:nth-child(7) A:nth-child(5)"},
+            {"Column31", ".row:nth-child(9) A:nth-child(1)"}
+        },
+        [
+            RowSelector = ".panel-default"
+        ]
+    ),
+    #"Removed Other Columns" = Table.SelectColumns(
+        #"Extracted Table From Html",
+        {
+            "Column1",
+            "Column2",
+            "Column3",
+            "Column18",
+            "Column4",
+            "Column5",
+            "Column6",
+            "Column7",
+            "Column8",
+            "Column9",
+            "Column10",
+            "Column11",
+            "Column12",
+            "Column13",
+            "Column14",
+            "Column15",
+            "Column16",
+            "Column17"
+        }
+    ),
+    #"Sorted Rows" = Table.Sort(#"Removed Other Columns", {{"Column1", Order.Descending}}),
+    #"Merged Columns" = Table.CombineColumns(
+        #"Sorted Rows", {"Column2", "Column3"}, Combiner.CombineTextByDelimiter(" ", QuoteStyle.None), "Merged"
+    ),
+    #"Merged Columns1" = Table.CombineColumns(
+        #"Merged Columns", {"Column18", "Column4"}, Combiner.CombineTextByDelimiter(" ", QuoteStyle.None), "Merged.1"
+    ),
+    #"Merged Columns2" = Table.CombineColumns(
+        #"Merged Columns1", {"Column5", "Column6"}, Combiner.CombineTextByDelimiter(" ", QuoteStyle.None), "Merged.2"
+    ),
+    #"Merged Columns3" = Table.CombineColumns(
+        #"Merged Columns2", {"Column7", "Column8"}, Combiner.CombineTextByDelimiter(" ", QuoteStyle.None), "Merged.3"
+    ),
+    #"Merged Columns4" = Table.CombineColumns(
+        #"Merged Columns3", {"Column9", "Column10"}, Combiner.CombineTextByDelimiter(" ", QuoteStyle.None),
+        "Merged.4"
+    ),
+    #"Merged Columns5" = Table.CombineColumns(
+        #"Merged Columns4", {"Column11", "Column12"}, Combiner.CombineTextByDelimiter(" ", QuoteStyle.None),
+        "Merged.5"
+    ),
+    #"Merged Columns6" = Table.CombineColumns(
+        #"Merged Columns5", {"Column13", "Column14"}, Combiner.CombineTextByDelimiter(" ", QuoteStyle.None),
+        "Merged.6"
+    ),
+    #"Merged Columns7" = Table.CombineColumns(
+        #"Merged Columns6", {"Column15", "Column16"}, Combiner.CombineTextByDelimiter(" ", QuoteStyle.None),
+        "Merged.7"
+    ),
+    #"Transposed Table" = Table.Transpose(#"Merged Columns7"),
+    #"Promoted Headers" = Table.PromoteHeaders(#"Transposed Table", [PromoteAllScalars = true]),
+    #"Unpivoted Columns1" = Table.UnpivotOtherColumns(#"Promoted Headers", {}, "Attribute", "Value"),
+    #"Inserted Text Before Delimiter1" = Table.AddColumn(
+        #"Unpivoted Columns1", "YYYY", each Text.BeforeDelimiter([Attribute], " "), type text
+    ),
+    #"Inserted Text Before Delimiter" = Table.AddColumn(
+        #"Inserted Text Before Delimiter1",
+        "Month1",
+        each Text.BeforeDelimiter(Text.BeforeDelimiter([Value], " "), "/"),
+        type text
+    ),
+    #"Added Custom1" = Table.AddColumn(
+        #"Inserted Text Before Delimiter", "MM1", each Date.Month(Date.FromText("1" & Text.Start([Month1], 3)))
+    ),
+    #"Added Custom" = Table.AddColumn(
+        #"Added Custom1", "DD1", each Text.Select(Text.BeforeDelimiter([Value], "-"), {"0".."9"})
+    ),
+    #"Inserted Text After Delimiter" = Table.AddColumn(
+        #"Added Custom", "Month2", each Text.BetweenDelimiters([Value], "/", " "), type text
+    ),
+    #"Added Custom2" = Table.AddColumn(
+        #"Inserted Text After Delimiter",
+        "MM2",
+        each
+            if not Text.Contains([Value], "/") and not Text.Contains([Value], "-") then
+                ""
+            else if [Month2] = "" then
+                Date.Month(Date.FromText("1" & Text.Start([Month1], 3)))
+            else
+                Date.Month(Date.FromText("1" & Text.Start([Month2], 3)))
+    ),
+    Custom1 = Table.AddColumn(
+        #"Added Custom2", "DD2", each Text.Select(Text.AfterDelimiter([Value], "-"), {"0".."9"})
+    ),
+    #"Changed Type" = Table.TransformColumnTypes(
+        Custom1,
+        {{"YYYY", Int64.Type}, {"MM1", Int64.Type}, {"DD1", Int64.Type}, {"MM2", Int64.Type}, {"DD2", Int64.Type}}
+    ),
+    #"Added Custom3" = Table.AddColumn(
+        #"Changed Type", "Date_Start", each try #date([YYYY], [MM1], [DD1]) otherwise null, type date
+    ),
+    #"Added Custom4" = Table.AddColumn(
+        #"Added Custom3", "Date_End", each try #date([YYYY], [MM2], [DD2]) otherwise [Date_Start], type date
+    ),
+    #"Removed Errors" = Table.RemoveRowsWithErrors(#"Added Custom4", {"MM1"}),
+    #"Removed Other Columns1" = Table.SelectColumns(#"Removed Errors", {"Value", "Month1", "Date_Start", "Date_End"}),
+    Custom2 = fx("MergeDimDate")(#"Removed Other Columns1", "Date_End", {"MM", "YYYY"}),
+    #"Sorted Rows1" = Table.Sort(Custom2, {{"YYYY", Order.Descending}, {"MM", Order.Descending}})
+in
+    #"Sorted Rows1"

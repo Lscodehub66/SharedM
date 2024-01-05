@@ -1,0 +1,90 @@
+//let MonitorName = "ESG", Fn = fx("DBMonitor")(MonitorName) in Fn
+let
+    Source = (optional _inputkey as nullable text) =>
+        let
+            Key = Text.Upper(Text.Trim(_inputkey ?? "")),
+            //
+            wSource = fx("DBFilter")({{"Year.Num", ">=", 2022}}, {{"删除及隐藏", null, {"", null}}}),
+            #"Filtered Output" =
+                if Key = "DEAL_MASTER" then
+                    fx("DBFilter")(null)
+                else if Key = "FTZ" then
+                    fx("DBFilter")({{"货币细分", "=", "自贸债"}})
+                else if Text.Contains(Key, "DIRECTORY") then
+                    fx("DBFilter")(null, {{"BISL_ROLE", "not", {"", null, "--"}}})
+                else
+                    List.Accumulate(
+                        {
+                            {"RECENT_SOE", {{{"投标资历分类", "=", "SOE Creds"}}, null}},
+                            {"RECENT", {null, null}},
+                            {"DIRECTORY", {null, {{"BISL_ROLE", "not", {null, "", "--"}}}}},
+                            {"ESG", {null, {{"ESG", "not", {null, "", "--"}}}}},
+                            {"DIMSUM", {{{"货币细分", "=", "点心债"}}, null}},
+                            {
+                                "IGLGFV",
+                                {{{"货币", "<>", "CNH"}, {"是否IG", "<>", "--"}, {"投标资历分类", "=", "SOE Creds"}}, null}
+                            },
+                            {"SBLC", {{{"结构", null, "备证"}}, null}},
+                            {"FI", {{{"板块", null, "金"}}, null}},
+                            {"USDCNH_DATA", {null, {{"货币", null, {"CNH", "USD"}}}}},
+                            {
+                                "USDCNH_TIGHTEN",
+                                {null, {{"货币", null, {"CNH", "USD"}}, {"收窄基点", "not", {"", "--", null}}}}
+                            },
+                            {"RMB", {{{"货币", "=", "CNH"}}, null}}
+                        },
+                        wSource,
+                        (x, y) => if Text.Contains(Key, y{0}) then fx("DBFilter")(y{1}{0}, y{1}{1}, x) else x
+                    ),
+            #"Transformed Output" = fx("DBMonitor_TF")(#"Filtered Output", Key),
+            GetKey =
+                if Key = "RECENT" or Key = "RECENT60" then
+                    "Graph_Deal_Weekly"
+                else
+                    List.Accumulate(
+                        {"RMB", "ESG", "DIMSUM", "IGLGFV", "SBLC", "FI", "FTZ", "USDCNH_DATA", "USDCNH_TIGHTEN"},
+                        "",
+                        (x, y) => if Text.Contains(Key, y) and not Text.Contains(Key, "PIVOT") then y else x
+                    ),
+            #"SCol Output" =
+                if GetKey <> "" then
+                    Table.SelectColumns(#"Transformed Output", Get(GetKey), MissingField.UseNull)
+                else
+                    #"Transformed Output",
+            #"Sorted Output" =
+                if Text.Contains(Key, "MATURITY2024_SOE") or Text.Contains(Key, "MATURITY2024") then
+                    fx("DBMature")(Key)
+                else
+                    fx("SortNIndex")(#"SCol Output")
+        in
+            #"Sorted Output",
+    fnType = type function (
+        optional _inputkey as (
+            type nullable text meta [
+                Documentation.AllowedValues = {
+                    "Directory",
+                    "Directory(DCM Base)",
+                    "Recent",
+                    "Recent_SOE",
+                    "RMB",
+                    "DimSum",
+                    "FTZ",
+                    "ESG",
+                    "IGLGFV",
+                    "FI",
+                    "USDCNH_DATA",
+                    "USDCNH_Tighten",
+                    "Maturity",
+                    "Maturity(MOF)",
+                    "Maturity2024",
+                    "Maturity2024_SOE",
+                    "DEAL_MASTER"
+                }
+            ]
+        )
+    ) as list meta [
+        Documentation.Name = "fxDBMonitor",
+        Documentation.Description = "One-stop connector to access predefined themed tables"
+    ]
+in
+    Value.ReplaceType(Source, fnType)

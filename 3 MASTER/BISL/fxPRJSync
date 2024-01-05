@@ -1,22 +1,39 @@
-( TableName as table, NumColName as text, DateColName as text, PRJSyncColName as text ) =>
- let
-  Source = TableName, 
-  DupliatedCol = Table.DuplicateColumn ( Source, NumColName, "TARGET序号" ), 
-  DuplicatedCol1 = Table.DuplicateColumn ( DupliatedCol, DateColName, "TARGET日期" ), 
-  ChangedType = Table.TransformColumnTypes ( DuplicatedCol1, { { "TARGET序号", type text }, { "TARGET日期", type date } } ), 
-  AddSummand = Table.AddColumn ( ChangedType, "Summand", each if [TARGET序号] = null then "" else Text.BeforeDelimiter ( [TARGET序号], "-" ) ), 
-  ChangedToNum = Table.TransformColumnTypes ( AddSummand, { { "Summand", Int64.Type } } ), 
-  Operation = 
-   if List.Contains ( Table.ColumnNames ( ChangedToNum ), PRJSyncColName ) then
-    Table.ReplaceValue (
-     Table.TransformColumnTypes ( ChangedToNum, { { PRJSyncColName, Int64.Type } } ), 
-     each Record.Field ( _, PRJSyncColName ), 
-     each if [TARGET日期] = null or [Summand] = null then 0 else ( Date.Year ( [TARGET日期] ) - 2000 ) * 1000 + [Summand], 
-     Replacer.ReplaceValue, 
-     { PRJSyncColName }
-    )
-   else
-    Table.AddColumn ( ChangedToNum, "PRJ对账号", each if [TARGET日期] = null or [Summand] = null then 0 else ( Date.Year ( [TARGET日期] ) - 2000 ) * 1000 + [Summand], type number ), 
-  RemovedCol = Table.RemoveColumns ( Operation, { "TARGET序号", "Summand", "TARGET日期" } )
- in
-  RemovedCol
+(TableName as table, NumColName as text, DateColName as text, PRJSyncColName as text) =>
+    let
+        Source = TableName,
+        RefCol = {NumColName, DateColName},
+        DupliatedCol = Table.DuplicateColumn(Source, NumColName, "TARGET序号"),
+        DuplicatedCol1 = Table.DuplicateColumn(DupliatedCol, DateColName, "TARGET日期"),
+        ChangedType = Table.TransformColumnTypes(DuplicatedCol1, {{"TARGET序号", type text}, {"TARGET日期", type date}}),
+        AddSummand = Table.AddColumn(
+            ChangedType, "Summand", each if [TARGET序号] = null then "" else Text.BeforeDelimiter([TARGET序号], "-")
+        ),
+        ChangedToNum = Table.TransformColumnTypes(AddSummand, {{"Summand", Int64.Type}}),
+        Operation =
+            if List.Contains(Table.ColumnNames(ChangedToNum), PRJSyncColName) then
+                Table.ReplaceValue(
+                    Table.TransformColumnTypes(ChangedToNum, {{PRJSyncColName, Int64.Type}}),
+                    each Record.Field(_, PRJSyncColName),
+                    each
+                        if [TARGET日期] = null or [Summand] = null then
+                            0
+                        else
+                            (Date.Year([TARGET日期]) - 2000) * 1000 + [Summand],
+                    Replacer.ReplaceValue,
+                    {PRJSyncColName}
+                )
+            else
+                Table.AddColumn(
+                    ChangedToNum,
+                    "PRJ对账号",
+                    each
+                        if [TARGET日期] = null or [Summand] = null then
+                            0
+                        else
+                            (Date.Year([TARGET日期]) - 2000) * 1000 + [Summand],
+                    type number
+                ),
+        RemovedCol = Table.RemoveColumns(Operation, {"TARGET序号", "Summand", "TARGET日期"}),
+        Output = if Table.HasColumns(Source, RefCol) then RemovedCol else Source
+    in
+        Output

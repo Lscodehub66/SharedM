@@ -6,11 +6,17 @@ let
     DB_Source = CWB(DB),
     Parameter = Load("Controller")[RemoveFrom_DB]{0} ?? "",
     Added = fx("AddToDB")(DB, wDynamicPQ, Parameter),
-    Managed = if Text.Contains(Parameter, "Stop") then fx("DBManager")(DB_Source, "m") else fx(
+    Crossroad = if Text.Contains(Parameter, "Stop") then DB_Source else Added,
+    Synced = if SyncSwitch_mChart = "ON" then fx("Sync_mChart")(Crossroad) else Crossroad,
+    #"Filtered Rows" = Table.SelectRows(
+        Synced, each not Text.StartsWith([ISIN], "BBG01") and ([货币] = "USD" or [货币] = "CNH")
+    ),
+    FX = fx("AddBBGFX")(#"Filtered Rows", "USD"),
+
+    Managed =  fx(
         "DBManager"
     )(
-        Added, "m"
-    ),
-    #"Filtered Rows" = Table.SelectRows(Managed, each [货币] = "USD" or [货币] = "CNH")
+         FX  , "m"
+    )
 in
-    #"Filtered Rows"
+   Managed

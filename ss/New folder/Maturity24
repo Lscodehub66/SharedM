@@ -5,9 +5,11 @@ let
     #"Grouped Rows1" = Table.Group(
         Source,
         {"ISIN"},
-        {
-            {"发行规模(亿)", each List.Sum([#"发行规模(亿)"]), type number},
-            {"亿美元", each List.Sum([#"亿美元"]), type number},
+        {   {"Count_BISLDeal", each List.Sum([Count_BISLDeal]), type number},
+            {"Count_JGC", each List.Sum([Check_JGC]), type number},
+            {"Count_JBR", each List.Sum([Count_JBR]), type number},
+            
+           
             {"Data", each _, type table}
         }
     ),
@@ -30,6 +32,8 @@ let
         "Data",
         List.RemoveItems(Table.ColumnNames(#"Transformed Col"[Data]{0}), Table.ColumnNames(#"Transformed Col"))
     ),
+    #"Added OutstandingUSD" = fx("OutstandingUSD")(#"Expanded Data"),
+    // **skipped
     #"Added Conditional Column" = Table.AddColumn(
         #"Expanded Data",
         "地区覆盖",
@@ -68,17 +72,13 @@ let
     #"Added Conditional Column1" = Table.AddColumn(
         #"Added Conditional Column0", "Count_BISLDeal", each if [IS_BISLDeal] = "Y" then 1 else null, type number
     ),
-    #"Reordered Columns" = Table.ReorderColumns(
-        #"Added Conditional Column1", Table.ColumnNames(Source), MissingField.Ignore
-    ),
-    #"Removed Duplicates" = Table.Distinct(#"Reordered Columns", {"ISIN"}),
+    // **skipped
+    #"Removed Duplicates" = Table.Distinct(#"Added OutstandingUSD", {"ISIN"}),
     #"Sorted Rows" = Table.Sort(
         #"Removed Duplicates", {{"地区", Order.Descending}, {"信用主体(备证行)", Order.Descending}, {"兑付日", Order.Descending}}
     ),
     #"Removed Columns" = Table.RemoveColumns(#"Sorted Rows", {"Index"}),
     #"Added Index" = Table.AddIndexColumn(#"Removed Columns", "Index", 1, 1, Int64.Type),
-    #"Reordered Columns1" = Table.ReorderColumns(
-        #"Added Index", List.Distinct({"Index"} & Table.ColumnNames(#"Added Index")), MissingField.Ignore
-    )
+    #"Reordered Columns1" = Table.ReorderColumns(#"Added Index", Get("Header_Maturity2024"), MissingField.Ignore)
 in
     #"Reordered Columns1"

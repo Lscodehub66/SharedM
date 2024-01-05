@@ -1,0 +1,25 @@
+let
+    HKHolidaytbl = Table.Buffer(fx("Data")(Load("HKHolidays", "CSV"))),
+    Source = Load("FOMCCal", "CSV"),
+    #"Filtered Rows" = Table.SelectRows(Source, each ([YYYY] = "2024")),
+    #"Removed Other Columns" = Table.SelectColumns(#"Filtered Rows", {"Value", "Date_End"}),
+    #"Changed Type" = Table.TransformColumnTypes(#"Removed Other Columns", {{"Date_End", type date}}),
+    #"Renamed Columns" = Table.RenameColumns(#"Changed Type", {{"Date_End", "Start Date"}}),
+    #"Added Custom" = Table.AddColumn(
+        #"Renamed Columns", "Due Date", each fx("NextWorkDay")([Start Date], HKHolidaytbl, "Date"), type date
+    ),
+    #"Added Custom1" = Table.AddColumn(
+        #"Added Custom",
+        "Task Name",
+        each "【BOCOM View Update】" & Date.ToText([Due Date], "MMM") & " " & Date.ToText([Due Date], "yyyy"),
+        type text
+    ),
+    #"Added Custom2" = Table.AddColumn(
+        #"Added Custom1",
+        "Description",
+        each "FOMC Meeting Date: " & [Value] & "," & Date.ToText([Due Date], "yyyy"),
+        type text
+    ),
+    #"Removed Columns" = Table.RemoveColumns(#"Added Custom2", {"Value"})
+in
+    #"Removed Columns"

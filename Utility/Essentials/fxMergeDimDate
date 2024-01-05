@@ -1,0 +1,27 @@
+(
+    TableName as table,
+    DateKeyCol as text,
+    optional InputDimtblHD as list,
+    optional InputExpDimtblHD as list,
+    optional prefix as nullable text
+) =>
+    let
+        Source = TableName,
+        p1 = Text.AfterDelimiter(prefix ?? "", "1"),
+        Dimtbl =
+            if prefix = null then
+                Load("DimDate")
+            else if Text.StartsWith(prefix, "1") and p1 <> "" then
+                Table.PrefixColumns(fx("DimFuture")(20261231), p1)
+            else if Text.StartsWith(prefix, "1") then
+                fx("DimFuture")(20261231)
+            else
+                Table.PrefixColumns(Load("DimDate"), prefix),
+        text = List.Select(Table.ColumnNames(Dimtbl), each Text.Contains(_, "A_Date")){0},
+        DimtblHD = if InputDimtblHD = null then {""} else InputDimtblHD,
+        ExpDimtblHD = if InputExpDimtblHD = null then DimtblHD else InputExpDimtblHD,
+        Merged = fx("Merge")(Source, Dimtbl, DateKeyCol, text, DimtblHD, ExpDimtblHD),
+        RCol = Table.RemoveColumns(Merged, {text}, MissingField.Ignore),
+        Output = if Table.HasColumns(Source, ExpDimtblHD) then Source else RCol
+    in
+        Output

@@ -1,0 +1,12 @@
+   let     
+        
+        
+        
+       Source = List.Accumulate({"GroupSize","GpTenorCCYRtg"},try CWB("mChart") otherwise Load("mChart"),(x,y)=> fx(y)(x)),
+        Merged11 = fx("MergeDimDate")( Source , "定价日" ,{"年","月"}),
+        Merged11a = fx("Merge")( Merged11, CWB("mCredit","1"),"信用主体","信用主体", {"板块"},{""}),
+         Checked = fx("CheckNDupe")(Merged11a),
+        Sorted = fx("SortNIndex")(Checked),
+        Presented = fx("PresentNoData")(Sorted)
+    in
+        Presented

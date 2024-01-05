@@ -27,6 +27,7 @@
         //Date ValueType
         Date1 = {
             "CLIENT_SINCE",
+            "Date",
             "KYC Deadline",
             "上会审批日",
             "上市日期",
@@ -56,14 +57,28 @@
         Num5 = List.Select(CN_RNSource, each Text.StartsWith(_, "R_") or Text.StartsWith(_, "C_"))
             & Num0ToNull
             & {"FX_Rate", "USD", "CNH", "HKD", "EUR", "SGD", "MOP", "GBP", "AUD", "NZD", "CAD"},
-        Num3 = {"亿港币", "亿美元", "亿元", "发行规模(亿)"},
-        Num2 = {"投资级", "高收益级", "iTraxx Asia", "VIX", "BOCOM下单量", "BOCOM分配量"}
+        Num3 = List.Select(
+            CN_RNSource,
+            each
+                Text.Contains(_, "亿港币")
+                or Text.Contains(_, "亿美元")
+                or Text.Contains(_, "亿元")
+                or Text.Contains(_, "规模(亿)")
+                or Text.Contains(_, "债券余额")
+        ),
+        Num2 = {"投资级", "高收益级", "iTraxx Asia", "VIX", "BOCOM下单量", "BOCOM分配量", "最终账簿(亿)", "收窄Num"}
             & List.Select(
                 CN_RNSource, each Text.StartsWith(_, "S_") or Text.StartsWith(_, "Spd_") or Text.StartsWith(_, "I_")
             ),
-        Num0 = {"FEE", "承销费原币", "Relevance", "承销费_RMB", "承销费_USD", "承销费"},
+        Num0 = {"FEE", "承销费原币", "Relevance", "承销费_RMB", "承销费_USD", "承销费", "Year.Num", "兑付日.YearNum", "账户数"},
         Num = {
             "IPT_YIELD",
+            "Count_BISLDeal",
+            "Count_JBR",
+            "Count_JGC",
+            "ISIN_BISLDeal",
+            "ISIN_JBR",
+            "ISIN_JGC",
             "定价YIELD_Num",
             "IPT_SPD",
             "WPIR",
@@ -122,17 +137,18 @@
             "认购倍数",
             "亚洲占比",
             "基金占比",
-            "债券余额",
             "RangeStart",
             "RangeEnd"
         }
             & List.Select(CN_RNSource, each Text.StartsWith(_, "Index_") or Text.EndsWith(_, ".num")),
-        Text_Trim = {"PROJECT_CODE", "期数", "外部评审机构", "外部评审方式", "FolderPath"},
+        Text_Trim = {"PROJECT_CODE", "期数", "外部评审机构", "外部评审方式", "FolderPath", "地区分布", "类型分布"},
         Text_Upper = {
             "Bond Details",
             "CCY",
             "信用主体",
             "ISIN",
+            "ISIN_TEMP",
+            "ISIN_144A",
             "ISIN Code",
             "发行人",
             "担保人",
@@ -143,10 +159,14 @@
             "发行人名称英文*",
             "发行人名称英文"
         },
-        Text_NoSpace = {"Check", "ISIN", "发行评级", "主体评级", "境内主体评级"},
-        Text_NoNA = {"增发判定", "主题债券"},
+        Text_NoSpace = {"Check", "ISIN", "ISIN_TEMP", "ISIN_144A", "发行评级", "主体评级", "修改.发行评级", "修改.主体评级", "境内主体评级"},
+        Text_NoNA = {"增发判定", "修改.增发判定", "主题债券", "品种主题", "备证行全称"},
         Text1 = {
             "地区覆盖",
+            "是否债券违约",
+            "是否中资主体",
+            "覆盖地区",
+            "覆盖团队",
             "主体",
             "计息基准",
             "浮息定价",
@@ -208,7 +228,6 @@
             "英文简称",
             "CLIENT对账号",
             "SBLC提供者",
-            "备证行全称",
             "备证行分行",
             "Sync",
             "Tap",
@@ -273,7 +292,6 @@
             "上市分类",
             "ESG",
             "货币细分",
-            "品种主题",
             "发行人成立地",
             "发行人主上市地",
             "PROJECT_NAME",
@@ -359,7 +377,7 @@
                             Table.FromColumns({Num, {}, {-1}}),
                             Table.FromColumns({Text_Trim, {type text}, {Text.Trim}}),
                             Table.FromColumns({Text_Upper, {}, {Text.Upper}}),
-                            Table.FromColumns({Text_NoNA, {}, {"--"}}),
+                            Table.FromColumns({Text_NoNA, {}, {"-"}}),
                             Table.FromColumns({Text_NoSpace, {}, {" "}}),
                             Table.FromColumns({Text1, {}, {""}})
                         }

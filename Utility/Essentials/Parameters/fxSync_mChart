@@ -1,0 +1,20 @@
+(TableName as table) =>
+let
+// TableName = xx,
+Sourcetbl = TableName,
+ExpList =  {"发行规模(亿)","发行期限(年)"},  // ,"信用主体","货币","定价日"}
+RenamedList  = List.Transform(List.ReplaceMatchingItems(ExpList, {{"发行期限(年)","年期" }}),each "修改."&_),
+    #"Merged DMI" = fx("Merge")(Sourcetbl , Load("DMI_NoTap"), "ISIN", "ISIN",ExpList, RenamedList),
+    #"Changed Type" = Table.TransformColumnTypes(#"Merged DMI",{  {"年期", type number} , {"修改.年期", type number} }),
+    #"Replaced Errors" = Table.ReplaceErrorValues(#"Changed Type", {{"年期", null}, {"修改.年期", null}}),
+    #"Replaced Value" = List.Accumulate({"修改.发行规模(亿)", "修改.年期"}, #"Replaced Errors",(x,y)=>Table.ReplaceValue(x, each Record.Field(_, y), each if [删除及隐藏] <> "FIMTN" then null else Record.Field(_, y) ,Replacer.ReplaceValue,{y})),
+    #"Rounded Off" = Table.TransformColumns(#"Replaced Value",{{"年期", each Number.Round(_, 1), type number}, {"修改.年期", each Number.Round(_, 1), type number}}),
+    #"Filtered Rows1" = Table.SelectRows(#"Rounded Off", each  [删除及隐藏] = "FIMTN" and [年期] <> [修改.年期]),
+    #"Filtered Rows2" = Table.SelectRows(#"Rounded Off", each  [删除及隐藏] = "FIMTN" and  [#"发行规模(亿)"] <> [#"修改.发行规模(亿)"] ),
+    #"Filtered Rows3" = Table.SelectRows(#"Rounded Off", each [信用主体] <> [修改.信用主体] ),
+    #"Filtered Rows4" = Table.SelectRows(#"Rounded Off", each [定价日] <> [修改.定价日]),
+    #"Filtered Rows5" = Table.SelectRows(#"Rounded Off", each [货币] <> [修改.货币]),
+    Custom1 = fx("Revise_NotNull")(#"Rounded Off"),
+    #"Removed Other Columns" = Table.SelectColumns(Custom1, Table.ColumnNames(Sourcetbl))
+in
+    #"Removed Other Columns"

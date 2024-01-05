@@ -1,25 +1,40 @@
 //let FileName = "CWB",Path  = if (try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Remote" ) = "Remote" then "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM\" else "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\SharedM\",  EVA = Expression.Evaluate ( Text.FromBinary ( Binary.Buffer ( File.Contents ( Path&FileName ) ) ) ,#shared )in    EVA//
-
-
-(InputName as text, optional InputFnText as nullable text) =>
+(_inputtblname as text, optional _inputkey as nullable text) =>
     let
-        CurrentWorkbook = Excel.CurrentWorkbook(){[Name = InputName]}[Content],
-        FText = Text.Replace(Text.Upper(Text.Trim(InputName)), "_", ""),
-        FnFText = if InputFnText = null then "" else InputFnText,
-        Source = if InputFnText = "1" then fx("Data")(CurrentWorkbook, 1) else fx("Data")(CurrentWorkbook),
-        DefinedNames =
-            if List.Contains(
-                {"MONDAY", "UPDATORWEEKLY","REMOVEFROMDB" ,"澳门FILTER", "香港FILTER", "WEEKLYFILTER", "ISEXCHFILTER", "MULTISOURCE","GPS","WEEKLYADDTAP"},
-                FText
-            ) then
-                Source[Column1]{0}
+        ThisExcel = Excel.CurrentWorkbook(){[Name = _inputtblname]}[Content],
+        DM = fx("Excel")("DEALSMASTER_=" & _inputtblname),
+        _key = if _inputkey = null then "" else _inputkey,
+        _tblname = Text.Replace(Text.Upper(Text.Trim(_inputtblname)), "_", ""),
+        NamedList = {
+            "MONDAY",
+            "UPDATORWEEKLY",
+            "REMOVEFROMDB",
+            "澳门FILTER",
+            "香港FILTER",
+            "WEEKLYFILTER",
+            "ISEXCHFILTER",
+            "MULTISOURCE",
+            "GPS",
+            "WEEKLYADDTAP"
+        },
+        Source =
+            if List.Contains({"deal_master" ,"chart_master","mIndice"}, _inputkey ) then
+                try ThisExcel otherwise try Load(_inputkey) otherwise DM
+            else if List.Contains(NamedList, _tblname) then
+                try ThisExcel otherwise Load(_inputkey)
             else
-                Source,
+                try ThisExcel otherwise DM,
+        DataType = if _inputkey = "1" then fx("Data")(Source, 1) else fx("Data")(Source),
+        DefinedNames = if List.Contains(NamedList, _tblname) then DataType[Column1]{0} else DataType,
         List =
-            if Text.StartsWith(FText, "CN") or Text.EndsWith(FText, "CN") or Text.StartsWith(FText, "HEADER") then
+            if
+                Text.StartsWith(_tblname, "CN")
+                or Text.EndsWith(_tblname, "CN")
+                or Text.StartsWith(_tblname, "HEADER")
+            then
                 Table.ToList(DefinedNames)
             else
                 DefinedNames,
-        GetCN = if Text.Contains(FnFText, "CN") then Table.ColumnNames(List) else List
+        GetCN = if Text.Contains(_key, "CN") then Table.ColumnNames(List) else List
     in
         GetCN

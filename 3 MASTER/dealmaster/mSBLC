@@ -1,0 +1,15 @@
+let
+    List1 = {"信用主体", "信用主体简称", "板块三级", "板块标签"},
+    List2 = {"备证行全称", "备证行", "备证分类", "板块标签"},
+    Pair = List.Zip({List1, List2}),
+    Source = try Table.Buffer(CWB("mCredit", "1")) otherwise Table.Buffer(fx("Excel")("DEALSMASTER_=MCREDIT")),
+    Filtered = Table.SelectRows(Source, each [IS_SBLC] = "Y"),
+    SCol = Table.SelectColumns(Filtered, List1, MissingField.UseNull),
+    Renamed = Table.RenameColumns(SCol, Pair),
+    #"Duplicated Column" = Table.DuplicateColumn(Renamed, "备证分类", "Copy"),
+    #"Merged Columns" = Table.CombineColumns(
+        #"Duplicated Column", {"Copy", "板块标签"}, Combiner.CombineTextByDelimiter("", QuoteStyle.None), "备证行标签"
+    ),
+    TF = Table.TransformColumns(#"Merged Columns", {{"备证分类", each if _ <> "" then _ & "备证" else _, type text}})
+in
+    TF

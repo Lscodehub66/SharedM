@@ -1,0 +1,203 @@
+(TableName as table) =>
+    let
+        //
+        Source = Table.Buffer(TableName),
+        CN_Source = List.Buffer(Table.ColumnNames(Source)),
+        //Prep
+        DataType = fx("Data")(Source),
+        RemovedCol = Table.RemoveColumns(
+            DataType,
+            {"是否IG", "是否首发", "美元规模分类", "评级分类", "主体评级分类", "结构分类", "货币细分", "上市分类", "BOCOM_DEAL?", "期限"},
+            MissingField.Ignore
+        ),
+    
+
+        RFolderPath =
+            if List.Contains( CN_Source, "FolderPath") then
+                Table.ReplaceValue(
+                       RemovedCol ,
+                    each [FolderPath],
+                    each
+                        if [FolderPath] = "" then
+                            ""
+                        else
+                            "\\itd-m09-fs02\dcm$\Deals\Completed\"
+                                & Date.ToText([定价日], "yyyy")
+                                & " Completed\"
+                                & [FolderPath],
+                    Replacer.ReplaceValue,
+                    {"FolderPath"}
+                )
+            else
+                   RemovedCol ,
+        //Add DebutIssuance
+        Calculated_DEBUT =
+            if List.Contains(Table.ColumnNames(RFolderPath), "DEBUT_DATE") then
+                Table.AddColumn(
+                    RFolderPath, "是否首发", each if [DEBUT_DATE] = null then "--" else if [定价日] = [DEBUT_DATE] then
+                        "Y"
+                    else
+                        "N"
+                )
+            else
+                RFolderPath,
+        Slicer_Size0 = Load("fxGroupRange")(Calculated_DEBUT, {"亿美元", "美元规模分类"}, {"--", 2, 3, 5}, "亿"),
+        Slicer_Size =
+            if Table.HasColumns(Source, "亿美元") then
+                Table.ReplaceValue(
+                    Slicer_Size0, "≤2亿", each if [亿美元] <= 1 then "≤1亿" else "1-2亿", Replacer.ReplaceValue, {"美元规模分类"}
+                )
+            else
+                Calculated_DEBUT,
+        Slicer_Tenor =
+            if Table.HasColumns(Source, "年期") then
+                Load("fxGroupRange")(Slicer_Size, {"年期", "年期分类"}, {"永续", 1, 3, 5}, "年")
+            else
+                Slicer_Size,
+        Slicer_BondRtg =
+            if Table.HasColumns(Source, "发行评级") then
+                fx("RtgSlicer")(Slicer_Tenor, "发行评级", "评级分类")
+            else
+                Slicer_Tenor,
+        //
+        Calculated_CCY =
+            if Table.HasColumns(Source, {"ISIN", "货币"}) then
+                fx(
+                    "Replace"
+                )(
+                    Table.AddColumn(
+                        Slicer_BondRtg,
+                        "货币细分",
+                        each
+                            if [ISIN] = null then
+                                "--"
+                            else if Text.StartsWith([ISIN], "G") and not Text.StartsWith([ISIN], "GB") then
+                                "自贸债"
+                            else if Text.Contains([货币], "CNH") then
+                                "点心债"
+                            else
+                                [货币] & "债",
+                        type text
+                    ),
+                    {"货币细分"},
+                    "货币"
+                )
+            else
+                Slicer_BondRtg,
+        Calculated_Clearing =
+            if Table.HasColumns(Source, "ISIN") then
+                Table.AddColumn(
+                    Calculated_CCY,
+                    "清算地",
+                    each
+                        if [ISIN] = null then
+                            "--"
+                        else if Text.StartsWith([ISIN], "G") and not Text.StartsWith([ISIN], "GB") then
+                            "中债登"
+                        else if Text.StartsWith([ISIN], "MO") then
+                            "澳交所"
+                        else if Text.StartsWith([ISIN], "HK") then
+                            "CMU"
+                        else if Text.StartsWith([ISIN], "CND") then
+                            "上清所"
+                        else if Text.StartsWith([ISIN], "XS") then
+                            "欧清/明讯"
+                        else
+                            "--"
+                )
+            else
+                Calculated_CCY,
+        /////////////////////////
+        Junction_Start = Calculated_Clearing,
+        /////////////////////////
+        Slicer_EntityRtg = fx("RtgSlicer")(Junction_Start, "主体评级", "主体评级分类", "EN"),
+        Slicer_IsIG = Table.AddColumn(
+            Slicer_EntityRtg,
+            "是否IG",
+            each
+                if [评级分类] = "投资级" and [主体评级分类] = "IG" then
+                    "主体及债项"
+                else if [主体评级分类] = "IG" and [评级分类] = "无评级" then
+                    "仅主体"
+                else if [主体评级分类] = "IG" and [评级分类] = "高收益" then
+                    "CrossOver"
+                else if [主体评级分类] = "--" and [评级分类] = "IG" and Text.Contains([结构], "备证") then
+                    "仅债项(备证)"
+                else
+                    "--",
+            type text
+        ),
+        Slicer_Structure =
+            if Table.HasColumns(Source, "结构") then
+                Table.AddColumn(Slicer_IsIG, "结构分类", each Load("fxGroupSTR")([结构]))
+            else
+                Slicer_IsIG,
+        Slicer_Listing =
+            if Table.HasColumns(Source, "上市") then
+                Table.AddColumn(
+                    Slicer_Structure,
+                    "上市分类",
+                    each
+                        if [上市] = null or [上市] = "" or [上市] = "--" or [上市] = "n/a" then
+                            "--"
+                        else if Text.Contains([上市], ";") then
+                            "多地上市"
+                        else if [上市] <> "港交所" and [上市] <> "新交所" and [上市] <> "港交所" and [上市] <> "澳交所" and [上市] <> "未上市" then
+                            "其他"
+                        else
+                            [上市]
+                )
+            else
+                Slicer_Structure,
+        BOCOMDEAL = Load("fxBOCOMDEAL")(Slicer_Listing),
+        // Add CN DES and combine shortnames
+        Written_Stats = fx("WriteStats")(  BOCOMDEAL),
+        
+        Written_Tenor = Table.AddColumn(
+             Written_Stats,
+            "期限",
+            each
+                if [期限备注] = null then
+                    ""
+                else if Text.Contains([期限备注], "天") or Text.Contains([期限备注], "月") then
+                    [期限备注]
+                else if not Text.Contains([年期], "P") then
+                    [年期] & "年"
+                else if Text.Contains([年期], "P") then
+                    "永续(前" & Text.AfterDelimiter([年期], "PNC") & "年不可赎回)"
+                else
+                    ""
+        ),
+        Written_CCYSize = Load("fxWriteCCYSize")(Written_Tenor, "发行规模(亿)", "货币", "增发判定"),
+        Written_Theme = Load("fxWriteTheme")(Written_CCYSize),
+        Written_BISLRole = fx(
+            "Replace"
+        )(
+            Table.AddColumn(Written_Theme, "角色", each [IS_LEAD] & [BISL_ROLE] & [#"IS_B&D"], type text), {"角色"},
+            "ROLE"
+        ),
+        //
+        CombinedName = Load("fxNameCombiner")(Written_BISLRole),
+        // Add Comparer
+        AddedComp = Table.AddColumn(
+            CombinedName,
+            "COMPARER",
+            each
+                if [PROJECT_NAME] <> "" then
+                    Text.From([YYMMDD]) & Text.Upper(Text.Remove([PROJECT_NAME], " "))
+                else
+                    Text.From([YYMMDD]) & [信用主体简称],
+            type text
+        ),
+        ////////////////////////
+        Junction = if not List.ContainsAll(CN_Source, {"上市", "主体评级", "BISL_ROLE"}) then Junction_Start else AddedComp,
+        /////////////////////////
+        RCol = Table.RemoveColumns(
+            Junction, List.Select(Table.ColumnNames(Junction), each Text.Contains(_, "Dummy")), MissingField.Ignore
+        ),
+        #"Added DB_KPI" = if  List.ContainsAll(CN_Source, {"地区覆盖", "覆盖分类", "团队", "Count_BISLDeal", "Count_JBR", "Count_JGC"}) then  RCol else fx("DB_KPI2")(RCol),
+        Checked = fx("CheckNDupe")(#"Added DB_KPI"),
+        Sorted = fx("SortNIndex")(Checked),
+        Presented = fx("PresentNoData")(Sorted)
+    in
+        Presented

@@ -10,6 +10,7 @@ Sub RefreshDataLake()
     ActiveWorkbook.Connections("Query - BaseDirectory_CN").Refresh
 
 
+
     If Range("GPS") = "Global" Then
         ActiveWorkbook.Connections("Query - ESG_ExternalReview").Refresh
         ActiveWorkbook.Connections("Query - KYC_Master").Refresh
@@ -30,7 +31,6 @@ Sub RefreshFolderDatabase()
     ActiveWorkbook.Connections("Query - mBISL").Refresh
     ActiveWorkbook.Connections("Query - mCredit").Refresh
     ActiveWorkbook.Connections("Query - mChart").Refresh
-    ActiveWorkbook.Connections("Query - BISL_Ancient").Refresh
     ActiveWorkbook.Connections("Query - mIndice").Refresh
 
 End Sub
@@ -42,8 +42,7 @@ Sub RefreshKeyGraphLoad()
     '
 
     ActiveWorkbook.Connections("Query - deal_master").Refresh
-    ActiveWorkbook.Connections("Query - USDCNH_Data").Refresh
-    ActiveWorkbook.Connections("Query - SBLCBankLEAG").Refresh
+    ActiveWorkbook.Connections("Query - chart_master").Refresh
 
 
 End Sub
@@ -59,7 +58,7 @@ Sub RefreshNewIssueMonitor()
     ActiveWorkbook.Connections("Query - ESG").Refresh
     ActiveWorkbook.Connections("Query - FI").Refresh
     ActiveWorkbook.Connections("Query - IGlgfv").Refresh
-    ActiveWorkbook.Connections("Query - USDCNH_Tighten_3M").Refresh
+    
 End Sub
 Sub RefreshDirectory()
     '

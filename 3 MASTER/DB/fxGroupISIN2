@@ -1,0 +1,38 @@
+(optional TableName as table) =>
+    let
+        // TableName = CWB("deal_master"),
+        Size0 = {"发行规模(亿)"},
+        Size1 = {"亿美元", "亿元", "亿港币"},
+        Role = {"Count_BISLDeal", "Count_JBR", "Count_JGC"},
+        default = Size0 & Size1 & Role,
+        Source = fx("Data")(TableName),
+        Prep =
+            if not Table.HasColumns(Source, Size1) then
+                fx("AddBBGFX")(Source)
+            else
+                Source,
+        CN_Prep = List.Buffer(Table.ColumnNames(Prep)),
+        Gpdefault = List.Transform(
+            default, each if Text.StartsWith(_, "Count") then Text.Replace(_, "Count", "ISIN") else "合计" & _
+        ),
+        Zipped =
+           
+                List.Zip({Gpdefault, default}),
+           
+        List = List.Select(Zipped, each List.Contains(CN_Prep, _{1})),
+        Custom1 = Table.Group(
+            Prep,
+            {"ISIN"},
+            List.Reverse(
+                List.Accumulate(
+                    List,
+                    {{"Data", each _, type table}},
+                    (x, y) => x & {{y{0}, each List.Sum(Record.Field(_, y{1})), type number}}
+                )
+            )
+        ),
+        Custom2 = if Table.HasColumns(Custom1, "合计亿美元") then fx("GroupSize")(Custom1, {"合计亿美元", "合计美元规模分类"}) else Custom1,
+        Custom4 = fx("1st")(Custom2, {"Data", null}),
+        Custom3 = Table.ExpandTableColumn(Custom4, "Data", List.RemoveItems(CN_Prep, Table.ColumnNames(Custom4)))
+    in
+        Custom3

@@ -1,0 +1,13 @@
+(TableName as table, HD as list) =>
+    let
+        ExpHD = List.RemoveNulls(List.Transform(HD, each Text.Replace(_, "AddIndex", "Index"))),
+        CN_Source = Table.ColumnNames(Source),
+        Source = TableName,
+        Added = if HD{0} = "AddIndex" then Table.AddIndexColumn(Source, "Index", 1, 1, Int64.Type) else Source,
+        ToBeginging = List.Distinct(ExpHD & CN_Source),
+        ToEnd = List.RemoveItems(CN_Source, ExpHD) & ExpHD,
+        nullToEnd = List.Contains(HD, null),
+        Reordered = Table.ReorderColumns(Added, if nullToEnd = true then ToEnd  else ToBeginging,
+        MissingField.Ignore)
+    in
+        Reordered

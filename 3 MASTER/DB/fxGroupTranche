@@ -1,0 +1,42 @@
+(TableName as table, optional ColNameList as list) =>
+    let
+        Source = TableName,
+        defaultlist = if ColNameList = null or ColNameList = {null} then {"信用主体简称", "定价日", "年月"} else ColNameList,
+        #"Grouped Rows" = Table.Group(
+            Source,
+            {"信用主体简称", "定价日", "年月"},
+            {{"多批次", each Table.RowCount(_), Int64.Type}, {"Data", each _, type table}}
+        ),
+        #"Replaced Value" = Table.ReplaceValue(#"Grouped Rows", 1, null, Replacer.ReplaceValue, {"多批次"}),
+        #"Added Custom" = fx(
+            "Replace"
+        )(
+            Table.AddColumn(
+                #"Replaced Value",
+                "Dummy多批次",
+                each if Text.From([多批次] ?? "") <> "" then Text.From([多批次]) & "批次" else "",
+                type text
+            ),
+            {"Dummy多批次"},
+            "双"
+        ),
+        #"Merged Columns" = Table.CombineColumns(
+            #"Added Custom", {"年月", "信用主体简称", "Dummy多批次"}, Combiner.CombineTextByDelimiter("", QuoteStyle.None),
+            "多批次发行"
+        ),
+        #"Replaced Value1" = Table.ReplaceValue(
+            #"Merged Columns", each [多批次发行], each if [多批次] = null then "" else [多批次发行], Replacer.ReplaceValue, {
+                "多批次发行"
+            }
+        ),
+        #"Removed Columns" = Table.RemoveColumns(#"Replaced Value1", {"定价日"}),
+        #"Reordered Columns" = Table.ReorderColumns(#"Removed Columns", {"Data", "多批次", "多批次发行"}),
+        #"Expanded Data" = Table.ExpandTableColumn(
+            #"Reordered Columns",
+            "Data",
+            List.RemoveItems(
+                Table.ColumnNames(#"Reordered Columns"[Data]{0}), Table.ColumnNames(#"Reordered Columns")
+            )
+        )
+    in
+        #"Expanded Data"

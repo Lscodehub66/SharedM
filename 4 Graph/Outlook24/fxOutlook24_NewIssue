@@ -1,0 +1,19 @@
+(optional TableName as table, optional _inputkey as nullable text, optional _inputlist as list) =>
+    let
+        Key = Text.Upper(Text.Trim(_inputkey ?? "")),
+        Numtext = Number.From(Text.Select(Key, {"0".."9"})),
+        list = if _inputlist = null then {"YYYY", "货币"} else _inputlist,
+        Source = TableName ?? (fx("Source")("DMI")),
+        #"Filtered Rows" = Table.SelectRows(Source, each ([货币] = "CNH" or [货币] = "USD") and [发行规则] <> "144A"),
+        #"Extracted Year" = Table.AddColumn(#"Filtered Rows", "YearNum", each Date.Year([定价日]), type number),
+        #"Filtered Rows1" = Table.SelectRows(#"Extracted Year", each [YearNum] > Numtext),
+        Custom1 = fx("ShowFilter")(#"Filtered Rows1", "NOT"),
+        LeftAnti = Table.NestedJoin(
+            Custom1, {"ISIN"}, CWB("DMI_TempISIN"), {"OTHER_ISIN"}, "Data", JoinKind.LeftAnti
+        ),
+        Fn1 = fx("CheckNDupe")(LeftAnti),
+        Fn = fx("OriginalSize")(Fn1),
+        Custom4 = fx("AddBBGFX")(Fn, "USD", {"原始规模(亿)", "原始"}),
+        Output = fx("Data")(Custom4)
+    in
+        Output

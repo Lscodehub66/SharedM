@@ -4,6 +4,7 @@ let
     ManagerCode = Load("fxDBManager", "Code"),
     DB = "mBISL",
     DB_Source = CWB(DB),
+   // DB_Source2 = fx("Data")(Excel.Workbook(File.Contents("Z:\Team Folder\Execution Team\DataHub\Backup\Archive.xlsx"), null, true){[Item="mBISL",Kind="Table"]}[Data]),
     Parameter = Load("Controller")[RemoveFrom_DB]{0} ?? "",
     Added = fx("AddToDB")(DB, wDynamicPQ, Parameter),
     Managed = if Text.Contains(Parameter, "Stop") then fx("DBManager")(DB_Source, "m") else fx(

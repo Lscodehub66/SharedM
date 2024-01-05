@@ -1,0 +1,24 @@
+
+(TableName as table) =>
+    let
+        Source = TableName,
+        修改HD = List.Buffer(List.Select(Table.ColumnNames(Source), each Text.StartsWith(_, "修改"))),
+        Replaced = List.Accumulate(
+            修改HD,
+              Source,
+            (x, y) =>
+                Table.ReplaceValue(
+                    x,
+                    each Record.Field(_, Text.AfterDelimiter(y, ".")),
+                    each
+                        if not List.Contains({0, null, "", "--"}, Record.Field(_, y)) then
+                            Record.Field(_, y)
+                        else
+                            Record.Field(_, Text.AfterDelimiter(y, ".")),
+                    Replacer.ReplaceValue,
+                    {Text.AfterDelimiter(y, ".")}
+                )
+        ),
+        Output = Table.RemoveColumns(Replaced, 修改HD)
+    in
+        Output

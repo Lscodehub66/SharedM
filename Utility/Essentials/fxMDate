@@ -1,0 +1,15 @@
+   
+( _inputtbl as table,  _inputcol as nullable text,_inputstart as number,_inputend as number )=>
+let
+
+Start = Date.From(Number.ToText(_inputstart)) ,
+End =Date.From(Number.ToText(_inputend)) ,
+
+DimDate = List.Reverse(List.Generate(() => Start, each _ <= End, each Date.AddDays(_, 1))),
+    Source = Table.FromColumns({DimDate}, {"Column1"}),
+    DateType = Table.TransformColumnTypes(Source,{{"Column1", type date}}),
+Merged =  Table.NestedJoin(
+          _inputtbl, _inputcol??{"定价日"},DateType, {"Column1"}, "Dummy.Data", JoinKind.Inner),
+RCol = Table.RemoveColumns(Merged ,{"Dummy.Data"},MissingField.Ignore)
+
+in RCol

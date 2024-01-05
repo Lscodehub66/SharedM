@@ -1,0 +1,47 @@
+// Load
+let GPS  = try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Remote",  FilePath = if GPS = "Remote" then "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM\Load" else "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\SharedM\Load",  LoadCode = Text.FromBinary ( Binary.Buffer ( File.Contents ( FilePath ) ) ), EVA = Expression.Evaluate ( LoadCode, #shared ) in EVA
+
+// text
+let
+    Source = Load("DimDate","Code"),
+    #"Converted to Table" = #table(1, {{Source}}),
+    #"Added Custom" = Table.AddColumn(#"Converted to Table", "Custom", each Text.Split([Column1],"#(lf)")),
+    #"Removed Columns" = Table.RemoveColumns(#"Added Custom",{"Column1"}),
+    #"Expanded Custom" = Table.ExpandListColumn(#"Removed Columns", "Custom"),
+    BD = Table.AddColumn(#"Expanded Custom", "C2", each Text.BetweenDelimiters([Custom], """", """"), type text),
+    BD1 = Table.AddColumn(BD, "C3", each Text.BetweenDelimiters([Custom], "each ", "type"), type text),
+    BD2 = Table.AddColumn(BD1, "Type", each Text.BetweenDelimiters([Custom], "type", ")"), type text),
+    #"Replaced Value" = Table.ReplaceValue(BD2,"[Column1]","_",Replacer.ReplaceText,{"C3"}),
+    #"Filtered Rows" = Table.SelectRows(#"Replaced Value", each ([C3] <> "" and [C3] <> "_ <= End, each Date.AddDays(_, 1))),") and ([C2] <> "")),
+    #"Removed Other Columns" = Table.SelectColumns(#"Filtered Rows",{"C2", "C3", "Type"}),
+    #"Trimmed Text" = Table.TransformColumns(#"Removed Other Columns",{{"C2", Text.Trim, type text}}),
+    #"Replaced Value1" = Table.ReplaceValue(#"Trimmed Text"," ","",Replacer.ReplaceText,{"C2", "C3", "Type"}),
+    #"Replaced Value2" = Table.ReplaceValue(#"Replaced Value1",")""","),""",Replacer.ReplaceText,{"C3"}),
+    R2 = Table.ReplaceValue(#"Replaced Value2","),",")",Replacer.ReplaceText,{"C3"}),
+    CC2 = Table.AddColumn(R2, "A1", each if Text.Contains([C3], "[") then Text.BetweenDelimiters([C3],"[", "]") else null),
+    #"Inserted Text Between Delimiters" = Table.AddColumn(CC2, "D1", each Text.BetweenDelimiters([C3], "&[", "],"), type text),
+    #"Replaced Value4" = Table.ReplaceValue(#"Inserted Text Between Delimiters","",null,Replacer.ReplaceValue,{"D1"}),
+    Custom3 = fx("Merge")(#"Replaced Value4",R2,"A1","C2",{"C3"},{"Dummy"}),
+    AD = Table.AddColumn(Custom3, "A11", each if Text.Contains([C3], "[") then "["&Text.BetweenDelimiters([C3],"[", "]")&"]" else null),
+    AD2 = Table.AddColumn(AD, "A2", each if [A1] = null then null else [Dummy]),
+    Custom1 = List.Zip({List.RemoveNulls(AD2[A11]) ,List.RemoveNulls(AD2[Dummy])}),
+    RV3 = List.Accumulate(Custom1, AD2, (x,y)=> Table.ReplaceValue(x,y{0}, y{1},Replacer.ReplaceText,{"C3"})),
+    #"Removed Columns1" = Table.RemoveColumns(RV3,{"A1", "Dummy", "A11", "A2"}),
+    Custom2 = fx("Merge")( #"Removed Columns1",RV3,"D1","C2",{"C3"},{"Dummy"}),
+    #"Added Prefix" = Table.TransformColumns(Custom2, {{"D1", each "[" & _, type text}}),
+    A1111 = Table.TransformColumns(#"Added Prefix", {{"D1", each _ & "]", type text}}),
+    Custom4 = List.Zip({List.RemoveNulls(A1111[D1]) ,List.RemoveNulls(A1111[Dummy])}),
+    Custom5 = List.Accumulate(Custom4, A1111, (x,y)=> Table.ReplaceValue(x,y{0}, y{1},Replacer.ReplaceText,{"C3"})),
+    #"Removed Other Columns1" = Table.SelectColumns(Custom5,{"C2", "C3", "Type"}),
+    #"Replaced Value3" = Table.ReplaceValue(#"Removed Other Columns1","","text",Replacer.ReplaceValue,{"Type"}),
+    #"Replaced Value5" = Table.ReplaceValue(#"Replaced Value3","_)""","_),""",Replacer.ReplaceText,{"C3"}),
+    #"Replaced Value6" = Table.ReplaceValue(#"Replaced Value5","number","Int64.Type",Replacer.ReplaceText,{"Type"}),
+    #"Replaced Value8" = Table.ReplaceValue(#"Replaced Value6", "#(lf)" ,"",Replacer.ReplaceText,{"C3"}),
+    #"Sorted Rows" = Table.Sort(#"Replaced Value8",{{"Type", Order.Ascending}}),
+    AC = Table.AddColumn(#"Sorted Rows", "Custom", each [C2] & "  = " & [Type] & ","),
+    #"Trimmed Text1" = Table.TransformColumns(AC,{{"C3", Text.Trim, type text}}),
+    #"Filtered Rows1" = Table.SelectRows(#"Trimmed Text1", each Text.Contains([C3], "[")),
+    #"Replaced Value7" = Table.ReplaceValue(#"Trimmed Text1",""")),","""),",Replacer.ReplaceText,{"C3"}),
+    #"Added Suffix" = Table.TransformColumns(#"Replaced Value7", {{"C3", each _ & ",", type text}})
+in
+    #"Added Suffix"

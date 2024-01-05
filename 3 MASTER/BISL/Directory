@@ -1,29 +1,18 @@
 //let Code = Load("Directory","Code"), EVA = Expression.Evaluate(Code ,#shared) in EVA
 let
-    #"Buffered Ancient" = Table.Buffer(CWB("BISL_Ancient")),
-    #"Buffered mDeal" = Table.Buffer(CWB("deal_master")),
-    JLMtbl = Table.RenameColumns(
-        Table.SelectColumns(CWB("BISL_JLMPeers"), {"Check", "JGC", "JBR"}, MissingField.Ignore),
-        {{"Check", "Check.Dummy"}},
-        MissingField.Ignore
-    ),
-    CN_Base = List.Buffer(CWB("BaseDirectory_CN")),
-    CN_CWB = List.Buffer(Table.ColumnNames(CWB("Directory"))),
-    //
-    Ancient_Merged = Load("fxDBMerger")(#"Buffered Ancient"),
-    Ancient_Finalized = Load("fxDBFinalization")(Ancient_Merged),
-    deal_masterFiltered = Table.SelectRows(#"Buffered mDeal", each [BISL_ROLE] <> "" and [BISL_ROLE] <> "--"),
-    Combined = fx("Combine")({Ancient_Finalized, deal_masterFiltered}, null, {1}),
-    Checked = fx("CheckNDupe")(Combined),
-    MergedQ = fx("Merge")(Checked, CWB("Table_PRJMerge"), "COMPARER", "COMPARER", {"承销费原币"}, {""}),
+    MonitorName = "Directory",
+    Fn = fx("DBMonitor")(MonitorName),
+    MergedQ = fx("Merge")(Fn, CWB("Table_PRJMerge"), "COMPARER", "COMPARER", {"承销费原币"}, {""}),
     NthMandate = fx("NthMandated")(MergedQ, {"YYMMDD", "信用主体"}),
     #"Count Multi-Tranche" = fx("AddMultiCount")(NthMandate),
-     #"Merged Queries1" = Table.NestedJoin(  #"Count Multi-Tranche" , {"定价会时间"}, Load("DimTime"), {"Time"}, "Data", JoinKind.LeftOuter),
+    #"Merged Queries1" = Table.NestedJoin(
+        #"Count Multi-Tranche", {"定价会时间"}, Load("DimTime"), {"Time"}, "Data", JoinKind.LeftOuter
+    ),
     #"Expanded DimTime" = Table.ExpandTableColumn(#"Merged Queries1", "Data", {"DayPeriod"}, {"定价会时段"}),
     ExeTime =
-        if Table.HasColumns(  #"Expanded DimTime", "Date_Onboarded") then
+        if Table.HasColumns(#"Expanded DimTime", "Date_Onboarded") then
             Table.AddColumn(
-                  #"Expanded DimTime",
+                #"Expanded DimTime",
                 "执行周期",
                 each
                     if not List.Contains({[定价日], [Date_Onboarded]}, null) and [定价日] >= [Date_Onboarded] then
@@ -33,9 +22,13 @@ let
                 type number
             )
         else
-              #"Expanded DimTime",
-    Sorted = fx("SortNIndex")(ExeTime),
-    ReplacedCCY = Table.ReplaceValue(Sorted, "美元债", "", Replacer.ReplaceValue, {"货币细分"}),
-    Reordered = Table.ReorderColumns(ReplacedCCY, CN_Base & List.RemoveItems(CN_CWB, CN_Base), MissingField.Ignore)
+            #"Expanded DimTime",
+  
+    ReplacedCCY = Table.ReplaceValue(ExeTime, "美元债", "", Replacer.ReplaceValue, {"货币细分"}),
+      Sorted = fx("SortNIndex")(  ReplacedCCY),
+    //Reorder
+    CN_Base = List.Buffer(CWB("BaseDirectory_CN")),
+    CN_CWB = List.Buffer(Table.ColumnNames(CWB("Directory"))),
+    Reordered = Table.ReorderColumns( Sorted , CN_Base & List.RemoveItems(CN_CWB, CN_Base), MissingField.Ignore)
 in
     Reordered

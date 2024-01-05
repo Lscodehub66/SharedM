@@ -1,0 +1,33 @@
+(optional TableName as table, optional AllRowsColName as text) =>
+    let
+        Source = if TableName = null then CWB("mIssue") else TableName,
+        DataType = fx("Data")(Source),
+        #"Grouped Rows1" = Table.Group(
+            DataType,
+            {"ISIN"},
+            {
+                {"合计发行(亿)", each List.Sum([#"发行规模(亿)"]), type number},
+                {"合计亿美元", each List.Sum([#"亿美元"]), type number},
+                {"合计亿元", each List.Sum([#"亿元"]), type number},
+                {"合计亿港币", each List.Sum([#"亿港币"]), type number}
+            }
+        ),
+        #"Grouped Rows2" = Table.Group(
+            DataType,
+            {"ISIN"},
+            {
+                {"合计发行(亿)", each List.Sum([#"发行规模(亿)"]), type number},
+                {"合计亿美元", each List.Sum([#"亿美元"]), type number},
+                {"合计亿元", each List.Sum([#"亿元"]), type number},
+                {"合计亿港币", each List.Sum([#"亿港币"]), type number},
+                {"Data", each _, type table}
+            }
+        ),
+        #"Expanded Data" = Table.ExpandTableColumn(
+            #"Grouped Rows2",
+            "Data",
+            List.RemoveItems(Table.ColumnNames(#"Grouped Rows2"[Data]{0}), Table.ColumnNames(#"Grouped Rows2"))
+        ),
+        Output = if AllRowsColName = "Data" then #"Expanded Data" else #"Grouped Rows1"
+    in
+        Output

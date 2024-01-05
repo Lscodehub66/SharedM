@@ -1,6 +1,6 @@
 // DimDate
 let
-    Text = "(Input1 as number, Input2 as nullable number, optional SColInput0 as nullable list) => let SColInput = if SColInput0 = null then {null} else SColInput0, Start = Date.From(Text.From(Input1)),  End = if Input2 = null then Date.From(DateTime.FixedLocalNow()) else Date.From(Text.From(Input2)),",
+    Text = "(Input1 as number, optional Input2 as nullable number, optional SColInput0 as nullable list) => let SColInput = if SColInput0 = null then {null} else SColInput0, Start = Date.From(Text.From(Input1)),  End = if Input2 = null then Date.From(DateTime.FixedLocalNow()) else Date.From(Text.From(Input2)),",
     Old = Text.AfterDelimiter(Load("DimDate", "Code"), "//**"),
     EVA = Expression.Evaluate(Text & Old, #shared)
 in
