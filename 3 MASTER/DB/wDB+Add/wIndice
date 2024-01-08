@@ -24,7 +24,7 @@ let
     DateRange = fx("DateRange")({"PreviousMon.Date", "当前"}),
     #">>FilteredMonday>>" = fx("DateRange")({"PreviousMon.Date", "当前"}, {Type, "Date"}),
     //Table.SelectRows(Type, each [Date] <= Controller1{0} and [Date] > Controller2{0})  ,
-    ManagedDB = fx("DBManager")(#">>FilteredMonday>>", "w"),
+    ManagedDB = fx("DBManager")( #">>FilteredMonday>>" , "w"),
     #"Changed Type" = Table.TransformColumnTypes(ManagedDB, {{"Date", type text}}),
     TP = Table.AddIndexColumn(Table.Transpose(Table.DemoteHeaders(#"Changed Type")), "Index", 0, 1, Int64.Type)
 in

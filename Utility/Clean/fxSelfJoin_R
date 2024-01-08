@@ -3,7 +3,7 @@
     let
         // tblname = DLD_p2,   tbltojoin  = CWB("DLD_priceNstats"),    MergeKey = {"Check"},
         CN_Source = List.Buffer(Table.ColumnNames(tblname)),
-        IPGList = List.Intersect({{"IPG", "FPG", "定价"}, CN_Source}),
+        IPGList = List.Intersect({{"IPG", "FPG", "定价","票息"}, CN_Source}),
         tbl_nonull = Table.SelectRows(tbltojoin, each not List.Contains({null, ""}, Record.Field(_, MergeKey{0}))),
         Fn1 = if not List.IsEmpty(IPGList) then fx("NumInputText")(tbl_nonull, IPGList) else tbl_nonull,
         Schema = Table.Schema(Fn1),

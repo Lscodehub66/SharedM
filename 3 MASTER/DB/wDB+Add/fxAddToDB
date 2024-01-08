@@ -1,7 +1,7 @@
 // fxAddToDB("mCurated",wDynamicPQ)
 (DB_Name as text, Add_Source as table, wRemove as nullable text) =>
     let
-        Add_CN_DistinctCol = {"Check", "信用主体", "Date"},
+        Add_CN_DistinctCol = {"Check","PRJ对账号", "ISIN", "信用主体", "Date"},
         //
         Add_From = "Below",
         //【Input】Insert New From Top or Below

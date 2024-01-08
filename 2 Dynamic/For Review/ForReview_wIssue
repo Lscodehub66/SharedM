@@ -1,0 +1,12 @@
+// let LoadCode = Load("ForReview_wIssue","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    DBName = "mIssue",
+    Source =  {"Index"} & List.RemoveItems(List.Intersect({CWB(    DBName ,"CN"),  Get("Header_ForReviewHD")}),{"ISIN_TEMP","信用主体"})& {"ISIN_TEMP","信用主体"}  ,
+    _input = {"票息","浮息定价"},
+  tbl = Load("DLD_Filtered"),
+    Custom1 = Table.SelectColumns(  tbl, Source& _input, MissingField.Ignore),
+    SelfJoined = fx("SelfJoin_R")(Custom1, CWB("ForReview_wIssue"), {"Check"}),
+    Custom2 = fx("SelfJoin_IPG")(SelfJoined),
+        SCol = Table.SelectColumns( Custom2, Source, MissingField.Ignore)
+in
+SCol

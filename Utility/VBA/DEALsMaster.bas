@@ -4,12 +4,11 @@ Sub RefreshDataLake()
     '
 
 
-    ActiveWorkbook.Connections("Query - wDynamic").Refresh
-    ActiveWorkbook.Connections("Query - wIndice").Refresh
+
     ActiveWorkbook.Connections("Query - ControllerTP").Refresh
     ActiveWorkbook.Connections("Query - BaseDirectory_CN").Refresh
-
-
+    ActiveWorkbook.Connections("Query - wIndice").Refresh
+    ActiveWorkbook.Connections("Query - wDynamic").Refresh
 
     If Range("GPS") = "Global" Then
         ActiveWorkbook.Connections("Query - ESG_ExternalReview").Refresh
@@ -27,10 +26,14 @@ Sub RefreshFolderDatabase()
 
     '
     ActiveWorkbook.Connections("Query - Step2_RowCount").Refresh
-    ActiveWorkbook.Connections("Query - mCurated").Refresh
-    ActiveWorkbook.Connections("Query - mBISL").Refresh
-    ActiveWorkbook.Connections("Query - mCredit").Refresh
+    ActiveWorkbook.Connections("Query - mIssue").Refresh
+    ActiveWorkbook.Connections("Query - mBond").Refresh
     ActiveWorkbook.Connections("Query - mChart").Refresh
+    ActiveWorkbook.Connections("Query - mBISL").Refresh
+    ActiveWorkbook.Connections("Query - mEXE").Refresh
+
+
+    ActiveWorkbook.Connections("Query - mCredit").Refresh
     ActiveWorkbook.Connections("Query - mIndice").Refresh
 
 End Sub
@@ -58,7 +61,7 @@ Sub RefreshNewIssueMonitor()
     ActiveWorkbook.Connections("Query - ESG").Refresh
     ActiveWorkbook.Connections("Query - FI").Refresh
     ActiveWorkbook.Connections("Query - IGlgfv").Refresh
-    
+
 End Sub
 Sub RefreshDirectory()
     '
@@ -81,4 +84,6 @@ Sub RefreshwTomb()
     ActiveWorkbook.Connections("Query - CompletedFormalities").Refresh
 
 End Sub
+
+
 

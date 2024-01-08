@@ -1,0 +1,8 @@
+// let LoadCode = Load("ForReview_wStats","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    DBName = "mStats",
+    Source = CWB(    DBName ,"CN"),
+    Custom1 = Table.SelectColumns(Load("DLD_Filtered"), Source, MissingField.Ignore),
+    Custom2 = fx("SelfJoin_R")(Custom1, CWB("ForReview_wStats"), {"Check"})
+in
+    Custom2

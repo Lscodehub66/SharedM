@@ -8,7 +8,7 @@ let
     Appended1 = if #"//GNG_Multi" <> "GO" then ACol else fx(
         "Combine"
     )(
-        {ACol, Load("DLD_DMI_Missing")}, {null}, CN_ACol
+        {ACol, Load("DLD_DMI_MissingPQ")}, {null},{0}
     ),
     Custom1 = fx("DMI2")(Appended1, "Y")
 in

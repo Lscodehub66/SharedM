@@ -46,9 +46,19 @@
         Custom2a =
             if wFilter = "ON" then
                 Table.ReplaceValue(
-                    Custom2,
-                    "",
-                    each if [定价日] > MaxDate or [定价日] < MinDate then "【超出周报日期】" else "",
+                    Table.ReplaceValue(
+                        Custom2,
+                        "",
+                        each if [定价日] > MaxDate or [定价日] < MinDate then "【超出周报日期】" else "",
+                        Replacer.ReplaceValue,
+                        {NewCol{1}}
+                    ),
+                    each Record.Field(_, NewCol{1}),
+                    each
+                        if [ISIN] <> "" and [信用主体] <> "" and [定价日] <> "" and [债券简称] = "" and [货币] = "" then
+                            ""
+                        else
+                            Record.Field(_, NewCol{1}),
                     Replacer.ReplaceValue,
                     {NewCol{1}}
                 )

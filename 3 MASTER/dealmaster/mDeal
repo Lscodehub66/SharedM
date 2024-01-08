@@ -10,9 +10,9 @@ let
     mBond_Joined = fx("Merge")(    mStats_Joined, mBond, "ISIN", "ISIN", {""}, {""}),
     MaturityDate_Joined = fx("MergeDimDate")(mBond_Joined, "兑付日", {"YYYY"}, {"兑付日.YearNum"}),
     //
-    mBISL = fx("mBISLCount")(CWB("mBISLDraft")),
+    mBISL = fx("mBISLCount")(CWB("mBISL")),
     mBISL_Joined = fx("Merge")(MaturityDate_Joined, mBISL, "Check", "Check", {"Y"}, {""}),
-    mEXE_Joined = fx("Merge")(mBISL_Joined, CWB("mEXE"), "Check", "Check", {"Y"}, {""}),
+    mEXE_Joined = fx("Merge")(mBISL_Joined, CWB("mEXE"), "PRJ对账号", "PRJ对账号", {"Y"}, {""}),
     //
     //
     #"Fn Calculated" = fx("DBCalculate")(mEXE_Joined),
