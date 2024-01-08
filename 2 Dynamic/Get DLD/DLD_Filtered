@@ -1,0 +1,40 @@
+let
+    Source1 = CWB("DLD_Conso"),
+    FilteredOut_Entity = Load("FilteredOut_Credit"),
+    FilteredOut_Bond = Load("FilteredOut_Bond"),
+    Merged = Table.NestedJoin(Source1, {"信用主体"}, FilteredOut_Entity, {"信用主体"}, "DummyData", JoinKind.LeftAnti),
+    Merged1 = Table.NestedJoin(
+        Merged, {"ISIN", "定价日"}, FilteredOut_Bond, {"ISIN", "定价日"}, "DummyData1", JoinKind.LeftAnti
+    ),
+    #"Added BISL_ROLE" =
+        if not List.Contains(Table.ColumnNames(Source1), "BISL_ROLE") then
+            Table.AddColumn(
+                Merged1,
+                "BISL_ROLE",
+                each
+                    if Text.Contains([联席全球协调人], "BOCOM") then
+                        "JGC"
+                    else if Text.Contains([牵头经办人], "BOCOM") then
+                        "JBR"
+                    else if Text.Contains([联席全球协调人], "【") then
+                        "【】"
+                    else
+                        "--"
+            )
+        else
+            Merged1,
+    BBG_HD = Get("Header_Exp_Dynamic_BBG"),
+    BBG_HDExp = List.Transform(BBG_HD, each if List.Contains({"计息基准", "SBLC提供者"}, _) then "Dummy" & _ else _),
+    BBG_Merged = fx("Merge")(#"Added BISL_ROLE", Load("DLD_BBG_Corp"), "Check", "Check", BBG_HD, BBG_HDExp),
+    //{"发行人成立地", "发行人主上市地", "补充OMAS updates", "定价息差", "发行评级", "主体评级","ESG_Indicator","计息基准","票息"}
+    #"CrossChecked BBG" = fx("CrossCheck")(BBG_Merged),
+    // End of MultiSource
+    #"//GNG_Multi" = if fx("Parameter")("MultiSource") = "ON" then "GO" else "NO-GO",
+    Crossroad =
+        if #"//GNG_Multi" <> "GO" then
+            Table.RenameColumns(#"Added BISL_ROLE", {{"债项评级", "发行评级"}, {"穆迪/标普", "主体评级"}}, MissingField.UseNull)
+        else
+            #"CrossChecked BBG",
+    Custom1 = fx("RCol")(Crossroad)
+in
+    Custom1

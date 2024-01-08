@@ -1,7 +1,7 @@
-// let LoadCode = Load("mISIN","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+// let LoadCode = Load("mBond","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
     Source = CWB("mCurated"),
-    #"Renamed Columns" = Table.RenameColumns(Source, {{"OTHER_ISIN", "ISIN_144A"}}),
+    #"Renamed Columns" = Table.RenameColumns(Source, {{"ISIN_TEMP", "ISIN_144A"}}),
     #"Replaced Value" = Table.ReplaceValue(
         #"Renamed Columns",
         each [ISIN_144A],

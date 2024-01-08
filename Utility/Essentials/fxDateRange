@@ -1,0 +1,21 @@
+(_input as list, optional _Mergeinput as list) =>
+    let
+        Source = Load("Control_Date"),
+        Start = Record.Field(Source, _input{0}),
+        End = Record.Field(Source, _input{1}),
+        DateList = List.Reverse(List.Generate(() => Start, each _ <= End, each Date.AddDays(_, 1))),
+        Datetbl = #table(type table [A_Date = date], List.Transform(DateList, each {_})),
+        Output =
+            if _Mergeinput = null then
+                DateList else if  _Mergeinput = {""} then Datetbl 
+            else
+                Table.RemoveColumns(
+                    Table.NestedJoin(
+                        _Mergeinput{0}, {_Mergeinput{1}}, Datetbl, {"A_Date"}, "DummyData", JoinKind.Inner
+                    ),
+                    {"DummyData"}
+                )
+    in
+        Output
+
+      

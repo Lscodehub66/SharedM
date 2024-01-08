@@ -1,0 +1,9 @@
+(TableName as any, MergeKey as text, Collist as list) =>
+    let
+        Source = if Value.Type(TableName) = type text then CWB("DLD_Filter_Bond") else TableName,
+        Custom1 = Table.RenameColumns(
+            Table.SelectColumns(Source, {MergeKey} & Collist),
+            List.Zip({Collist, List.Transform(Collist, each "修改." & _)})
+        )
+    in
+        Custom1

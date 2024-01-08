@@ -5,7 +5,8 @@
         Source = TableName,
         Merged = fx("Merge")(Source, RevisedTableToMerge, MergeKey, MergeKey, {""}),
         修改HD = List.Select(Table.ColumnNames(Merged), each Text.StartsWith(_, "修改")),
-        Replaced = List.Accumulate(
+        补齐HD = List.Select(Table.ColumnNames(Merged), each Text.StartsWith(_, "补齐")),
+        修改原有记录 = List.Accumulate(
             修改HD,
             Merged,
             (x, y) =>
@@ -21,6 +22,25 @@
                     {Text.AfterDelimiter(y, ".")}
                 )
         ),
-        Output = Table.SelectColumns(Replaced, Table.ColumnNames(Source))
+        补齐空白记录 = List.Accumulate(
+            补齐HD,
+            修改原有记录,
+            (x, y) =>
+                Table.ReplaceValue(
+                    x,
+                    each Record.Field(_, Text.AfterDelimiter(y, ".")),
+                    each
+                        if
+                            not List.Contains({0, null, "", "--"}, Record.Field(_, y))
+                            and List.Contains({0, null, "", "--"}, Record.Field(_, Text.AfterDelimiter(y, ".")))
+                        then
+                            Record.Field(_, y)
+                        else
+                            Record.Field(_, Text.AfterDelimiter(y, ".")),
+                    Replacer.ReplaceValue,
+                    {Text.AfterDelimiter(y, ".")}
+                )
+        ),
+        Output = Table.SelectColumns(补齐空白记录, Table.ColumnNames(Source))
     in
         Output

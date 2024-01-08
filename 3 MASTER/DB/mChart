@@ -11,12 +11,12 @@ let
     #"Filtered Rows" = Table.SelectRows(
         Synced, each not Text.StartsWith([ISIN], "BBG01") and ([货币] = "USD" or [货币] = "CNH")
     ),
-    FX = fx("AddBBGFX")(#"Filtered Rows", "USD"),
+    
 
     Managed =  fx(
         "DBManager"
     )(
-         FX  , "m"
+         #"Filtered Rows"  , "m"
     )
 in
    Managed

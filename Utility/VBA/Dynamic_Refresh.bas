@@ -2,11 +2,12 @@ Sub RefreshDownload()
     '
     ' RefreshDownload Macro
     '
-
-    '
     ActiveWorkbook.Connections("Query - DimMonday").Refresh
     ActiveWorkbook.Connections("Query - CSOE_SASAC").Refresh
+
     ActiveWorkbook.Connections("Query - DLD_Conso").Refresh
+    ActiveWorkbook.Connections("Query - DLD_Filter_Credit").Refresh
+    ActiveWorkbook.Connections("Query - DLD_Filter_Bond").Refresh
     ActiveWorkbook.Connections("Query - DMI_NewColumn").Refresh
     ActiveWorkbook.Connections("Query - DMI_ChangedColumn").Refresh
     ActiveWorkbook.Connections("Query - DMIHeaders").Refresh
@@ -17,6 +18,16 @@ Sub RefreshDownload()
     End If
 End Sub
 
+Sub RefreshDLDPriceNStats()
+    '
+    ' RefreshDLDPriceNStats Macro
+    '
+
+    '
+    ActiveWorkbook.Connections("Query - DLD_priceNstats").Refresh
+
+End Sub
+
 
 
 Sub RefreshDLDForReview()
@@ -25,11 +36,13 @@ Sub RefreshDLDForReview()
     '
 
     '
-    ActiveWorkbook.Connections("Query - DLD_Add").Refresh
-    ActiveWorkbook.Connections("Query - ForReview_Issuer").Refresh
-    ActiveWorkbook.Connections("Query - ForReview_wCurated").Refresh
+    ActiveWorkbook.Connections("Query - DLD_Filtered_Add").Refresh
+    ActiveWorkbook.Connections("Query - ForReview_wIssue").Refresh
+    ActiveWorkbook.Connections("Query - ForReview_wBond").Refresh
     ActiveWorkbook.Connections("Query - ForReview_wCredit").Refresh
     ActiveWorkbook.Connections("Query - ForReview_wBOCOM").Refresh
+    ActiveWorkbook.Connections("Query - ForReview_wChart").Refresh
+    ActiveWorkbook.Connections("Query - ForReview_wStats").Refresh
 
 End Sub
 
@@ -65,6 +78,7 @@ Sub RefreshAll()
 
 
 End Sub
+
 
 
 

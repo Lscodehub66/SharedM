@@ -1,0 +1,50 @@
+//let LoadCode = Load("wDeal","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    p = "ForReview_",
+    wIssue = CWB(p & "wIssue", "1"),
+    ACol1 = Table.AddColumn(wIssue, "mIssue", each "Y"),
+    SourceDB = fx("Combine")({ACol1, CWB("ForReview_wChart")}, null, {10}),
+    RemovedCol = Table.RemoveColumns(SourceDB, Get("Header_MergeRemoval"), MissingField.Ignore),
+    Filtered = Table.SelectRows(
+        RemovedCol, each ([定价日] <> null) and [ISIN] <> null and [删除及隐藏] <> "删除" and [删除及隐藏] <> "【删除】"
+    ),
+    Custom1 = Table.TransformColumns(
+        Filtered,
+        {
+            {"主体评级", each if _ <> "【】" then Text.Replace(_, "【】", "【--】") else _},
+            {"发行评级", each if _ <> "【】" then Text.Replace(_, "【】", "【--】") else _},
+            {
+                "信用主体",
+                each
+                    if List.Count(Text.Split(_, "【")) > 2 then
+                        Text.BeforeDelimiter(_, "【", {0, RelativePosition.FromEnd})
+                    else
+                        _
+            }
+        }
+    ),
+    //
+    wStats = Table.SelectRows(CWB(p & "wStats", "1"), each not List.Contains({null, "", "--"}, [#"最终账簿(亿)"])),
+    wBOCOM = CWB(p & "wBOCOM"),
+    wBond = WB(p & "wBond", "1"),
+    wCredit = Load("wCredit_Reviewed"),
+    DLD_Filtered_Add = CWB("DLD_Filtered_Add"),
+    Merged = List.Accumulate(
+        {
+            {wStats, "mStats", "Check"},
+            {wBOCOM, "mBISLmEXE", "Check"},
+            {wBond, "mBond", "ISIN"},
+            {wCredit, "mCredit", "信用主体"},
+            {DLD_Filtered_Add, "DLD_Add", "Check"}
+        },
+        Custom1,
+        (x, y) => fx("Merge")(x, Table.AddColumn(y{0}, y{1}, each "Y", type text), y{2}, y{2}, {""}, {""})
+    ),
+    TF = fx("SelfJoin_IPG")(Merged),
+    CN = Table.ColumnNames(TF),
+    DM = {"mIssue", "mStats", "mBISL", "mEXE", "mCredit"},
+    HD = List.Distinct(List.Accumulate(DM, {"mBond"} & CWB("mBond", "CN"), (x, y) => x & {y} & CWB(y, "CN"))),
+    Reordered = Table.SelectColumns(TF, HD, MissingField.Ignore),
+    Custom2 = fx("DBManager2")(Reordered)
+in
+    Custom2

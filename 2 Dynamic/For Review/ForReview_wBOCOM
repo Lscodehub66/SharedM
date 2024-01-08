@@ -2,7 +2,7 @@
 
 
 let
-    Source = try CWB("DLD_Conso") otherwise Load("DLD_Conso"),
+    Source = Load("DLD_Filtered"),
    Prep =  if not List.Contains(Table.ColumnNames(Source),"BISL_ROLE") then Table.AddColumn(
         Source ,
         "BISL_ROLE",

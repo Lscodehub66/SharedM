@@ -1,0 +1,11 @@
+// DLD_FilteredwFIMTN
+let
+    Source1 = CWB("DLD_Conso"),
+    FilteredOut_Entity = Load("FilteredOut_Credit"),
+    FilteredOut_Bond = Load("FilteredOut_Bond"),
+    Merged = Table.NestedJoin(Source1, {"信用主体"}, FilteredOut_Entity, {"信用主体"}, "DummyData", JoinKind.LeftAnti),
+    Merged1 = Table.NestedJoin(
+        Merged, {"ISIN", "定价日"}, FilteredOut_Bond, {"ISIN", "定价日"}, "DummyData1", JoinKind.LeftAnti
+    )
+in
+    Merged1

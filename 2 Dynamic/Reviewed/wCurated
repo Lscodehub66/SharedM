@@ -2,7 +2,7 @@
 let
     Source = Load("Reviewed_IssuerPQ"),
     ReviewedCurated = Load("Reviewed_CuratedPQ"),
-    ColNow_mCurated = Table.ColumnNames(fx("Excel")("DEALSMASTER_=mCurated")),
+    ColNow_mCurated = List.Distinct(CWB("mBond", "CN") & CWB("mIssue", "CN") & CWB("mStats", "CN")),
     MReview = fx("Merge")(Source, ReviewedCurated, "Check", "Check", {""}, {""}, null, 1),
     MDLD_Add = fx("Merge")(MReview, CWB("DLD_Add"), "Check", "Check", {""}, {""}),
     //
@@ -15,6 +15,6 @@ let
         }
     ),
     SelectedCol = Table.SelectColumns(Custom2, ColNow_mCurated, MissingField.UseNull),
-    ACol = Table.AddColumn(SelectedCol, "mCurated", each "Y")
+    ACol = List.Accumulate({"mBond", "mIssue", "mStats"}, SelectedCol, (x, y) => Table.AddColumn(x, y, each "Y"))
 in
     ACol

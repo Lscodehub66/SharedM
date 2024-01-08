@@ -10,66 +10,23 @@
             {"是否IG", "是否首发", "美元规模分类", "年期分类", "评级分类", "主体评级分类", "结构分类", "货币细分", "上市分类", "BOCOM_DEAL?", "期限"},
             MissingField.Ignore
         ),
-    
-
-        RFolderPath =
-            if List.Contains( CN_Source, "FolderPath") then
-                Table.ReplaceValue(
-                       RemovedCol ,
-                    each [FolderPath],
-                    each
-                        if [FolderPath] = "" then
-                            ""
-                        else
-                            "\\itd-m09-fs02\dcm$\Deals\Completed\"
-                                & Date.ToText([定价日], "yyyy")
-                                & " Completed\"
-                                & [FolderPath],
-                    Replacer.ReplaceValue,
-                    {"FolderPath"}
-                )
-            else
-                   RemovedCol ,
         //Add DebutIssuance
         Calculated_DEBUT =
-            if List.Contains(Table.ColumnNames(RFolderPath), "DEBUT_DATE") then
+            if List.Contains(Table.ColumnNames(RemovedCol), "DEBUT_DATE") then
                 Table.AddColumn(
-                    RFolderPath, "是否首发", each if [DEBUT_DATE] = null then "--" else if [定价日] = [DEBUT_DATE] then
+                    RemovedCol, "是否首发", each if [DEBUT_DATE] = null then "--" else if [定价日] = [DEBUT_DATE] then
                         "Y"
                     else
                         ""
                 )
             else
-                RFolderPath,
-
-    GroupedSize = fx("GroupSize")(Calculated_DEBUT),
-    GroupRest = fx("GpTenorCCYRtg")(GroupedSize),
-
-        Calculated_Clearing =
-            if Table.HasColumns(Source, "ISIN") then
-                Table.AddColumn(
-                    GroupRest,
-                    "清算地",
-                    each
-                        if [ISIN] = null then
-                            "--"
-                        else if Text.StartsWith([ISIN], "G") and not Text.StartsWith([ISIN], "GB") then
-                            "中债登"
-                        else if Text.StartsWith([ISIN], "MO") then
-                            "澳交所"
-                        else if Text.StartsWith([ISIN], "HK") then
-                            "CMU"
-                        else if Text.StartsWith([ISIN], "CND") then
-                            "上清所"
-                        else if Text.StartsWith([ISIN], "XS") then
-                            "欧清/明讯"
-                        else
-                            "--"
-                )
-            else
-                GroupRest,
+                RemovedCol,
+        #"Added FolderPath" = fx("FolderPath")(Calculated_DEBUT),
+        #"Added 美元规模分类" = fx("GroupSize")(#"Added FolderPath"),
+        #"Added 年期货币评级分类" = fx("GpTenorCCYRtg")(#"Added 美元规模分类"),
+        #"Added 清算地" = fx("ISINToCSD")(#"Added 年期货币评级分类"),
         /////////////////////////
-        Junction_Start = Calculated_Clearing,
+        Junction_Start = #"Added 清算地",
         /////////////////////////
         Slicer_EntityRtg = fx("RtgSlicer")(Junction_Start, "主体评级", "主体评级分类", "EN"),
         Slicer_IsIG = Table.AddColumn(
@@ -112,10 +69,9 @@
                 Slicer_Structure,
         BOCOMDEAL = Load("fxBOCOMDEAL")(Slicer_Listing),
         // Add CN DES and combine shortnames
-        Written_Stats = fx("WriteStats")(  BOCOMDEAL),
-        
+        Written_Stats = fx("WriteStats")(BOCOMDEAL),
         Written_Tenor = Table.AddColumn(
-             Written_Stats,
+            Written_Stats,
             "期限",
             each
                 if [期限备注] = null then
@@ -156,8 +112,7 @@
         RCol = Table.RemoveColumns(
             Junction, List.Select(Table.ColumnNames(Junction), each Text.Contains(_, "Dummy")), MissingField.Ignore
         ),
-      
-        Checked = fx("CheckNDupe")(    RCol ),
+        Checked = fx("CheckNDupe")(RCol),
         Sorted = fx("SortNIndex")(Checked),
         Presented = fx("PresentNoData")(Sorted)
     in

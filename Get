@@ -506,6 +506,7 @@ let
                 "IS_B&D",
                 "是否合名"
             },
+            Header_ForReviewHD = {"删除及隐藏", "ISIN", "定价日", "信用主体", "债券简称","发行评级", "主体评级", "结构", "备证行全称", "港分_ROLE", "澳分_ROLE", "Check", "ESG", "IPG", "FPG", "定价", "收窄基点", "增发判定", "货币", "发行规模(亿)", "年期", "票息", "品种主题", "上市", "亿美元", "亿元", "亿港币", "台账序号", "Project Name", "EXE", "COVERAGE", "新规角色", "PROJECT_CODE", "期数", "BISL_ROLE", "IS_LEAD", "IS_B&D", "是否合名", "SHORTNAMER", "板块", "板块二级", "板块三级", "中资属性", "级别", "地区", "城市", "区县"},
             Header_Sync_Directory = {"PROJECT_NAME", "COVERAGE", "定价日", "交易简称", "Check", "币种规模", "票息", "期限", "ISIN"},
             Header_Connect_DMI违约 = {"ISIN码", "发行人名称", "违约日期", "违约类型", "地区"},
             Header_DMI_Credit = {"信用主体", "债券简称", "穆迪/标普", "公司类型", "DMI行业", "细分行业", "省份", "城市", "区县", "定价日"},
@@ -839,10 +840,6 @@ let
                 "发行价",
                 "港分_ROLE",
                 "澳分_ROLE",
-                "最终账簿(亿)",
-                "账户数",
-                "地区分布",
-                "类型分布",
                 "起息日期",
                 "信用主体",
                 "主体评级",
@@ -873,9 +870,7 @@ let
                 "项目亮点",
                 "定价会时间",
                 "台账序号",
-                "FolderPath",
-                "JGC",
-                "JBR",
+                "FolderName",
                 "PRJ对账号",
                 "信用主体简称",
                 "板块二级",
@@ -889,10 +884,11 @@ let
                 "DEBUT_DATE",
                 "DMI行业",
                 "YY类型",
-                "合计亿美元",
-                "合计亿元",
-                "合计亿港币",
-                "合计发行规模(亿)",
+                "最终账簿(亿)",
+                "账户数",
+                "地区分布",
+                "类型分布",
+                "FolderPath",
                 "亿元",
                 "亿港币",
                 "首次付息日",
@@ -923,7 +919,7 @@ let
                 "交易简称",
                 "A_Date",
                 "YYYY",
-                "YY",
+                "Year.Num",
                 "MM",
                 "WeekNum",
                 "WeekStartDate",
@@ -944,9 +940,6 @@ let
                 "Count_JBR",
                 "Count_JGC",
                 "ISIN_144A",
-                "ISIN_BISLDeal",
-                "ISIN_JBR",
-                "ISIN_JGC",
                 "ISIN_TEMP",
                 "IS_B&D",
                 "IS_BISLDeal",
@@ -965,8 +958,8 @@ let
                 "是否债券违约",
                 "是否合名",
                 "是否首发",
-                "美元规模分类",
                 "结构分类",
+                "美元规模分类",
                 "覆盖分类",
                 "评级分类",
                 "Check"
@@ -1093,6 +1086,8 @@ let
                     Header_Maturity2024
                 else if Text.Contains(Key, "DEALMASTER") then
                     Header_deal_master
+                else if Text.Contains(Key, "FORREVIEWHD") then
+                    Header_ForReviewHD
                 else
                     {""},
             Selected =

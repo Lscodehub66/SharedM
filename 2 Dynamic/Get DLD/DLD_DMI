@@ -1,21 +1,15 @@
 //let LoadCode = Load("DLD_DMI","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
     Source = fx("Source")("DOWNLOAD_美元债一级"),
-    wRangeStart = List.Buffer(Load("Controller")[wFilter_PreviousMon_Date]){0},
+    Date = fx("DateRange")({"PreviousMon.Date", "Sunday.Date"}),
     ACol = Table.AddColumn(Source, "DataSource", each "DMI"),
     CN_ACol = Table.ColumnNames(ACol),
-    #"//GNG_Multi" =
-        if Text.Contains(Load("Controller")[Multi]{0}, "BBG") or Load("Controller")[Multi]{0} = "ON" then
-            "GO"
-        else
-            "NO-GO",
+    #"//GNG_Multi" = if fx("Parameter")("MultiSource") = "ON" then "GO" else "NO-GO",
     Appended1 = if #"//GNG_Multi" <> "GO" then ACol else fx(
         "Combine"
     )(
         {ACol, Load("DLD_DMI_Missing")}, {null}, CN_ACol
     ),
-    Code1 = Load("fxDMI", "Code"),
-    EVA1 = Expression.Evaluate(Code1, #shared)(Appended1, "Y"),
-    Filtered = Table.SelectRows(EVA1, each [定价日] >= wRangeStart and [债券简称] <> null)
+    Custom1 = fx("DMI2")(Appended1, "Y")
 in
-    Filtered
+    Custom1

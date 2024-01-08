@@ -1,0 +1,84 @@
+// fx("SelfJoin_R")(#"Checked Price", CWB("DLD_priceNstats"), {"Check"})
+(tblname as table, tbltojoin as table, MergeKey as list) =>
+    let
+        // tblname = DLD_p2,   tbltojoin  = CWB("DLD_priceNstats"),    MergeKey = {"Check"},
+        CN_Source = List.Buffer(Table.ColumnNames(tblname)),
+        IPGList = List.Intersect({{"IPG", "FPG", "定价"}, CN_Source}),
+        tbl_nonull = Table.SelectRows(tbltojoin, each not List.Contains({null, ""}, Record.Field(_, MergeKey{0}))),
+        Fn1 = if not List.IsEmpty(IPGList) then fx("NumInputText")(tbl_nonull, IPGList) else tbl_nonull,
+        Schema = Table.Schema(Fn1),
+        _excllist = {"ISIN", "Index", "Check", "Timestamp", "Updator", "定价日", "信用主体"} & MergeKey,
+        Sch1 = Table.SelectRows(Schema, each not List.Contains(_excllist, [Name])),
+        HD_null = List.Intersect(
+            {CN_Source, Table.SelectRows(Sch1, each List.Contains({"number", "date", "datetime"}, [Kind]))[Name]}
+        ),
+        HD_Blank = List.Intersect({CN_Source, Table.SelectRows(Sch1, each List.Contains({"text"}, [Kind]))[Name]}),
+        _prefixNum = "NullJoin.",
+        _prefixText = "Join.",
+        HD_null_Num = List.Transform(HD_null, each _prefixNum & _),
+        HD_Blank_Text = List.Transform(HD_Blank, each _prefixText & _),
+        #"null pair" = List.Zip({HD_null, HD_null_Num}),
+        #"blank pair" = List.Zip({HD_Blank, HD_Blank_Text}),
+        tblOutput = Table.RenameColumns(Fn1, #"blank pair" & #"null pair"),
+        _Datacol = "Dummy50." & ".Data",
+        #"Merged Queries" = Table.NestedJoin(tblname, MergeKey, tblOutput, MergeKey, _Datacol, JoinKind.LeftOuter),
+        #"Expanded Data" = Table.ExpandTableColumn(
+            #"Merged Queries",
+            _Datacol,
+            List.RemoveItems(
+                Table.ColumnNames(Table.Column(#"Merged Queries", _Datacol){0}), Table.ColumnNames(#"Merged Queries")
+            )
+        ),
+        #"Replaced Value" = List.Accumulate(
+            HD_Blank_Text,
+            #"Expanded Data",
+            (x, y) => try Table.TransformColumns(x, {{y, each if _ = null then "" else _, type text}}) otherwise y
+        ),
+        #"Replaced Empty and TBC" = List.Accumulate(
+            HD_null_Num & HD_Blank_Text,
+            #"Replaced Value",
+            (x, y) =>
+                Table.ReplaceValue(
+                    Table.ReplaceValue(
+                        x,
+                        if Text.StartsWith(y, _prefixNum) then
+                            null
+                        else
+                            "",
+                        each Record.Field(_, y),
+                        Replacer.ReplaceValue,
+                        {Text.AfterDelimiter(y, ".")}
+                    ),
+                    "【】",
+                    each if not List.Contains({"", "【】"}, Record.Field(_, y)) then Record.Field(_, y) else "【】",
+                    Replacer.ReplaceValue,
+                    {Text.AfterDelimiter(y, ".")}
+                )
+        ),
+        #"Replaced both Non-blank" = List.Accumulate(
+            HD_null_Num & HD_Blank_Text,
+            #"Replaced Empty and TBC",
+            (x, y) =>
+                Table.ReplaceValue(
+                    x,
+                    each Record.Field(_, Text.AfterDelimiter(y, ".")),
+                    each
+                        if
+                            not List.Contains({null, "", "【】"}, Record.Field(_, Text.AfterDelimiter(y, ".")))
+                            and not List.Contains({null, "", "【】"}, Record.Field(_, y))
+                            and Record.Field(_, Text.AfterDelimiter(y, ".")) <> Record.Field(_, y)
+                        then
+                            Record.Field(_, y)
+                        else
+                            Record.Field(_, Text.AfterDelimiter(y, ".")),
+                    Replacer.ReplaceValue,
+                    {Text.AfterDelimiter(y, ".")}
+                )
+        ),
+        Custom1 =
+            if Table.RowCount(tbl_nonull) = 0 or Table.RowCount(tblname) =0 then
+                tblname
+            else
+                Table.SelectColumns(#"Replaced both Non-blank", CN_Source)
+    in
+        Custom1

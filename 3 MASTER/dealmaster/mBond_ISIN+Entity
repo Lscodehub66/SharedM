@@ -1,13 +1,22 @@
 let
     mCoverage = Load("mCoverage"),
     Source = CWB("mBond"),
-       JoinESG22 = fx("Merge")(Source , CWB("ESG_ExternalReview"), "ISIN", "ISIN", {""}, {""}),
+    JoinESG22 = fx("Merge")(Source, CWB("ESG_ExternalReview"), "ISIN", "ISIN", {""}, {""}),
     CN_Source = List.Buffer(Table.ColumnNames(Source)),
-DMIExpList = {"TICKER","首次付息日","付息频率","债券余额","评级类型", "利率类型", "筹款用途"},
-    JoinDMI = fx("Merge")( JoinESG22 , fx("Source")("DMI"), "ISIN", "ISIN",DMIExpList , List.ReplaceMatchingItems(DMIExpList,{{"评级类型","是否债券违约"}})),
-    TF = Table.TransformColumns(JoinDMI, {{"是否债券违约", each if _ <> "违约" then "" else "Y" }}),
+    DMIExpList = {"TICKER", "首次付息日", "付息频率", "债券余额", "评级类型", "利率类型", "筹款用途"},
+    JoinDMI = fx(
+        "Merge"
+    )(
+        JoinESG22,
+        fx("Source")("DMI"),
+        "ISIN",
+        "ISIN",
+        DMIExpList,
+        List.ReplaceMatchingItems(DMIExpList, {{"评级类型", "是否债券违约"}})
+    ),
+    TF = Table.TransformColumns(JoinDMI, {{"是否债券违约", each if _ <> "违约" then "" else "Y"}}),
     #"Transformed SBLCName" = Table.RenameColumns(
-        fx("FormerName")(  TF , "备证行全称"), {"Dummy.信用主体", "Dummy.SBLC"}, MissingField.UseNull
+        fx("FormerName")(TF, "备证行全称"), {"Dummy.信用主体", "Dummy.SBLC"}, MissingField.UseNull
     ),
     JoinSBLC = fx("Merge")(#"Transformed SBLCName", Load("mSBLC"), "Dummy.SBLC", "备证行全称", {""}, {""}),
     AddSBLCSuffix = if List.IsEmpty(List.Select(CN_Source, each Text.Contains(_, "备证行"))) then JoinDMI else JoinSBLC,

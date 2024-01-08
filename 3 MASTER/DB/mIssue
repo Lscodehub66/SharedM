@@ -1,7 +1,7 @@
 // let LoadCode = Load("mIssue","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
     Source = CWB("mCurated"),
-    #"Renamed Columns" = Table.RenameColumns(Source, {{"OTHER_ISIN", "ISIN_TEMP"}}),
+    #"Renamed Columns" = Table.RenameColumns(Source, {{"OTHER_ISIN", "ISIN_TEMP"}}, MissingField.Ignore),
     #"Replaced Value" = Table.ReplaceValue(
         #"Renamed Columns",
         each [ISIN_TEMP],
@@ -9,18 +9,15 @@ let
         Replacer.ReplaceValue,
         {"ISIN_TEMP"}
     ),
-   
-
-   Extracted = fx("ExtractStats")(  #"Replaced Value" ),
-    Custom1 = fx("Merge")( Extracted , CWB("deal_master"), "Check", "Check", {"交易简称"}, {"债券简称"}),
+    Custom1 = fx("Merge")(#"Replaced Value", CWB("deal_master"), "Check", "Check", {"交易简称"}, {"债券简称"}),
     #"Removed Other Columns" = Table.SelectColumns(
         Custom1,
-        {"删除及隐藏",
+        {
+            "删除及隐藏",
             "债券简称",
             "ISIN",
             "定价日",
             "增发判定",
-            "ISIN_TEMP",
             "发行规模(亿)",
             "IPG",
             "FPG",
@@ -28,12 +25,9 @@ let
             "收窄基点",
             "发行价",
             "港分_ROLE",
-            "澳分_ROLE",            
-            "最终账簿(亿)",
-            "账户数",
-            "地区分布",
-            "类型分布",
+            "澳分_ROLE",
             "起息日期",
+            "ISIN_TEMP",
             "Check",
             "Timestamp"
         },

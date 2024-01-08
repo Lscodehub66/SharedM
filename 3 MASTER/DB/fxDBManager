@@ -5,7 +5,7 @@
         // Definitions fx("DBManager")(Source,"mCredit","LIFO")
         //
         CN_Source = Table.ColumnNames(SourceDB),
-        HD = List.Intersect({{"Check", "信用主体", "信用主体(备证行)", "Date", "Timestamp", "板块二级", "BISL_ROLE"}, CN_Source}),
+        HD = List.Intersect({{"Check", "ISIN","信用主体", "信用主体(备证行)", "Date", "Timestamp", "板块二级", "BISL_ROLE"}, CN_Source}),
         HD_Count = List.Count(HD),
         MorW = if not List.Contains(HD, "Timestamp") then "W" else "M",
         // Filter out blank rows & invoke dataformat
@@ -56,28 +56,30 @@
         // Remember to check the referenced name if you revise previous steps **Referenced Dummy Step **
         _CROSSROAD = if MorW = "W" then Load("fxUpdatorTS")(RemovedDupe) else RemovedDupe,
         // Revalidate mCurated
-        #"ReCalculated FX" = fx("RecalculateFX")(_CROSSROAD),
+
         #"Replaced WeeklyMissing" =
             if List.ContainsAll(CN_Source, {"SPECIALs", "DataSource"}) then
                 Table.ReplaceValue(
-                    #"ReCalculated FX",
+                    _CROSSROAD ,
                     each [SPECIALs],
                     each if [DataSource] = "BBG" then "Weekly DMI_Missing" else [SPECIALs],
                     Replacer.ReplaceValue,
                     {"SPECIALs"}
                 )
             else
-                #"ReCalculated FX",
+                _CROSSROAD ,
                 
         // Revalidate mBISL BISL_Ancient
         BISL_对帐号 = Load("fxPRJSync")(#"Replaced WeeklyMissing", "台账序号", "定价日", "PRJ对账号"),
+        // **Skipped
         DB_mBISL =
             if List.Contains(CN_Source, "IS_KYC_DONE") and MorW = "M" then
                 fx("fxDEALs_ToReplace")(BISL_对帐号)
             else
                 BISL_对帐号,
+                  // **Skipped
         //  **Referenced Dummy Step ** This step is referenced by the conditional mCredit Manager step as Source !
-        DB_Entity = if List.Contains(HD, "板块二级") and MorW = "M" then Load("fxDB_Entity")(DB_mBISL) else DB_mBISL,
+        DB_Entity = if List.Contains(HD, "板块二级") and MorW = "M" then Load("fxDB_Entity")(BISL_对帐号) else BISL_对帐号,
         //  **Referenced Dummy Step ** This step is referenced by the conditional sort step - better not to change it !
         FnDBUpdated = if MorW = "M" then fx("DBUpdator")(DB_Entity) else DB_Entity,
         PresentedNull = fx("PresentNoData")(FnDBUpdated),

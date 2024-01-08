@@ -16,7 +16,7 @@
                 {"ticker", "TICKER"},
                 {"行业", "DMI行业"},
                 {"交易所", "发行场所"},
-                {"临时isin", "OTHER_ISIN"}
+                {"临时isin", "ISIN_TEMP"}
             },
             MissingField.Ignore
         ),
@@ -360,7 +360,7 @@
             "是否首次品种",
             "项目亮点"
         }
-            & List.Select(CN_RNSource, each Text.StartsWith(_, "IS_")),
+            & List.Select(CN_RNSource, each Text.StartsWith(_, "IS_", Comparer.OrdinalIgnoreCase) or  Text.StartsWith(_, "Filter_", Comparer.OrdinalIgnoreCase)),
         //Type Transformation
         Type_Dimtbl = Table.Buffer(
             Table.FillDown(

@@ -1,0 +1,38 @@
+(TableName as table) =>
+    let
+        Source = TableName,
+        CN_Source = List.Buffer(Table.ColumnNames(Source)),
+        #"Added FolderName" =
+            if Table.HasColumns(Source, "公盘地址") and not Table.HasColumns(Source, "FolderName") then
+                Table.AddColumn(
+                    Source,
+                    "FolderName",
+                    each
+                        List.Accumulate(
+                            {"FI&C\", "POE\", "SOE\"},
+                            "",
+                            (x, y) =>
+                                if Text.Contains([公盘地址], y) then
+                                    y & Text.BeforeDelimiter(Text.AfterDelimiter([公盘地址], y), "\")
+                                else
+                                    x
+                        )
+                )
+            else
+                Source,
+        #"Added FolderPath" =
+            if Table.HasColumns(Source, {"FolderName", "YYYY"}) and not Table.HasColumns(Source, "FolderPath") then
+                Table.AddColumn(
+                    #"Added FolderName",
+                    "FolderPath",
+                    each
+                        if [FolderName] = "" then
+                            ""
+                        else
+                            "\\itd-m09-fs02\dcm$\Deals\Completed\" & [YYYY] & " Completed\" & [FolderName],
+                    type text
+                )
+            else
+                #"Added FolderName"
+    in
+        #"Added FolderPath"

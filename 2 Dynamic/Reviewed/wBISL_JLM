@@ -1,5 +1,5 @@
 let
-    Source = CWB("DLD_Conso"),
+    Source = CWB("DLD_Add"),
     #"Filtered Rows" = Table.SelectRows(Source, each not List.Contains({"",null,"--"}, [BISL_ROLE] )),
     #"Removed Other Columns" = Table.SelectColumns(#"Filtered Rows",{"联席全球协调人", "牵头经办人", "Check"}),
     Custom1 = fx("AddJLMCN")( #"Removed Other Columns"   ),

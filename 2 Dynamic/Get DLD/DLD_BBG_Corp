@@ -16,10 +16,7 @@ let
         }
     ),
     #"//GNG_Multi" =
-        if Text.Contains(Load("Controller")[Multi]{0}, "BBG") or Load("Controller")[Multi]{0} = "ON" then
-            "GO"
-        else
-            "NO-GO",
+       if fx("Parameter")("MultiSource") = "ON" then "GO" else "NO-GO",
     Crossroad =
         if #"//GNG_Multi" <> "GO" then
             try CWB("DLD_BBG_Corp") otherwise fx("CheckNDupe")(TBC_Replaced)

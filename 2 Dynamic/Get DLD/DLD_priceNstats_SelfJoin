@@ -1,0 +1,9 @@
+let
+    Source = CWB("DLD_priceNstats"),
+    SCol = Table.SelectColumns(
+        Source, {"IPG", "FPG", "定价", "认购额(亿)", "投资者账户数", "投资者类型", "投资者分布", "Check"}, MissingField.UseNull
+    ),
+    Fn = fx("NumInputText")(SCol, {"FPG", "定价"}),
+    PrefixCol = Table.PrefixColumns(Fn, "Dummy")
+in
+    PrefixCol

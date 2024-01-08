@@ -1,0 +1,51 @@
+(_input as nullable text) =>
+let
+    MonDate = Date.From(fx("Parameter")("Monday")[Value]),
+    wFilter_Value = fx("Parameter")("wFilter")[Value],
+    Parameters = {"当前", "上周", "年初", "22年初", "近1年", "近5年", "近3月", "当前_YYW", "上周_YYW", "wFilter_PreviousMon_Date"},
+    Source_Mon =
+        if _input = null then
+            Parameters
+        else if Text.Contains("Monday", _input, Comparer.OrdinalIgnoreCase) then
+            {""}
+        else
+            List.Select(Parameters, each Text.Contains(_, _input, Comparer.OrdinalIgnoreCase)),
+    Output =
+        if List.IsEmpty(Source_Mon) then
+            MonDate
+        else
+            #table(
+                type table [
+                    Monday.Date = date,
+                    当前 = date,
+                    上周 = date,
+                    年初 = date,            
+                    近1年 = date,
+                    近5年 = date,
+                    近3月 = date,
+                    当前_YYW = text,
+                    上周_YYW = text,
+                    wFilter_PreviousMon_Date = date
+                ],
+                List.Transform(
+                    {MonDate},
+                    each
+                        {
+                            Date.AddDays(_, -3),
+                            Date.AddDays(_, -10),
+                            fx("NextWeekDay")(Date.StartOfYear(_)),
+                            fx("NextWeekDay")(Date.StartOfYear(Date.AddYears(_, -1))),
+                            fx("NextWeekDay")(Date.AddYears(_, -1)),
+                            fx("NextWeekDay")(Date.AddYears(_, -5)),
+                            fx("NextWeekDay")(Date.AddMonths(_, -3)),
+                            Load("fxYYW")(Date.AddDays(_, -3)),
+                            Load("fxYYW")(Date.AddDays(_, -10)),
+                            if wFilter_Value <> "" then
+                                Date.StartOfWeek(Date.AddDays(_, -3), Day.Monday)
+                            else
+                                #date(1991, 2, 20)
+                        }
+                )
+            )
+in
+    Output
