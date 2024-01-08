@@ -8,12 +8,10 @@ let
     Pie5 = fx("Pie")(Source, "年", Order.Ascending, "评级分类", "亿美元"),
     Combined = fx("Combine")({Pie1, Pie2, Pie3, Pie4, Pie5}),
     Substracted = Table.AddColumn(Combined, "变动", each [23年占比] - [22年占比], Percentage.Type),
-    MergedQ = fx("Merge")(
-        Substracted, Get("SortTable_Graph_USDCNHPIE"), "Column2", "Column2", {"Index"}, {"Index"}
-    ),
+    MergedQ = fx("Merge")(Substracted, Get("SortTable_Graph_USDCNHPIE"), "Column2", "Column2", {"Index"}, {"Index"}),
     Sorted = Table.Sort(MergedQ, {{"Index", 0}}),
-    Reordered = Table.ReorderColumns(
-        Sorted, List.Distinct({"Index"} & Table.ColumnNames(Sorted)), MissingField.Ignore
+    Reordered = Table.SelectColumns(
+        Sorted, {"Index", "Column1", "Column2", "22年亿美元", "23年亿美元", "24年亿美元", "变动"}, MissingField.UseNull
     )
 in
     Reordered

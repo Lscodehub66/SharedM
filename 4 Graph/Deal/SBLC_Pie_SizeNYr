@@ -21,8 +21,8 @@ let
     Sorted = Table.Sort(#"Expanded Data", {{"Index", 0}}),
     List_NullToZero = List.RemoveItems(Table.ColumnNames(#"Expanded Data"), {"Column1", "Column2"}),
     #"Replaced Value" = Table.ReplaceValue(Sorted, null, 0, Replacer.ReplaceValue, List_NullToZero),
-    Reordered = Table.ReorderColumns(
-        #"Replaced Value", List.Distinct({"Index"} & Table.ColumnNames(Sorted)), MissingField.Ignore
+     Reordered = Table.SelectColumns(
+        Sorted, {"Index", "Column1", "Column2", "22年亿美元", "23年亿美元", "24年亿美元", "变动"}, MissingField.UseNull
     )
 in
     Reordered

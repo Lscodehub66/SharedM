@@ -1,0 +1,111 @@
+(TableName as table, _input as list) =>
+    let
+        //TableName =CWB("deal_master"), _input = {"发行评级","评级分类", "EN","RtgScore"},
+        Source = TableName,
+        ref1 = _input{0},
+        New1 = _input{1},
+        Dummy1 = "Dummy." & ref1,
+        Is_RtgScore = List.Contains(_input, "Score", Comparer.OrdinalIgnoreCase),
+        Score1 = if Is_RtgScore = true then ref1 & ".RtgScore" else "DummyScore1",
+        Is_EN = List.Contains(_input, "EN", Comparer.OrdinalIgnoreCase),
+        Is_allCol = List.Contains(_input, "ALL", Comparer.OrdinalIgnoreCase),
+        Prep = Table.RemoveColumns(Source, {New1}, MissingField.Ignore),
+        #"Duplicated Column" = Table.DuplicateColumn(Prep, ref1, Dummy1),
+        #"Added Custom0" = Table.AddColumn(
+            #"Duplicated Column",
+            "DummyRtg1",
+            each Table.FromList(Text.Split(Text.Upper(Record.Field(_, Dummy1)), "/"))
+        ),
+        #"Added Custom" = Table.AddColumn(
+            #"Added Custom0", "DummyRtgCount", each List.Count([DummyRtg1][Column1]), type number
+        ),
+        Custom1 = Table.TransformColumns(
+            #"Added Custom",
+            {
+                {
+                    "DummyRtg1",
+                    each
+                        Table.AddColumn(
+                            _, "Column2", each if [Column1] = "--" then "NR" else Text.Select([Column1], {"A".."Z"})
+                        )
+                }
+            }
+        ),
+        rtgtbl = Table.FromRows(
+            {
+                {"AAA", "IG", "投资级"},
+                {"AA", "IG", "投资级"},
+                {"A", "IG", "投资级"},
+                {"BAA", "IG", "投资级"},
+                {"BBB", "IG", "投资级"},
+                {"BA", "HY", "高收益"},
+                {"BB", "HY", "高收益"},
+                {"B", "HY", "高收益"},
+                {"CAA", "HY", "高收益"},
+                {"CCC", "HY", "高收益"},
+                {"CA", "HY", "高收益"},
+                {"CC", "HY", "高收益"},
+                {"C", "HY", "高收益"},
+                {"D", "D", "--"},
+                {"SD", "D", "--"},
+                {"RD", "D", "--"},
+                {"WD", "--", "--"},
+                {"--", "NR", "无评级"},
+                {"NR", "NR", "无评级"}
+            },
+            {"Value", "EN", "CN"}
+        ),
+        rtgtbl2 = Table.FromRows(
+            {
+                {"AAA", 3},
+                {"AA", 3},
+                {"A", 3},
+                {"BAA", 3},
+                {"BBB", 3},
+                {"BA", 4},
+                {"BB", 4},
+                {"B", 4},
+                {"CAA", 4},
+                {"CCC", 4},
+                {"CA", 4},
+                {"CC", 4},
+                {"C", 4},
+                {"D", 5},
+                {"SD", 5},
+                {"RD", 5},
+                {"--", 2},
+                {"NR", 2}
+            },
+            {"Value", "Score"}
+        ),
+        #"TF Joined" = Table.TransformColumns(
+            Custom1, {{"DummyRtg1", each Table.Join(_, {"Column2"}, rtgtbl2, {"Value"}, JoinKind.Inner)}}
+        ),
+        Custom2 = Table.AddColumn(#"TF Joined", Score1, each List.Max([DummyRtg1][Score])),
+        Custom3 = Table.AddColumn(
+            Custom2,
+            New1,
+            each
+                if [DummyRtgCount] < 3 then
+                    "--"
+                else if Record.Field(_, Score1) = 5 then
+                    "违约"
+                else if Record.Field(_, Score1) = 4 then
+                    "高收益"
+                else if Record.Field(_, Score1) = 3 then
+                    "投资级"
+                else if Record.Field(_, Score1) = 2 then
+                    "无评级"
+                else
+                    "--",
+            type text
+        ),
+        Replaced = if Is_EN = true then fx("Replace")(Custom3, {New1}, "评级分类") else Custom3,
+        RCol = if Is_allCol = true then Replaced else if Table.HasColumns(Source, ref1) then fx("RCol")(Replaced) else Source
+        
+            in
+             RCol 
+       // #"Merged Queries" = Table.NestedJoin( RCol, {"ISIN", "主体评级"}, Query7, {"ISIN", "主体评级"}, "Query7", JoinKind.LeftOuter        ),
+       // #"Expanded Query7" = Table.ExpandTableColumn(            #"Merged Queries", "Query7", {"主体评级", "主体评级分类"}, {"Query7.主体评级", "Query7.主体评级分类"}        ),
+     //   #"Filtered Rows" = Table.SelectRows(#"Expanded Query7", each [主体评级分类] <> [Query7.主体评级分类])
+

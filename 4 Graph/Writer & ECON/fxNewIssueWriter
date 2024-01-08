@@ -117,7 +117,7 @@
             }
         ),
         #"Replaced Value" = Table.ReplaceValue(
-            Grouped, each [增发判定], each if [增发判定] = "" and [多笔] <> null then "定价" else [增发判定], Replacer.ReplaceValue,
+            Grouped, each [增发判定], each if [增发判定] = "" and [多笔] <> null then "定价" else "增发", Replacer.ReplaceValue,
             {
                 "增发判定"
             }

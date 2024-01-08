@@ -10,7 +10,7 @@
     let
         // TableName = Splited, Current ="当前" ,   Past = "上周", TextTrendCNList={"Text","Trend","Trend_CN"} ,AddTextColforCurrentIsTrue = true,
         Source = TableName,
-        DAXRange = if Text.Contains(Past, "初") then Text.Select(Past, {"日", "周", "月", "季", "年"}) & "初至今" else Past,
+        DAXRange = if Text.Contains(Past, "初") then Text.Select(Past,{ "上","前","去"}) & Text.Select(Past, {"日", "周", "月", "季", "年"}) & "初至今" else Past,
         DAXColName = "△" & DAXRange,
         Text = TextTrendCNList{0},
         Trend = TextTrendCNList{1},

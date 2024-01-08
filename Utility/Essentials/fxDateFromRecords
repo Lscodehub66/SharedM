@@ -1,6 +1,8 @@
 (_input as list) =>
     let
         DateList = _input,
+
+        //     
         Output = #table(
             type table [
                 A_Date = date,
@@ -10,6 +12,7 @@
                 WeekStartDate = date,
                 QEndDate = date,
                 YYYY = text,
+                YYYY.至今 = text,
                 YYQQ = text,
                 YYMMDD = text,
                 DayName = text,
@@ -32,6 +35,10 @@
                         Date.StartOfWeek(_, Day.Monday),
                         Date.EndOfQuarter(_),
                         Date.ToText(_, "yyyy"),
+                        if Date.Month(_) = 1 then
+                            Date.ToText(Date.AddYears(_, -1), "yyyy")
+                        else
+                            Date.ToText(_, "yyyy"),
                         Text.RemoveRange(Number.ToText(Date.Year(_)), 0, 2)
                             & "Q"
                             & Number.ToText(Date.QuarterOfYear(_), "0"),
