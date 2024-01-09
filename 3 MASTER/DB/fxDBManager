@@ -62,7 +62,7 @@
                 Table.ReplaceValue(
                     _CROSSROAD ,
                     each [SPECIALs],
-                    each if [DataSource] = "BBG" then "Weekly DMI_Missing" else [SPECIALs],
+                    each if [DataSource] = "BBG" then "wDMI Missing(BBG)" else [SPECIALs],
                     Replacer.ReplaceValue,
                     {"SPECIALs"}
                 )

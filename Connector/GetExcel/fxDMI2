@@ -1,10 +1,7 @@
 //Indicate "Y" in second argument to enable clean steps - best for load small number of rows - such as weekly
 // let Code = Load("fxDMI","Code"), EVA = Expression.Evaluate(Code,#shared)(Source) in EVA
 // let TableName =  Source, _inputkey= "Y",RangeStartNum=null,RangeEndNum = null, DMIFiltertbl_PutFilterOutValueInColumn1 = Get("Dimtbl_DMI_Filter"),
-(
-    TableName as table,
-    optional _inputkey as nullable text
-) =>
+(TableName as table, optional _inputkey as nullable text) =>
     let
         Source = TableName,
         //【3】Rename Columns
@@ -33,8 +30,9 @@
         ),
         Output_Junction = Revalidated,
         // Clean
+        Replace_blank = Table.ReplaceValue(Output_Junction, "", each [信用主体], Replacer.ReplaceValue, {"债券简称"}),
         Clean_TF = Table.TransformColumns(
-            Output_Junction,
+            Replace_blank,
             {
                 {
                     "信用主体",

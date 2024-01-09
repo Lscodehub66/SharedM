@@ -1,0 +1,26 @@
+// let Code = Load("wDMI_MissedISIN","Code"), EVA = Expression.Evaluate(Code ,#shared) in EVA
+let
+    Source = fx("Source")("DOWNLOAD_美元债一级"),
+    需填写 = {"ISIN", "定价日", "信用主体"},
+    需留空 = {"债券简称", "货币"},
+    ToBracket = {"主题债券", "发行架构", "IPT", "FPG", "联席全球协调人"},
+    Filtered = Table.SelectRows(
+        Source,
+        each
+            List.Accumulate(
+                需填写 & 需留空,
+                true,
+                (x, y) =>
+                    if List.Contains(需填写, y) then
+                        not List.Contains({"", null, "--"}, Record.Field(_, y))
+                    else
+                        List.Contains({"", null, "--"}, Record.Field(_, y)) and x
+            )
+    ),
+    TF = List.Accumulate(
+        ToBracket, Filtered, (x, y) =>
+            try Table.TransformColumns(x, {{y, each if List.Contains({"", null, "--"}, _)  then "【】" else _}}) otherwise x
+    ),
+    SCol = Table.SelectColumns(TF, 需填写 & ToBracket)
+in
+    SCol

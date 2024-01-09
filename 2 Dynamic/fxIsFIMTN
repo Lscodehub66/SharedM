@@ -1,10 +1,10 @@
 (TableName as table, optional OneAsNoY_ZeroAsOnlyY as number, optional SelectCNNum1 as number) =>
     let
         Source = fx("Data")(TableName),
-        CN_Input = {"ISIN", "定价日", "信用主体","货币","发行规模(亿)" ,"主题债券", "IPT_DMI", "FPG_DMI", "联席全球协调人", "牵头经办人", "行业"},
+        CN_Input = {"ISIN", "定价日", "信用主体", "货币", "发行规模(亿)", "主题债券", "IPT_DMI", "FPG_DMI", "联席全球协调人", "牵头经办人", "行业"},
         CN_Source = Table.ColumnNames(Source),
-       CN_IPT =  List.Select(CN_Source, each Text.Contains(_,"IPT") or Text.Contains(_,"IPG")){0},
-       CN_FPG =  List.Select(CN_Source, each Text.Contains(_,"FPG") or Text.Contains(_,"FPT")){0},
+        CN_IPT = List.Select(CN_Source, each Text.Contains(_, "IPT") or Text.Contains(_, "IPG")){0},
+        CN_FPG = List.Select(CN_Source, each Text.Contains(_, "FPG") or Text.Contains(_, "FPT")){0},
         Removed = Table.RemoveColumns(Source, {"IS_FIMTN"}, MissingField.Ignore),
         Output = Table.AddColumn(
             Removed,
@@ -14,9 +14,9 @@
                     [主题债券]
                 else if Text.Contains([联席全球协调人], "BOCOM") or Text.Contains([牵头经办人], "BOCOM") then
                     "IsBOCOM"
-                else if Text.Length(Record.Field(_,CN_IPT)) >4 then
+                else if Text.Length(Record.Field(_, CN_IPT)) > 4 then
                     "有IPG"
-                else if Text.Length(Record.Field(_,CN_FPG)) >4  then
+                else if Text.Length(Record.Field(_, CN_FPG)) > 4 then
                     "有FPG"
                 else if List.Count(Text.Split([联席全球协调人], ";")) > 2 then
                     "JGC至少3家"
@@ -27,19 +27,32 @@
                 else
                     "Y"
         ),
+        List1 = List.Intersect({CN_Source, {"SPECIALs", "DataSource"}}),
         Replaced =
-            if List.Contains(Table.ColumnNames(Output), "DataSource") then
+            if not List.IsEmpty(List1) then
                 Table.ReplaceValue(
                     Output,
                     each [IS_FIMTN],
-                    each if Text.Contains([DataSource], "BBG", Comparer.OrdinalIgnoreCase) then "--" else [IS_FIMTN],
+                    each
+                        if Text.Contains(Record.Field(_, List1{0}), "BBG", Comparer.OrdinalIgnoreCase) then
+                            "--"
+                        else
+                            [IS_FIMTN],
                     Replacer.ReplaceValue,
                     {"IS_FIMTN"}
                 )
             else
                 Output,
-        Filtered = Table.SelectRows(Replaced, each if OneAsNoY_ZeroAsOnlyY = 0 then [IS_FIMTN] = "Y" else if  OneAsNoY_ZeroAsOnlyY = 1 
-        then [IS_FIMTN] <> "Y" else true),
+        Filtered = Table.SelectRows(
+            Replaced,
+            each
+                if OneAsNoY_ZeroAsOnlyY = 0 then
+                    [IS_FIMTN] = "Y"
+                else if OneAsNoY_ZeroAsOnlyY = 1 then
+                    [IS_FIMTN] <> "Y"
+                else
+                    true
+        ),
         SCol =
             if SelectCNNum1 = 1 then
                 Table.SelectColumns(Filtered, CN_Input & {"IS_FIMTN"}, MissingField.UseNull)
@@ -47,4 +60,3 @@
                 Filtered
     in
         SCol
- 

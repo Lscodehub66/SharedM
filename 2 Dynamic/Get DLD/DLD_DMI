@@ -2,13 +2,11 @@
 let
     Source = fx("Source")("DOWNLOAD_美元债一级"),
     Date = fx("DateRange")({"PreviousMon.Date", "Sunday.Date"}),
-    ACol = Table.AddColumn(Source, "DataSource", each "DMI"),
-    CN_ACol = Table.ColumnNames(ACol),
     #"//GNG_Multi" = if fx("Parameter")("MultiSource") = "ON" then "GO" else "NO-GO",
-    Appended1 = if #"//GNG_Multi" <> "GO" then ACol else fx(
+    Appended1 = if #"//GNG_Multi" <> "GO" then Source else fx(
         "Combine"
     )(
-        {ACol, Load("DLD_DMI_MissingPQ")}, {null},{0}
+        {Source, Load("DLD_DMI_MissingPQ")}, {null},{0}
     ),
     Custom1 = fx("DMI2")(Appended1, "Y")
 in
