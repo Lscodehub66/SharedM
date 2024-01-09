@@ -1,8 +1,8 @@
-(_input as list) =>
+(_input as list, optional SCollist as list) =>
+    //  fx("DateFromRecord")(fx("DateRange")({"近5年", "当前"}),{"每周第一天"}),
     let
         DateList = _input,
-
-        //     
+        //
         Output = #table(
             type table [
                 A_Date = date,
@@ -50,9 +50,11 @@
                         Date.ToText(_, "yy年") & "Q" & Number.ToText(Date.QuarterOfYear(_), "0"),
                         Number.ToText(Date.Month(_), "00月"),
                         Number.ToText(Date.WeekOfYear(_, Day.Monday), "00周"),
-                        Date.ToText(Date.StartOfWeek(_, Day.Monday), "yy年M月d日起一周")
+                        Date.ToText(Date.StartOfWeek(_, Day.Monday), "yyyy年MM月dd日起一周")
                     }
             )
-        )
+        ),
+        SCol = if SCollist = null then Output else Table.SelectColumns(Output, SCollist, MissingField.UseNull)
+        // Keys =  if Table.HasColumns(SCol, "A_Date") then Table.AddKey(SCol, {"A_Date"},true) else SCol
     in
-        Output
+        SCol

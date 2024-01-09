@@ -1,37 +1,6 @@
 let
-    Start = #date(2013, 1, 1),
-    SColInput = {null},
-    End = Date.EndOfYear(Date.AddYears(Date.From(DateTime.FixedLocalNow()),1)), 
-    //**
-    DimDate = List.Reverse(List.Generate(() => Start, each _ <= End, each Date.AddDays(_, 1))),
-    Source = Table.FromColumns({DimDate}, {"Column1"}),
-    DateType = Table.TransformColumnTypes(Source,{{"Column1", type date}}),
-        ACol = Table.AddColumn( DateType , "YYYY", each Date.ToText([Column1],"yyyy"), type text),
-    ACol0 = Table.AddColumn(  ACol  , "Year.Num", each Date.Year([Column1]), type number),
-    ACol1 = Table.AddColumn(ACol0, "MM", each Date.Month([Column1]), type number),
-    ACol2 = Table.AddColumn(ACol1, "WeekNum", each Date.WeekOfYear([Column1], Day.Monday), type number),
-    ACol2a = Table.AddColumn(ACol2, "WeekStartDate", each Date.StartOfWeek([Column1], Day.Monday), type date),
-     ACol2b = Table.AddColumn(ACol2a, "每周第一天", each Date.ToText([WeekStartDate],"yy年M月d日起一周"), type text),   
-    ACol2c = Table.AddColumn(ACol2b, "YYW", each Load("fxYYW")([Column1]), type text),
-    ACol3 = Table.AddColumn(ACol2c, "年", each Date.ToText([Column1], "yy年"), type text),
-    ACol4 = Table.AddColumn(ACol3, "季", each "Q" & Number.ToText(Date.QuarterOfYear([Column1]), "0"), type text),
-    ACol4a = Table.AddColumn(ACol4, "YYQQ", each Text.RemoveRange(Number.ToText([Year.Num]), 0, 2) & [季], type text),
-    ACol4b = Table.AddColumn(ACol4a, "QEndDate", each Date.EndOfQuarter([Column1]), type date),
-    ACol5 = Table.AddColumn(ACol4b, "月", each Number.ToText([MM], "00月")),
-    ACol6 = Table.AddColumn(ACol5, "周", each Number.ToText([WeekNum], "00周")),
-    ACol7 = Table.AddColumn(ACol6, "年月", each [年] & [月], type text),
-    ACol8 = Table.AddColumn(ACol7, "YYMMDD", each Date.ToText([Column1], "yyMMdd"), type text),
-    ACol9 = Table.AddColumn(ACol8, "DayName", each Date.DayOfWeekName([Column1]), type text),
-    ACol10 = Table.AddColumn(ACol9, "DayShortName", each Date.ToText([Column1], "ddd"), type text),
-    ACol11 = fx("Replace")(Table.DuplicateColumn(ACol10, "DayShortName", "周几"), {"周几"}, "周几"),
-    Renamed = Table.RenameColumns(ACol11, {{"Column1", "A_Date"}}),
-    Sorted = Table.Sort(Renamed, {{"A_Date", Order.Ascending}}),
-    AddedIndex = Table.AddIndexColumn(Sorted, "Index", 1, 1),
-    SortReversed = Table.Sort(AddedIndex, {{"Index", Order.Descending}}),
-    SColOutput =
-        if SColInput = {null} then
-            SortReversed
-        else
-            Table.SelectColumns(SortReversed, SColInput, MissingField.UseNull)
+    Source = fx("DateRange")({"wNIMStart.Date","Now.Date"}),
+    Custom1 = fx("DateFromRecord")(Source),
+    Custom2 = Table.AddKey(Custom1,{"A_Date"},true)
 in
-    SColOutput
+    Custom2

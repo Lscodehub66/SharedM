@@ -114,6 +114,31 @@ let
                 ),
                 {{"Index", Int64.Type}}
             ),
+            SortTable_SOEPie = Table.TransformColumnTypes(
+                Table.FromRows(
+                    {
+                        {"1", "美元规模分类SOE（按规模）", "≤1亿"},
+                        {"2", "美元规模分类SOE（按规模）", "1-2亿"},
+                        {"3", "美元规模分类SOE（按规模）", "2-3亿"},
+                        {"4", "美元规模分类SOE（按规模）", "3-5亿"},
+                        {"5", "美元规模分类SOE（按规模）", ">5亿"},
+                        {"6", "评级分类（按规模）", "无评级"},
+                        {"7", "评级分类（按规模）", "投资级"},
+                        {"8", "评级分类（按规模）", "高收益"},
+                        {"9", "年期分类（按笔数）", "≤1年"},
+                        {"10", "年期分类（按笔数）", "1-3年"},
+                        {"11", "年期分类（按笔数）", "3-5年"},
+                        {"12", "年期分类（按笔数）", ">5年"},
+                        {"13", "年期分类（按笔数）", "永续"},
+                        {"14", "结构分类（按笔数）", "备证"},
+                        {"15", "结构分类（按笔数）", "直发"},
+                        {"16", "结构分类（按笔数）", "担保"},
+                        {"17", "结构分类（按笔数）", "维好"}
+                    },
+                    {"Index", "Column1", "Column2"}
+                ),
+                {{"Index", Int64.Type}}
+            ),
             Dimtbl_TextFormat = Table.FromRows(
                 {
                     {"Indice_Equity", "I", "0", "点", "0.0%", "维持不变/下跌/上涨", 2},
@@ -137,6 +162,23 @@ let
                     {"Folder_QRC", "\EXE Team\QRC", "\【QRC】DCM项目情况表", ""}
                 },
                 {"Folder", "Folder_Remote", "Folder_Global", "Folder_Segment"}
+            ),
+            Dimtbl_sheet = Table.FromRows(
+                {
+                    {"DOWNLOAD", "美元债一级", {1, "", "Column"}},
+                    {"DOWNLOAD", "ECON", {"Column1", "Date Time"}},
+                    {"KYC", "MASTER", {"Column2", "序号"}},
+                    {"台账23", "合规", {"Column3", "团队"}},
+                    {"台账23", "收入情况2023", {"Column2", "Project Name"}},
+                    {"DMI", "*SOLE*DMI", {1}},
+                    {"违约", "*SOLE*违约", {1}},
+                    {"银行", "*SOLE*银行", {1}},
+                    {"YY", "城投", {0}},
+                    {"YY", "金融", {0}},
+                    {"YY", "产业", {0}},
+                    {"BBGFX", "VALUE", {"Column1", "Base Currency"}}
+                },
+                {"Excel_Key.1", "PK_Sheet", "SkipFindAnchor"}
             ),
             TransformationTable_Entity = Table.PrefixColumns(
                 Table.SelectRows(
@@ -506,7 +548,55 @@ let
                 "IS_B&D",
                 "是否合名"
             },
-            Header_ForReviewHD = {"删除及隐藏", "ISIN", "定价日", "信用主体", "债券简称","发行评级", "主体评级", "结构", "备证行全称", "港分_ROLE", "澳分_ROLE", "Check", "ESG", "IPG", "FPG", "定价", "收窄基点", "增发判定", "货币", "发行规模(亿)", "年期", "票息", "品种主题", "上市", "亿美元", "亿元", "亿港币", "台账序号", "Project Name", "EXE", "COVERAGE", "新规角色", "PROJECT_CODE", "期数", "BISL_ROLE", "IS_LEAD", "IS_B&D", "是否合名", "SHORTNAMER", "板块", "板块二级", "板块三级", "中资属性", "级别", "地区", "城市", "区县"},
+            Header_ForReviewHD = {
+                "删除及隐藏",
+                "ISIN",
+                "定价日",
+                "信用主体",
+                "债券简称",
+                "发行评级",
+                "主体评级",
+                "结构",
+                "备证行全称",
+                "港分_ROLE",
+                "澳分_ROLE",
+                "Check",
+                "ESG",
+                "IPG",
+                "FPG",
+                "定价",
+                "收窄基点",
+                "增发判定",
+                "货币",
+                "发行规模(亿)",
+                "年期",
+                "票息",
+                "品种主题",
+                "上市",
+                "亿美元",
+                "亿元",
+                "亿港币",
+                "台账序号",
+                "Project Name",
+                "EXE",
+                "COVERAGE",
+                "新规角色",
+                "PROJECT_CODE",
+                "期数",
+                "BISL_ROLE",
+                "IS_LEAD",
+                "IS_B&D",
+                "是否合名",
+                "SHORTNAMER",
+                "板块",
+                "板块二级",
+                "板块三级",
+                "中资属性",
+                "级别",
+                "地区",
+                "城市",
+                "区县"
+            },
             Header_Sync_Directory = {"PROJECT_NAME", "COVERAGE", "定价日", "交易简称", "Check", "币种规模", "票息", "期限", "ISIN"},
             Header_Connect_DMI违约 = {"ISIN码", "发行人名称", "违约日期", "违约类型", "地区"},
             Header_DMI_Credit = {"信用主体", "债券简称", "穆迪/标普", "公司类型", "DMI行业", "细分行业", "省份", "城市", "区县", "定价日"},
@@ -991,12 +1081,16 @@ let
                     SortTable_Graph_SBLCPieSize
                 else if Text.Contains(Key, "USDCNHPIE") then
                     SortTable_Graph_USDCNHPIE
+                else if Text.Contains(Key, "SOEPIE") then
+                    SortTable_SOEPie
                 else if Text.Contains(Key, "DLD") and Text.Contains(Key, "NAME") then
                     TransformationTable_DLD_TableName
                 else if Text.Contains(Key, "DIM") and Text.Contains(Key, "FOLDER") then
                     Dimtbl_Folder
                 else if Text.Contains(Key, "DMI") and Text.Contains(Key, "FILTER") then
                     Dimtbl_DMI_Filter
+                else if Text.Contains(Key, "SHEET") then
+                    Dimtbl_sheet
                 else if Text.Contains(Key, "DMI") and Text.Contains(Key, "HK") then
                     Table_DMI_HKCompany
                 else

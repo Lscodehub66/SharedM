@@ -5,7 +5,7 @@
         Source = fx("Data")(TableName),
         CN_Source = List.Buffer(Table.ColumnNames(Source)),
         NewCol = List.Transform({"亿美元", "亿元", "亿港币"}, each Prefix & _),
-        DummyNewCol = {"USD", "CNH", "HKD"},
+        DummyNewCol = {"USD", "CNH", "HKD"}, 
         List = List.Zip({DummyNewCol, NewCol}),
         Col = if Collist = null then {"发行规模(亿)", ""} else Collist,
         Prefix = if Col{1} <> "" then Col{1} & "." else "",
@@ -15,7 +15,12 @@
             if List.Contains(CN_Source, "YYQQ") then
                 Table.DuplicateColumn(Prep, "YYQQ", "DummyCol1")
             else
-                fx("MergeDimDate")(Prep, "定价日", {"YYQQ"}, {"DummyCol1"}),
+                fx("MDate")(Prep, "定价日", {"YYQQ"}, {"DummyCol1"}),
+       //
+       tbl = Load("DimFX", "CSV"),
+       Keys = Table.AddKey(tbl, {"YYQQ","Base Currency"},true)
+       
+       
         #"Merged Queries" = Table.NestedJoin(
             AddedYYQQ, {"DummyCol1", "货币"}, Load("DimFX", "CSV"), {"YYQQ", "Base Currency"}, "DimFX",
             JoinKind.LeftOuter

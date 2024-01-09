@@ -7,7 +7,9 @@
         Datetbl = #table(type table [A_Date = date], List.Transform(DateList, each {_})),
         Output =
             if _Mergeinput = null then
-                DateList else if  _Mergeinput = {""} then Datetbl 
+                DateList
+            else if _Mergeinput = {""} then
+                Datetbl
             else
                 Table.RemoveColumns(
                     Table.NestedJoin(
@@ -17,5 +19,3 @@
                 )
     in
         Output
-
-      

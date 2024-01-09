@@ -1,10 +1,12 @@
 let
-    dd_覆盖地区 = try CWB("dd_覆盖地区") otherwise fx("Excel")("DEALSMASTER_dd_覆盖地区"),
-    Source = try Table.Buffer(CWB("mCredit", "1")) otherwise Table.Buffer(fx("Excel")("DEALSMASTER_=MCREDIT")),
+    dd_覆盖地区 = CWB("dd_覆盖地区"),
+    Source = CWB("mCredit", "1"),
     NewCol = {"投标资历分类", "覆盖地区", "覆盖分类", "覆盖团队"},
     RefCol = {"板块", "中资属性", "城市", "地区"},
     Prep = Table.RemoveColumns(Source, NewCol, MissingField.Ignore),
-    GroupCreds = Table.AddColumn(Prep, "投标资历分类", each if [板块] = "金融机构" then "FI Creds" else if [中资属性] = "地方国企" then "SOE Creds" else "--"),
+    GroupCreds = Table.AddColumn(
+        Prep, "投标资历分类", each if [板块] = "金融机构" then "FI Creds" else if [中资属性] = "地方国企" then "SOE Creds" else "--"
+    ),
     CN_Source = Table.ColumnNames(Source),
     #"Added Conditional Column" = Table.AddColumn(
         GroupCreds,
@@ -40,6 +42,7 @@ let
                 "SOE组"
             else
                 "POE组"
-    )
+    ),
+    KeysTagged_Credit = Table.AddKey(#"Added Conditional Column0", {"信用主体"}, true)
 in
-    #"Added Conditional Column0"
+    KeysTagged_Credit

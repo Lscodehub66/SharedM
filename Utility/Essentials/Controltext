@@ -1,0 +1,11 @@
+let
+    
+    M1 = Date.From(fx("Parameter")("Monday")),
+    Record = [
+        
+        当前_YYW = fx("YYW")(Date.AddDays(M1, -3)),
+        上周_YYW = fx("YYW")(Date.AddDays(M1, -10)),
+             Path_YYYYMMDD = Date.ToText(M1,"yyyyMMdd")
+    ]
+in
+    Record

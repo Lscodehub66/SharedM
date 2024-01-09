@@ -3,19 +3,23 @@ let
     SourceDB = CWB("mIssue", "1"),
     RemovedCol = Table.RemoveColumns(SourceDB, Get("Header_MergeRemoval") & {"债券简称"}, MissingField.Ignore),
     Filtered_null = Table.SelectRows(RemovedCol, each not List.Contains({"", null, "--", "ISIN"}, [ISIN])),
-    DimDate_Joined = fx("MergeDimDate")(Filtered_null, "定价日"),
-    mStats_Joined = fx("Merge")( DimDate_Joined, CWB("mStats"), "Check", "Check", {"Y"}, {""}),
+    KeysTagged = Table.AddKey(Filtered_null, {"Check"}, true),
     //
-    mBond = Load("mBond_ISIN+Entity"),
-    mBond_Joined = fx("Merge")(    mStats_Joined, mBond, "ISIN", "ISIN", {""}, {""}),
-    MaturityDate_Joined = fx("MergeDimDate")(mBond_Joined, "兑付日", {"YYYY"}, {"兑付日.YearNum"}),
+    #"DimDate Joined" = fx("MDate")({KeysTagged}, {"定价日"}),
     //
-    mBISL = fx("mBISLCount")(CWB("mBISL")),
-    mBISL_Joined = fx("Merge")(MaturityDate_Joined, mBISL, "Check", "Check", {"Y"}, {""}),
-    mEXE_Joined = fx("Merge")(mBISL_Joined, CWB("mEXE"), "PRJ对账号", "PRJ对账号", {"Y"}, {""}),
+    mStats = CWB("mStats"),
+    mBond = Load("mISIN+Coverage+SBLC"),
+    mBOCOM = Load("mBOCOM"),
+    #">>>Key" = Table.Keys(mStats){0}[Columns],
+    #">>>Key1" = Table.Keys(mBond){0}[Columns],
+    #">>>Key2" = Table.Keys(mBOCOM){0}[Columns],
     //
-    //
-    #"Fn Calculated" = fx("DBCalculate")(mEXE_Joined),
+    Merged = List.Accumulate(
+        {{mStats, "Check"}, {mBOCOM, "Check"}, {mBond, "ISIN"}},
+        #"DimDate Joined",
+        (x, y) => fx("Merge")(x, y{0}, y{1}, y{1}, {""}, {""})
+    ),
+    #"Fn Calculated" = fx("DBCalculate")(Merged),
     Reordered = Table.ReorderColumns(#"Fn Calculated", Get("Header_deal_master"), MissingField.Ignore)
 in
     Reordered

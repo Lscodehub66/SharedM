@@ -2,36 +2,44 @@
 let
     Source = Load("DLD_DMI"),
     Fn = fx("ShowFilter")(Source),
- Fn1=  Load("fxIsFIMTN")( Fn),
-   Fn1_R = Table.ReplaceValue(Fn1,"Y",   each if [Filter_Bond] <>"" or [Filter_Exch] <>"" then "" else  "【Y】" ,Replacer.ReplaceValue,{"IS_FIMTN"}),
-   
+    Fn1 = Load("fxIsFIMTN")(Fn),
+    Fn1_R = Table.ReplaceValue(
+        Fn1, "Y", each if [Filter_Bond] <> "" or [Filter_Exch] <> "" then "" else "【Y】", Replacer.ReplaceValue, {
+            "IS_FIMTN"
+        }
+    ),
     Fn2 = List.Accumulate(
-        {{"Credit", "信用主体",{"Index","信用主体简称","板块", "板块二级", "板块三级", "中资属性", "级别"}}, {"Bond", "ISIN",{"Index"}}, {"Issue", "Check",{"Index"}}},
-       Fn1_R,
+        {
+            {"Credit", "信用主体", {"Index", "信用主体简称", "板块", "板块二级", "板块三级", "中资属性", "级别"}},
+            {"Bond", "ISIN", {"Index"}},
+            {"Issue", "Check", {"Index"}}
+        },
+        Fn1_R,
         (x, y) =>
             let
-                SourceM = fx("Merge")(x, CWB("m" & y{0}), y{1}, y{1}, y{2}, List.Transform(y{2},each if _= "Index" then "DBIndex_" & y{0} else _)),
-                A1 = if not Table.HasColumns(SourceM, "Filter_" & y{0}) then   Table.AddColumn(
-                            SourceM,
-                            "Filter_" & y{0}, each "", type text) else SourceM,
-                R1 =
-               
-                        Table.ReplaceValue(
-                               A1,
-                            each Record.Field(_, "Filter_" & y{0}),
-                            each
-                                if Record.Field(_, "DBIndex_" & y{0}) <> null then
-                                    Record.Field(_, "Filter_" & y{0}) & "*"
-                                else
-                                    Record.Field(_, "Filter_" & y{0}),
-                            Replacer.ReplaceValue,
-                            {"Filter_" & y{0}}
-                        )
-                   
+                DBName = "m" & y{0},
+                //DBName & ColName
+                DBtbl = CWB("m" & y{0}),
+                PK = y{1},
+                ToExp = y{2},
+                Target = List.Transform(y{2}, each if _ = "Index" then "DBIndex_" & y{0} else _),
+                SourceM = fx("Merge")(x, DBtbl, PK, PK, ToExp, Target),
+                Prep = Table.RemoveColumns(SourceM, {DBName}, MissingField.Ignore),
+                ACol = Table.AddColumn(
+                    Prep,
+                    DBName,
+                    each
+                        if Record.Field(_, "DBIndex_" & y{0}) <> null then
+                            "已收录"
+                        else if y{0} = "Credit"  and Record.Field(_, "级别") = "【】" then
+                            "修改"
+                        else
+                            "新增",
+                    type text
+                )
             in
-                R1
-    ),  // Multisource steps
- Fn2_R =    Table.ReplaceValue(Fn2, "*", each if [级别] = "【】" then "**" else "*", Replacer.ReplaceText,{"Filter_Credit"} ),
- Reorered = fx("1st")(Fn2_R, {"Filter_Bond","IS_FIMTN", "Filter_Exch", "ISIN", "定价日", "债券简称","货币","发行规模(亿)" })
- in  Reorered
- 
+                ACol
+    ),
+    Reorered = fx("1st")(Fn2, {"Filter_Bond","Filter_Exch", "IS_FIMTN", "mIssue","mBond","mCredit", "ISIN", "定价日", "债券简称", "货币", "发行规模(亿)"})
+in
+    Reorered

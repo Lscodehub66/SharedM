@@ -58,6 +58,7 @@
                 "YY_区县"
             },
             MissingField.Ignore
-        )
+        ),
+        Sorted = fx("SortNIndex")(Reordered)
     in
-        Reordered
+        Sorted

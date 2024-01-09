@@ -126,19 +126,58 @@ let
     Custom1 = Table.AddColumn(
         #"Added Custom2", "DD2", each Text.Select(Text.AfterDelimiter([Value], "-"), {"0".."9"})
     ),
-    #"Changed Type" = Table.TransformColumnTypes(
+    #"Changed Type1" = Table.TransformColumnTypes(
         Custom1,
         {{"YYYY", Int64.Type}, {"MM1", Int64.Type}, {"DD1", Int64.Type}, {"MM2", Int64.Type}, {"DD2", Int64.Type}}
     ),
     #"Added Custom3" = Table.AddColumn(
-        #"Changed Type", "Date_Start", each try #date([YYYY], [MM1], [DD1]) otherwise null, type date
+        #"Changed Type1", "Date_Start", each try #date([YYYY], [MM1], [DD1]) otherwise null, type date
     ),
     #"Added Custom4" = Table.AddColumn(
         #"Added Custom3", "Date_End", each try #date([YYYY], [MM2], [DD2]) otherwise [Date_Start], type date
     ),
-    #"Removed Errors" = Table.RemoveRowsWithErrors(#"Added Custom4", {"MM1"}),
-    #"Removed Other Columns1" = Table.SelectColumns(#"Removed Errors", {"Value", "Month1", "Date_Start", "Date_End"}),
-    Custom2 = fx("MergeDimDate")(#"Removed Other Columns1", "Date_End", {"MM", "YYYY"}),
-    #"Sorted Rows1" = Table.Sort(Custom2, {{"YYYY", Order.Descending}, {"MM", Order.Descending}})
+    #"Removed Errors1" = Table.RemoveRowsWithErrors(#"Added Custom4", {"MM1"}),
+    #"Removed Other Columns2" = Table.SelectColumns(
+        #"Removed Errors1", {"Value", "Month1", "Date_Start", "Date_End"}
+    ),
+    Custom2 = fx("MergeDimDate")(#"Removed Other Columns2", "Date_End", {"MM", "YYYY"}),
+    #"Sorted Rows1" = Table.Sort(Custom2, {{"YYYY", Order.Descending}, {"MM", Order.Descending}}),
+    #"Grouped Rows" = Table.Group(
+        #"Sorted Rows1",
+        {"YYYY"},
+        {
+            {
+                "Count",
+                each _,
+                type table [
+                    Value = nullable text,
+                    Month1 = nullable text,
+                    Date_Start = nullable text,
+                    Date_End = nullable text,
+                    MM = nullable text,
+                    YYYY = nullable text
+                ]
+            },
+            {"Total", each Table.RowCount(_), Int64.Type}
+        }
+    ),
+    #"Added Index" = Table.TransformColumns(
+        #"Grouped Rows", {{"Count", each Table.AddIndexColumn(_, "YY_Index", 1, 1, Int64.Type)}}
+    ),
+    #"Removed Other Columns1" = Table.SelectColumns(#"Added Index", {"Count", "Total"}),
+    #"Expanded Count" = Table.ExpandTableColumn(
+        #"Removed Other Columns1", "Count", Table.ColumnNames(#"Removed Other Columns"{0}[Count])
+    ),
+    #"Added Custom5" = Table.AddColumn(
+        #"Expanded Count",
+        "FOMC.Name",
+        each Text.From([YYYY]) & "FOMC" & "(" & Text.From([YY_Index]) & "/" & Text.From([Total]) & ")"
+    ),
+    #"Unpivoted Columns" = Table.UnpivotOtherColumns(
+        #"Added Custom5", {"Value", "Month1", "MM", "YYYY", "YY_Index", "Total", "FOMC.Name"}, "Attribute",
+        "FOMC.Date"
+    ),
+    #"Changed Type" = Table.TransformColumnTypes(#"Unpivoted Columns", {{"FOMC.Date", type date}}),
+    #"Removed Errors" = Table.RemoveRowsWithErrors(#"Changed Type", {"FOMC.Date"})
 in
-    #"Sorted Rows1"
+    #"Removed Errors"

@@ -18,7 +18,7 @@
             "WEEKLYADDTAP"
         },
         Source =
-            if List.Contains({"deal_master" ,"chart_master","mIndice"}, _inputkey ) then
+            if List.Contains({"deal_master", "chart_master", "mIndice"}, _inputkey) then
                 try ThisExcel otherwise try Load(_inputkey) otherwise DM
             else if List.Contains(NamedList, _tblname) then
                 try ThisExcel otherwise Load(_inputkey)

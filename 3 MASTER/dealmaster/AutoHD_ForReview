@@ -1,0 +1,22 @@
+// let Code = Load("AutoHD_ForReview","Code"), EVA = Expression.Evaluate(Code ,#shared) in EVA
+let
+    Source = Excel.CurrentWorkbook(),
+    #"Filtered Rows" = Table.SelectRows(
+        Source, each Text.StartsWith([Name], "ForReview") and Text.Contains([Name], "_w")
+    ),
+    _PKlist = {"Check","ISIN","信用主体"},
+
+    #"Filtered Rows1" = Table.SelectRows(#"Filtered Rows", each ([Name] <> "ForReview_wCurated")),
+    #"Custom0" = Table.AddColumn(#"Filtered Rows1", "Key", each Text.AfterDelimiter([Name], "_")),
+    #"Custom1" = Table.AddColumn(#"Custom0", "PQ", each "{" &"""" & [Key] &""""& "【," & [Key] & "【},"),
+    #"Custom2" = Table.AddColumn(#"Custom1", "Left", each [Key] & "="),
+    #"Custom3" = Table.AddColumn(#"Custom2", "Custom", each CWB([Name], "CN")),
+#"Custom3a" = Table.AddColumn(#"Custom3", "PK", each List.Intersect({_PKlist,[Custom]}){0}),
+    #"Custom4" = Table.AddColumn(#"Custom3a", "Custom.1", each fx("ToM")([Custom])),
+    #"Custom5" = Table.AddColumn(#"Custom4", "fxToM", each [Left] & [Custom.1] & "," & "#(lf)"),
+    T1 = Text.Remove(Text.Combine(#"Custom5"[PQ]), "【"),
+    Output0 = Text.Replace("{" & T1 & "}", "},}", "}},") & "#(lf)",
+    Output1 = Text.Combine(#"Custom5"[fxToM])& "List1="&Output0 
+in
+    Custom1
+// #"Custom5"

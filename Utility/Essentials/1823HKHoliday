@@ -1,0 +1,49 @@
+let
+    holiday_source = Json.Document(
+        Web.Contents(
+            "https://res.data.gov.hk/api/get-download-file?name=https%3A%2F%2Fwww.1823.gov.hk%2Fcommon%2Fical%2Fsc.json"
+        )
+    ),
+    holidayList = Record.Field(Record.Field(holiday_source, "vcalendar"){0}, "vevent"),
+    Custom2 = List.Transform(holidayList, each Record.SelectFields(_, {"summary", "dtstart"})),
+    holidayList1 = Table.FromRecords(Custom2),
+    #"Extracted Values" = Table.TransformColumns(holidayList1, {{"dtstart", each _{0}}}),
+    #"Changed Type" = Table.TransformColumnTypes(#"Extracted Values", {{"dtstart", type date}}),
+    Dimtbl = Table.AddKey(
+        Table.FromRows(
+            {
+                {"一月一日", "元旦"},
+                {"农历年初一", "春节"},
+                {"农历年初二", "春节"},
+                {"农历年初三", "春节"},
+                {"清明节", "清明节"},
+                {"耶稣受难节", "复活节"},
+                {"耶稣受难节翌日", "复活节"},
+                {"复活节星期一", "复活节"},
+                {"劳动节翌日", "劳动节"},
+                {"佛诞翌日", "佛诞"},
+                {"端午节", "端午节"},
+                {"香港特别行政区成立纪念日", "回归纪念日"},
+                {"中秋节后第二日", "中秋节"},
+                {"国庆节", "国庆节"},
+                {"重阳节", "重阳节"},
+                {"圣诞节后第一个周日", "圣诞节"},
+                {"圣诞节后第二个周日", "圣诞节"},
+                {"一月一日翌日", "元旦"},
+                {"农历年初四", "春节"},
+                {"劳动节", "劳动节"},
+                {"佛诞", "佛诞"},
+                {"中秋节翌日", "中秋节"},
+                {"国庆节翌日", "国庆节"},
+                {"圣诞节", "圣诞节"},
+                {"国庆日", "国庆节"}
+            },
+            {"summary", "香港假期"}
+        ),
+        {"summary"},
+        true
+    ),
+    #"Removed Duplicates" = fx("Merge")(#"Changed Type", Dimtbl, "summary", "summary", {""}),
+    key = Table.AddKey(#"Removed Duplicates", {"dtstart"}, true)
+in
+    key

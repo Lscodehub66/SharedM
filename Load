@@ -4,8 +4,8 @@
         //NameInput = "", PathInput = null,
         GPS = try Table.Buffer(Excel.CurrentWorkbook(){[Name = "GPS"]}[Content])[Column1]{0} otherwise "Remote",
         Name_File =
-            if NameInput = "fxGetBranch" then
-                "fxAddBranch"
+            if NameInput = "Control_Date" then
+                "Control"
             else if Text.StartsWith(NameInput, "Q") then
                 Text.RemoveRange(NameInput, 0)
             else if PathInput = "CSV" then
@@ -32,12 +32,17 @@
         //"Code" "CSV" options here
         File_Code = Text.FromBinary(Binary.Buffer(File_Content)),
         File_CSV = Table.PromoteHeaders(Csv.Document(File_Content), [PromoteAllScalars = true]),
+        AddedKey = if NameInput = "DimFX" then Table.AddKey(File_CSV, {"YYQQ", "Base Currency"}, true) else File_CSV,
         //
         EVA_Existing = Expression.Evaluate(Name_File, #shared),
         EVA_Code = Expression.Evaluate(File_Code, #shared),
         EVA = try EVA_Existing otherwise EVA_Code,
         //
-        Output = if PathInput = "Code" or PathInput = "1" then File_Code else if PathInput = "CSV" then File_CSV else EVA,
-        SCol_Output = if ColList = null or ColList = {null} then Output else Table.SelectColumns(Output, ColList, MissingField.UseNull )
+        Output = if PathInput = "Code" or PathInput = "1" then File_Code else if PathInput = "CSV" then AddedKey else EVA,
+        SCol_Output =
+            if ColList = null or ColList = {null} then
+                Output
+            else
+                Table.SelectColumns(Output, ColList, MissingField.UseNull)
     in
-         SCol_Output
+        SCol_Output

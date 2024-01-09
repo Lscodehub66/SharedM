@@ -1,15 +1,16 @@
-   
-( _inputtbl as table,  _inputcol as nullable text,_inputstart as number,_inputend as number )=>
-let
-
-Start = Date.From(Number.ToText(_inputstart)) ,
-End =Date.From(Number.ToText(_inputend)) ,
-
-DimDate = List.Reverse(List.Generate(() => Start, each _ <= End, each Date.AddDays(_, 1))),
-    Source = Table.FromColumns({DimDate}, {"Column1"}),
-    DateType = Table.TransformColumnTypes(Source,{{"Column1", type date}}),
-Merged =  Table.NestedJoin(
-          _inputtbl, _inputcol??{"定价日"},DateType, {"Column1"}, "Dummy.Data", JoinKind.Inner),
-RCol = Table.RemoveColumns(Merged ,{"Dummy.Data"},MissingField.Ignore)
-
-in RCol
+(tbllist as list, KeyNPrefix as list, optional InputDimtblHD as list, optional InputExpDimtblHD as list) =>
+    let
+        tblCount = List.Count(tbllist),
+        prefix = if List.Count(KeyNPrefix) = 2 then KeyNPrefix{1} else "",
+        DateKeyCol = KeyNPrefix{0},
+        Source =  Table.TransformColumnTypes(tbllist{0},{{ DateKeyCol, type date}})   ,
+        DimtblSource = if tblCount = 1 then Load("DimDate") else tbllist{1},
+        Dimtbl = if prefix = "" then DimtblSource else Table.PrefixColumns(DimtblSource, prefix),
+        text = List.Select(Table.ColumnNames(Dimtbl), each Text.Contains(_, "A_Date")){0},
+        DimtblHD = if InputDimtblHD = null then {""} else InputDimtblHD,
+        ExpDimtblHD = if InputExpDimtblHD = null then DimtblHD else InputExpDimtblHD,
+        Merged = fx("Merge")(Source, Dimtbl, DateKeyCol, text, DimtblHD, ExpDimtblHD),
+        RCol = Table.RemoveColumns(Merged, {text}, MissingField.Ignore),
+        Output = if Table.HasColumns(Source, ExpDimtblHD) then Source else RCol
+    in
+        Output
