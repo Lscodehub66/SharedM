@@ -5,11 +5,7 @@
         CN_Source = List.Buffer(Table.ColumnNames(Source)),
         //Prep
         DataType = fx("Data")(Source),
-        RemovedCol = Table.RemoveColumns(
-            DataType,
-            {"是否IG", "是否首发", "美元规模分类", "年期分类", "评级分类", "主体评级分类", "结构分类", "货币细分", "上市分类", "BOCOM_DEAL?", "期限"},
-            MissingField.Ignore
-        ),
+        RemovedCol = Table.RemoveColumns(DataType, {"是否IG", "是否首发", "BOCOM_DEAL?", "期限"}, MissingField.Ignore),
         //Add DebutIssuance
         Calculated_DEBUT =
             if List.Contains(Table.ColumnNames(RemovedCol), "DEBUT_DATE") then
@@ -23,14 +19,12 @@
                 RemovedCol,
         #"Added FolderPath" = fx("FolderPath")(Calculated_DEBUT),
         #"Added 美元规模分类" = fx("GroupSize")(#"Added FolderPath"),
-        #"Added 年期货币评级分类" = fx("GpTenorCCYRtg")(#"Added 美元规模分类"),
-        #"Added 清算地" = fx("ISINToCSD")(#"Added 年期货币评级分类"),
-        /////////////////////////
-        Junction_Start = #"Added 清算地",
-        /////////////////////////
-        Slicer_EntityRtg = fx("RtgSlicer")(Junction_Start, "主体评级", "主体评级分类", "EN"),
-        Slicer_IsIG = Table.AddColumn(
-            Slicer_EntityRtg,
+        #"Added 年期货币分类" = fx("GpTenorCCYRtg")(#"Added 美元规模分类"),
+        #"Added 清算地" = fx("ISINToCSD")(#"Added 年期货币分类"),
+        #"Added 评级分类" = fx("GpRtg")(#"Added 清算地", {"发行评级", "评级分类"}),
+        #"Added 主体评级分类" = fx("GpRtg")(#"Added 评级分类", {"主体评级", "主体评级分类", "EN"}),
+        #"Added 是否IG" = Table.AddColumn(
+            #"Added 主体评级分类",
             "是否IG",
             each
                 if [评级分类] = "投资级" and [主体评级分类] = "IG" then
@@ -45,28 +39,23 @@
                     "--",
             type text
         ),
-        Slicer_Structure =
-            if Table.HasColumns(Source, "结构") then
-                Table.AddColumn(Slicer_IsIG, "结构分类", each Load("fxGroupSTR")([结构]))
-            else
-                Slicer_IsIG,
         Slicer_Listing =
             if Table.HasColumns(Source, "上市") then
                 Table.AddColumn(
-                    Slicer_Structure,
+                    #"Added 是否IG",
                     "上市分类",
                     each
-                        if [上市] = null or [上市] = "" or [上市] = "--" or [上市] = "n/a" then
+                        if List.Contains({null, "", "--"}, [上市]) then
                             "--"
                         else if Text.Contains([上市], ";") then
                             "多地上市"
-                        else if [上市] <> "港交所" and [上市] <> "新交所" and [上市] <> "港交所" and [上市] <> "澳交所" and [上市] <> "未上市" then
+                        else if not List.Contains({"港交所", "新交所", "澳交所", "未上市"}, [上市]) then
                             "其他"
                         else
                             [上市]
                 )
             else
-                Slicer_Structure,
+                #"Added 是否IG",
         BOCOMDEAL = Load("fxBOCOMDEAL")(Slicer_Listing),
         // Add CN DES and combine shortnames
         Written_Stats = fx("WriteStats")(BOCOMDEAL),
@@ -106,13 +95,7 @@
                     Text.From([YYMMDD]) & [信用主体简称],
             type text
         ),
-        ////////////////////////
-        Junction = if not List.ContainsAll(CN_Source, {"上市", "主体评级", "BISL_ROLE"}) then Junction_Start else AddedComp,
-        /////////////////////////
-        RCol = Table.RemoveColumns(
-            Junction, List.Select(Table.ColumnNames(Junction), each Text.Contains(_, "Dummy")), MissingField.Ignore
-        ),
-        Checked = fx("CheckNDupe")(RCol),
+        Checked = fx("CheckNDupe")(AddedComp),
         Sorted = fx("SortNIndex")(Checked),
         Presented = fx("PresentNoData")(Sorted)
     in

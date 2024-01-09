@@ -1,15 +1,13 @@
 (TableName as table) =>
     let
         Source = TableName,
-
-         NewCol = { "年期分类", "评级分类","货币细分"},
-    
+        NewCol = {"年期分类", "评级分类", "货币细分"},
         Prep = Table.RemoveColumns(Source, NewCol, MissingField.Ignore),
         Slicer_Tenor =
             if Table.HasColumns(Source, "年期") then
-                Load("fxGroupRange")(    Prep , {"年期", "年期分类"}, {"永续", 1, 3, 5}, "年")
+                Load("fxGroupRange")(Prep, {"年期", "年期分类"}, {"永续", 1, 3, 5}, "年")
             else
-                    Prep ,
+                Prep,
         Slicer_BondRtg =
             if Table.HasColumns(Source, "发行评级") then
                 fx("RtgSlicer")(Slicer_Tenor, "发行评级", "评级分类")
