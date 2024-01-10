@@ -2,6 +2,7 @@ let
     M1 = Date.From(fx("Parameter")("Monday")),
     Record = [
         wNIMStart.Date = #date(2013, 1, 1),
+        StartOfRecent.Date = #date(2022, 1, 1),
         Now.Date = Date.From(DateTime.FixedLocalNow()),
         Monday.Date = Date.StartOfWeek(M1, Day.Monday),
         PreviousMon.Date = Date.StartOfWeek(Date.AddDays(M1, -7), Day.Monday),

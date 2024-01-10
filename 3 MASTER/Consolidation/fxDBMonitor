@@ -3,6 +3,8 @@ let
     Source = (optional _inputkey as nullable text) =>
         let
             Key = Text.Upper(Text.Trim(_inputkey ?? "")),
+    
+
             //
             wSource = fx("DBFilter")({{"Year.Num", ">=", 2022}}, {{"删除及隐藏", null, {"", null}}}),
             #"Filtered Output" =

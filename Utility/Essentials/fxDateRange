@@ -1,6 +1,6 @@
-(_input as list, optional _Mergeinput as list) =>
+(_input as list, optional _Mergeinput as list) =>  
     let
-        Source = Load("Control_Date"),
+        Source = Load("Control"),
         Start = Record.Field(Source, _input{0}),
         End = Record.Field(Source, _input{1}),
         DateList = List.Reverse(List.Generate(() => Start, each _ <= End, each Date.AddDays(_, 1))),
@@ -9,7 +9,7 @@
             if _Mergeinput = null then
                 DateList
             else if _Mergeinput = {""} then
-                Datetbl
+                Datetbl  // fx("DateRange")({"Monday.Date", "Now.Date"},{""}),
             else
                 Table.RemoveColumns(
                     Table.NestedJoin(

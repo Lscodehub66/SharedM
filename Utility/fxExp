@@ -1,0 +1,9 @@
+(TableName as table, Expcolname as text) =>
+    let
+        Source = TableName,
+        Exp = Table.ExpandTableColumn(
+            Source, Expcolname, List.RemoveItems(Table.ColumnNames(Source[Custom]{0}), Table.ColumnNames(Source))
+        ),
+        Data = fx("Data")(Exp)
+    in
+         Data

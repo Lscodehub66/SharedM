@@ -1,6 +1,6 @@
 let
-    List1 = {"信用主体", "信用主体简称", "板块三级", "板块标签"},
-    List2 = {"备证行全称", "备证行", "备证分类", "板块标签"},
+    List1 = {"信用主体", "信用主体简称", "板块三级", "板块标签", "曾用名"},
+    List2 = {"备证行全称", "备证行", "备证分类", "板块标签", "备证行曾用名"},
     Pair = List.Zip({List1, List2}),
     Source = try Table.Buffer(CWB("mCredit", "1")) otherwise Table.Buffer(fx("Excel")("DEALSMASTER_=MCREDIT")),
     Filtered = Table.SelectRows(Source, each [IS_SBLC] = "Y"),
@@ -10,6 +10,20 @@ let
     #"Merged Columns" = Table.CombineColumns(
         #"Duplicated Column", {"Copy", "板块标签"}, Combiner.CombineTextByDelimiter("", QuoteStyle.None), "备证行标签"
     ),
-    TF = Table.TransformColumns(#"Merged Columns", {{"备证分类", each if _ <> "" then _ & "备证" else _, type text}})
+    TF = Table.TransformColumns(#"Merged Columns", {{"备证分类", each if _ <> "" then _ & "备证" else _, type text}}),
+    GetRtg =
+        if not Table.HasColumns(TF, "备证行评级") then
+            try fx("Merge")(TF, Load("SBLC_Rtg"), "备证行", "Entity", {"当前主体评级"}, {"备证行评级"}) otherwise TF
+        else
+            TF,
+    //  AddedIndex = Table.AddIndexColumn(GetRtg, "Index",1,1),
+    Merged = fx("Merge")(GetRtg, CWB("SBLCUniverse"), "备证行全称", "备证行全称", {"SortValue"}),
+    Replaced = Table.ReplaceValue(   Merged ,"--/--/--","",Replacer.ReplaceValue,{"备证行评级"}),  
+    Sorted = Table.Sort(    Replaced , {{"SortValue", Order.Descending}}),
+    #"Added Index" = Table.AddIndexColumn(Sorted, "Index", 1, 1),
+    Sorted2 = Table.Sort(#"Added Index", {{"Index", Order.Descending}}),
+    Reordered = Table.ReorderColumns(
+        Sorted2, {"Index", "备证行全称", "备证行评级", "备证行", "备证分类", "备证行标签", "备证行曾用名", "SortValue"}, MissingField.Ignore
+    )
 in
-    TF
+    Reordered

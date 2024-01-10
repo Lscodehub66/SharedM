@@ -1,0 +1,44 @@
+(optional _inputkey as nullable text) =>
+    let
+        Key = Text.Upper(Text.Trim(_inputkey ?? "")),
+        Dimtbl = Table.Buffer(Load("Dimtbl_Indice")),
+        Key_Dimtbl = List.Accumulate({"5Y", "1Y"}, "", (x, y) => if Text.Contains(Key, y) then "IS_" & y else x),
+        HD = List.Buffer(
+            if Key = "" then Dimtbl[PK] else Table.SelectRows(Dimtbl, each Record.Field(_, Key_Dimtbl) <> "")[PK]
+        ),
+        //
+        Source = CWB("mIndice"),
+        CN_Source = List.Buffer(Table.ColumnNames(Source)),
+        //
+        HD_Curves =
+            let
+                _SpdTenor = Record.Field(Load("Controltext"), "_SpdTenor"),
+                _InputCurves = {"CGB", "UST"},
+                // First Item minus by Second Item
+                SCGB = List.Select(
+                    CN_Source, each Text.Contains(_, _InputCurves{0}) and Text.Contains(_, _SpdTenor & "Y")
+                ),
+                SUST = List.Select(
+                    CN_Source, each Text.Contains(_, _InputCurves{1}) and Text.Contains(_, _SpdTenor & "Y")
+                ),
+                Prefix = {"S_DAX_CGBUST"},
+                CurveHD = SCGB & SUST & Prefix
+            in
+                List.Buffer(CurveHD),
+        Logic1 = List.ContainsAll(CN_Source, HD),
+        #"Calculated DAX" = if Logic1 = true then Source else Table.Buffer(fx("Avg_SpdDiff")(Source, HD_Curves)),
+        //
+        RecentNIM = Load("RecentNIM_Indice"),
+        #">>CheckKey" = fx("Key")(RecentNIM),
+        Logic2 = List.IsEmpty(List.Select(HD, each Text.Contains(_, "NIM"))),
+        #"Merged RecentNIM" =
+            if Logic2 = true then
+                #"Calculated DAX"
+            else
+                fx("Merge")(#"Calculated DAX", RecentNIM, "Date", "Date", {""}),
+        //
+        SCol = if Key = "" then #"Merged RecentNIM" else Table.SelectColumns(#"Merged RecentNIM", {"Date"} & HD),
+        //
+        Sorted = fx("SortNIndex")(SCol, "Date")
+    in
+        Sorted

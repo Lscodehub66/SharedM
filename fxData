@@ -66,11 +66,13 @@
                 or Text.Contains(_, "规模(亿)")
                 or Text.Contains(_, "债券余额")
         ),
-        Num2 = {"投资级", "高收益级", "iTraxx Asia", "VIX", "BOCOM下单量", "BOCOM分配量", "最终账簿(亿)", "收窄Num"}
+        Num2 = {"投资级", "高收益级", "iTraxx Asia", "VIX", "BOCOM下单量", "BOCOM分配量"}
             & List.Select(
                 CN_RNSource, each Text.StartsWith(_, "S_") or Text.StartsWith(_, "Spd_") or Text.StartsWith(_, "I_")
             ),
-        Num0 = {"FEE", "承销费原币", "Relevance", "承销费_RMB", "承销费_USD", "承销费", "Year.Num", "兑付日.YearNum", "账户数"},
+        Num1 = {"最终账簿(亿)", "收窄Num"} & List.Select(CN_RNSource, each Text.StartsWith(_, "V_")),
+        Num0 = {"FEE", "承销费原币", "Relevance", "承销费_RMB", "承销费_USD", "承销费", "Year.Num", "兑付日.YearNum", "账户数"}
+            & List.Select(CN_RNSource, each Text.StartsWith(_, "CT_")),
         Num = {
             "IPT_YIELD",
             "Count_BISLDeal",
@@ -360,7 +362,12 @@
             "是否首次品种",
             "项目亮点"
         }
-            & List.Select(CN_RNSource, each Text.StartsWith(_, "IS_", Comparer.OrdinalIgnoreCase) or  Text.StartsWith(_, "Filter_", Comparer.OrdinalIgnoreCase)),
+            & List.Select(
+                CN_RNSource,
+                each
+                    Text.StartsWith(_, "IS_", Comparer.OrdinalIgnoreCase)
+                    or Text.StartsWith(_, "Filter_", Comparer.OrdinalIgnoreCase)
+            ),
         //Type Transformation
         Type_Dimtbl = Table.Buffer(
             Table.FillDown(
@@ -373,6 +380,7 @@
                             Table.FromColumns({Num5, {type number}, {5}}),
                             Table.FromColumns({Num3, {}, {3}}),
                             Table.FromColumns({Num2, {}, {2}}),
+                            Table.FromColumns({Num1, {}, {1}}),
                             Table.FromColumns({Num0, {}, {0}}),
                             Table.FromColumns({Num, {}, {-1}}),
                             Table.FromColumns({Text_Trim, {type text}, {Text.Trim}}),
@@ -407,7 +415,7 @@
         NullFrom0 = Table.ReplaceValue(
             Error_Bye, 0, null, Replacer.ReplaceValue, List.Intersect({CN_RNSource, Num0ToNull})
         ),
-        Roundingtbl = Table.SelectRows(Type_Mytbl, each List.Contains({5, 3, 2, 0}, [Column3])),
+        Roundingtbl = Table.SelectRows(Type_Mytbl, each List.Contains({5, 3, 2,1, 0}, [Column3])),
         RoundingList = List.Zip({Roundingtbl[Column1], Roundingtbl[Column3]}),
         FnRound = List.Accumulate(
             RoundingList,

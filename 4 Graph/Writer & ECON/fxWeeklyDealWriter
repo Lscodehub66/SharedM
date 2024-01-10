@@ -1,4 +1,4 @@
-(TableName as table) =>
+(TableName as table,optional _input as text) =>
     let
         // TableName = Filtered, Col1 = "1周", Col2 = "2主体", Col3="3详情",  Col4 = "4品种", Col5="5价格", Col6="6担任",
         Source = TableName,
@@ -134,6 +134,6 @@
             type text
         ),
         AddedCol = Table.AddColumn(#"Added Suffix", "Writer", each if [总述] <> "" then [总述] & "#(lf)" & [描述] else [描述]),
-        SCol = Table.SelectColumns(AddedCol, {"信用主体及评级", "板块", "货币", "Writer"}, MissingField.UseNull)
+        SCol = if _input = null then Table.SelectColumns(AddedCol, {"信用主体及评级", "板块", "货币", "Writer"}, MissingField.UseNull)  else AddedCol
     in
         SCol

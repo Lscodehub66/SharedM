@@ -1,0 +1,13 @@
+(optional TableName as table, optional mergekey as nullable text) =>
+    let
+        tbl = fx("DateRange")({"Monday.Date", "Now.Date"},{""}),
+        Output =
+            if TableName = null then
+                tbl
+            else
+                Table.RemoveColumns(
+                    Table.NestedJoin(TableName, {mergekey}, tbl, {"A_Date"}, "DummyData1", JoinKind.LeftAnti),
+                    {"DummyData1"}
+                )
+    in
+        Output

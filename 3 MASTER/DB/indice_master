@@ -1,0 +1,28 @@
+//  let LoadCode = Load("indice_","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
+let
+    Source = CWB("mIndice"),
+    RCol1 = Table.RemoveColumns(Source, Get("Header_MergeRemoval"), MissingField.Ignore),
+    // NonWeekly = fx("NotWeeklyDate")(RCol1, "Date"),
+    _Curves =
+        let
+            CN_Source = List.Buffer(Table.ColumnNames(RCol1)),
+            _SpdTenor = Record.Field(Load("Controltext"), "_SpdTenor"),
+            _InputCurves = {"CGB", "UST"},
+            // First Item minus by Second Item
+            SCGB = List.Select(
+                CN_Source, each Text.Contains(_, _InputCurves{0}) and Text.Contains(_, _SpdTenor & "Y")
+            ),
+            SUST = List.Select(
+                CN_Source, each Text.Contains(_, _InputCurves{1}) and Text.Contains(_, _SpdTenor & "Y")
+            ),
+            Prefix = {"S_DAX_CGBUST"},
+            CurveHD = SCGB & SUST & Prefix
+        in
+            CurveHD,
+    #"Calculated DAX" = fx("Avg_SpdDiff")(RCol1, _Curves),
+    RecentNIM = Load("RecentNIM_Indice"),
+    #">>CheckKey" = fx("Key")(RecentNIM),
+    Merged = fx("Merge")(#"Calculated DAX", RecentNIM, "Date", "Date", {""}),
+    Sorted = fx("SortNIndex")(Merged, "Date")
+in
+    Sorted
