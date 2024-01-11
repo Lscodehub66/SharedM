@@ -1,0 +1,49 @@
+(Sheet as table) =>
+    let
+        Col = List.Transform(List.Numbers(1, 30, 1), each "Column" & Text.From(_)),
+        SCol = Table.SelectColumns(Sheet, Col, MissingField.Ignore),
+        #"Kept First Rows" = Table.FirstN(SCol, 4),
+        #"Demoted Headers" = Table.DemoteHeaders(#"Kept First Rows"),
+        #"Transposed Table" = Table.Transpose(#"Demoted Headers"),
+     MCol = {"Column2", "Column3", "Column4", "Column5"},
+    Zipped = List.Zip({MCol, List.Repeat({type text}, List.Count(MCol))}),
+    #"Merged Columns" = Table.CombineColumns(
+        Table.TransformColumnTypes( #"Transposed Table" , Zipped), MCol, Combiner.CombineTextByDelimiter("", QuoteStyle.None), "Merged"
+    ),
+    #"Trimmed Text" = Table.TransformColumns(#"Merged Columns", {{"Merged", Text.Trim, type text}}),
+    #"Cleaned Text" = fx(
+        "Replace"
+    )(
+        Table.TransformColumns(#"Trimmed Text", {{"Merged", Text.Clean, type text}}), {"Merged"}, "主体"
+    ),
+        #"Removed Errors" = Table.RemoveRowsWithErrors(#"Cleaned Text", {"Merged"}),
+        #"Added Custom" = Table.AddColumn(
+            #"Removed Errors",
+            "Name.Column",
+            each
+                List.Accumulate(
+                    {
+                        "Project Name",
+                        "ISIN",
+                        "项目名称(集团全称)",
+                        "序号",
+                        "担任角色",
+                        "新规角色",
+                        "团队",
+                        "项目定价日",
+                        "承销费",
+                        "承销费(USD)",
+                        "承销费(RMB)",
+                        "项目状态",
+                        "分配金额总计",
+                        "下单但无分配"
+                    },
+                    "",
+                    (x, y) => if Text.Contains([Merged], y) then y else x
+                )
+        ),
+        #"Filtered Rows" = Table.SelectRows(#"Added Custom", each ([Name.Column] <> "")),
+        #"Removed Duplicates" = Table.Distinct(#"Filtered Rows", {"Name.Column"}),
+        #"Removed Other Columns" = Table.SelectColumns(#"Removed Duplicates", {"Column1", "Name.Column"})
+    in
+        #"Removed Other Columns"

@@ -7,9 +7,9 @@ let
     #"Not 144A" = Table.SelectRows(Source, each ([发行规则] <> "144A")),
     // Get 144A ISINs
     #"144A ISIN" = Table.SelectRows(Source, each ([发行规则] = "144A") and ([发行方式] <> "增发")),
-    #"Removed Col" = Table.RemoveColumns(#"144A ISIN",{"OTHER_ISIN"},MissingField.Ignore),
-    #"Renamed Columns" = Table.RenameColumns( #"Removed Col", {{"ISIN", "OTHER_ISIN"}}),
-    #"144A Headers" = {"OTHER_ISIN", "英文简称", "定价日"},
+    #"Removed Col" = Table.RemoveColumns(#"144A ISIN",{"ISIN_144A"},MissingField.Ignore),
+    #"Renamed Columns" = Table.RenameColumns( #"Removed Col", {{"ISIN", "ISIN_144A"}}),
+    #"144A Headers" = {"ISIN_144A", "英文简称", "定价日"},
     #"Removed Other Columns" = Table.SelectColumns(#"Renamed Columns", #"144A Headers"),
     // Merge Reg S to 144A
     #"Merged Queries" = Table.NestedJoin(

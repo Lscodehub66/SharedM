@@ -600,6 +600,7 @@ let
             Header_Sync_Directory = {"PROJECT_NAME", "COVERAGE", "定价日", "交易简称", "Check", "币种规模", "票息", "期限", "ISIN"},
             Header_Connect_DMI违约 = {"ISIN码", "发行人名称", "违约日期", "违约类型", "地区"},
             Header_DMI_Credit = {"信用主体", "债券简称", "穆迪/标普", "公司类型", "DMI行业", "细分行业", "省份", "城市", "区县", "定价日"},
+            Header_DMI_Credit_Source = {"信用主体", "债券简称", "穆迪/标普", "公司类型", "行业", "细分行业", "省份", "城市", "区县", "定价日"},
             Header_CF = {"序号", "团队", "发行人名称英文", "Mandate", "项目定价日", "KYC", "DD Risk"},
             Header_DirectoryToFormalities = {
                 "ISIN",
@@ -1118,6 +1119,8 @@ let
                     Header_S_Dynamic_wIssuer
                 else if Text.Contains(Key, "RMB") then
                     Header_RMB
+                else if Text.Contains(Key, "DMICREDITSOURCE") then
+                    Header_DMI_Credit_Source
                 else if Text.Contains(Key, "FI") then
                     Header_FI
                 else if Text.Contains(Key, "ESG") then

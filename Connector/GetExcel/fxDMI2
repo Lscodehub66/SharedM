@@ -10,7 +10,7 @@
             {
                 {"定价", "定价_DMI"},
                 {"IPT", "IPT_DMI"},
-                {"FPG", "FPG_DMI"},
+                {"FPG", "FPG_DMI"},{"行业", "DMI行业"},
                 {"发行结构", "发行架构"},
                 {"票息", "票息_DMI"},
                 {"ticker", "TICKER"},

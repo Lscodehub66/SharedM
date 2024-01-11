@@ -8,13 +8,20 @@ let
             "IS_FIMTN"
         }
     ),
+    Fn1_R1 = Table.ReplaceValue(
+        Fn1_R,
+        each [Filter_Bond],
+        each if [DataSource] = "BBG" then "" else [Filter_Bond],
+        Replacer.ReplaceValue,
+        {"Filter_Bond"}
+    ),
     Fn2 = List.Accumulate(
         {
             {"Credit", "信用主体", {"Index", "信用主体简称", "板块", "板块二级", "板块三级", "中资属性", "级别"}},
             {"Bond", "ISIN", {"Index"}},
             {"Issue", "Check", {"Index"}}
         },
-        Fn1_R,
+        Fn1_R1,
         (x, y) =>
             let
                 DBName = "m" & y{0},
@@ -23,8 +30,9 @@ let
                 PK = y{1},
                 ToExp = y{2},
                 Target = List.Transform(y{2}, each if _ = "Index" then "DBIndex_" & y{0} else _),
-                SourceM = fx("Merge")(x, DBtbl, PK, PK, ToExp, Target),
-                Prep = Table.RemoveColumns(SourceM, {DBName}, MissingField.Ignore),
+                SourceM = Table.NestedJoin(x, {PK}, DBtbl, {PK}, "Data" & PK, JoinKind.LeftOuter),
+                Exp = Table.ExpandTableColumn(SourceM, "Data" & PK, ToExp, Target),
+                Prep = Table.RemoveColumns(Exp, {DBName}, MissingField.Ignore),
                 ACol = Table.AddColumn(
                     Prep,
                     DBName,

@@ -9,7 +9,7 @@
         #"Filtered Rows1" = Table.SelectRows(#"Extracted Year", each [YearNum] > Numtext),
         Custom1 = fx("ShowFilter")(#"Filtered Rows1", "NOT"),
         LeftAnti = Table.NestedJoin(
-            Custom1, {"ISIN"}, CWB("DMI_TempISIN"), {"OTHER_ISIN"}, "Data", JoinKind.LeftAnti
+            Custom1, {"ISIN"}, CWB("DMI_TempISIN"), {"ISIN_TEMP"}, "Data", JoinKind.LeftAnti
         ),
         Fn1 = fx("CheckNDupe")(LeftAnti),
         Fn = fx("OriginalSize")(Fn1),

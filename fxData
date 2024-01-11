@@ -14,7 +14,6 @@
                 {"发行结构", "发行架构"},
                 {"FEATURED", "品种主题"},
                 {"ticker", "TICKER"},
-                {"行业", "DMI行业"},
                 {"交易所", "发行场所"},
                 {"临时isin", "ISIN_TEMP"}
             },
@@ -71,8 +70,8 @@
                 CN_RNSource, each Text.StartsWith(_, "S_") or Text.StartsWith(_, "Spd_") or Text.StartsWith(_, "I_")
             ),
         Num1 = {"最终账簿(亿)", "收窄Num"} & List.Select(CN_RNSource, each Text.StartsWith(_, "V_")),
-        Num0 = {"FEE", "承销费原币", "Relevance", "承销费_RMB", "承销费_USD", "承销费", "Year.Num", "兑付日.YearNum", "账户数"}
-            & List.Select(CN_RNSource, each Text.StartsWith(_, "CT_")),
+        Num0 = {"FEE", "Relevance", "Year.Num", "兑付日.YearNum", "账户数"}
+            & List.Select(CN_RNSource, each Text.StartsWith(_, "CT_") or Text.StartsWith(_, "承销费")),
         Num = {
             "IPT_YIELD",
             "Count_BISLDeal",
@@ -415,7 +414,7 @@
         NullFrom0 = Table.ReplaceValue(
             Error_Bye, 0, null, Replacer.ReplaceValue, List.Intersect({CN_RNSource, Num0ToNull})
         ),
-        Roundingtbl = Table.SelectRows(Type_Mytbl, each List.Contains({5, 3, 2,1, 0}, [Column3])),
+        Roundingtbl = Table.SelectRows(Type_Mytbl, each List.Contains({5, 3, 2, 1, 0}, [Column3])),
         RoundingList = List.Zip({Roundingtbl[Column1], Roundingtbl[Column3]}),
         FnRound = List.Accumulate(
             RoundingList,

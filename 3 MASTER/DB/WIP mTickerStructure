@@ -1,0 +1,15 @@
+let
+    Source = Excel.CurrentWorkbook(){[Name="mCurated"]}[Content],
+    #"Removed Other Columns" = Table.SelectColumns(Source,{"ISIN", "发行人", "担保人", "维好协议提供者", "TICKER"}),
+    #"Merged Queries" = Table.NestedJoin(#"Removed Other Columns", {"ISIN"}, DMI_all, {"ISIN"}, "Data", JoinKind.LeftOuter),
+    #"Expanded Data" = Table.ExpandTableColumn(#"Merged Queries", "Data", {"ticker", "发行人", "担保人", "维好协议提供者"}, {"Dummy.TICKER", "Dummy.发行人", "Dummy.担保人", "Dummy.维好协议提供者"}),
+    #"Replaced Value" = List.Accumulate( 
+           { "TICKER", "发行人", "担保人", "维好协议提供者"}, 
+          #"Expanded Data",
+           ( state, current ) => 
+              Table.ReplaceValue( state,"", each Record.Field(_,"Dummy."&current),Replacer.ReplaceValue,{current} )
+),
+    #"Removed Columns" = Table.RemoveColumns(#"Replaced Value", List.Select(Table.ColumnNames(#"Replaced Value"), each Text.Contains(_,"Dummy") )),
+    Custom1 = #"Removed Columns"
+in
+    Custom1

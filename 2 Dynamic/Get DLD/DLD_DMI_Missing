@@ -4,7 +4,8 @@ let
     Source = fx("Source")("DOWNLOAD_美元债一级"),
     需填写 = {"ISIN", "定价日", "信用主体"},
     需留空 = {"债券简称", "货币"},
-    ToBracket = {"主题债券", "发行架构", "IPT", "FPG", "联席全球协调人"},
+    Bracket1 = {"主题债券", "发行架构", "IPT", "FPG", "联席全球协调人"},
+    Bracket2 = {"省份", "城市", "区县"},
     Filtered = Table.SelectRows(
         Source,
         each
@@ -18,29 +19,21 @@ let
                         List.Contains({"", null, "--"}, Record.Field(_, y)) and x
             )
     ),
+    SCol = Table.SelectColumns(Filtered, 需填写 & Bracket1),
+    // Merge & TF
+    Custom1 = fx("Merge")(SCol, CWB("Entity_DMIYY"), "信用主体", "信用主体", {""}, {""}),
     TF = List.Accumulate(
-        ToBracket,
-        Filtered,
+        Bracket1 & Bracket2,
+        Custom1,
         (x, y) =>
             try
                 Table.TransformColumns(x, {{y, each if List.Contains({"", null, "--"}, _) then "【】" else _}})
             otherwise
                 x
     ),
-    SCol = Table.SelectColumns(TF, 需填写 & ToBracket),
-    // Merge & TF
-    List1 = {"省份", "城市", "区县"},
-    List2 = {"地区", "城市", "区县"},
-    List2YY = List.Transform(List2, each "YY_" & _),
-    Custom1 = fx("Merge")(SCol, CWB("DMI_Credit"), "信用主体", "信用主体", List1, List2),
-    Custom2 = fx("Merge")(Custom1, Load("YY_Entity"), "信用主体", "YY_主体", List2YY, {""}),
-    Custom4 = fx("Merge")(Custom2, Load("DLD_BBG_Corp"), "ISIN", "ISIN", {""}, {""}),
-    Replaced = List.Accumulate(
-        List.Zip({List2, List2YY}),
-        Custom4,
-        (x, y) => Table.ReplaceValue(x, "", each Record.Field(_, y{1}), Replacer.ReplaceValue, {y{0}})
-    ),
-    // Custom5 = List.Intersect({Table.ColumnNames(Replaced), Table.ColumnNames(DLD_DMI)}), SCol1 = Table.SelectColumns(Custom4, Custom5),
-    Custom3 = fx("RemoveBlankColumns")(Replaced, true)
+    Custom2 = fx("Merge")(TF, Load("DLD_BBG_Corp"), "ISIN", "ISIN", {""}, {""}),
+    // Custom5 = List.Intersect({Table.ColumnNames(Custom2), Table.ColumnNames(DLD_DMI)}), SCol1 = Table.SelectColumns(Custom2, Custom5),
+    Custom3 = fx("RemoveBlankColumns")(Custom2, true),
+    ACol3 = Table.AddColumn(Custom3, "DataSource",each "BBG", type text)
 in
-    Custom3
+    ACol3

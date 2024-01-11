@@ -1,0 +1,64 @@
+let
+    Source = Table.Buffer(fx("Excel")("台账24")),
+    Sheetlist = List.Select(Source[Item], each Text.StartsWith(_, "项目收入情况")),
+    HD = List.Accumulate(
+        Sheetlist,
+        #table({""}, {{"Name.Sheet"}}),
+        (x, y) =>
+            let
+                Sheet = Table.SelectRows(Source, each [Item] = y)[Data]{0},
+                Col = List.Transform(List.Numbers(1, 30, 1), each "Column" & Text.From(_)),
+                SCol = Table.SelectColumns(Sheet, Col, MissingField.Ignore),
+                #"Kept First Rows" = Table.FirstN(SCol, 4),
+                #"Demoted Headers" = Table.DemoteHeaders(#"Kept First Rows"),
+                #"Transposed Table" = Table.Transpose(#"Demoted Headers"),
+                #"Added Custom" = Table.AddColumn(#"Transposed Table", "Name.Sheet", each y, type text),
+                Output = fx("Combine")({#"Added Custom", x}, {null}, {10})
+            in
+                Output
+    ),
+    MCol = {"Column2", "Column3", "Column4", "Column5"},
+    Zipped = List.Zip({MCol, List.Repeat({type text}, List.Count(MCol))}),
+    #"Merged Columns" = Table.CombineColumns(
+        Table.TransformColumnTypes(HD, Zipped), MCol, Combiner.CombineTextByDelimiter("", QuoteStyle.None), "Merged"
+    ),
+    #"Trimmed Text" = Table.TransformColumns(#"Merged Columns", {{"Merged", Text.Trim, type text}}),
+    #"Cleaned Text" = fx(
+        "Replace"
+    )(
+        Table.TransformColumns(#"Trimmed Text", {{"Merged", Text.Clean, type text}}), {"Merged"}, "主体"
+    ),
+    #"Removed Errors" = Table.RemoveRowsWithErrors(#"Cleaned Text", {"Merged"}),
+    #"Added Custom" = Table.AddColumn(
+        #"Removed Errors",
+        "Name.Column",
+        each
+            List.Accumulate(
+                {
+                    "Project Name",
+                    "ISIN",
+                    "项目名称(集团全称)",
+                    "序号",
+                    "担任角色",
+                    "新规角色",
+                    "团队",
+                    "项目定价日",
+                    "承销费",
+                    "承销费(USD)",
+                    "承销费(RMB)",
+                    "项目状态",
+                    "分配金额总计",
+                    "下单但无分配"
+                },
+                "",
+                (x, y) => if Text.Contains([Merged], y) then y else x
+            )
+    ),
+    #"Filtered Rows" = Table.SelectRows(#"Added Custom", each ([Name.Column] <> "")),
+    #"Removed Duplicates" = Table.Distinct(#"Filtered Rows", {"Name.Column", "Name.Sheet"}),
+    #">>>>>Grouped Rows" = Table.Group(
+        #"Removed Duplicates", {"Name.Sheet"}, {{"Count", each Table.RowCount(_), Int64.Type}}
+    ),
+    #"Removed Other Columns" = Table.SelectColumns(#"Removed Duplicates", {"Column1", "Name.Sheet", "Name.Column"})
+in
+    #"Removed Other Columns"

@@ -2,26 +2,11 @@
 let
     Source = Load("DLD_FilteredwFIMTN"),
     CN_Source = List.Buffer(Table.ColumnNames(Source)),
-    Clean_TBC = if List.Contains(CN_Source, "IS_FIMTN") then fx("Replace")(    Source , {"IS_FIMTN"}, "RTBC") else Merged1,
+    Clean_TBC = if List.Contains(CN_Source, "IS_FIMTN") then fx("Replace")(Source, {"IS_FIMTN"}, "RTBC") else Source,
     Clean_Structure = fx("Replace")(Table.DuplicateColumn(Clean_TBC, "发行架构", "结构"), {"结构"}, "结构"),
-    Add_Tap = Table.AddColumn(
-        Clean_Structure,
-        "增发判定",
-        each
-            if [发行方式] = "增发" then
-                "增发"
-            else if [起息日期] = null then
-                ""
-            else if [定价日] > [起息日期] then
-                "增发"
-            else if [Filter_Issue] = "" and [Filter_Bond] = "*" then
-                "【增发】"
-            else
-                "",
-        type text
-    ),
     Added = List.Accumulate(
         {
+            "Reopen",
             "SBLC",
             "Exchange",
             "BankBranch",
@@ -38,7 +23,7 @@ let
             "Tenor",
             "ESGMore"
         },
-        Add_Tap,
+        Clean_Structure,
         (x, y) => fx("Add" & y)(x)
     ),
     WeeklyAddTapSwith = CWB("WeeklyAddTap"),
@@ -48,4 +33,3 @@ let
     Sorted = fx("SortNIndex")(Checked)
 in
     Sorted
-

@@ -5,7 +5,7 @@
             _collist,
             Source,
             (x, y) =>
-               if Table.HasColumns( Source, y)  then
+                if Table.HasColumns(Source, y) then
                     Table.TransformColumns(
                         x,
                         {
@@ -19,7 +19,9 @@
                                 type text
                             }
                         }
-                    ) else x
+                    )
+                else
+                    x
         )
     in
         #"Transformed MannualInput"
