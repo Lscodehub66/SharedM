@@ -58,7 +58,7 @@ Private Sub Worksheet_Change(Byval Target As Range)
         Selection.ClearContents
 
         Sheet16.Activate
-        Application.Goto Reference:="DLD_Filtered_Add"
+        Application.Goto Reference:="Filtered_Add"
         Selection.ClearContents
 
         Sheet17.Activate

@@ -1,6 +1,6 @@
-// let LoadCode = Load("DLD_Filtered_Add","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+// let LoadCode = Load("Filtered_Add","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-    Source = Load("DLD_FilteredwFIMTN"),
+    Source = Load("Filtered_wFIMTN"),
     CN_Source = List.Buffer(Table.ColumnNames(Source)),
     Clean_TBC = if List.Contains(CN_Source, "IS_FIMTN") then fx("Replace")(Source, {"IS_FIMTN"}, "RTBC") else Source,
     Clean_Structure = fx("Replace")(Table.DuplicateColumn(Clean_TBC, "发行架构", "结构"), {"结构"}, "结构"),
@@ -26,8 +26,17 @@ let
         Clean_Structure,
         (x, y) => fx("Add" & y)(x)
     ),
-    WeeklyAddTapSwith = CWB("WeeklyAddTap"),
-    Appended = if WeeklyAddTapSwith = "OFF" then Added else fx("Combine")({Added, Load("wAddTapPQ")}, {null}, {0}),
+       DM = {"mIssue", "mStats", "mBISL", "mEXE", "mCredit"},
+    #"Operational Columns" = List.Accumulate(
+        DM, Added, (x, y) => if not Table.HasColumns(x, y) then Table.AddColumn(x, y, each "", type text) else x
+    ),
+
+  WeeklyAddTapSwith = CWB("WeeklyAddTap"),
+    Appended =
+        if WeeklyAddTapSwith = "OFF" then
+            #"Operational Columns"
+        else
+            fx("Combine")({#"Operational Columns", Load("wAddTapPQ")}, {null}, {0}),
     //
     Checked = fx("CheckNDupe")(Appended),
     Sorted = fx("SortNIndex")(Checked)

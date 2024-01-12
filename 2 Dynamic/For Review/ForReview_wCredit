@@ -1,29 +1,18 @@
-// let LoadCode = Load("ForReview_wCredit","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+ // let LoadCode = Load("ForReview_wCredit","Code"), EVA = Expression.Evaluate(LoadCode ,#shared),
 let
-  Source = Load("DLD_FilteredwFIMTN"),
-    FromForReviewIssuer = Table.SelectColumns(
-        Table.SelectRows(Load("ForReview_Issuer"), each Text.Contains([信用主体], "【")), {"信用主体"}
-    ),
-    Combined = fx("Combine")({Source, FromForReviewIssuer}, {"信用主体"}),
-    TFCol = Table.TransformColumns(
-        Combined,
-        {
-            {
-                "信用主体",
-                each
-                    if Text.Contains(_, "【") then
-                        Text.BetweenDelimiters(Text.BeforeDelimiter(_, "【", {0, RelativePosition.FromEnd}), "【", "】")
-                    else
-                        _
-            }
-        }
-    ),
-    Replaced = Table.ReplaceValue(TFCol, null, each [信用主体], Replacer.ReplaceValue, {"债券简称"}),
-    #"Filtered Rows" = Table.SelectRows(Replaced, each List.Contains({"","**"},[Filter_Credit] )),
-    Function = Table.AddColumn(#"Filtered Rows", "SHORTNAMER", each fx("SNBankCorp")([债券简称])),
-    SCol1 = Table.SelectColumns(
-        Function, {"信用主体", "SHORTNAMER", "板块", "板块二级", "板块三级", "中资属性", "级别", "地区", "城市", "区县"}, MissingField.UseNull
-    ),
-    BlankToInput = Table.ReplaceValue(SCol1, null, "【】", Replacer.ReplaceValue,{"板块","中资属性"})
+
+  _input = "wCredit",
+    _PK = "信用主体",
+    Name = "m" & Text.AfterDelimiter(_input, "w"),
+    HD = fx("ForReviewHD")(_input),
+Source = Load("DLD_Filtered"),
+     Replaced = Table.ReplaceValue(  Source ,each [债券简称], each if List.Contains({null,"","--"},[债券简称]) and  not List.Contains({null,"","--"}, [信用主体]) then [信用主体] else [债券简称] , Replacer.ReplaceValue, {"债券简称"}),
+    #"Filtered Rows" = Table.SelectRows(fx("1st")(Replaced,{"mCredit"}), each List.Contains({"","**"},[Filter_Credit] )),
+    SCol = Table.SelectColumns(    #"Filtered Rows", HD, MissingField.UseNull),
+    Function = Table.AddColumn(Table.RemoveColumns(SCol, {"信用主体简称"}, MissingField.Ignore), "信用主体简称", each fx("SNBankCorp")([债券简称])),
+    Filtered = Table.SelectRows(Function, each not List.Contains({"n/a","已收录"}, Record.Field(_,Name))),
+    SelfJoined = fx("SelfJoin_R")(Filtered, CWB("ForReview_" & _input), {_PK}),
+    Sorted = fx("SortNIndex")(SelfJoined)  //SelfJoined
+
 in
-    BlankToInput
+    Sorted

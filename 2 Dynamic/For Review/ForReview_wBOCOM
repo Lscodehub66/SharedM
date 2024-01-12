@@ -50,6 +50,7 @@ let
             "是否合名"
           
         }
-    )
+    ),
+   SelfJoined = fx("SelfJoin_R") (BlankToInput2, CWB("ForReview_wBOCOM"), {"Check"})
 in
-    BlankToInput2
+    SelfJoined

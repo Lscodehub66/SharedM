@@ -1,0 +1,19 @@
+let
+    Source = Table.Buffer(try CWB("DMIHeaders") otherwise fx("Source")("DYNAMIC_DMIHeaders")),
+    CurrentDMI =
+        let
+            Custom1 = fx("Excel")("DOWNLOAD_美元债一级"),
+            #"Promoted Headers" = Table.PromoteHeaders(Custom1, [PromoteAllScalars = true]),
+            #"Promoted Headers1" = Table.FromColumns(
+                {Table.ColumnNames(Table.PromoteHeaders(#"Promoted Headers", [PromoteAllScalars = true]))}, {"DMI字段"}
+            )
+        in
+            Table.Buffer(#"Promoted Headers1"),
+    OnlyInDMI = Table.NestedJoin(CurrentDMI, {"DMI字段"}, Source, {"DMI字段"}, "Data", JoinKind.LeftAnti),
+    #"Expanded Data" = Table.ExpandTableColumn(OnlyInDMI, "Data", {"状态"}, {"状态"}),
+    OnlyInDMI_Changed = Table.NestedJoin(Source, {"DMI字段"}, CurrentDMI, {"DMI字段"}, "Data", JoinKind.LeftAnti),
+    #"Removed Columns" = Table.RemoveColumns(OnlyInDMI_Changed, {"Data"}),
+    Custom1 = fx("Combine")({#"Removed Columns", #"Expanded Data"}),
+    TF = Table.TransformColumns(Custom1, {{"DMI字段", each if _ <> "" then "【" & _ & "】" else _}})
+in
+    TF

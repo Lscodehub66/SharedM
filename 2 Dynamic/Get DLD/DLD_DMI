@@ -1,13 +1,25 @@
 //let LoadCode = Load("DLD_DMI","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-    Source = fx("Source")("DOWNLOAD_美元债一级"),
+    DMI = Table.AddColumn(fx("Source")("DOWNLOAD_美元债一级"), "DataSource", each "DMI", type text),
+    Source = Table.Buffer(DMI),
+    CN_Source = List.Buffer(Table.ColumnNames(Source)),
+    bbg = fx("Excel")("DOWNLOAD_tbl_dmi_isin"),
+    //
+    ToCombine =
+        let
+            Getisin = fx("DMIMissing")(Source),
+            Custom2 = fx("Merge")(Getisin, bbg, "ISIN", "ISIN", {""}, {""}),
+            ACol3 =
+                if Table.HasColumns(Custom2, "DataSource") then
+                    Table.ReplaceValue(Custom2, "DMI", "BBG", Replacer.ReplaceValue, {"DataSource"})
+                else
+                    Table.AddColumn(Custom2, "DataSource", each "BBG", type text),
+            SCol = Table.SelectColumns(ACol3, CN_Source, MissingField.UseNull)
+        in
+            Table.Buffer(SCol),
     Date = fx("DateRange")({"PreviousMon.Date", "Sunday.Date"}),
     #"//GNG_Multi" = if fx("Parameter")("MultiSource") = "ON" then "GO" else "NO-GO",
-    Appended1 = if #"//GNG_Multi" <> "GO" then Source else fx(
-        "Combine"
-    )(
-        {Source, Load("DLD_DMI_Missing")}, {null},{0}
-    ),
+    Appended1 = if #"//GNG_Multi" <> "GO" then Source else Table.Combine({ToCombine, Source}),
     Custom1 = fx("DMI2")(Appended1, "Y")
 in
     Custom1

@@ -1,12 +1,10 @@
-// let LoadCode = Load("DLD_FilteredwFIMTN","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+// let LoadCode = Load("Filtered_wFIMTN","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
     Source1 = CWB("DLD_Conso"),
-    FilteredOut_Bond = Load("FilteredOut_Bond"),
-    Merged = Table.NestedJoin(Source1, {"信用主体"}, FilteredOut_Entity, {"信用主体"}, "DummyData", JoinKind.LeftAnti),
-    Merged1 = Table.NestedJoin(
-        Merged, {"ISIN", "定价日"}, FilteredOut_Bond, {"ISIN", "定价日"}, "DummyData1", JoinKind.LeftAnti
-    ),
-    Custom1 = Table.AddColumn(Merged1, "删除及隐藏", each if [IS_FIMTN] = "Y" or [IS_FIMTN] = "【Y】" then "FIMTN" else ""),
+    //
+   Filtered= Table.SelectRows(Source1, each List.Contains({null,"","--"},[Filter_Bond]) and  List.Contains({null,"","--"},[Filter_Exch])),
+    //
+    Custom1 = Table.AddColumn(Filtered, "删除及隐藏", each if [IS_FIMTN] = "Y" or [IS_FIMTN] = "【Y】" then "FIMTN" else ""),
     Replaced = Table.ReplaceValue(
         Custom1, "新增", each if [删除及隐藏] = "FIMTN" then "n/a" else "新增", Replacer.ReplaceValue, {"mBond", "mIssue"}
     ),

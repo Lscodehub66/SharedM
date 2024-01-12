@@ -2,30 +2,48 @@
 let
     p = "ForReview_",
     wIssue = CWB(p & "wIssue", "1"),
+    //
     ACol1 = Table.AddColumn(wIssue, "mIssue", each "Y"),
     RemovedCol = Table.RemoveColumns(ACol1, Get("Header_MergeRemoval"), MissingField.Ignore),
     Filtered = Table.SelectRows(
         RemovedCol, each ([定价日] <> null) and [ISIN] <> null and [删除及隐藏] <> "删除" and [删除及隐藏] <> "【删除】"
     ),
     wBond = CWB(p & "wBond", "1"),
-    Merged3 = fx("Merge")(
-        Filtered, Table.AddColumn(wBond, "mBond", each "Y", type text), "ISIN", "ISIN", {""}, {""}
+    Merged3 = fx(
+        "Merge"
+    )(
+        Filtered, try Table.AddColumn(wBond, "mBond", each "Y", type text) otherwise wBond, "ISIN", "ISIN", {""}, {
+            ""
+        }
     ),
     SourceDB = fx("Combine")({Merged3, CWB("ForReview_wChart")}, null, {10}),
     //
     wStats = Table.SelectRows(CWB(p & "wStats", "1"), each not List.Contains({null, "", "--"}, [#"最终账簿(亿)"])),
     wBOCOM = Table.AddColumn(CWB(p & "wBOCOM"), "mBISL", each "Y", type text),
     wCredit = Load("wCredit_Reviewed"),
-    DLD_Filtered_Add = CWB("DLD_Filtered_Add"),
+    Filtered_Add = CWB("Filtered_Add"),
     Merged = List.Accumulate(
         {
             {wStats, "mStats", "Check"},
             {wBOCOM, "mEXE", "Check"},
             {wCredit, "mCredit", "信用主体"},
-            {DLD_Filtered_Add, "DLD_Add", "Check"}
+            {Filtered_Add, "DLD_Add", "Check"}
         },
-         SourceDB,
-        (x, y) => fx("Merge")(x, Table.AddColumn(y{0}, y{1}, each "Y", type text), y{2}, y{2}, {""}, {""})
+        SourceDB,
+        (x, y) =>
+            fx(
+                "Merge"
+            )(
+                x,
+                if Table.HasColumns(y{0}, y{1}) then
+                    Table.TransformColumns(y{0}, {{y{1}, each "Y"}})
+                else
+                    Table.AddColumn(y{0}, y{1}, each "Y", type text),
+                y{2},
+                y{2},
+                {""},
+                {""}
+            )
     ),
     Custom1 = Table.TransformColumns(
         Merged,
