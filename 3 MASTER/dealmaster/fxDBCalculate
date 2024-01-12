@@ -19,8 +19,8 @@
                 RemovedCol,
         #"Added FolderPath" = fx("FolderPath")(Calculated_DEBUT),
         #"Added 美元规模分类" = fx("GroupSize")(#"Added FolderPath"),
-        #"Added 年期货币分类" = fx("GpTenorCCYRtg")(#"Added 美元规模分类"),
-        #"Added 清算地" = fx("ISINToCSD")(#"Added 年期货币分类"),
+        #"Added 年期结构货币分类" = fx("GpTenorSTRCCY")(#"Added 美元规模分类"),
+        #"Added 清算地" = fx("ISINToCSD")(#"Added 年期结构货币分类"),
         #"Added 评级分类" = fx("GpRtg")(#"Added 清算地", {"发行评级", "评级分类"}),
         #"Added 主体评级分类" = fx("GpRtg")(#"Added 评级分类", {"主体评级", "主体评级分类", "EN"}),
         #"Added 是否IG" = Table.AddColumn(

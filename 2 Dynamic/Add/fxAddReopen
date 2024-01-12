@@ -27,12 +27,12 @@
         Custom2 = Table.AddColumn(
             #"Grouped Rows",
             "ISIN_TEMP",
-            each
+            each if [Count] >1 then 
                 Text.Combine(
                     List.Distinct(
                         Table.Column(Table.SelectRows([Custom], each [mBond] = "新增" and [mIssue] = "新增"), "ISIN")
                     )
-                )
+                ) else ""
         ),
         #"Removed Other Columns" = fx("Exp")(Table.SelectColumns(Custom2, {"Custom", "ISIN_TEMP"}), "Custom"),
         #"Revised TapRow" = Table.ReplaceValue(

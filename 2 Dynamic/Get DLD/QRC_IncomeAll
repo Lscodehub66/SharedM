@@ -1,4 +1,3 @@
-// let LoadCode = Load("QRC_Income","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
     Source = Table.Buffer(fx("Excel")("台账24")),
     Sheetlist = Table.SelectRows(Source, each Text.StartsWith([Item], "项目收入情况")),
@@ -11,7 +10,7 @@ let
         Custom1, each not List.Contains({null, "", "--"}, [Project Name]) and not Text.Contains([Project Name], "【")
     ),
     Custom2 = fx("PRJSync")(#"Filtered Rows", "序号", "项目定价日", "PRJ对账号"),
-    #"Merged Queries" = fx("Merge")(Custom2, CWB("Directory"), "PRJ对账号", "PRJ对账号", {"货币"}),
+    #"Merged Queries" = fx("Merge")(Custom2, Query1, "PRJ对账号", "PRJ对账号", {"货币"}),
     #"Replaced Value" = Table.AddColumn(
         #"Merged Queries",
         "承销费原币",
@@ -45,10 +44,6 @@ let
             "下单但无分配"
         },
         MissingField.Ignore
-    ),
-    #"Sorted Rows1" = Table.Sort(#"Reordered Columns",{{"PRJ对账号", Order.Descending}}),
-    #"Added Index" = Table.AddIndexColumn(#"Sorted Rows1", "Index", 1, 1, Int64.Type),
-    Custom3 = Table.Sort( #"Added Index",{{"PRJ对账号", Order.Descending}}),
-    Custom4 = fx("1st")(Custom3,{"Index"})
+    )
 in
-    Custom4
+    #"Reordered Columns"

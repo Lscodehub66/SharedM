@@ -61,6 +61,14 @@ let
         #"Filtered Rows", Table.SelectColumns(CWB("DLD_Conso"), _HD, MissingField.Ignore), {"ISIN"}
     ),
     #"Sorted Rows" = fx("SortNIndex")(Revised),
-    #"Reordered" = fx("1st")(#"Sorted Rows", _HD)
+    #"Reordered" = fx(
+        "1st"
+    )(
+        try
+            Table.ReorderColumns(#"Sorted Rows", CWB("DLD_Conso", "CN"), MissingField.Ignore)
+        otherwise
+            #"Sorted Rows",
+        _HD
+    )
 in
     #"Reordered"

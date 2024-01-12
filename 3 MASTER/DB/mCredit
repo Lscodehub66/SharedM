@@ -15,6 +15,7 @@ let
     #">>Add1_Control>>" = CWB("AddEntity")[Column1]{0},
     //【Input】PQ//
     DB_Source = CWB(DB_Name),
+    //  DB_Source =   fx("DB_Revise")(    C1, CWB("ToRevise_Credit"), "信用主体"),
     // DB_Source2 = fx("Data")(Excel.Workbook(File.Contents("Z:\Team Folder\Execution Team\DataHub\Backup\Archive.xlsx"), null, true){[Item="mCredit",Kind="Table"]}[Data]),
     DB_Source_CN = Table.ColumnNames(DB_Source),
     Add_HD = List.Intersect({Add_CN_DistinctCol, DB_Source_CN}){0},

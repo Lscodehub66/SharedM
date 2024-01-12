@@ -1,0 +1,15 @@
+let
+    Source = Table.Buffer(fx("Excel")("台账24")),
+    Sheetlist = Table.SelectRows(Source, each Text.StartsWith([Item], "项目收入情况2024")),
+    #"Added Custom" = Table.AddColumn(Sheetlist, "HD", each fx("QRC_HD")([Data])),
+    #"Added Custom1" = Table.AddColumn(#"Added Custom", "Data1", each fx("QRC_MHD")([Data], [HD])),
+    #"Sorted Rows" = Table.Sort(#"Added Custom1", {{"Item", Order.Descending}}),
+    #"Removed Columns" = Table.SelectColumns(#"Sorted Rows", {"Item", "Data1"}),
+    Custom1 = fx("Combine")(#"Removed Columns"[Data1], {null}, {10}),
+       #"Filtered Rows" = Table.SelectRows(
+        Custom1, each not List.Contains({null, "", "--"}, [Project Name]) and not Text.Contains([Project Name], "【")
+    ),
+    #"Removed Other Columns" = Table.SelectColumns(#"Filtered Rows",{"Project Name", "ISIN", "项目名称(集团全称)",
+     "序号", "担任角色", "新规角色", "团队", "项目定价日"},MissingField.UseNull)
+in
+    #"Removed Other Columns"

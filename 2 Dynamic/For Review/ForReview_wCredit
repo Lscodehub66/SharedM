@@ -1,18 +1,30 @@
- // let LoadCode = Load("ForReview_wCredit","Code"), EVA = Expression.Evaluate(LoadCode ,#shared),
+// let LoadCode = Load("ForReview_wCredit","Code"), EVA = Expression.Evaluate(LoadCode ,#shared),
 let
-
-  _input = "wCredit",
+    _input = "wCredit",
     _PK = "信用主体",
     Name = "m" & Text.AfterDelimiter(_input, "w"),
     HD = fx("ForReviewHD")(_input),
-Source = Load("DLD_Filtered"),
-     Replaced = Table.ReplaceValue(  Source ,each [债券简称], each if List.Contains({null,"","--"},[债券简称]) and  not List.Contains({null,"","--"}, [信用主体]) then [信用主体] else [债券简称] , Replacer.ReplaceValue, {"债券简称"}),
-    #"Filtered Rows" = Table.SelectRows(fx("1st")(Replaced,{"mCredit"}), each List.Contains({"","**"},[Filter_Credit] )),
-    SCol = Table.SelectColumns(    #"Filtered Rows", HD, MissingField.UseNull),
-    Function = Table.AddColumn(Table.RemoveColumns(SCol, {"信用主体简称"}, MissingField.Ignore), "信用主体简称", each fx("SNBankCorp")([债券简称])),
-    Filtered = Table.SelectRows(Function, each not List.Contains({"n/a","已收录"}, Record.Field(_,Name))),
-    SelfJoined = fx("SelfJoin_R")(Filtered, CWB("ForReview_" & _input), {_PK}),
-    Sorted = fx("SortNIndex")(SelfJoined)  //SelfJoined
+    Source = Load("DLD_Filtered"),
+        Filtered = Table.SelectRows(  Source, each not List.Contains({"n/a", "已收录"}, Record.Field(_, Name))),
+    Replaced = Table.ReplaceValue(
+       Filtered,
+        each [债券简称],
+        each
+            if List.Contains({null, "", "--"}, [债券简称]) and not List.Contains({null, "", "--"}, [信用主体]) then
+                [信用主体]
+            else
+                [债券简称],
+        Replacer.ReplaceValue,
+        {"债券简称"}
+    ),
+    BlankToInput = Table.ReplaceValue(Replaced, "", "【】", Replacer.ReplaceValue, {"板块", "中资属性"}),
+    Function = Table.AddColumn(
+        Table.RemoveColumns(BlankToInput, {"信用主体简称"}, MissingField.Ignore), "信用主体简称", each fx("SNBankCorp")([债券简称])
+    ),
 
+    SCol = Table.SelectColumns(  Function , HD, MissingField.UseNull),
+    SelfJoined = fx("SelfJoin_R")(   SCol, CWB("ForReview_" & _input), {_PK}),
+    Sorted = fx("SortNIndex")(SelfJoined)
+    //SelfJoined
 in
     Sorted

@@ -13,12 +13,17 @@ Private Sub Worksheet_Change(Byval Target As Range)
         ' Place your code here.
         Sheet3.Activate
 
-        Application.Goto Reference:="DLD_QRC_23"
-        Selection.ClearContents
+
         Application.Goto Reference:="DLD_Filter_Credit"
         Selection.ClearContents
-        Application.Goto Reference:="DLD_Filter_Bond"
+        Application.Goto Reference:="DLD_Conso"
         Selection.ClearContents
+        Application.Goto Reference:="DMIHeaders_Check"
+        Selection.ClearContents
+
+
+
+
 
         Sheet6.Activate
         Application.Goto Reference:="tbl_review_issuer"
@@ -30,9 +35,6 @@ Private Sub Worksheet_Change(Byval Target As Range)
         Application.Goto Reference:="tbl_review_shortname"
         Selection.ClearContents
 
-        Sheet7.Activate
-        Application.Goto Reference:="DLD_Conso"
-        Selection.ClearContents
 
 
         Sheet1.Activate
@@ -46,6 +48,8 @@ Private Sub Worksheet_Change(Byval Target As Range)
         Sheet9.Activate
         Application.Goto Reference:="ForReview_wStats"
         Selection.ClearContents
+        Application.Goto Reference:="wConso"
+        Selection.ClearContents
 
 
 
@@ -55,10 +59,6 @@ Private Sub Worksheet_Change(Byval Target As Range)
 
         Sheet14.Activate
         Application.Goto Reference:="ForReview_wCredit"
-        Selection.ClearContents
-
-        Sheet16.Activate
-        Application.Goto Reference:="Filtered_Add"
         Selection.ClearContents
 
         Sheet17.Activate
@@ -84,6 +84,8 @@ Private Sub Worksheet_Change(Byval Target As Range)
 
     End If
 End Sub
+
+
 
 
 
