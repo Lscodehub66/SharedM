@@ -10,7 +10,7 @@
             修改HD,
             Merged,
             (x, y) =>
-                Table.ReplaceValue(
+              try  Table.ReplaceValue(
                     x,
                     each Record.Field(_, Text.AfterDelimiter(y, ".")),
                     each
@@ -20,13 +20,13 @@
                             Record.Field(_, Text.AfterDelimiter(y, ".")),
                     Replacer.ReplaceValue,
                     {Text.AfterDelimiter(y, ".")}
-                )
-        ),
+                ) otherwise x
+        ) ,
         补齐空白记录 = List.Accumulate(
             补齐HD,
             修改原有记录,
             (x, y) =>
-                Table.ReplaceValue(
+               try Table.ReplaceValue(
                     x,
                     each Record.Field(_, Text.AfterDelimiter(y, ".")),
                     each
@@ -39,7 +39,7 @@
                             Record.Field(_, Text.AfterDelimiter(y, ".")),
                     Replacer.ReplaceValue,
                     {Text.AfterDelimiter(y, ".")}
-                )
+                )  otherwise x
         ),
         Output = Table.SelectColumns(补齐空白记录, Table.ColumnNames(Source))
     in

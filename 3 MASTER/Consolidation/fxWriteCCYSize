@@ -44,7 +44,7 @@
                 Table.ReplaceValue(
                     CrcySizeCN,
                     each [币种规模],
-                    each Text.Remove(Text.Remove(Record.Field(_, IsTapColumn), "["),"]") & [币种规模],
+                    each if Text.Contains((Record.Field(_, IsTapColumn)??""),"增发") then "增发" & [币种规模] else [币种规模],
                     Replacer.ReplaceValue,
                     {"币种规模"}
                 ),

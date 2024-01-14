@@ -1,10 +1,10 @@
 //let FileName = "CWB",Path  = if (try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Remote" ) = "Remote" then "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM\" else "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\SharedM\",  EVA = Expression.Evaluate ( Text.FromBinary ( Binary.Buffer ( File.Contents ( Path&FileName ) ) ) ,#shared )in    EVA//
-(_inputtblname as text, optional _inputkey as nullable text) =>
+(_inputname as text, optional _inputkey as nullable text) =>
     let
-        ThisExcel = Excel.CurrentWorkbook(){[Name = _inputtblname]}[Content],
-        DM = fx("Excel")("DEALSMASTER_=" & _inputtblname),
+        ThisExcel = Excel.CurrentWorkbook(){[Name = _inputname]}[Content],
+        DM = fx("Excel")("DEALSMASTER_=" & _inputname),
         _key = if _inputkey = null then "" else _inputkey,
-        _tblname = Text.Replace(Text.Upper(Text.Trim(_inputtblname)), "_", ""),
+        _tblname = Text.Replace(Text.Upper(Text.Trim(_inputname)), "_", ""),
         NamedList = {
             "MONDAY",
             "UPDATORWEEKLY",
@@ -18,10 +18,12 @@
             "WEEKLYADDTAP"
         },
         Source =
-            if List.Contains({"deal_master", "chart_master", "mIndice"}, _inputkey,Comparer.OrdinalIgnoreCase) then
+            if List.Contains({"deal_master", "chart_master", "mIndice"}, _inputkey, Comparer.OrdinalIgnoreCase) then
                 try ThisExcel otherwise try Load(_inputkey) otherwise DM
             else if List.Contains(NamedList, _tblname) then
                 try ThisExcel otherwise Load(_inputkey)
+            else if _key = "CWB" then
+                ThisExcel
             else
                 try ThisExcel otherwise DM,
         DataType = if _inputkey = "1" then fx("Data")(Source, 1) else fx("Data")(Source),
@@ -35,6 +37,12 @@
                 Table.ToList(DefinedNames)
             else
                 DefinedNames,
-        GetCN = if Text.Contains(_key, "CN") then Table.ColumnNames(List) else List
+        GetCN =
+            if Text.Contains(_key, "CN") then
+                Table.ColumnNames(List)
+            else if _inputname = "DMI" then
+                fx("Source")("DMI")
+            else
+                List
     in
         GetCN

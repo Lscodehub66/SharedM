@@ -1,0 +1,98 @@
+// let LoadCode = Load("wNIMSum_Writer","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in    EVA
+let
+    Datatbl = Load("wNIMSum"),
+    #"Removed Top Rows" = Table.Skip(Datatbl, 1),
+    #"Changed Type1" = Table.TransformColumnTypes(
+        #"Removed Top Rows", {{"Column2", type number}, {"Column3", type number}}
+    ),
+    #"Inserted Division" = Table.AddColumn(
+        #"Changed Type1", "环比", each ([Column3] - [Column2]) / [Column2], type number
+    ),
+    #"Added Conditional Column" = Table.AddColumn(
+        #"Inserted Division",
+        "环比text",
+        each
+            if [Column2] = 0 or [Column3] = 0 then
+                ""
+            else if [环比] > 2 then
+                Number.ToText(Number.Abs([环比]), "0.0倍")
+            else
+                Number.ToText(Number.Abs([环比]), "0%"),
+        type text
+    ),
+    #"Added Custom" = Table.AddColumn(
+        #"Added Conditional Column",
+        "描述1",
+        each
+            List.Accumulate(
+                {{"CT_NIM_7D", "上周无新发活动。", "上周，中资离岸债券一级市场共有", "笔"}, {"V_NIM_7D", "上周无新发活动。", "约", "亿美元等值的债券定价"}},
+                "",
+                (x, y) =>
+                    if [Column3] = 0 then
+                        y{1}
+                    else if [Column1] = y{0} then
+                        y{2} & Number.ToText([Column3], "0") & y{3}
+                    else
+                        x
+            ),
+        type text
+    ),
+    #"Added Custom3" = Table.AddColumn(
+        #"Added Custom", "连接12", each if Text.StartsWith(([Column1] ?? ""), "V_") then "。" else "", type text
+    ),
+    Custom2 = Table.AddColumn(
+        #"Added Custom3",
+        "描述2",
+        each
+            List.Accumulate(
+                {{"CT_NIM_7D", "前一周无新发活动。", "前一周共", "笔"}, {"V_NIM_7D", "前一周无新发活动。", "约", "亿美元等值"}},
+                "",
+                (x, y) =>
+                    if [Column2] = 0 then
+                        y{1}
+                    else if [Column3] = 0 and [Column1] = y{0} then
+                        y{2} & Number.ToText([Column2], "0") & y{3}
+                    else if [Column1] = y{0} then
+                        y{2} & Number.ToText([Column2], "0") & y{3}
+                    else
+                        x
+            ),
+        type text
+    ),
+    #"Added Conditional Column1" = Table.AddColumn(
+        Custom2,
+        "描述3",
+        each
+            if [Column2] = 0 or [Column3] = 0 then
+                ""
+            else if [环比] < 0.1 and [环比] > -0.1 and Text.StartsWith(([Column1] ?? ""), "V_") then
+                "发行量基本持平"
+            else if [环比] >= 0.1 and [Column1] = "V_NIM_7D" then
+                "发行量上升" & [环比text]
+            else if Text.StartsWith(([Column1] ?? ""), "V_") then
+                "发行量下降" & [环比text]
+            else
+                "",
+        type text
+    ),
+    R1 = Table.ReplaceValue(
+        #"Added Conditional Column1",
+        "。",
+        each if [描述3] <> "" and Text.StartsWith(([Column1] ?? ""), "V_") then "，相比" else "。",
+        Replacer.ReplaceValue,
+        {"连接12"}
+    ),
+    #"Removed Other Columns" = Table.SelectColumns(R1, {"描述1", "连接12", "描述2", "描述3"}),
+    #"Reversed Rows" = Table.ReverseRows(#"Removed Other Columns"),
+    ACol = Table.AddColumn(
+        #"Reversed Rows",
+        "描述",
+        each
+            List.Accumulate(
+                {"描述1", "连接12", "描述2", "描述3"},
+                "",
+                (x, y) => x & Text.Combine(List.Distinct(Table.Column(#"Reversed Rows", y)))
+            )
+    )
+in
+    ACol

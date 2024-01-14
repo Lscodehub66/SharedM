@@ -3,11 +3,11 @@
         // _inputkey = _inputkey,
         Key = Text.Upper(Text.Trim(_inputkey ?? "")),
         NumText = Text.Select(Key, {"0".."9"}),
-        //
-        Source = fx("MergeDimDate")(CWB("deal_master"), "兑付日", {""}, {""}, "兑付日"),
+        Source = fx("DateRange")({"Now.Date", "NextTwoYearEnd.Date"}, {CWB("deal_master"), "兑付日", {""}, "兑付日"}),
+        //= Table.SelectColumns(Source,{"ISIN", "信用主体(备证行)", "定价日"} & {"投标资历分类","兑付日","兑付日.YYYY","IS_DEFAULT", "是否债券违约", "债券余额"})
         C0 = {{"债券余额", ">", 0}, {"是否债券违约", "<>", "Y"}, {"IS_DEFAULT", "<>", "Y"}, {"信用主体(备证行)", "not", "*"}},
         C1 = if not Text.Contains(Key, "MOF") then {{"信用主体", "<>", "中华人民共和国财政部"}} else {{null}},
-        C2 = if NumText <> "" then {{"兑付日.YYYY", null, NumText}} else {{null}},
+        C2 = if NumText <> "" then {{"兑付日.YearNum", "=", Number.From(NumText)}} else {{null}},
         C3 = if Text.Contains(Key, "SOE") then {{"投标资历分类", "=", "SOE Creds"}} else {{null}},
         #"Filtered Output" = fx("DBFilter")(List.RemoveItems((C0 & C1 & C2 & C3), {{null}}), null, Source),
         #"Grouped IssueSizeNRole" = fx("GroupISIN2")(#"Filtered Output"),
@@ -24,6 +24,13 @@
         List3 = Get(Key),
         SCol = if List3 <> {""} then Table.SelectColumns(Renamed, List3, MissingField.UseNull) else Renamed,
         FnSort = fx("SortNIndex")(SCol),
-        Output = if not Text.Contains(Key, "MATUR") and Key <> "" then fx("DBMonitor")(_inputkey) else FnSort
+        Output =
+            try
+                CWB(_inputkey)
+            otherwise
+                if not Text.Contains(Key, "MATUR") and Key <> "" then
+                    fx("DBMonitor")(_inputkey)
+                else
+                    FnSort
     in
         Output

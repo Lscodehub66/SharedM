@@ -1,0 +1,6 @@
+(tbl as table, cwbname as text) =>
+    let
+        Source = tbl,
+        Output = if fx("Parameter")("GPS") = "Remote" then CWB(cwbname,"CWB") else try Source otherwise CWB(cwbname,"CWB")
+    in
+        Output

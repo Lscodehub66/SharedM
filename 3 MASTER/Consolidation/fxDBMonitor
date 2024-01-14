@@ -3,10 +3,14 @@ let
     Source = (optional _inputkey as nullable text) =>
         let
             Key = Text.Upper(Text.Trim(_inputkey ?? "")),
-    
-
             //
-            wSource = fx("DBFilter")({{"Year.Num", ">=", 2022}}, {{"删除及隐藏", null, {"", null}}}),
+            Source = fx(
+                "DBFilter"
+            )(
+                {{"Year.Num", ">=", 2022}}, {{"删除及隐藏", null, {"", null}}} ),
+                //Global Date Control
+             wSource =       fx("NotWeeklyDate")(Source, "定价日"),
+                //
             #"Filtered Output" =
                 if Key = "DEAL_MASTER" then
                     fx("DBFilter")(null)
@@ -77,11 +81,7 @@ let
                     "IGLGFV",
                     "FI",
                     "USDCNH_DATA",
-                    "USDCNH_Tighten",
-                    "Maturity",
-                    "Maturity(MOF)",
-                    "Maturity2024",
-                    "Maturity2024_SOE",
+                    "USDCNH_Tighten", // "Maturity",  "Maturity(MOF)","Maturity2024", "Maturity2024_SOE",
                     "DEAL_MASTER",
                     "SOE_Pie"
                 }

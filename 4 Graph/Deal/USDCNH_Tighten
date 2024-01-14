@@ -1,10 +1,10 @@
+//  let LoadCode = Load("USDCNH_Tighten_Recent1Y","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
 //  let LoadCode = Load("USDCNH_Tighten","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
 let
-   
     MonitorName = "USDCNH_Tighten_Pivot",
-   Fn = fx("DBMonitor")(MonitorName),
-    Filtered = Table.SelectRows(  Fn , each [Year.Num] = 2023),
-    #"Grouped Rows" = Table.Group(    Filtered  , {"YYQQ", "货币"}, {{"Count", each _, type table}}),
+    Fn = fx("DBMonitor")(MonitorName),
+    Filtered = fx("DateRange")({"23年初", "Monday.Date"}, {Fn, "定价日"}),
+    #"Grouped Rows" = Table.Group(Filtered, {"YYQQ", "货币"}, {{"Count", each _, type table}}),
     Custom1 = Table.TransformColumns(
         Table.AddColumn(#"Grouped Rows", "平均收窄", each fx("Addpt")(fx("Data")([Count]), "亿美元")),
         {{"平均收窄", each Table.AddColumn(_, "平均收窄", each _[收窄Num] * _[占比])}}
@@ -13,6 +13,7 @@ let
     #"Removed Other Columns" = Table.SelectColumns(Custom2, {"YYQQ", "货币", "平均收窄"}, MissingField.UseNull),
     #"Pivoted Column" = Table.Pivot(
         #"Removed Other Columns", List.Distinct(#"Removed Other Columns"[货币]), "货币", "平均收窄", List.Sum
-    )
+    ),
+    Sorted = Table.Sort(#"Pivoted Column", {{"YYQQ", Order.Ascending}})
 in
-    #"Pivoted Column"
+    Sorted

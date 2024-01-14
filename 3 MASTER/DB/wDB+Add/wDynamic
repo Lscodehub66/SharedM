@@ -1,13 +1,21 @@
 // let LoadCode = Load("wDynamic","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
-
 let
-
     Source = fx("Excel")("DYNAMIC_wConso"),
-    ACol = if not Table.HasColumns(Source, "mChart") then Table.AddColumn(Source, "mChart", each if [删除及隐藏] = "FIMTN" then "Y" else "", type text) else Source,
-            ACol1 = if not Table.HasColumns(Source, "PRJ对账号") then Load("fxPRJSync")(   ACol, "台账序号", "定价日", "PRJ对账号") else ACol,
-             #"Removed Columns" = Table.RemoveColumns(  ACol1,{"Updator", "Timestamp"},MissingField.Ignore) ,
-
-
-        ManagedDB = fx("DBManager2")(#"Removed Columns")
+    ACol =
+        if not Table.HasColumns(Source, "mChart") then
+            Table.AddColumn(Source, "mChart", each if [删除及隐藏] = "FIMTN" then "Y" else "", type text)
+        else
+            Source,
+    HD = List.Intersect(
+        {Table.ColumnNames(ACol), {"mBond", "mIssue", "mStats", "mBISL", "mEXE", "mCredit", "mChart"}}
+    ),
+    Replaced = Table.ReplaceValue(ACol, "新增", "Y", Replacer.ReplaceValue, HD),
+    ACol1 =
+        if not Table.HasColumns(Source, "PRJ对账号") then
+            Load("fxPRJSync")(Replaced, "台账序号", "定价日", "PRJ对账号")
+        else
+            Replaced,
+    #"Removed Columns" = Table.RemoveColumns(ACol1, {"Updator", "Timestamp"}, MissingField.Ignore),
+    ManagedDB = fx("DBManager2")(#"Removed Columns")
 in
     ManagedDB

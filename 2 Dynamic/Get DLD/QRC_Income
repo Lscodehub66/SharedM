@@ -46,9 +46,11 @@ let
         },
         MissingField.Ignore
     ),
-    #"Sorted Rows1" = Table.Sort(#"Reordered Columns",{{"PRJ对账号", Order.Descending}}),
+    #"Sorted Rows1" = Table.Sort(#"Reordered Columns", {{"PRJ对账号", Order.Descending}}),
     #"Added Index" = Table.AddIndexColumn(#"Sorted Rows1", "Index", 1, 1, Int64.Type),
-    Custom3 = Table.Sort( #"Added Index",{{"PRJ对账号", Order.Descending}}),
-    Custom4 = fx("1st")(Custom3,{"Index"})
+    Reordered = fx("1st")(#"Added Index", {"Index"}),
+    Output = if fx("Parameter")("GPS") = "Remote" then CWB("QRC_Income") else try
+        Reordered otherwise CWB("QRC_Income"),
+    Sorted = Table.Sort(Output, {{"PRJ对账号", Order.Descending}})
 in
-    Custom4
+    Sorted

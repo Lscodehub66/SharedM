@@ -24,7 +24,7 @@ let
         each (Record.Field(_, HD{2}) - Record.Field(_, HD{1})) / Record.Field(_, HD{1}),
         type number
     ),
-    TF = Table.TransformColumns(#"Inserted Division", {{"环比", each Number.Round(_,2 )}}),
+    TF = Table.TransformColumns(#"Inserted Division", {{"环比", each Number.Round(_, 2)}}),
     #"Demoted Headers2" = Table.DemoteHeaders(TF)
 in
-    #"Demoted Headers2"
+    Load("wNIMSum")

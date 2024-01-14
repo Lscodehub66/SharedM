@@ -15,8 +15,12 @@
                 YYYY.至今 = text,
                 YYQQ = text,
                 YYMMDD = text,
+                DDMMMYYYY = text,
                 DayName = text,
+                DayName.CN = text,
                 DayShortName = text,
+                MonthName.CN = text,
+                年M月 = text,
                 年月 = text,
                 年 = text,
                 季 = text,
@@ -39,15 +43,17 @@
                             Date.ToText(Date.AddYears(_, -1), "yyyy")
                         else
                             Date.ToText(_, "yyyy"),
-                        Text.RemoveRange(Number.ToText(Date.Year(_)), 0, 2)
-                            & "Q"
-                            & Number.ToText(Date.QuarterOfYear(_), "0"),
+                        Date.ToText(_, "yy") & "Q" & Number.ToText(Date.QuarterOfYear(_), "0"),
                         Date.ToText(_, "yyMMdd"),
+                        Date.ToText(_, "dd MMM yyyy"),
                         Date.DayOfWeekName(_),
+                        Date.DayOfWeekName(_, "zh-CN"),
                         Date.ToText(_, "ddd"),
+                        Date.MonthName(_, "zh-CN"),
+                        Date.ToText(_, "yy年") & Number.ToText(Date.Month(_), "0月"),
                         Date.ToText(_, "yy年") & Number.ToText(Date.Month(_), "00月"),
                         Date.ToText(_, "yy年"),
-                        Date.ToText(_, "yy年") & "Q" & Number.ToText(Date.QuarterOfYear(_), "0"),
+                        Date.ToText(_, "yy年") & Number.ToText(Date.QuarterOfYear(_), "0") & "季度",
                         Number.ToText(Date.Month(_), "00月"),
                         Number.ToText(Date.WeekOfYear(_, Day.Monday), "00周"),
                         Date.ToText(Date.StartOfWeek(_, Day.Monday), "yyyy年MM月dd日起一周")

@@ -1,0 +1,41 @@
+let
+   DB = "mIndice",
+    DB_Source = CWB(DB),
+     DB_Source_CN = Table.ColumnNames(DB_Source),
+    So2 = Date.From(CWB("wIndice")[Column2]{1}),
+ MaxDateCompared = if DB_Source[Date]{0} <= So2 then "Stop" else "Go"
+,   
+    Parameter = fx("Parameter")("RemoveFrom_DB")??"",
+    Added = fx("AddToDB")(DB, wIndicePQ, Parameter),
+    Crossroad = if Text.Contains(Parameter, "Stop") or  MaxDateCompared = "Stop" then DB_Source else Added,
+      RHD =    List.Select(DB_Source_CN, each Text.StartsWith(_, "Column") or Text.Contains(_, "DAX") or Text.Contains(_,"NIM"))& {"每周第一天","TREND"},           
+ RCol = Table.RemoveColumns(
+          Crossroad,              
+ RHD,
+        MissingField.Ignore
+    ),
+
+    #"Sorted Rows" = Table.Sort( RCol, {{"Date", Order.Descending}}),
+    HD_Curves =
+        let
+            _SpdTenor = Record.Field(Load("Controltext"), "_SpdTenor"),
+            _InputCurves = {"CGB", "UST"},
+            // First Item minus by Second Item
+            SCGB = List.Select(
+                DB_Source_CN, each Text.Contains(_, _InputCurves{0}) and Text.Contains(_, _SpdTenor & "Y")
+            ),
+            SUST = List.Select(
+                DB_Source_CN, each Text.Contains(_, _InputCurves{1}) and Text.Contains(_, _SpdTenor & "Y")
+            ),
+            Prefix = {"S_DAX_CGBUST"},
+            CurveHD = SCGB & SUST & Prefix
+        in
+            List.Buffer(CurveHD),
+    #"Calculated DAX" = Table.Buffer(fx("Avg_SpdDiff")(#"Sorted Rows", HD_Curves)),
+    RecentNIM = Load("RecentNIM_Indice"),
+    #">>CheckKey" = fx("Key")(RecentNIM),
+    Merged = fx("Merge")(#"Calculated DAX", RecentNIM, "Date", "Date", {""}),
+    Managed = fx("DBManager")(Merged, "m"),
+    Reordered = Table.ReorderColumns(Managed, DB_Source_CN, MissingField.Ignore)
+in
+    Reordered

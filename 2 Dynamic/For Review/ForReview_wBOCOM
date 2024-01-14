@@ -4,7 +4,6 @@ let
     _PK = "Check",
     Name = "m" & Text.AfterDelimiter(_input, "w"),
     HD = fx("ForReviewHD")(_input),
-    DLD_QRC = Table.Buffer(Load("DLD_QRC_24")),
     Source = Load("DLD_Filtered"),
     Prep =
         if not List.Contains(Table.ColumnNames(Source), "BISL_ROLE") then
@@ -23,30 +22,38 @@ let
             )
         else
             Source,
-    MergedQ = fx("Merge")(Prep, DLD_QRC, "ISIN", "ISIN", {""}, {""}),
-    Filtered = Table.SelectRows(MergedQ, each [BISL_ROLE] <> "--" or [担任角色] <> ""),
+    DLD_QRC = Table.Buffer(Load("DLD_QRC_24")),
+    MergedQ = try fx("Merge")(Prep, DLD_QRC, "ISIN", "ISIN", {""}, {""}) otherwise Prep,
+    Filtered = Table.SelectRows(
+        MergedQ,
+        each if Table.HasColumns(MergedQ, "担任角色") then [BISL_ROLE] <> "--" or [担任角色] <> "" else [BISL_ROLE] <> "--"
+    ),
     #">>ExpandedList" = List.RemoveItems(Table.ColumnNames(MergedQ), Table.ColumnNames(Prep)),
     SCol = fx("Data")(Table.SelectColumns(Filtered, HD, MissingField.UseNull)),
-    Replaced = Table.ReplaceValue(
-        SCol,
-        each [BISL_ROLE],
-        each
-            if [担任角色] <> "" and [BISL_ROLE] = "【】" then
-                [担任角色]
-            else if [担任角色] <> "" and [BISL_ROLE] <> [担任角色] then
-                "【" & [BISL_ROLE] & "】" & "#(lf)" & "【" & [担任角色] & "】"
-            else
-                [BISL_ROLE],
-        Replacer.ReplaceValue,
-        {"BISL_ROLE"}
-    ),
+    Replaced =
+        if Table.HasColumns(Filtered, "担任角色") then
+            Table.ReplaceValue(
+                SCol,
+                each [BISL_ROLE],
+                each
+                    if [担任角色] <> "" and [BISL_ROLE] = "【】" then
+                        [担任角色]
+                    else if [担任角色] <> "" and [BISL_ROLE] <> [担任角色] then
+                        "【" & [BISL_ROLE] & "】" & "#(lf)" & "【" & [担任角色] & "】"
+                    else
+                        [BISL_ROLE],
+                Replacer.ReplaceValue,
+                {"BISL_ROLE"}
+            )
+        else
+            SCol,
     BlankToNil =
         try
             Table.ReplaceValue(
                 Replaced, "", "nil", Replacer.ReplaceValue, List.RemoveItems(#">>ExpandedList", {"新规角色", "COVERAGE"})
             ) otherwise Replaced,
     BlankToInput = Table.ReplaceValue(
-        BlankToNil, "", "【】", Replacer.ReplaceValue, {"EXE", "PROJECT_CODE", "期数", "新规角色", "COVERAGE"}
+        BlankToNil, "", "【】", Replacer.ReplaceValue, {"台账序号", "EXE", "PROJECT_CODE", "期数", "新规角色", "COVERAGE"}
     ),
     BlankToInput1 = Table.ReplaceValue(
         BlankToInput, "", each if [BISL_ROLE] <> "JBR" then "【】" else "", Replacer.ReplaceValue, {

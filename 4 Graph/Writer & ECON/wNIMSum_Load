@@ -1,0 +1,5 @@
+let
+Source = Load("wNIMSum"),
+    TF = Table.TransformColumns(    Source ,{{"Column1", each if Text.StartsWith(_ ,"V_" )then "亿美元" else if  Text.StartsWith(_ ,"CT_" )then "笔数"  else _, type text}})
+in
+     TF 

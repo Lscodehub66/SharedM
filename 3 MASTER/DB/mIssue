@@ -1,39 +1,12 @@
-// let LoadCode = Load("mIssue","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+//let LoadCode = Load("mISIN","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-    Source = CWB("mCurated"),
-    #"Renamed Columns" = Table.RenameColumns(Source, {{"ISIN_TEMP", "ISIN_TEMP"}}, MissingField.Ignore),
-    #"Replaced Value" = Table.ReplaceValue(
-        #"Renamed Columns",
-        each [ISIN_TEMP],
-        each if not Text.Contains([增发判定], "ISIN") then "" else [ISIN_TEMP],
-        Replacer.ReplaceValue,
-        {"ISIN_TEMP"}
-    ),
-    Custom1 = fx("Merge")(#"Replaced Value", CWB("deal_master"), "Check", "Check", {"交易简称"}, {"债券简称"}),
-    #"Removed Other Columns" = Table.SelectColumns(
-        Custom1,
-        {
-            "删除及隐藏",
-            "债券简称",
-            "ISIN",
-            "定价日",
-            "增发判定",
-            "发行规模(亿)",
-            "IPG",
-            "FPG",
-            "定价",
-            "收窄基点",
-            "发行价",
-            "港分_ROLE",
-            "澳分_ROLE",
-            "起息日期",
-            "ISIN_TEMP",
-            "Check",
-            "Timestamp"
-        },
-        MissingField.Ignore
-    ),
-    Custom2 = fx("DBManager")(#"Removed Other Columns", "mIssue"),
-    Custom3 = fx("SortNIndex")(Custom2, "定价日")
+    AddCode = Load("fxAddToDB", "Code"),
+    ManagerCode = Load("fxDBManager3", "Code"),
+    DB = "mIssue",
+    DB_Source = CWB(DB),
+    // DB_Source =   fx("DB_Revise")(    C1, CWB("ToRevise_mIssue","CWB"), "Check"),
+    Parameter = fx("Parameter")("RemoveFrom_DB") ?? "",
+    Added = if Text.Contains(Parameter, "Stop") then DB_Source else fx("AddToDB")(DB, Load("wDynamicPQ"), Parameter),
+    Managed = fx("DBManager3")(Added, "Check")
 in
-    Custom3
+    Managed

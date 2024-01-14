@@ -64,13 +64,14 @@
                 or Text.Contains(_, "亿元")
                 or Text.Contains(_, "规模(亿)")
                 or Text.Contains(_, "债券余额")
-        ) &{"排行榜份额(%)"},
+        )
+            & {"排行榜份额(%)"},
         Num2 = {"投资级", "高收益级", "iTraxx Asia", "VIX", "BOCOM下单量", "BOCOM分配量"}
             & List.Select(
                 CN_RNSource, each Text.StartsWith(_, "S_") or Text.StartsWith(_, "Spd_") or Text.StartsWith(_, "I_")
             ),
         Num1 = {"最终账簿(亿)", "收窄Num"} & List.Select(CN_RNSource, each Text.StartsWith(_, "V_")),
-        Num0 = {"FEE", "Relevance", "Year.Num", "兑付日.YearNum", "账户数","金额 (MM USD)","发行数"}
+        Num0 = {"FEE", "Relevance", "Year.Num", "兑付日.YearNum", "账户数", "金额 (MM USD)", "发行数"}
             & List.Select(CN_RNSource, each Text.StartsWith(_, "CT_") or Text.StartsWith(_, "承销费")),
         Num = {
             "IPT_YIELD",
@@ -144,7 +145,7 @@
             & List.Select(CN_RNSource, each Text.StartsWith(_, "Index_") or Text.EndsWith(_, ".num")),
         Text_Trim = {"PROJECT_CODE", "期数", "外部评审机构", "外部评审方式", "FolderPath", "地区分布", "类型分布"},
         Text_Upper = {
-            "Bond Details",
+          
             "CCY",
             "信用主体",
             "ISIN",
@@ -163,7 +164,9 @@
         Text_NoSpace = {"Check", "ISIN", "ISIN_TEMP", "ISIN_144A", "发行评级", "主体评级", "修改.发行评级", "修改.主体评级", "境内主体评级"},
         Text_NoNA = {"增发判定", "修改.增发判定", "主题债券", "品种主题", "备证行全称"},
         Text1 = {
-            "地区覆盖","承销商",
+            "地区覆盖",
+            "承销商",
+            "FolderName",
             "是否债券违约",
             "是否中资主体",
             "覆盖地区",

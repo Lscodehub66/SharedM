@@ -1,9 +1,0 @@
-let
-    Source = fx("DBMonitor")("USDCNH_Tighten_Pivot"),
-    date = fx("DateRange")({"近3月", "Monday.Date"}, {""}),
-    joined = Table.NestedJoin(Source, {"定价日"}, date, {"A_Date"}, "DummyData1", JoinKind.Inner),
-    MaxNum = List.Max(List.Buffer(joined[收窄Num])),
-    MaxFound = Table.SelectRows(joined, each [收窄Num] = MaxNum),
-    Custom1 = fx("WeeklyDealWriter")(MaxFound)
-in
-    Custom1

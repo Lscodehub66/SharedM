@@ -1,20 +1,18 @@
 Sub RefreshDataLake()
     '
     ' RefreshDataLake Macro
-    '
 
 
-
-    ActiveWorkbook.Connections("Query - ControllerTP").Refresh
-    ActiveWorkbook.Connections("Query - BaseDirectory_CN").Refresh
     ActiveWorkbook.Connections("Query - wIndice").Refresh
     ActiveWorkbook.Connections("Query - wDynamic").Refresh
+    ActiveWorkbook.Connections("Query - BBG_SBLCRtg").Refresh
 
     If Range("GPS") = "Global" Then
         ActiveWorkbook.Connections("Query - ESG_ExternalReview").Refresh
         ActiveWorkbook.Connections("Query - KYC_Master").Refresh
         ActiveWorkbook.Connections("Query - CPL_23").Refresh
-        ActiveWorkbook.Connections("Query - DLD_QRC_23").Refresh
+        ActiveWorkbook.Connections("Query - QRC_Income").Refresh
+
     End If
 
 
@@ -22,19 +20,17 @@ End Sub
 Sub RefreshFolderDatabase()
     '
     ' RefreshFolderDatabase Macro
-    '
 
-    '
-    ActiveWorkbook.Connections("Query - Step2_RowCount").Refresh
+    ActiveWorkbook.Connections("Query - Step2_Dashboard").Refresh
     ActiveWorkbook.Connections("Query - mIssue").Refresh
     ActiveWorkbook.Connections("Query - mBond").Refresh
+    ActiveWorkbook.Connections("Query - mStats").Refresh
     ActiveWorkbook.Connections("Query - mChart").Refresh
-    ActiveWorkbook.Connections("Query - mBISL").Refresh
+    ActiveWorkbook.Connections("Query - mBISL(1)").Refresh
     ActiveWorkbook.Connections("Query - mEXE").Refresh
-
-
-    ActiveWorkbook.Connections("Query - mCredit").Refresh
     ActiveWorkbook.Connections("Query - mIndice").Refresh
+    ActiveWorkbook.Connections("Query - mCredit").Refresh
+
 
 End Sub
 Sub RefreshKeyGraphLoad()
@@ -55,7 +51,6 @@ Sub RefreshNewIssueMonitor()
     '
 
     '
-
     ActiveWorkbook.Connections("Query - SBLC").Refresh
     ActiveWorkbook.Connections("Query - DimSum").Refresh
     ActiveWorkbook.Connections("Query - ESG").Refresh
@@ -82,6 +77,22 @@ Sub RefreshwTomb()
 
     ActiveWorkbook.Connections("Query - wTomb").Refresh
     ActiveWorkbook.Connections("Query - CompletedFormalities").Refresh
+
+End Sub
+
+Sub ClearWenDang()
+    '
+    ' ClearWenDang Macro
+
+
+    Sheet12.Activate
+
+
+    Application.Goto Reference:="tbl_WenDang"
+    Selection.ClearContents
+
+    Sheet12.Select
+    Range("C6").Select
 
 End Sub
 

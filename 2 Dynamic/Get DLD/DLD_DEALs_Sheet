@@ -1,3 +1,4 @@
+
 let
     Source = fx("Excel")("DOWNLOAD_文档Deals"),
     #"Removed Top Rows" = Table.Skip(Source,2),

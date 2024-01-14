@@ -44,24 +44,32 @@
         // Weekly
         // Remember to check the referenced name if you revise previous steps **Referenced Dummy Step **
         _CROSSROAD = if MorW = "W" then fx("UpdatorTS")(RemovedDupe) else RemovedDupe,
-        // Revalidate mBISL BISL_Ancient
         BISL_对帐号 = Load("fxPRJSync")(_CROSSROAD, "台账序号", "定价日", "PRJ对账号"),
-        //  **Referenced Dummy Step ** This step is referenced by the conditional mCredit Manager step as Source !
-        DB_Entity = if List.Contains(HD, "板块二级") and MorW = "M" then Load("fxDB_Entity")(BISL_对帐号) else BISL_对帐号,
-        //  **Referenced Dummy Step ** This step is referenced by the conditional sort step - better not to change it !
-        GetShortName =
-            if Table.HasColumns(DB_Entity, {"债券简称", "Check", "Timestamp"}) then
-                fx("Merge")(DB_Entity, CWB("deal_master"), "Check", "Check", {"交易简称"}, {"Dummy.债券简称"})
+        #"Invoked Entity Manager" =
+            if List.Contains(HD, "板块二级") and MorW = "M" then
+                fx("DB_Entity")(BISL_对帐号)
             else
-                DB_Entity,
-        Replaced1 = Table.ReplaceValue(
-            GetShortName,
-            each [债券简称],
-            each if not List.Contains({null, "", "--"}, [Dummy.债券简称]) then [Dummy.债券简称] else [债券简称],
-            Replacer.ReplaceValue,
-            {"债券简称"}
-        ),
-        FnDBUpdated = if MorW = "M" then fx("DBUpdator")(Replaced1) else Replaced1,
+                BISL_对帐号,
+        #"Replaced 债券简称" =
+            if Table.HasColumns(#"Invoked Entity Manager", {"债券简称", "Check", "Timestamp"}) then
+                let
+                    GetShortName = fx(
+                        "Merge"
+                    )(
+                        #"Invoked Entity Manager", CWB("deal_master"), "Check", "Check", {"交易简称"}, {"Dummy.债券简称"}
+                    ),
+                    Replaced1 = Table.ReplaceValue(
+                        GetShortName,
+                        each [债券简称],
+                        each if not List.Contains({null, "", "--"}, [Dummy.债券简称]) then [Dummy.债券简称] else [债券简称],
+                        Replacer.ReplaceValue,
+                        {"债券简称"}
+                    )
+                in
+                    Replaced1
+            else
+                #"Invoked Entity Manager",
+        FnDBUpdated = if MorW = "M" then fx("DBUpdator")(#"Replaced 债券简称") else #"Replaced 债券简称",
         PresentedNull = fx("PresentNoData")(FnDBUpdated),
         //Sort as last step
         RCol = fx("RCol")(PresentedNull),

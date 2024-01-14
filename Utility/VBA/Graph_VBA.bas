@@ -27,7 +27,6 @@ Sub Refresh_Indice()
     ActiveWorkbook.Connections("Query - Chart_Curve2").Refresh
     ActiveWorkbook.Connections("Query - Chart_CNYCNHSPD").Refresh
     ActiveWorkbook.Connections("Query - Table_RMBEstimate").Refresh
-    ActiveWorkbook.Connections("Query - OMAS").Refresh
 
 End Sub
 Sub Refresh_Deal()
@@ -57,8 +56,9 @@ Sub Refresh_Writer()
     ' Refresh_Writer Macro
     '
     ActiveWorkbook.Connections("Query - Writers").Refresh
-    ActiveWorkbook.Connections("Query - wNewIssue_Sum").Refresh
+    ActiveWorkbook.Connections("Query - wNIMSum_Load").Refresh
 
 
 
 End Sub
+

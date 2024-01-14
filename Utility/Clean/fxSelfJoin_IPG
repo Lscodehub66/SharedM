@@ -26,6 +26,7 @@
             Replacer.ReplaceValue,
             {"定价"}
         ),
+        
         Renamed = Table.RenameColumns(
             Table.RemoveColumns(Replaced2, List1, MissingField.Ignore), List.Zip({List2, List1}),
             MissingField.UseNull

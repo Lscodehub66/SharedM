@@ -1,9 +1,11 @@
 //  let LoadCode = Load("Chart_5Y","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
 let
-
-    Source = CWB("mIndice"),
-    CN_Indice = List.Buffer(Table.SelectRows(Load("Dimtbl_Indice"), each ([IS_5Y] <> ""))[PK]),
-    SelectedCol = Table.SelectColumns(    Source, {"Date"} & CN_Indice),
+    _input = "5",
+    Source = fx("DateRange")({"近" & Text.From(_input) & "年", "当前"}, {CWB("mIndice"), "Date"}),
+    CN_Indice = List.Buffer(
+        Table.SelectRows(Load("Dimtbl_Indice"), each (Record.Field(_, "IS_" & Text.From(_input) & "Y") <> ""))[PK]
+    ),
+    SelectedCol = Table.SelectColumns(Source, {"Date"} & CN_Indice),
     Sorted = fx("SortNIndex")(SelectedCol, "Date", null, null, null, "Y")
 in
     Sorted

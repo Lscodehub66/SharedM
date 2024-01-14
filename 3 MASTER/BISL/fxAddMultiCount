@@ -2,8 +2,8 @@
 (TableName as table, optional PRJNAMEColName as nullable text) =>
     let
         Source = TableName,
-        Referenced = {"定价日", "PROJECT_NAME", "货币", "Check", "发行品种"},
-        ToAdd = {"多笔", "多币种", "多品种"},
+        Referenced = {"定价日", "PROJECT_NAME", "货币", "Check", "发行品种", "发行人"},
+        ToAdd = {"多笔", "多币种", "多品种", "多发行体"},
         Prep = Table.RemoveColumns(Source, ToAdd, MissingField.Ignore),
         #"Added Custom" = Table.AddColumn(
             Prep,
@@ -15,7 +15,7 @@
                     Date.ToText([定价日], "yyMMdd") & Text.Upper(Text.Remove(Record.Field(_, PRJNAMEColName), " "))
         ),
         Added = List.Accumulate(
-            {{"Check", "多笔"}, {"货币", "多币种"}, {"发行品种", "多品种"}},
+            {{"Check", "多笔"}, {"货币", "多币种"}, {"发行品种", "多品种"}, {"发行人", "多发行体"}},
             #"Added Custom",
             (x, y) =>
                 Table.Join(

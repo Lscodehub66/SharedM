@@ -1,0 +1,9 @@
+// let LoadCode = Load("WwNIMSUM","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
+let
+    Source = fx("DateRange")({"上周", "当前"}, {Load("mIndice"), "Date"}),
+    #"Removed Other Columns" = Table.SelectColumns(Source, {"每周第一天", "V_NIM_7D", "CT_NIM_7D"}),
+    #"Removed Duplicates" = Table.Distinct(#"Removed Other Columns"),
+    #"Sorted Rows" = Table.Sort(#"Removed Duplicates", {{"每周第一天", Order.Ascending}}),
+    #"Demoted Headers" = Table.DemoteHeaders(#"Sorted Rows"),
+    #"Transposed Table" = Table.Buffer(Table.Transpose(#"Demoted Headers"))
+    in  #"Transposed Table"

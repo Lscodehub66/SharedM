@@ -604,7 +604,7 @@ let
             Header_CF = {"序号", "团队", "发行人名称英文", "Mandate", "项目定价日", "KYC", "DD Risk"},
             Header_DirectoryToFormalities = {
                 "ISIN",
-                "PROJECT_NAME",
+                "PROJECT_NAME","多发行体",
                 "定价日",
                 "新规角色",
                 "IS_KYC_DONE",
