@@ -27,7 +27,7 @@
                 else
                     "Y"
         ),
-        List1 = List.Intersect({CN_Source, {"SPECIALs", "DataSource"}}),
+        List1 = List.Intersect({CN_Source, {"债券备注", "DataSource"}}),
         Replaced =
             if not List.IsEmpty(List1) then
                 Table.ReplaceValue(

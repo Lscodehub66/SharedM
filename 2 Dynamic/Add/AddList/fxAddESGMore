@@ -47,9 +47,9 @@
             "ESG",
             each
                 if Text.Contains([ESG_Source], "挂钩") or  Text.Contains([ESG_Source], "LINKED") then
-                    "可持续挂钩"
+                    "可持续发展挂钩"
                 else if Text.Contains([ESG_Source], "可持续") or Text.Contains([ESG_Source], "SUSTAIN") then
-                    "可持续"
+                    "可持续发展"
                 else if Text.Contains([ESG_Source], "社会") or Text.Contains([ESG_Source], "SOCIAL") then
                     "社会"
                 else if Text.Contains([ESG_Source], "绿") or Text.Contains([ESG_Source], "GREEN") then
@@ -66,7 +66,7 @@
                         if Text.Contains([筹款用途], "绿") then
                             "【绿色】"
                         else if Text.Contains([筹款用途], "可持续") then
-                            "【可持续】"
+                            "【可持续发展】"
                         else
                             "",
                     Replacer.ReplaceValue,

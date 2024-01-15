@@ -32,7 +32,7 @@
                     each
                         if
                             not List.Contains({0, null, "", "--"}, Record.Field(_, y))
-                            and List.Contains({0, null, "", "--"}, Record.Field(_, Text.AfterDelimiter(y, ".")))
+                            and List.Contains({0, null, "", "--", "【】"}, Record.Field(_, Text.AfterDelimiter(y, ".")))
                         then
                             Record.Field(_, y)
                         else

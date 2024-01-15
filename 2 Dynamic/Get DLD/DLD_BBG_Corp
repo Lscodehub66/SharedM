@@ -1,12 +1,22 @@
 // let LoadCode = Load("DLD_BBG_Corp","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-    Source = fx("Excel")("DOWNLOAD_tbl_dmi_isin"),
+    Source = fx("Ws")("DOWNLOAD", "tbl_dmi_isin"),
     RCol = Table.RemoveColumns(Source, {"Index"}, MissingField.Ignore),
     FBlank = Table.SelectRows(
         RCol, each not List.IsEmpty(List.RemoveMatchingItems(Record.FieldValues(_), {"", null}))
     ),
     FormattedData = fx("Data")(FBlank),
-    TFCols = fx("Replace")(FormattedData, {"发行评级", "主体评级"}, "评级"),
+    TF = List.Accumulate(
+        {"发行人", "票息", "货币"},
+        FormattedData,
+        (x, y) =>
+            try
+                Table.TransformColumns(x, {{y, each if List.Contains({"", null, "--"}, _) then "【】" else _}})
+            otherwise
+                x
+    ), 
+    AddedSBLC = fx("SBLCBBG")(TF),
+    TFCols = fx("Replace")( AddedSBLC, {"发行评级", "主体评级"}, "评级"),
     ByeErrors = fx("ByeAllErrors")(TFCols),
     TBC_Replaced = Table.TransformColumns(
         ByeErrors,
@@ -15,13 +25,18 @@ let
             {"主体评级", each Text.Combine(List.ReplaceValue(Text.Split(_, "/"), "", "【】", Replacer.ReplaceValue), "/")}
         }
     ),
-    #"//GNG_Multi" =
-       if fx("Parameter")("MultiSource") = "ON" then "GO" else "NO-GO",
+    #"//GNG_Multi" = if fx("Parameter")("MultiSource") = "ON" then "GO" else "NO-GO",
     Crossroad =
         if #"//GNG_Multi" <> "GO" then
             try CWB("DLD_BBG_Corp") otherwise fx("CheckNDupe")(TBC_Replaced)
         else
             fx("CheckNDupe")(TBC_Replaced),
-    Renamed1 = Table.RenameColumns(Crossroad, {{"SBLC_Provider_Name", "SBLC提供者"}}, MissingField.Ignore)
+    Renamed1 = if not Table.HasColumns(Crossroad, "SBLC提供者") then Table.RenameColumns(Crossroad, {{"SBLC_Provider_Name", "SBLC提供者"}}, MissingField.Ignore)
+    else Crossroad,
+    Stamped = fx(
+        "1st"
+    )(
+        Table.AddColumn(Renamed1, "Timestamp", each DateTime.LocalNow(), type datetime), {"Timestamp"}
+    )
 in
-    Renamed1
+    Stamped

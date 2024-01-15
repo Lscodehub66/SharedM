@@ -1,6 +1,6 @@
 (InputTable as table, InputList3Items as list) as table =>
     let
-        // InputTable = fx("Excel")("DOWNLOAD"){[Item = "美元债一级"]}[Data],
+        // InputTable = fx("Ws")("DOWNLOAD"){[Item = "美元债一级"]}[Data],
         // InputList3Items = {"Column1", "信用主体", ""},
         ColName = InputList3Items{0},
         AnchorValue = InputList3Items{1},

@@ -1,0 +1,7 @@
+// DimDate
+let
+    Text = "(_range as list) => let ",
+    Old = Text.AfterDelimiter(Load("RecentNIM_Indice", "Code"), "//**"),
+    EVA = Expression.Evaluate(Text & Old, #shared)
+in
+    EVA

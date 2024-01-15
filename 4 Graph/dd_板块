@@ -1,6 +1,6 @@
 
 // dd_板块
 let
-    Source = fx("Excel")("DEALSMASTER_dd_板块")
+    Source = fx("Ws")("DEALSMASTER","dd_板块")
 in
     Source

@@ -9,7 +9,7 @@
         C1 = if not Text.Contains(Key, "MOF") then {{"信用主体", "<>", "中华人民共和国财政部"}} else {{null}},
         C2 = if NumText <> "" then {{"兑付日.YearNum", "=", Number.From(NumText)}} else {{null}},
         C3 = if Text.Contains(Key, "SOE") then {{"投标资历分类", "=", "SOE Creds"}} else {{null}},
-        #"Filtered Output" = fx("DBFilter")(List.RemoveItems((C0 & C1 & C2 & C3), {{null}}), null, Source),
+        #"Filtered Output" = fx("Filter")( Source, List.RemoveItems((C0 & C1 & C2 & C3), {{null}}), null),
         #"Grouped IssueSizeNRole" = fx("GroupISIN2")(#"Filtered Output"),
         #"Grouped Outstanding" = fx("OutstandingUSD")(#"Grouped IssueSizeNRole"),
         List1 = {{"合计亿美元", "合计美元规模分类"}, {"余额亿美元", "余额美元规模分类"}},
@@ -21,16 +21,10 @@
                 Table.RenameColumns(#"Conditional Replace", List.Zip({List1a, List1b}))
             else
                 #"Grouped Outstanding",
-        List3 = Get(Key),
+        List3 = if  Text.Contains(Key, "SOE") then Get("Maturity2024_SOE") else if NumText = "" then {""} else Get("Maturity2024") ,
         SCol = if List3 <> {""} then Table.SelectColumns(Renamed, List3, MissingField.UseNull) else Renamed,
-        FnSort = fx("SortNIndex")(SCol),
-        Output =
-            try
-                CWB(_inputkey)
-            otherwise
-                if not Text.Contains(Key, "MATUR") and Key <> "" then
-                    fx("DBMonitor")(_inputkey)
-                else
-                    FnSort
+        OuputRenamed = Table.RenameColumns(SCol, fx("Rename.MATURE2024"),MissingField.Ignore),
+        FnSort = fx("SortNIndex")( OuputRenamed)
     in
-        Output
+      
+  FnSort 

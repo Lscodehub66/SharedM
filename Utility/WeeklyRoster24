@@ -1,9 +1,12 @@
 let
     InputMakerList = {"ES", "CL", "CY"},
     InputFirstMonday = #date(2024, 1, 8),
+    NoWeeklyDueDate = {#date(2024,2,19)},
     HKHolidaytbl = Table.Buffer(fx("Data")(Load("HKHolidays", "CSV"))),
     Makertbl = Table.AddIndexColumn(
-        Table.FromColumns({List.Repeat(InputMakerList, Number.RoundUp(52 / List.Count(InputMakerList)))}, {"Maker_DD"}),
+        Table.FromColumns(
+            {List.Repeat(InputMakerList, Number.RoundUp(52 / List.Count(InputMakerList)))}, {"Maker_DD"}
+        ),
         "Index",
         1,
         1
@@ -16,8 +19,11 @@ let
     #"Converted to Table" = Table.FromColumns({Source}, {"Monday_date"}),
     #"Changed Type" = Table.TransformColumnTypes(#"Converted to Table", {{"Monday_date", type date}}),
     #"Added Index" = Table.AddIndexColumn(#"Changed Type", "Index", 1, 1, Int64.Type),
+     #"Added Custom0" = Table.AddColumn(
+        #"Added Index", "MondayText", each Date.ToText([Monday_date], "yyyyMMdd"), type text
+    ),
     #"Added Custom1" = Table.AddColumn(
-        #"Added Index", "Sunday_date", each Date.AddDays([Monday_date], -1), type date
+       #"Added Custom0" , "Sunday_date", each Date.AddDays([Monday_date], -1), type date
     ),
     #"Inserted Start Date" = Table.AddColumn(
         #"Added Custom1", "Start_date", each fx("PreviousWorkDay")([Sunday_date], HKHolidaytbl, "Date"), type date
@@ -47,10 +53,13 @@ let
         each Text.Replace([Template] & Text.From([Index]) & " (" & [Due_DayName] & ")", " ()", ""),
         type text
     ),
+    #"Transformed" = Table.ReplaceValue(
+        #"Added Custom4",each [TaskName] , each if List.Contains(NoWeeklyDueDate, [Due_date]) then [TaskName]& "(No Weekly)" else  [TaskName],
+        Replacer.ReplaceValue,{"TaskName"}    ),
     #"Added Custom" = Table.AddColumn(
-        #"Added Custom4", "Description", each "Weekly Folder Name: " & Date.ToText([Monday_date], "yyyyMMdd"), type text
+        #"Transformed", "Description", each "Weekly Folder Name: " & Date.ToText([Monday_date], "yyyyMMdd"), type text
     ),
-    #"Removed Columns" = Table.RemoveColumns(#"Added Custom", {"Sunday_date", "Monday_date","Start_DayName"}),
+    #"Removed Columns" = Table.RemoveColumns(#"Added Custom", {"Sunday_date", "Monday_date", "Start_DayName"}),
     Merged = fx("Merge")(#"Removed Columns", Makertbl, "Index", "Index", {""}),
     Custom1 = fx("PreviousRow")(Merged, "Maker_DD", "Checker_DD")
 in

@@ -4,7 +4,8 @@ let
     _PK = "信用主体",
     Name = "m" & Text.AfterDelimiter(_input, "w"),
     HD = fx("ForReviewHD")(_input),
-    Source = Load("DLD_Filtered"),
+   Sourceold = Load("Filtered_Add"),
+    Source = CWB("Filtered_Add"),
         Filtered = Table.SelectRows(  Source, each not List.Contains({"n/a", "已收录"}, Record.Field(_, Name))),
     Replaced = Table.ReplaceValue(
        Filtered,

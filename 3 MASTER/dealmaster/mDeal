@@ -20,6 +20,7 @@ let
         (x, y) => fx("Merge")(x, y{0}, y{1}, y{1}, {""}, {""})
     ),
     #"Fn Calculated" = fx("DBCalculate")(Merged),
-    Reordered = Table.ReorderColumns(#"Fn Calculated", Get("Header_deal_master"), MissingField.Ignore)
+Reordered = Table.ReorderColumns(#"Fn Calculated", Get("Header_deal_master"), MissingField.Ignore)
+
 in
-    Reordered
+   Reordered

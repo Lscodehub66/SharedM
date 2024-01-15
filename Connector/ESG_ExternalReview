@@ -1,6 +1,6 @@
 //let LoadCode = Load("ESG_ExternalReview","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-    Source = fx("Source")("ESG_External_Review"),
+    Source = fx("Ws")("ESG","=External_Review"),
     #">>>ISINDupe" = fx("ShowDupe")(Source, {"ISIN"}),
     //
     RBlank = Table.SelectRows(Source, each [外部评审方式] <> "" or [外部评审机构] <> ""),

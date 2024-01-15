@@ -1,13 +1,16 @@
 // let LoadCode = Load("ForReview_wBond","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
+    DeleteISIN = List.Buffer(Table.SelectRows(CWB("ForReview_wIssue"), each [删除及隐藏] = "【删除】")[ISIN]),
     _input = "wBond",
     _PK = "ISIN",
     Name = "m" & Text.AfterDelimiter(_input, "w"),
     HD = fx("ForReviewHD")(_input),
-    Consotbl = Load("DLD_Filtered"),
-    Filtered = Table.SelectRows(Consotbl, each not List.Contains({"n/a"}, Record.Field(_, Name))),
-    Custom2 = fx("SelfJoin_R")(Filtered, CWB("ForReview_" & _input), {_PK}),
-    SCol = Table.SelectColumns(Custom2, HD, MissingField.UseNull),
-    Sorted = fx("SortNIndex")(SCol)
+    Sourceold = Load("DLD_Filtered"),
+   Source = CWB("Filtered_Add"), 
+    Filtered = Table.SelectRows(Source, each not List.Contains({"n/a", "已收录"}, Record.Field(_, Name)) and not List.Contains(DeleteISIN , [ISIN])),
+       SCol = Table.SelectColumns(  Filtered, HD, MissingField.UseNull),
+    Custom2 = fx("SelfJoin_R")( SCol, CWB("ForReview_" & _input), {_PK}),
+ 
+    Sorted = fx("SortNIndex")(    Custom2)
 in
     Sorted

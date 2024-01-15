@@ -14,6 +14,7 @@ let
     #"Pivoted Column" = Table.Pivot(
         #"Removed Other Columns", List.Distinct(#"Removed Other Columns"[货币]), "货币", "平均收窄", List.Sum
     ),
-    Sorted = Table.Sort(#"Pivoted Column", {{"YYQQ", Order.Ascending}})
+    Sorted = Table.Sort(#"Pivoted Column", {{"YYQQ", Order.Ascending}}),
+    DynamicRemove = if List.Contains( {1,4,7,10},Date.Month(fx("Control.Monday.Date"))) then Table.RemoveLastN( Sorted,1) else Table.Skip( Sorted,1)
 in
-    Sorted
+     DynamicRemove 

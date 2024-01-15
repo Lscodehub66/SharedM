@@ -2,7 +2,7 @@
     let
         text = "ISIN_TEMP",
         Col = {"ISIN", "定价日", "债券简称", "信用主体", "发行规模(亿)", "货币", "发行方式", "发行规则", "ISIN_TEMP", "债券余额", "利率类型", "交易状态"},
-        Source = TableName ?? (fx("Source")("DMI")),
+        Source = TableName ?? (fx("Wstbl")("DMI")),
         #"Removed Other Columns" = Table.SelectColumns(
             Source,
             if _input = null then

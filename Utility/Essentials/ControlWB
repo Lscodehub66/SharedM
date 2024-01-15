@@ -1,0 +1,17 @@
+
+let
+    M1 = Date.From(fx("Parameter")("Monday")),
+    ThisWB = Load("ThisWorkbook"),
+    Record = [
+      
+        GPS = try if
+            Text.Contains(Record.Field(ThisWB, "FullPath"), "ktkt2", Comparer.OrdinalIgnoreCase)
+            or Text.StartsWith(ThisWB, "http", Comparer.OrdinalIgnoreCase)
+        then
+            "Remote"
+        else
+            "Global" otherwise fx("Parameter")("GPS")
+    ],
+  Combined = Record.Combine({Record,ThisWB}) 
+in
+     Combined

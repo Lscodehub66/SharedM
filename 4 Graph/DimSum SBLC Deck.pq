@@ -3,7 +3,7 @@ let GPS  = try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} ot
 
 // deal_master
 let
- Source = fx("Excel")("DEALSMASTER_DEAL_MASTER"),
+ Source = fx("Ws")("DEALSMASTER","DEAL_MASTER"),
  KeyDate = List.Buffer(Load("Controller")[Monday]){0},
       Filtered = Table.SelectRows(    Source, each [删除及隐藏] = "" and  [定价日] < KeyDate and [定价日]>= #date(2022,1,1) )
 
@@ -116,7 +116,7 @@ in
 
 // deal_master
 let
- Source = fx("Excel")("DEALSMASTER_DEAL_MASTER"),
+ Source = fx("Ws")("DEALSMASTER","DEAL_MASTER"),
  KeyDate = List.Buffer(Load("Controller")[Monday]){0},
       Filtered = Table.SelectRows(    Source, each [删除及隐藏] = "" and  [定价日] < KeyDate and [定价日]>= #date(2022,1,1) )
 

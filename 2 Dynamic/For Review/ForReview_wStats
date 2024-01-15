@@ -1,13 +1,19 @@
 // let LoadCode = Load("ForReview_wStats","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
- let
- _input = "wStats",
+let
+    CheckList = List.Buffer(Table.SelectRows(CWB("ForReview_wIssue"), each [删除及隐藏] <> "【删除】")[Check]),
+    _input = "wStats",
     _PK = "Check",
     Name = "m" & Text.AfterDelimiter(_input, "w"),
     HD = fx("ForReviewHD")(_input),
-    Consotbl = Load("DLD_Filtered"),
-    Filtered = Table.SelectRows(Consotbl, each not List.Contains({"n/a"}, Record.Field(_,Name))),
-    SelfJoined = fx("SelfJoin_R")(Filtered, CWB("ForReview_" & _input), {_PK}),
-    SCol = Table.SelectColumns(    SelfJoined, HD, MissingField.UseNull),
-    Sorted = fx("SortNIndex")(SCol)
+    Source = CWB("Filtered_Add"), 
+    SelfJoined = fx("SelfJoin_R")(Source, CWB("ForReview_" & _input), {_PK}),
+    SCol = Table.SelectColumns(SelfJoined, HD, MissingField.UseNull),
+    Fn = fx("AddStats2")(SCol),
+    Fn2 = fx("NewOrInDB")(Fn),
+    Filtered = Table.SelectRows(
+        Fn2, each List.Contains({"新增"}, Record.Field(_, Name)) or List.Contains(CheckList, [Check])
+    ),
+    Sorted = fx("SortNIndex")(Filtered),
+    SCol2 = Table.SelectColumns(Sorted, HD, MissingField.UseNull)
 in
-    Sorted
+    SCol2

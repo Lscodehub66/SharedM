@@ -1,16 +1,27 @@
 (TableName as table, SortList as list, optional _inputcount as text) =>
+    //fx("Nth")(Inserted, {"定价日"},)
     let
         // KeyColList = { "YYMMDD", "信用主体"},
         Source = TableName,
         NewColName = "Nth_" & SortList{0}{0},
         Sorted = Table.Buffer(Table.Sort(Source, SortList)),
-        InstanceGp1 = if  _inputcount  = null then Table.Group(Sorted, {SortList{0}{0}}, {{"Data", each _, type table}}) 
-        else Table.Group(Sorted, {SortList{0}{0}}, {{_inputcount, each List.Count(Record.Field(_,SortList{0}{0} )), type number},{"Data", each _, type table}}),
-        IGCustom1 = Table.AddColumn(
-            InstanceGp1, "Custom", each Table.AddIndexColumn([Data],  NewColName, 1)
-        ),
-        IGRemoved1 = Table.SelectColumns(IGCustom1, List.RemoveNulls({"Custom",_inputcount})),
+        InstanceGp1 =
+            if _inputcount = null then
+                Table.Group(Sorted, {SortList{0}{0}}, {{"Data", each _, type table}})
+            else if _inputcount = "" then
+                Table.Group(Source, {SortList{0}{0}}, {{"Data", each _, type table}})
+            else
+                Table.Group(
+                    Sorted,
+                    {SortList{0}{0}},
+                    {
+                        {_inputcount, each List.Count(Record.Field(_, SortList{0}{0})), type number},
+                        {"Data", each _, type table}
+                    }
+                ),
+        IGCustom1 = Table.AddColumn(InstanceGp1, "Custom", each Table.AddIndexColumn([Data], NewColName, 1)),
+        IGRemoved1 = Table.SelectColumns(IGCustom1, List.RemoveNulls({"Custom", _inputcount})),
         IGExpanded1 = Table.ExpandTableColumn(IGRemoved1, "Custom", Table.ColumnNames(IGRemoved1[Custom]{0})),
-        Output = fx("Data")(fx("1st")((IGExpanded1),{ NewColName,_inputcount}))
+        Output = fx("Data")(fx("1st")((IGExpanded1), {NewColName, _inputcount}))
     in
         Output

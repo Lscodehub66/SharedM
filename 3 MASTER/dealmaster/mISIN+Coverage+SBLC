@@ -2,7 +2,7 @@ let
     Source = Load("mISIN(ESG+DMI)"),
     CN_mISIN = List.Buffer(Table.ColumnNames(Source)),
     //
-    mSBLC = CWB("SBLCUniverse"),
+    mSBLC = CWB("mSBLC"),
     #"Transformed SBLCName" = Table.RenameColumns(
         fx("FormerName")(Source, "备证行全称"), {"Dummy.信用主体", "Dummy.SBLC"}, MissingField.UseNull
     ),

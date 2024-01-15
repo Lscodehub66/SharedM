@@ -13,7 +13,7 @@ let
     Custom1 = Table.TransformColumns(
         Sorted, {{"Column2", each Text.Replace(Text.Replace(_, "上周，3个月", "年期方面，3个月"), "美国国债利率", ""), type text}}
     ),
-    #"Renamed Columns" = Table.RenameColumns(Custom1, {{"Index_Writer", "Column0"}}),
+    #"Renamed Columns" = Table.Buffer(Table.RenameColumns(Custom1, {{"Index_Writer", "Column0"}})),
     Inserted = Table.InsertRows(
         #"Renamed Columns",
         4,

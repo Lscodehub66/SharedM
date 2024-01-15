@@ -11,9 +11,9 @@
                         x,
                         each Record.Field(_, y{0}),
                         each
-                            if Record.Field(_, y{0}) = "" and Record.Field(_, y{1}) = "" then
+                            if List.Contains({null,"","【】"}, Record.Field(_, y{0})) and List.Contains({null,"","【】"}, Record.Field(_, y{1}))then
                                 "【】/【】/【】"
-                            else if Record.Field(_, y{1}) = "" then
+                            else if  List.Contains({null,"","【】"}, Record.Field(_, y{1})) then
                                 "【" & Record.Field(_, y{0}) & "】"
                             else if Record.Field(_, y{0}) = "" or (Record.Field(_, y{0}) = "--/--/--" and Record.Field(_, y{1}) <> "--/--") then
                                 Record.Field(_, y{1}) & "/【】"

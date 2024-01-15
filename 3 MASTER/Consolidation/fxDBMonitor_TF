@@ -59,7 +59,7 @@
                         try
                             CWB("chart_master")
                         otherwise
-                            try Load("chart_master") otherwise fx("Excel")("DEALSMASTER_CHART_MASTER"),
+                            try Load("chart_master") otherwise fx("Ws")("DEALSMASTER","CHART_MASTER"),
                         Regrouped
                     },
                     {"Check"},

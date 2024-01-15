@@ -3,50 +3,31 @@ let
     p = "ForReview_",
     wIssue = CWB(p & "wIssue", "1"),
     //
-    ACol1 = Table.AddColumn(wIssue, "mIssue", each "Y"),
-    RemovedCol = Table.RemoveColumns(ACol1, Get("Header_MergeRemoval"), MissingField.Ignore),
+    RemovedCol = Table.RemoveColumns(wIssue, Get("Header_MergeRemoval"), MissingField.Ignore),
     Filtered = Table.SelectRows(
         RemovedCol, each ([定价日] <> null) and [ISIN] <> null and [删除及隐藏] <> "删除" and [删除及隐藏] <> "【删除】"
     ),
-    wBond = CWB(p & "wBond", "1"),
-    Merged3 = fx(
-        "Merge"
-    )(
-        Filtered, try Table.AddColumn(wBond, "mBond", each "Y", type text) otherwise wBond, "ISIN", "ISIN", {""}, {
-            ""
-        }
-    ),
-    SourceDB = fx("Combine")({Merged3, CWB("ForReview_wChart")}, null, {10}),
+    wBond = Load("ForReview_wBond"),
+    Merged3 = fx("Merge")(Filtered, wBond, "ISIN", "ISIN", {""}, {""}),
+    SourceDB = fx("Combine")({Merged3, CWB("ForReview_wChart", "1")}, null, {10}),
     //
-    wStats = Table.SelectRows(CWB(p & "wStats", "1"), each not List.Contains({null, "", "--"}, [#"最终账簿(亿)"])),
-    wBOCOM = Table.AddColumn(CWB(p & "wBOCOM"), "mBISL", each "Y", type text),
+    wStats = Load("ForReview_wStats"),
+    wBOCOM = Load("ForReview_wBOCOM"),
     wCredit = Load("wCredit_Reviewed"),
     Filtered_Add = CWB("Filtered_Add"),
     Merged = List.Accumulate(
-        {
-            {wStats, "mStats", "Check"},
-            {wBOCOM, "mEXE", "Check"},
-            {wCredit, "mCredit", "信用主体"},
-            {Filtered_Add, "DLD_Add", "Check"}
-        },
+        {{wStats, "Check"}, {wBOCOM, "Check"}, {wCredit, "信用主体"}, {Filtered_Add, "Check"}},
         SourceDB,
-        (x, y) =>
-            fx(
-                "Merge"
-            )(
-                x,
-                if Table.HasColumns(y{0}, y{1}) then
-                    Table.TransformColumns(y{0}, {{y{1}, each "Y"}})
-                else
-                    Table.AddColumn(y{0}, y{1}, each "Y", type text),
-                y{2},
-                y{2},
-                {""},
-                {""}
-            )
+        (x, y) => fx("Merge")(x, y{0}, y{1}, y{1}, {""}, {""})
+    ),
+    #"Global Y" = Table.ReplaceValue(
+        Merged, "新增", "Y", Replacer.ReplaceValue, {"mIssue", "mBond", "mStats", "mBISL", "mEXE", "mCredit", "mChart"}
+    ),
+    FirstTime = Table.ReplaceValue(
+        #"Global Y", null, each if [mCredit] = "Y" then [定价日] else null, Replacer.ReplaceValue, {"DEBUT_DATE"}
     ),
     Custom1 = Table.TransformColumns(
-        Merged,
+        FirstTime,
         {
             {"主体评级", each if _ <> "【】" then Text.Replace(_, "【】", "【--】") else _},
             {"发行评级", each if _ <> "【】" then Text.Replace(_, "【】", "【--】") else _},
@@ -65,6 +46,7 @@ let
     DM = {"mIssue", "mStats", "mBISL", "mEXE", "mCredit"},
     HD = List.Distinct(List.Accumulate(DM, {"mBond"} & CWB("mBond", "CN"), (x, y) => x & {y} & CWB(y, "CN"))),
     Reordered = Table.SelectColumns(TF, HD, MissingField.Ignore),
-    Custom2 = fx("DBManager2")(Reordered)
+    Replaced = Table.ReplaceValue(Reordered, "新增", "Y", Replacer.ReplaceValue, DM & {"mBond"}),
+    Custom2 = fx("DBManager2")(Replaced)
 in
     Custom2

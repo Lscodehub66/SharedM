@@ -1,0 +1,35 @@
+(_input as text, optional _inputsheet as nullable text) =>
+    let
+        Source = fx("Ws")(_input, _inputsheet),
+        transformationkey = Text.Upper(_input & "." & (_inputsheet ?? "")),
+        #"SkipNPromote" = [
+            YY.城投 = 0,
+            YY.金融 = 0,
+            YY.产业 = 0,
+            #"DMI." = 1,
+            #"违约." = 1,
+            #"银行." = 1
+        ],
+        Is1 = Record.HasFields(#"SkipNPromote", transformationkey),
+        #"FindAncorValue" = [
+            BBGFX.VALUE = {"Column1", "Base Currency"},
+            DOWNLOAD.美元债一级 = {1, "", "Column"},
+            DOWNLOAD.ECON = {"Column1", "Date Time"},
+            KYC.MASTER = {"Column2", "序号"},
+            台账23.合规 = {"Column3", "团队"},
+            台账24.合规 = {"Column4", "項目代碼(Project Code)"},
+            台账24.收入情况2023 = {"Column2", "Project Name"},
+            台账23.收入情况2023 = {"Column2", "Project Name"}
+        ],
+        Is2 = Record.HasFields(#"FindAncorValue", transformationkey),
+        Isnull = not Is1 and not Is2,
+        transformation1 = Table.PromoteHeaders(
+            Table.Skip(Source, Record.Field(#"SkipNPromote", transformationkey)), [
+                PromoteAllScalars = true
+            ]
+        ),
+        transformation2 = fx("SheetTotbl")(Source, Record.Field(#"FindAncorValue", transformationkey)),
+        #"transformation Method" = if Is1 = true then transformation1 else transformation2,
+        Output = if Isnull = true then Source else fx("Data")(#"transformation Method")
+    in
+        Output

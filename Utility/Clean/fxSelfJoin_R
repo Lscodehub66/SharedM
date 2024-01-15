@@ -3,23 +3,30 @@
     let
         // tblname = DLD_p2,   tbltojoin  = CWB("DLD_priceNstats"),    MergeKey = {"Check"},
         CN_Source = List.Buffer(Table.ColumnNames(tblname)),
-        IPGList = List.Intersect({{"IPG", "FPG", "定价","票息"}, CN_Source}),
+        IPGList = List.Intersect({{"IPG", "FPG", "定价", "票息"}, CN_Source}),
         tbl_nonull = Table.SelectRows(tbltojoin, each not List.Contains({null, ""}, Record.Field(_, MergeKey{0}))),
         Fn1 = if not List.IsEmpty(IPGList) then fx("NumInputText")(tbl_nonull, IPGList) else tbl_nonull,
         Schema = Table.Schema(Fn1),
         _excllist = {"ISIN", "Index", "Check", "Timestamp", "Updator", "定价日", "信用主体"} & MergeKey,
+        _filterlist = {"Filter_Bond", "Filter_Exch", "IS_FIMTN"},
         Sch1 = Table.SelectRows(Schema, each not List.Contains(_excllist, [Name])),
         HD_null = List.Intersect(
             {CN_Source, Table.SelectRows(Sch1, each List.Contains({"number", "date", "datetime"}, [Kind]))[Name]}
         ),
         HD_Blank = List.Intersect({CN_Source, Table.SelectRows(Sch1, each List.Contains({"text"}, [Kind]))[Name]}),
+        HD_filter = List.Intersect({CN_Source, _filterlist}),
+        //
         _prefixNum = "NullJoin.",
         _prefixText = "Join.",
         HD_null_Num = List.Transform(HD_null, each _prefixNum & _),
         HD_Blank_Text = List.Transform(HD_Blank, each _prefixText & _),
+        HD_filter_text = List.Transform(HD_filter, each _prefixText & _),
+        //
         #"null pair" = List.Zip({HD_null, HD_null_Num}),
         #"blank pair" = List.Zip({HD_Blank, HD_Blank_Text}),
-        tblOutput = Table.RenameColumns(Fn1, #"blank pair" & #"null pair"),
+        #"filter pair" = List.Zip({HD_filter, HD_filter_text}),
+        //
+        tblOutput = Table.RenameColumns(Fn1, #"blank pair" & #"null pair", MissingField.Ignore),
         _Datacol = "Dummy50." & ".Data",
         #"Merged Queries" = Table.NestedJoin(tblname, MergeKey, tblOutput, MergeKey, _Datacol, JoinKind.LeftOuter),
         #"Expanded Data" = Table.ExpandTableColumn(
@@ -64,6 +71,17 @@
                     each Record.Field(_, Text.AfterDelimiter(y, ".")),
                     each
                         if
+                            List.Contains({"【】"}, Record.Field(_, Text.AfterDelimiter(y, ".")))
+                            and List.Contains({null, "", "--"}, Record.Field(_, y))
+                        then
+                            Record.Field(_, y)
+                        else if
+                            Text.Contains(Record.Field(_, Text.AfterDelimiter(y, ".")), "【")
+                            and Text.Contains(y, "Filter")
+                            and List.Contains({null, "", "--"}, Record.Field(_, y))
+                        then
+                            Record.Field(_, y)
+                        else if
                             not List.Contains({null, "", "【】"}, Record.Field(_, Text.AfterDelimiter(y, ".")))
                             and not List.Contains({null, "", "【】"}, Record.Field(_, y))
                             and Record.Field(_, Text.AfterDelimiter(y, ".")) <> Record.Field(_, y)
@@ -76,7 +94,8 @@
                 )
         ),
         Custom1 =
-            if Table.RowCount(tbl_nonull) = 0 or Table.RowCount(tblname) =0 then
+            if Table.HasColumns(tbl_nonull, "Index")  and List.IsEmpty(tbl_nonull[Index]) then tblname else if 
+            Table.RowCount(tbl_nonull) = 0 or Table.RowCount(tblname) = 0 then
                 tblname
             else
                 Table.SelectColumns(#"Replaced both Non-blank", CN_Source)

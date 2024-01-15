@@ -2,7 +2,8 @@
 let
     Source = Load("Recent_Data"),
     Custom1 = fx("DateRange")({"PreviousMon.Date", "Sunday.Date"}, {Source, "定价日"}),
-    WriteNewIssue = fx("WeeklyDealWriter")(Custom1),
+    Buffered = Table.Buffer(Custom1),
+    WriteNewIssue = fx("WeeklyDealWriter")( Buffered ),
     #"Renamed Columns" = Table.RenameColumns(
         WriteNewIssue, {{"货币", "Column1"}, {"板块", "Column0"}, {"Writer", "Column2"}}, MissingField.UseNull
     ),

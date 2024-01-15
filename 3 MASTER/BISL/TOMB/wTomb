@@ -5,16 +5,27 @@ let
     //
     R2R3 = fx("tblTomb_R2R3")(InnerJoined),
     R1R4 = fx("tblTomb_R4R1")(R2R3, InnerJoined),
-    BlankTable =
+    Inserted =
         if Table.RowCount(InnerJoined) = 0 then
-            Table.FromRows(
-                {{"", Date.ToText(Record.Field(Load("Control"), "PreviousMon.Date"), "MM月dd日") & "起一周无新增", ""}}
-                    & List.Repeat({{"", "", ""}}, 9),
-                Table.ColumnNames(R1R4)
-            )
+            Table.InsertRows(R1R4, 0, {[
+                定价日 = fx("Control.PreviousMon.Date"),
+                P1 = "无新增",
+                P2 = ""
+            ]})
         else
-            Table.FromRows(List.Repeat({{null, "", ""}}, 10 - Table.RowCount(InnerJoined)), Table.ColumnNames(R1R4)),
-    Combined = Table.Combine({R1R4, Table.SelectColumns(BlankTable, Table.ColumnNames(R1R4), MissingField.UseNull)}),
-    TransposedTomb = fx("tblTomb_Transpose")(Combined)
+            R1R4,
+    #"Calculated Day of Week" = Table.TransformColumns(
+        Inserted, {{"定价日", each Date.ToText(Date.StartOfWeek(_, Day.Monday), "yyyy年MM月dd日起一周"), type text}}
+    ),
+    #"Added Index" = Table.AddIndexColumn(#"Calculated Day of Week", "Index", 1, 1, Int64.Type),
+    #"Merged Columns" = Table.CombineColumns(
+        Table.TransformColumnTypes(#"Added Index", {{"Index", type text}}, "en-US"),
+        {"定价日", "Index"},
+        Combiner.CombineTextByDelimiter("-", QuoteStyle.None),
+        "Merged"
+    ),
+    Custom1 = fx("1st")(#"Merged Columns", {"Merged"}),
+    #"Transposed Table" = Table.Transpose(Custom1),
+    #"Promoted Headers" = Table.PromoteHeaders(#"Transposed Table", [PromoteAllScalars = true])
 in
-    TransposedTomb
+    #"Promoted Headers"

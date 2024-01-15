@@ -2,7 +2,7 @@
 
 
 let
-    Source = Table.Buffer(fx("DMI")(fx("Source")("DMI"))),
+    Source = Table.Buffer(fx("DMI")(fx("Wstbl")("DMI"))),
     // Get Reg S ISINs
     #"Not 144A" = Table.SelectRows(Source, each ([发行规则] <> "144A")),
     // Get 144A ISINs

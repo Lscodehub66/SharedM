@@ -9,7 +9,7 @@ let
                 {
                     x,
                     let
-                        Source = fx("Source")("YY_" & y),
+                        Source = fx("Wstbl")("YY" ,y),
                         Duplicated =
                             if Table.HasColumns(Source, "行业") then
                                 Table.RemoveColumns(Table.DuplicateColumn(Source, "行业", "行业" & ".Dummy"), {"行业"})

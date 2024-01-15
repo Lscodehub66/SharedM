@@ -1,5 +1,5 @@
 let
-   Source = Table.LastN(Load("USDCNH_Tighten"), 1),
+   Source = Table.Buffer(Table.LastN(Load("USDCNH_Tighten"), 1)),
     #"Added Custom" = Table.AddColumn(
         Source ,
         "描述",

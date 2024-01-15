@@ -5,7 +5,7 @@
         Source = TableName,
         需填写 = {"ISIN", "定价日", "信用主体"},
         需留空 = {"债券简称", "货币"},
-        Bracket1 = {"主题债券", "发行架构", "IPT", "FPG", "联席全球协调人"},
+        Bracket1 =  {"主题债券", "发行架构", "IPT", "FPG", "联席全球协调人","发行场所"},
         Bracket2 = {"省份", "城市", "区县"},
         Filtered = Table.SelectRows(
             Source,
