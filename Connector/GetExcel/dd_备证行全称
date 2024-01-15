@@ -1,0 +1,16 @@
+//let Code = Load("dd_备证行全称","Code"), EVA = Expression.Evaluate(Code,#shared) in EVA
+let
+    Grouped =
+        let
+            Custom1 = CWB("deal_master"),
+            #"Grouped Rows" = Table.Group(Custom1, {"备证行全称"}, {{"Count", each Table.RowCount(_), Int64.Type}}),
+            #"Filtered Rows" = Table.SelectRows(#"Grouped Rows", each not List.Contains({null, "", "--"}, [备证行全称]))
+        in
+            Table.Buffer(#"Filtered Rows"),
+    Source = Table.SelectColumns(CWB("mSBLC"), {"备证行全称", "SortValue"}, MissingField.UseNull),
+    Merged = fx("Merge")(Source, Grouped, "备证行全称", "备证行全称", {"Count"}, {"Count"}),
+    #"Sorted Rows1" = Table.Sort(Merged, {{"Count", Order.Descending}, {"SortValue", Order.Ascending}}),
+    #"Removed Other Columns" = Table.SelectColumns(#"Sorted Rows1", {"备证行全称"}),
+    #"Added Index" = Table.AddIndexColumn(#"Removed Other Columns", "SortValue", 1, 1, Int64.Type)
+in
+    #"Added Index"

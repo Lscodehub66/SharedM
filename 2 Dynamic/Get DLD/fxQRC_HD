@@ -5,17 +5,20 @@
         #"Kept First Rows" = Table.FirstN(SCol, 4),
         #"Demoted Headers" = Table.DemoteHeaders(#"Kept First Rows"),
         #"Transposed Table" = Table.Transpose(#"Demoted Headers"),
-     MCol = {"Column2", "Column3", "Column4", "Column5"},
-    Zipped = List.Zip({MCol, List.Repeat({type text}, List.Count(MCol))}),
-    #"Merged Columns" = Table.CombineColumns(
-        Table.TransformColumnTypes( #"Transposed Table" , Zipped), MCol, Combiner.CombineTextByDelimiter("", QuoteStyle.None), "Merged"
-    ),
-    #"Trimmed Text" = Table.TransformColumns(#"Merged Columns", {{"Merged", Text.Trim, type text}}),
-    #"Cleaned Text" = fx(
-        "Replace"
-    )(
-        Table.TransformColumns(#"Trimmed Text", {{"Merged", Text.Clean, type text}}), {"Merged"}, "主体"
-    ),
+        MCol = {"Column2", "Column3", "Column4", "Column5"},
+        Zipped = List.Zip({MCol, List.Repeat({type text}, List.Count(MCol))}),
+        #"Merged Columns" = Table.CombineColumns(
+            Table.TransformColumnTypes(#"Transposed Table", Zipped),
+            MCol,
+            Combiner.CombineTextByDelimiter("", QuoteStyle.None),
+            "Merged"
+        ),
+        #"Trimmed Text" = Table.TransformColumns(#"Merged Columns", {{"Merged", Text.Trim, type text}}),
+        #"Cleaned Text" = fx(
+            "Replace"
+        )(
+            Table.TransformColumns(#"Trimmed Text", {{"Merged", Text.Clean, type text}}), {"Merged"}, "主体"
+        ),
         #"Removed Errors" = Table.RemoveRowsWithErrors(#"Cleaned Text", {"Merged"}),
         #"Added Custom" = Table.AddColumn(
             #"Removed Errors",
@@ -25,13 +28,16 @@
                     {
                         "Project Name",
                         "ISIN",
-                        "项目名称(集团全称)", 
+                        "项目名称(集团全称)",
                         "序号",
                         "担任角色",
                         "新规角色",
                         "团队",
                         "项目定价日",
+                        "融资规模(其他币种)币种",
                         "承销费",
+                        "承销费(其他币种)币种",
+                        "承销费(其他币种)",
                         "承销费(USD)",
                         "承销费(RMB)",
                         "项目状态",
@@ -43,7 +49,13 @@
                 )
         ),
         #"Filtered Rows" = Table.SelectRows(#"Added Custom", each ([Name.Column] <> "")),
-        #"Removed Duplicates" = Table.Distinct(#"Filtered Rows", {"Name.Column"}),
+        #"Replaced Value" = Table.ReplaceValue(
+            #"Filtered Rows", "(其他币种)币种", "(币种)", Replacer.ReplaceText, {"Name.Column"}
+        ),
+        #"Replaced Value1" = Table.ReplaceValue(
+            #"Replaced Value", "其他币种", "其他", Replacer.ReplaceText, {"Name.Column"}
+        ),
+        #"Removed Duplicates" = Table.Distinct(#"Replaced Value1", {"Name.Column"}),
         #"Removed Other Columns" = Table.SelectColumns(#"Removed Duplicates", {"Column1", "Name.Column"})
     in
         #"Removed Other Columns"

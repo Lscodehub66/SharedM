@@ -5,7 +5,7 @@ let
  Source      = CWB( "tbl_review_BISL" ),
     RemovedBlank = Table.SelectRows(Source, each not List.IsEmpty(List.RemoveMatchingItems(Record.FieldValues(_), {"", null}))), 
  Filtered    = fx("Merge")  (   RemovedBlank ,CWB("DLD_Add"), "Check" ,   "Check" , {""} , {""}), 
-ColNow_mBISL = Table.ColumnNames(fx("Excel")("DEALSMASTER_=mBISL")),
+ColNow_mBISL = Table.ColumnNames(fx("Ws")("DEALSMASTER","=mBISL")),
  SelectedCol = if GNG = "GO" then
 Table.SelectColumns (  Filtered, ColNow_mBISL, MissingField.UseNull ) else Table.SelectColumns ( RemovedBlank, ColNow_mBISL, MissingField.UseNull ),
     ACol = Table.AddColumn(SelectedCol, "mBISL", each "Y"),    ACol1 = Table.AddColumn(ACol, "mEXE", each "Y")

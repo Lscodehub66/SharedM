@@ -1,6 +1,6 @@
 //let LoadCode = Load("DMI_Credit","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-    Source = fx("Source")("DMI"),
+    Source = fx("Wstbl")("DMI"),
     Header_DMI_Credit = Get("Header_DMI_Credit_Source"),
     // {"信用主体", "债券简称", "穆迪/标普", "公司类型", "行业", "细分行业", "省份", "城市", "区县", "定价日"}
     // Function

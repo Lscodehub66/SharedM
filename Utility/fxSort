@@ -1,0 +1,47 @@
+(
+    TableName as table, optional _inputHD as list, optional _inputkey as nullable text
+    // "N" means no need to reverse index
+) =>
+    let
+        Source1 = fx("Data")(TableName),
+        // *Remove DummyCol*
+        Source= Table.RemoveColumns(
+            Source1, List.Select(Table.ColumnNames(Source1), each Text.Contains(_, "Dummy")), MissingField.Ignore
+        ),
+        //
+        CN_Source = List.Buffer(Table.ColumnNames(Source)),
+        GNG = if List.Contains({"N", "NoIndex"}, _inputkey) or _inputHD = {""} then "" else "Reversed",
+        FirstOrder = if GNG = "Reversed" then Order.Ascending else Order.Descending,
+        //  Order.Ascending=0
+        HD_Entity = List.Select(CN_Source, each Text.Contains(_, "信用主体") or _ = "债券简称"),
+        //Default sort
+        HD_Default = {"定价日", try HD_Entity{0} otherwise null, "货币", "年期", "DEBUT_DATE", "Timestamp", "Date"},
+        MyHD =
+            if not List.Contains({null, {""}, {null}}, _inputHD) then
+                _inputHD
+            else
+                List.RemoveNulls(List.Intersect({HD_Default, CN_Source})),
+        MyHD_Count = List.Count(MyHD),
+        Zipped = List.Zip({MyHD, List.Repeat({FirstOrder}, MyHD_Count)}),
+        #"First Sorted" =
+            if _inputHD = {""} then
+                Source
+            else if _inputkey = "Mature" then
+                Table.Sort(
+                    Source,
+                    List.Zip(
+                        {
+                            {"覆盖团队", "覆盖分类", "覆盖地区", "信用主体", "兑付日"},
+                            {FirstOrder, Order.Descending, Order.Descending, FirstOrder, Order.Descending}
+                        }
+                    )
+                )
+            else
+                Table.Sort(Source, Zipped),
+        AddedIndex = Table.AddIndexColumn(
+            Table.RemoveColumns(#"First Sorted", {"Index"}, MissingField.Ignore), "Index", 1, 1, Int64.Type
+        ),
+        Reversed = if GNG = "Reversed" then Table.Sort(AddedIndex, {"Index", Order.Descending}) else AddedIndex,
+        Reordered = if _inputkey <> "NoIndex" then fx("1st")(Reversed, {"Index"}) else #"First Sorted"
+    in
+        Reordered

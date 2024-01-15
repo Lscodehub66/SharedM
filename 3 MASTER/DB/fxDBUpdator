@@ -22,15 +22,47 @@
                 else
                     x
         ),
-        Removed =
+        补齐tbl =
+            let
+                Source = CWB("QRC_Income"),
+                #"Renamed Columns1" = Table.RenameColumns(Source, {{"项目定价日", "定价日"}}, MissingField.Ignore),
+                #"Added Custom" = fx("CheckNDupe")(#"Renamed Columns1"),
+                #"Renamed Columns" = Table.RenameColumns(#"Added Custom", {{"序号", "补齐.台账序号"}}),
+                SCol = Table.SelectColumns(#"Renamed Columns", {"Check", "补齐.台账序号"}, MissingField.UseNull)
+            in
+                SCol,
+        #"Update 台账序号" = if Table.HasColumns(Source, {"Check", "台账序号"}) then fx("DB_Revise")(Fn, 补齐tbl, "Check") else Fn,
+        补齐tbl2 =
+            let
+                Source = CWB("QRC_Compliance"),
+                #"Added Custom" = fx("FolderPath")(Source),
+                #"Added Custom1" = Table.AddColumn(
+                    #"Added Custom", "补齐.IS_KYC_DONE", each
+                        if not List.Contains({null, "", "--"}, [KYC]) then
+                            "Y"
+                        else
+                            ""
+                ),
+                #"Renamed Columns" = Table.RenameColumns(#"Added Custom1", {{"FolderName", "补齐.FolderName"}}),
+                SCol = Table.SelectColumns(
+                    #"Renamed Columns", {"PRJ对账号", "补齐.FolderName", "补齐.IS_KYC_DONE"}, MissingField.UseNull
+                )
+            in
+                SCol,
+        #"Update Folder & KYC" =
             if Table.HasColumns(Source, {"PRJ对账号", "FolderName", "IS_KYC_DONE"}) then
-                fx("DB_Revise")(Fn, Load("ToRevise_mEXE"), "PRJ对账号")
+                fx("DB_Revise")(#"Update 台账序号", 补齐tbl2, "PRJ对账号")
             else
-                Fn,
+                #"Update 台账序号",
         Merged1 = fx(
             "Merge"
         )(
-            Removed, try CWB("DMI_Default") otherwise Load("DMI_Default"), "信用主体", "发行人名称", {"首次违约日"}, {"违约日"}
+            #"Update Folder & KYC",
+            try CWB("DMI_Default") otherwise Load("DMI_Default"),
+            "信用主体",
+            "发行人名称",
+            {"首次违约日"},
+            {"违约日"}
         ),
         Replaced1 = Table.ReplaceValue(
             Merged1, null, each if [违约日] <> null then [违约日] else null, Replacer.ReplaceValue, {"首次违约日"}
@@ -39,6 +71,6 @@
             if List.Contains(CN_Source, "首次违约日") then
                 Table.RemoveColumns(Replaced1, {"违约日"}, MissingField.Ignore)
             else
-                Removed
+                #"Update Folder & KYC"
     in
         Removed1

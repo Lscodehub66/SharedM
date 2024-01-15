@@ -100,14 +100,23 @@
                         ),
                     type text
                 ) otherwise Custom4,
+        Adjustment = Table.ReplaceValue(
+            Custom5,
+            "【发行规模(亿)为空值】",
+            each if List.Contains({"AddTap", "BBG"}, [DataSource]) then "" else "【发行规模(亿)为空值】",
+            Replacer.ReplaceValue,
+            {"Filter_Bond"}
+        ),
         Output =
             if Text.Contains(Key, "NOT") then
                 List.Accumulate(
                     NewCol,
-                    Custom5,
+                    Adjustment,
                     (x, y) => Table.SelectRows(x, each List.Contains({null, "", "--"}, Record.Field(_, y)))
                 )
             else
-                Table.ReorderColumns(Custom5, List.Distinct(NewCol & Table.ColumnNames(Custom5)), MissingField.Ignore)
+                Table.ReorderColumns(
+                    Adjustment, List.Distinct(NewCol & Table.ColumnNames(Adjustment)), MissingField.Ignore
+                )
     in
         Output

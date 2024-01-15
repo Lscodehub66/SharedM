@@ -41,7 +41,7 @@
             try
                 CWB("DMI_Default")
             otherwise
-                try fx("Excel")("DEALSMASTER_DMI_Default") otherwise Load("DMI_Default", "CSV"),
+                try fx("Ws")("DEALSMASTER","DMI_Default") otherwise Load("DMI_Default", "CSV"),
         MergedQ =
             if List.Contains(CN_RNSource, "首次违约日") then
                 RCol

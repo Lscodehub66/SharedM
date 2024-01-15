@@ -1,0 +1,14 @@
+(TableName as table) =>
+    let
+        Source = TableName,
+        RefCol = {"IS_LEAD", "BISL_ROLE", "OTHER_ROLE"},
+        NewCol = {"角色", "角色资历分类"},
+        Prep = Table.RemoveColumns(Source, NewCol, MissingField.Ignore),
+        ACol = Table.AddColumn(Prep, "角色", each [IS_LEAD] & [BISL_ROLE] & [#"OTHER_ROLE"], type text),
+        Replaced = fx("Replace")(ACol, {"角色"}, "角色"),
+        ACol1 = Table.AddColumn(
+            Replaced, "角色资历分类", each if Text.Contains([角色], "全球协调人") then "JGC资历" else "Non-JGC资历", type text
+        ),
+        Output = if not Table.HasColumns(Source, RefCol) then Source else ACol1
+    in
+        Output

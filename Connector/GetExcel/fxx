@@ -1,0 +1,107 @@
+(_input as text, optional _input2 as nullable text, optional _input3 as nullable text) =>
+    let
+        //  _input = _debugfxSource, _input2 = "美元债一级",_input3 = null,
+        _inputroot = "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\"
+        // C:\Users\kingsley.tong\Desktop\DataHub\
+        ,
+        excelkey = if _input = "DMI" then "美元债一级" else Text.Upper(_input ?? ""),
+        sheetkey = if List.Contains({"美元债一级", "银行", "违约"}, excelkey) then excelkey else Text.Upper(_input2 ?? ""),
+        comparerkey = _input3,
+        yyyyMMdd = Text.Replace(fx("Parameter")("Monday"), "/", ""),
+        gps = fx("Parameter")("GPS"),
+        RecordOfRecord = [
+            DEALSMASTER = [
+                Folder = "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\",
+                File = "DEALs MASTER.xlsm"
+            ],
+            DOWNLOAD = [
+                Folder = "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\",
+                File = "Weekly\" & yyyyMMdd & "\Data\1.Weekly Download.xlsm"
+            ],
+            DYNAMIC = [
+                Folder = "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\",
+                File = "Weekly\" & yyyyMMdd & "\Data\2.Dynamic List Generator.xlsm"
+            ],
+            GRAPH = [Folder = "\\itd-m09-fs02\dcm$\0 DCM Base\", File = "4 Markets\Data\Graph.xlsm"],
+            DIRECTORY = [Folder = "\\itd-m09-fs02\dcm$\0 DCM Base\", File = "4 Markets\DEAL DIRECTORY.xlsm"],
+            美元债一级 = [
+                Folder = "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\",
+                File = "DataLake\美元债一级.xlsx"
+            ],
+            违约 = [Folder = "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\", File = "DataLake\境外债券违约.xlsx"],
+            银行 = [Folder = "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\", File = "DataLake\银行指标数据.xlsx"],
+            YY = [Folder = "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\", File = "DataLake\YY.xlsx"],
+            BBGFX = [
+                Folder = "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\",
+                File = "DataLake\BBGFX.xlsx"
+            ],
+            ESG = [
+                Folder = "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\",
+                File = "Rating & Advisory\7. ESG\Pitch book\ESG Deal List.xlsx"
+            ],
+            台账21 = [Folder = "\\itd-m09-fs02\dcm$\【QRC】DCM项目情况表\", File = "DCM2021年台账.xlsx"],
+            台账22 = [Folder = "\\itd-m09-fs02\dcm$\【QRC】DCM项目情况表\", File = "DCM2022年台账.xlsx"],
+            KYC = [
+                Folder = "\\itd-m09-fs02\dcm$\【QRC】DCM项目情况表\",
+                File = "DCM Existing KYC Master List_19 Oct 2023.xlsx"
+            ],
+            台账23 = [Folder = "\\itd-m09-fs02\dcm$\【QRC】DCM项目情况表\", File = "DCM台账2023.xlsx"],
+            台账24 = [Folder = "\\itd-m09-fs02\dcm$\【QRC】DCM项目情况表\", File = "DCM台账2024.xlsx"]
+        ],
+        Record = Record.Field(RecordOfRecord, excelkey),
+        #">>path" = if gps = "Remote" then _inputroot else Record[Folder] & Record[File],
+        #"ExcelWB" = Table.SelectRows(Excel.Workbook(File.Contents(#">>path")), each ([Kind] <> "DefinedName")),
+        //fx("ExcelWB")(#">>path"),
+        #"Is true" = sheetkey = "",
+        #"Is ExactMatch" = Text.Contains(_input3 ?? "", "="),
+        #"Math By" =
+            if #"Is true" = true then
+                Table.SelectColumns(
+                    Table.Sort(#"ExcelWB", {{"Kind", Order.Descending}, {"Item", Order.Ascending}}),
+                    {"Item", "Kind", "Data"}
+                )
+            else if #"Is ExactMatch" = true then
+                Table.SelectRows(#"ExcelWB", each Text.Upper([Item]) = sheetkey)
+            else
+                Table.SelectRows(#"ExcelWB", each Text.Contains([Item], sheetkey, Comparer.OrdinalIgnoreCase)),
+        #"Selected Sheet" =
+            if #"Is true" = true then
+                #"Math By"
+            else if #"Math By"[Kind]{0} = "Table" then
+                fx("Data")(#"Math By"[Data]{0})
+            else
+                #"Math By"[Data]{0},
+        transformationkey = excelkey & "." & sheetkey,
+        #"SkipNPromote" = [
+            YY.城投 = 0,
+            YY.金融 = 0,
+            YY.产业 = 0,
+            #"美元债一级.美元债一级" = 1,
+            #"违约.违约" = 1,
+            #"银行.银行" = 1,
+            DOWNLOAD.美元债一级 = 1
+        ],
+        Is1 = Record.HasFields(#"SkipNPromote", transformationkey),
+        #"FindAncorValue" = [
+            BBGFX.VALUE = {"Column1", "Base Currency"},
+            DOWNLOAD.美元债一级 = {1, "", "Column"},
+            DOWNLOAD.ECON = {"Column1", "Date Time"},
+            KYC.MASTER = {"Column2", "序号"},
+            台账23.合规 = {"Column3", "团队"},
+            台账24.合规 = {"Column2", "序号"},
+            台账24.收入情况2023 = {"Column2", "Project Name"},
+            台账23.收入情况2023 = {"Column2", "Project Name"}
+        ],
+        Is2 = Record.HasFields(#"FindAncorValue", transformationkey),
+        Isnull = not Is1 and not Is2,
+        transformation1 = Table.PromoteHeaders(
+            Table.Skip(#"Selected Sheet", Record.Field(#"SkipNPromote", transformationkey)),
+            [
+                PromoteAllScalars = true
+            ]
+        ),
+        transformation2 = fx("SheetTotbl")(#"Selected Sheet", Record.Field(#"FindAncorValue", transformationkey)),
+        #"transformation Method" = if Is1 = true then transformation1 else transformation2,
+        Output = if Isnull = true then #"Selected Sheet" else fx("Data")(#"transformation Method")
+    in
+        Output

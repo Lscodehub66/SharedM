@@ -1,6 +1,6 @@
 // Sync_产业板块YY行业
 let
-    Source = try CWB("mCredit") otherwise fx("Excel")("DEALSMASTER_=mcredit"),
+    Source = try CWB("mCredit") otherwise fx("Ws")("DEALSMASTER","=mCredit"),
     #"Removed Other Columns" = Table.SelectColumns(Source, {"信用主体", "板块", "板块二级"}),
     #"Filtered Rows1" = Table.SelectRows(#"Removed Other Columns", each ([板块] = "产业")),
     #"Merged Queries" = Table.NestedJoin(

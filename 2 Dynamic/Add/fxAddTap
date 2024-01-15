@@ -1,8 +1,10 @@
 (TableName as table) =>
 let
  Source          = TableName, 
+NewCol = {"增发判定","交割日","交割T+n"},
+ Prep = Table.RemoveColumns(Source  , NewCol, MissingField.Ignore        ),
  ValidateTap     = Table.AddColumn (
-  Source, 
+  Prep, 
   "增发判定", 
   each if  [起息日期] = null then "" else if [定价日] > [起息日期] then "[增发]" else ""
  ), 

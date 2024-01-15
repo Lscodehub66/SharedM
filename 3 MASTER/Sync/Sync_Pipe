@@ -1,4 +1,4 @@
-// let LoadCode = Load("QSync_Pipe","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+// let LoadCode = "Sync_Pipe","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
  
     Source = CWB("Pipe_Folder"),

@@ -1,23 +1,22 @@
 //let MonitorName = "ESG", Fn = fx("DBMonitor")(MonitorName) in Fn
 let
-    Source = (optional _inputkey as nullable text) =>
+    Source = (_inputkey as nullable text, optional _tbl as any) =>
         let
-            Key = Text.Upper(Text.Trim(_inputkey ?? "")),
+            IsStamped = Text.EndsWith(_inputkey ?? "", "@"),
+            Key = Text.Remove(Text.Upper(Text.Trim(_inputkey ?? "")), "@"),
             //
-            Source = fx(
-                "DBFilter"
-            )(
-                {{"Year.Num", ">=", 2022}}, {{"删除及隐藏", null, {"", null}}} ),
-                //Global Date Control
-             wSource =       fx("NotWeeklyDate")(Source, "定价日"),
-                //
+            Source = if _tbl = null then CWB("deal_master") else _tbl,
+            Source22 = fx("Filter")(Source, {{"Year.Num", ">=", 2022}}, {{"删除及隐藏", null, {"", null}}}),
+            //Global Date Control
+            wSource22 = fx("NotWeeklyDate")(Source22, "定价日"),
+            //
             #"Filtered Output" =
                 if Key = "DEAL_MASTER" then
-                    fx("DBFilter")(null)
+                    Source
                 else if Key = "FTZ" then
-                    fx("DBFilter")({{"货币细分", "=", "自贸债"}})
+                    fx("Filter")(Source, {{"货币细分", "=", "自贸债"}})
                 else if Text.Contains(Key, "DIRECTORY") then
-                    fx("DBFilter")(null, {{"BISL_ROLE", "not", {"", null, "--"}}})
+                    fx("Filter")(Source, null, {{"BISL_ROLE", "not", {"", null, "--"}}})
                 else
                     List.Accumulate(
                         {
@@ -39,8 +38,8 @@ let
                             },
                             {"RMB", {{{"货币", "=", "CNH"}}, null}}
                         },
-                        wSource,
-                        (x, y) => if Text.Contains(Key, y{0}) then fx("DBFilter")(y{1}{0}, y{1}{1}, x) else x
+                        wSource22,
+                        (x, y) => if Text.Contains(Key, y{0}) then fx("Filter")(x, y{1}{0}, y{1}{1}) else x
                     ),
             #"Transformed Output" = fx("DBMonitor_TF")(#"Filtered Output", Key),
             GetKey =
@@ -58,16 +57,25 @@ let
                 else
                     #"Transformed Output",
             #"Sorted Output" =
-                if Text.Contains(Key, "MATURITY2024_SOE") or Text.Contains(Key, "MATURITY2024") then
+                if Text.Contains(Key, "MATURITY") or Text.Contains(Key, "MATURE") then
                     fx("DBMature")(Key)
                 else if Key = "SOE_PIE" then
                     Load("SOE_Pie")
+                else if IsStamped = true then
+                    Table.AddColumn(
+                        Table.RemoveColumns(
+                            fx("Data")(fx("SortNIndex")(#"SCol Output"), 2), {"Timestamp"}, MissingField.Ignore
+                        ),
+                        "Timestamp",
+                        each DateTime.LocalNow(),
+                        type datetime
+                    )
                 else
                     fx("SortNIndex")(#"SCol Output")
         in
             #"Sorted Output",
     fnType = type function (
-        optional _inputkey as (
+        _inputkey as (
             type nullable text meta [
                 Documentation.AllowedValues = {
                     "Directory",
@@ -81,12 +89,14 @@ let
                     "IGLGFV",
                     "FI",
                     "USDCNH_DATA",
-                    "USDCNH_Tighten", // "Maturity",  "Maturity(MOF)","Maturity2024", "Maturity2024_SOE",
+                    "USDCNH_Tighten",
+                    // "Maturity",  "Maturity(MOF)","Maturity2024", "Maturity2024_SOE",
                     "DEAL_MASTER",
                     "SOE_Pie"
                 }
             ]
-        )
+        ),
+        optional _tbl as any
     ) as list meta [
         Documentation.Name = "fxDBMonitor",
         Documentation.Description = "One-stop connector to access predefined themed tables"

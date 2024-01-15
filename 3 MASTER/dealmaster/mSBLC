@@ -2,7 +2,7 @@ let
     List1 = {"信用主体", "信用主体简称", "板块三级", "板块标签", "曾用名"},
     List2 = {"备证行全称", "备证行", "备证分类", "板块标签", "备证行曾用名"},
     Pair = List.Zip({List1, List2}),
-    Source = try Table.Buffer(CWB("mCredit", "1")) otherwise Table.Buffer(fx("Excel")("DEALSMASTER_=MCREDIT")),
+    Source = try Table.Buffer(CWB("mCredit", "1")) otherwise Table.Buffer(fx("Ws")("DEALSMASTER","=mCredit")),
     Filtered = Table.SelectRows(Source, each [IS_SBLC] = "Y"),
     SCol = Table.SelectColumns(Filtered, List1, MissingField.UseNull),
     Renamed = Table.RenameColumns(SCol, Pair),
@@ -17,7 +17,7 @@ let
         else
             TF,
     //  AddedIndex = Table.AddIndexColumn(GetRtg, "Index",1,1),
-    Merged = fx("Merge")(GetRtg, CWB("SBLCUniverse"), "备证行全称", "备证行全称", {"SortValue"}),
+    Merged = fx("Merge")(GetRtg, CWB("mSBLC"), "备证行全称", "备证行全称", {"SortValue"}),
     Replaced = Table.ReplaceValue(   Merged ,"--/--/--","",Replacer.ReplaceValue,{"备证行评级"}),  
     Sorted = Table.Sort(    Replaced , {{"SortValue", Order.Descending}}),
     #"Added Index" = Table.AddIndexColumn(Sorted, "Index", 1, 1),

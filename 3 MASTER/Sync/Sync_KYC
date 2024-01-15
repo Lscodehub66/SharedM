@@ -1,11 +1,11 @@
-// let LoadCode = Load("QSync_KYC","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+// let LoadCode = Load("Sync_KYC","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
     CWB_Directory = CWB("Directory"),
     CWB_mCredit = CWB("mCredit"),
     //
     KYC_SyncHeader = Get("Header_KYC_Sync"),
     //
-    KYC_Load = Load("QKYC_Master_TF"),
+    KYC_Load = Load("KYC_Master_TF"),
     KYC_SCol = Table.SelectColumns(KYC_Load, KYC_SyncHeader, MissingField.Ignore),
     // ***KYC_TBC_LEGACY***
     Filtered = Table.SelectRows(

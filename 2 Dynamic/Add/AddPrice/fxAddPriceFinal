@@ -1,0 +1,37 @@
+(TableName as table) =>
+    let
+       RefCol = {"IPG","FPG","浮息定价","定价"},
+       NewCol = {"定价","Dummy.PriceCheck"},
+        Source = TableName,
+          #"FPT Missing w IPT" = Table.ReplaceValue(
+            Source, "", each if [IPG] <> "" then "【】" else "", Replacer.ReplaceValue, {"FPG"}
+        ),
+        #"FRN Price w No Spd" = Table.ReplaceValue(
+            #"FPT Missing w IPT",
+            "【】",
+            each
+                if [FPG] <> "" and not Text.Contains([FPG], "-") and not Text.Contains([FPG], "【") then
+                    [FPG]
+                else
+                    "【】",
+            Replacer.ReplaceValue,
+            {"浮息定价"}
+        ),
+        #"Price Missing w FPT Range" = Table.AddColumn(
+            Table.RemoveColumns(#"FRN Price w No Spd",{"定价"}, MissingField.Ignore),
+            "定价",
+            each
+                if [IPG] = "" then
+                    ""
+                else if not Text.Contains([FPG], "-") and not Text.Contains([FPG], "【") then
+                    [FPG]
+                else
+                    "【】"
+        ),
+        Output =
+       
+                Table.AddColumn(#"Price Missing w FPT Range", "Dummy.PriceCheck", each "Checked", type text)
+            
+              
+    in
+        Output

@@ -1,0 +1,31 @@
+let
+    Source = Table.FromRows(
+        {
+            {
+                "https://res.data.gov.hk/api/get-download-file?name=https%3A%2F%2Fwww.1823.gov.hk%2Fcommon%2Fical%2Fsc.json"
+            },
+            {
+                "https://api.data.gov.hk/v1/historical-archive/get-file?url=http%3A%2F%2Fwww.1823.gov.hk%2Fcommon%2Fical%2Fsc.json&time=20210601-0905"
+            },
+            {
+                "https://api.data.gov.hk/v1/historical-archive/get-file?url=http%3A%2F%2Fwww.1823.gov.hk%2Fcommon%2Fical%2Fsc.json&time=20200602-0932"
+            },
+            {
+                "https://api.data.gov.hk/v1/historical-archive/get-file?url=http%3A%2F%2Fwww.1823.gov.hk%2Fcommon%2Fical%2Fsc.json&time=20191005-0917"
+            },
+            {
+                "https://api.data.gov.hk/v1/historical-archive/get-file?url=http%3A%2F%2Fwww.1823.gov.hk%2Fcommon%2Fical%2Fsc.json&time=20190718-0912"
+            }
+        },
+        {"Column1"}
+    ),
+    #"Added Custom" = Table.AddColumn(Source, "Custom", each fx("1823HKHoliday")([Column1])),
+    #"Removed Other Columns" = Table.SelectColumns(#"Added Custom", {"Custom"}),
+    #"Expanded Custom" = Table.ExpandTableColumn(
+        #"Removed Other Columns", "Custom", {"Date", "假期简称"}, {"Date", "假期简称"}
+    ),
+    #"Changed Type" = Table.TransformColumnTypes(#"Expanded Custom", {{"Date", type date}}),
+    #"Removed Duplicates" = Table.Distinct(#"Changed Type", {"Date"}),
+    #"Sorted Rows" = Table.Sort(#"Removed Duplicates", {{"Date", Order.Descending}})
+in
+    #"Sorted Rows"

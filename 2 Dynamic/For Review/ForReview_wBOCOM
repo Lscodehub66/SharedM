@@ -1,10 +1,11 @@
 // let LoadCode = Load("ForReview_wBOCOM","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
+    DeleteCheck = List.Buffer(Table.SelectRows(CWB("ForReview_wIssue"), each [删除及隐藏] = "【删除】")[Check]),
     _input = "wBOCOM",
     _PK = "Check",
     Name = "m" & Text.AfterDelimiter(_input, "w"),
     HD = fx("ForReviewHD")(_input),
-    Source = Load("DLD_Filtered"),
+    Source = Table.SelectRows(CWB("Filtered_Add"), each [mBISL] = "新增"),
     Prep =
         if not List.Contains(Table.ColumnNames(Source), "BISL_ROLE") then
             Table.AddColumn(
@@ -22,47 +23,57 @@ let
             )
         else
             Source,
-    DLD_QRC = Table.Buffer(Load("DLD_QRC_24")),
+    DLD_QRC = CWB("DLD_QRC_Income24"),
     MergedQ = try fx("Merge")(Prep, DLD_QRC, "ISIN", "ISIN", {""}, {""}) otherwise Prep,
+    Custom1 = Table.RenameColumns(MergedQ, {{"序号", "台账序号"}}, MissingField.Ignore),
     Filtered = Table.SelectRows(
-        MergedQ,
-        each if Table.HasColumns(MergedQ, "担任角色") then [BISL_ROLE] <> "--" or [担任角色] <> "" else [BISL_ROLE] <> "--"
+        Custom1,
+        each if Table.HasColumns(Custom1, "IS_JGC") then [BISL_ROLE] <> "--" or [IS_JGC] <> "" else
+            [BISL_ROLE] <> "--"
     ),
-    #">>ExpandedList" = List.RemoveItems(Table.ColumnNames(MergedQ), Table.ColumnNames(Prep)),
-    SCol = fx("Data")(Table.SelectColumns(Filtered, HD, MissingField.UseNull)),
+    ACol0 = Table.AddColumn(
+        Filtered, "COVERAGE", each if not List.Contains({null, "", "--"}, [团队]) then [团队] & "组" else "", type text
+    ),
+    #">>ExpandedList" = List.RemoveItems(Table.ColumnNames(Custom1), Table.ColumnNames(Prep)),
+    SCol = fx("Data")(Table.SelectColumns(ACol0, HD, MissingField.UseNull)),
+    SelfJoined = fx("SelfJoin_R")(SCol, CWB("ForReview_" & _input), {_PK}),
     Replaced =
-        if Table.HasColumns(Filtered, "担任角色") then
+        if Table.HasColumns(SelfJoined, "IS_JGC") then
             Table.ReplaceValue(
-                SCol,
+                SelfJoined,
                 each [BISL_ROLE],
                 each
-                    if [担任角色] <> "" and [BISL_ROLE] = "【】" then
-                        [担任角色]
-                    else if [担任角色] <> "" and [BISL_ROLE] <> [担任角色] then
-                        "【" & [BISL_ROLE] & "】" & "#(lf)" & "【" & [担任角色] & "】"
+                    if [IS_JGC] <> "" and [BISL_ROLE] = "【】" then
+                        [IS_JGC]
+                    else if [IS_JGC] <> "" and [BISL_ROLE] <> [IS_JGC] then
+                        "【" & [BISL_ROLE] & "】" & "#(lf)" & "【" & [IS_JGC] & "】"
                     else
                         [BISL_ROLE],
                 Replacer.ReplaceValue,
                 {"BISL_ROLE"}
             )
         else
-            SCol,
+            SelfJoined,
     BlankToNil =
         try
             Table.ReplaceValue(
                 Replaced, "", "nil", Replacer.ReplaceValue, List.RemoveItems(#">>ExpandedList", {"新规角色", "COVERAGE"})
             ) otherwise Replaced,
     BlankToInput = Table.ReplaceValue(
-        BlankToNil, "", "【】", Replacer.ReplaceValue, {"台账序号", "EXE", "PROJECT_CODE", "期数", "新规角色", "COVERAGE"}
+        BlankToNil, "", "【】", Replacer.ReplaceValue, {"台账序号", "EXE", "PROJECT_CODE", "新规角色", "COVERAGE"}
     ),
     BlankToInput1 = Table.ReplaceValue(
         BlankToInput, "", each if [BISL_ROLE] <> "JBR" then "【】" else "", Replacer.ReplaceValue, {
             "IS_LEAD",
-            "IS_B&D"
+            "OTHER_ROLE"
         }
     ),
     BlankToInput2 = Table.ReplaceValue(BlankToInput1, "", "--", Replacer.ReplaceValue, {"是否合名"}),
-    SelfJoined = fx("SelfJoin_R")(BlankToInput2, CWB("ForReview_" & _input), {_PK}),
-    Sorted = fx("SortNIndex")(SelfJoined)
+    Fn2 = fx("NewOrInDB")(BlankToInput2),
+    Filtered1 = Table.SelectRows(
+        Fn2, each List.Contains({"新增"}, [mBISL]) and not List.Contains(DeleteCheck, [Check])
+    ),
+    Sorted = fx("SortNIndex")(Filtered1),
+    SCol2 = Table.SelectColumns(Sorted, HD, MissingField.UseNull)
 in
-    Sorted
+    SCol2

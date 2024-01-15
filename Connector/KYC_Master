@@ -1,7 +1,7 @@
 // let LoadCode = Load("KYC_Master","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 
 let
- Source      = fx("Source")("KYC_Master"), 
+ Source      = fx("Wstbl")("KYC","MASTER"), 
  ATime       = Table.AddColumn ( Source, "Timestamp", each DateTime.FixedLocalNow() ), 
  CWB_tbl     = CWB ( "KYC_Master" ), 
  // if SourceQRC does not have this item then maintain current CWB data to append

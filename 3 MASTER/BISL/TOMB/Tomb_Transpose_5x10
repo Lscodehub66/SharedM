@@ -1,6 +1,6 @@
 // Create 5 x 10
     let
-    Source = Load("QTomb_Transpose"),
+    Source = Load("Tomb_Transpose"),
     //**
         T1 = Table.DemoteHeaders(
             Table.SelectColumns(Source, List.Transform(List.Numbers(1, 10), each Text.From(_)))

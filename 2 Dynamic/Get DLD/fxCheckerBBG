@@ -1,0 +1,71 @@
+(TableName as table, optional BBGtbl as table) =>
+    //fx("CheckerBBG")(Source, CWB("DLD_BBG_Corp")),
+    let
+        Source = TableName,
+        BBG_HD = Get("Header_Exp_Dynamic_BBG"),
+        BBG_HDExp = List.Transform(BBG_HD, each if List.Contains({"计息基准", "SBLC提供者"}, _) then "Dummy" & _ else _),
+        BBG_Merged = if BBGtbl = null then Source else  fx("Merge")(Source, BBGtbl, "Check", "Check", BBG_HD, BBG_HDExp),
+        BBGCheck_1 = List.Accumulate(
+            {{"发行评级", "债项评级"}, {"主体评级", "穆迪/标普"}},
+            BBG_Merged,
+            (x, y) =>
+                if Table.HasColumns(Source, y) then
+                    Table.ReplaceValue(
+                        x,
+                        each Record.Field(_, y{0}),
+                        each
+                            if
+                                List.Contains({null, "", "【】"}, Record.Field(_, y{0}))
+                                and List.Contains({null, "", "【】"}, Record.Field(_, y{1}))
+                            then
+                                "【】/【】/【】"
+                            else if List.Contains({null, "", "【】"}, Record.Field(_, y{1})) then
+                                "【" & Record.Field(_, y{0}) & "】"
+                            else if Record.Field(_, y{0}) = "" or (Record.Field(_, y{0}) = "--/--/--" and Record.Field(_, y{1}) <> "--/--") then
+                                Record.Field(_, y{1}) & "/【】"
+                            else
+                                Record.Field(_, y{0}),
+                        Replacer.ReplaceValue,
+                        {y{0}}
+                    )
+                else
+                    x
+        ),
+        #"EntityRtg TBC" = Table.ReplaceValue(
+            BBGCheck_1,
+            each [主体评级],
+            each if [主体评级] = "--/--/--" and [发行评级] <> "--/--/--" then "【" & [发行评级] & "】" else [主体评级],
+            Replacer.ReplaceValue,
+            {"主体评级"}
+        ),
+                #"IssueRtg TBC" = Table.ReplaceValue(
+                  #"EntityRtg TBC",
+            each [发行评级],
+            each if [主体评级] <> "--/--/--" and [发行评级] = "--/--/--" then "【--/--/--】" else [发行评级],
+            Replacer.ReplaceValue,
+            {"发行评级"}
+        ),
+        BBGCheck_2 = List.Accumulate(
+            {"计息基准", "SBLC提供者"},
+          #"IssueRtg TBC" ,
+            (x, y) =>
+                if Table.HasColumns(Source, y) then
+                    Table.ReplaceValue(
+                        x,
+                        "",
+                        each
+                            if not List.Contains({null, ""}, Record.Field(_, "Dummy" & y)) then
+                                Record.Field(_, "Dummy" & y)
+                            else
+                                "",
+                        Replacer.ReplaceValue,
+                        {y}
+                    )
+                else
+                    x
+        ),
+
+        
+        Custom2 = fx("RCol")(BBGCheck_2)
+    in
+        Custom2

@@ -1,4 +1,4 @@
-(TableName as table, optional NumIndicator as nullable number) =>
+(TableName as table, optional _inputnum as nullable number) =>
     let
         Source = TableName,
         //Global RenameColumns
@@ -15,7 +15,7 @@
                 {"FEATURED", "品种主题"},
                 {"ticker", "TICKER"},
                 {"交易所", "发行场所"},
-                {"临时isin", "ISIN_TEMP"}
+                {"临时isin", "ISIN_TEMP"} ,   {"IS_B&D", "OTHER_ROLE"}
             },
             MissingField.Ignore
         ),
@@ -26,7 +26,7 @@
         //Date ValueType
         Date1 = {
             "CLIENT_SINCE",
-            "Date",
+            "交割日",
             "KYC Deadline",
             "上会审批日",
             "上市日期",
@@ -34,13 +34,16 @@
             "到期日",
             "发行日",
             "发行起始日",
+            "DEBUT_DATE",
             "定价日",
+            "假设KYC到期日",
             "行权兑付日",
             "起息日",
             "起息日期",
             "违约日期",
             "项目定价日",
             "首次付息日",
+            "项目定价日",
             "首次违约日",
             "Monday",
             "LastFriday",
@@ -49,13 +52,36 @@
             "YearStart",
             "OneYearAgo"
         }
-            & List.Select(CN_RNSource, each Text.Contains(_, "date", Comparer.OrdinalIgnoreCase)),
+            & List.Select(
+                CN_RNSource,
+                each Text.Contains(_, "date", Comparer.OrdinalIgnoreCase) and not Text.StartsWith(_, "是否")
+            ),
         //
+        Int64 = {
+            "曾作为JGC",
+            "曾作为JBR",
+            "曾作为承销商",
+            "账户数",
+            "发行数",
+            "DayOfWeek.Num",
+            "Count_BISLDeal",
+            "Count_JBR",
+            "Count_JGC",
+            "ISIN_BISLDeal",
+            "ISIN_JBR",
+            "ISIN_JGC",
+            "多品种",
+            "多币种",
+            "多期限",
+            "多笔",
+            "Tranches",
+            "WEEKNUM"
+        },
         //Number ValueTyp
         Num0ToNull = {"Δ1周", "Δ年初至今", "PRJ对账号"},
         Num5 = List.Select(CN_RNSource, each Text.StartsWith(_, "R_") or Text.StartsWith(_, "C_"))
             & Num0ToNull
-            & {"FX_Rate", "USD", "CNH", "HKD", "EUR", "SGD", "MOP", "GBP", "AUD", "NZD", "CAD"},
+            & {"FX_Rate", "QRC汇率因子", "USD", "CNH", "HKD", "EUR", "SGD", "MOP", "GBP", "AUD", "NZD", "CAD"},
         Num3 = List.Select(
             CN_RNSource,
             each
@@ -71,16 +97,11 @@
                 CN_RNSource, each Text.StartsWith(_, "S_") or Text.StartsWith(_, "Spd_") or Text.StartsWith(_, "I_")
             ),
         Num1 = {"最终账簿(亿)", "收窄Num"} & List.Select(CN_RNSource, each Text.StartsWith(_, "V_")),
-        Num0 = {"FEE", "Relevance", "Year.Num", "兑付日.YearNum", "账户数", "金额 (MM USD)", "发行数"}
+        Num0 = {"FEE", "Relevance", "Year.Num", "兑付日.YearNum", "金额 (MM USD)"}
             & List.Select(CN_RNSource, each Text.StartsWith(_, "CT_") or Text.StartsWith(_, "承销费")),
         Num = {
             "IPT_YIELD",
-            "Count_BISLDeal",
-            "Count_JBR",
-            "Count_JGC",
-            "ISIN_BISLDeal",
-            "ISIN_JBR",
-            "ISIN_JGC",
+            "承销费.其他",
             "定价YIELD_Num",
             "IPT_SPD",
             "WPIR",
@@ -93,12 +114,6 @@
             "SGD",
             "Size (MM)",
             "TOTAL_FEE",
-            "Tranches",
-            "WEEKNUM",
-            "多品种",
-            "多币种",
-            "多期限",
-            "多笔",
             "定价息差",
             "年份",
             "当前",
@@ -143,13 +158,16 @@
             "RangeEnd"
         }
             & List.Select(CN_RNSource, each Text.StartsWith(_, "Index_") or Text.EndsWith(_, ".num")),
-        Text_Trim = {"PROJECT_CODE", "期数", "外部评审机构", "外部评审方式", "FolderPath", "地区分布", "类型分布"},
+        Text_Trim = {"PROJECT_CODE", "期数", "外部评审机构", "外部评审方式", "FolderPath", "地区分布", "类型分布", "投资者分布", "投资者类型"},
         Text_Upper = {
-          
             "CCY",
             "信用主体",
             "ISIN",
             "ISIN_TEMP",
+            "地区分布",
+            "类型分布",
+            "投资者分布",
+            "投资者类型",
             "ISIN_144A",
             "ISIN Code",
             "发行人",
@@ -161,14 +179,36 @@
             "发行人名称英文*",
             "发行人名称英文"
         },
-        Text_NoSpace = {"Check", "ISIN", "ISIN_TEMP", "ISIN_144A", "发行评级", "主体评级", "修改.发行评级", "修改.主体评级", "境内主体评级"},
-        Text_NoNA = {"增发判定", "修改.增发判定", "主题债券", "品种主题", "备证行全称"},
+        Text_NoSpace = {
+            "Check",
+            "ISIN",
+            "ISIN_TEMP",
+            "ISIN_144A",
+            "发行评级",
+            "主体评级",
+            "修改.发行评级",
+            "修改.主体评级",
+            "境内主体评级",
+            "交割T+n"
+        },
+        Text_NoNA = {"增发判定", "修改.增发判定", "主题债券", "品种主题", "备证行全称","期数"},
         Text1 = {
-            "地区覆盖",
+            "地区覆盖","OTHER_ROLE","角色资历分类",
+            "假期简称",
+            "是否中国假期",
+            "B&D/LeftLead",
+            "Project Name",
+            "债券名称",
+            "发行人总部所在地区",
+            "地区Mapping",
+            "承销费.其他",
+            "汇丰角色",
+            "绿债/可持续债",
+            "绿债/可持续债.绿债",
+            "融资规模.其他.其他币种",
+            "融资规模.其他.币种",
             "承销商",
             "FolderName",
-            "是否债券违约",
-            "是否中资主体",
             "覆盖地区",
             "状态",
             "DMI字段",
@@ -198,7 +238,6 @@
             "Series_Indice",
             "SeriesCN",
             "Series",
-            "是否IG",
             "上市类型",
             "KYC Status",
             "补充OMAS updates",
@@ -219,7 +258,6 @@
             "Approved by RO",
             "大股东持股",
             "大股东",
-            "是否上市公司",
             "行政级别",
             "平台重要性",
             "主营业务",
@@ -229,6 +267,7 @@
             "Project Name",
             "担任角色",
             "项目名称（集团全称）",
+            "项目名称(集团全称)",
             "临时isin",
             "申万二级",
             "英文简称",
@@ -245,6 +284,7 @@
             "债券类型",
             "债项初始评级",
             "债项评级",
+            "备证行评级",
             "偿还顺位",
             "利率类型",
             "发行场所",
@@ -255,8 +295,6 @@
             "备注",
             "年期",
             "序号",
-            "是否存单",
-            "是否永续债",
             "牵头经办人",
             "特殊条款",
             "特殊条款说明",
@@ -304,11 +342,10 @@
             "COVERAGE",
             "亮点",
             "期限备注",
-            "SPECIALs",
+            "债券备注",
             "OTHER_ISIN",
             "Stats",
             "BISL_ROLE",
-            "是否合名",
             "港分_ROLE",
             "澳分_ROLE",
             "BOCOM_DEAL?",
@@ -325,7 +362,6 @@
             "月",
             "周",
             "年月",
-            "是否首发",
             "美元规模分类",
             "Structure",
             "结构分类",
@@ -363,47 +399,47 @@
             "BBG_Page",
             "路演形式",
             "BBG_Msg",
-            "是否首次品种",
             "项目亮点"
         }
             & List.Select(
                 CN_RNSource,
                 each
-                    Text.StartsWith(_, "IS_", Comparer.OrdinalIgnoreCase)
+                    Text.Contains(_, "是否")
+                    or Text.StartsWith(_, "IS_", Comparer.OrdinalIgnoreCase)
                     or Text.StartsWith(_, "Filter_", Comparer.OrdinalIgnoreCase)
             ),
         //Type Transformation
         Type_Dimtbl = Table.Buffer(
             Table.FillDown(
-                Table.Distinct(
-                    Table.Combine(
-                        {
-                            Table.FromColumns({DateTime1, {type datetime}, {}}),
-                            Table.FromColumns({Time1, {type time}, {}}),
-                            Table.FromColumns({Date1, {type date}}),
-                            Table.FromColumns({Num5, {type number}, {5}}),
-                            Table.FromColumns({Num3, {}, {3}}),
-                            Table.FromColumns({Num2, {}, {2}}),
-                            Table.FromColumns({Num1, {}, {1}}),
-                            Table.FromColumns({Num0, {}, {0}}),
-                            Table.FromColumns({Num, {}, {-1}}),
-                            Table.FromColumns({Text_Trim, {type text}, {Text.Trim}}),
-                            Table.FromColumns({Text_Upper, {}, {Text.Upper}}),
-                            Table.FromColumns({Text_NoNA, {}, {"-"}}),
-                            Table.FromColumns({Text_NoSpace, {}, {" "}}),
-                            Table.FromColumns({Text1, {}, {""}})
-                        }
-                    ),
-                    {"Column1"}
+                Table.Combine(
+                    {
+                        Table.FromColumns({DateTime1, {type datetime}, {}}),
+                        Table.FromColumns({Time1, {type time}, {}}),
+                        Table.FromColumns({Date1, {type date}}),
+                        Table.FromColumns({Int64, {Int64.Type}}),
+                        Table.FromColumns({Num5, {type number}, {5}}),
+                        Table.FromColumns({Num3, {}, {3}}),
+                        Table.FromColumns({Num2, {}, {2}}),
+                        Table.FromColumns({Num1, {}, {1}}),
+                        Table.FromColumns({Num0, {}, {0}}),
+                        Table.FromColumns({Num, {}, {-1}}),
+                        Table.FromColumns({Text_Trim, {type text}, {Text.Trim}}),
+                        Table.FromColumns({Text_Upper, {}, {Text.Upper}}),
+                        Table.FromColumns({Text_NoNA, {}, {"-"}}),
+                        Table.FromColumns({Text_NoSpace, {}, {" "}}),
+                        Table.FromColumns({Text1, {}, {""}})
+                    }
                 ),
                 {"Column2", "Column3"}
             )
         ),
-        Type_Mytbl = Table.SelectRows(Type_Dimtbl, each List.Contains(CN_RNSource, [Column1])),
-        Type_MyList = Table.ToColumns(Table.Transpose(Table.RemoveColumns(Type_Mytbl, {"Column3"})))
-        //Table.ToColumns(Table.Transpose(Table.RemoveColumns(Type_Mytbl_ValueType, {"Column2"})))
+        Type_Mytbl_Duped = Table.SelectRows(Type_Dimtbl, each List.Contains(CN_RNSource, [Column1])),
+        Type_MyDistinctList = Table.ToColumns(
+            Table.Transpose(Table.Distinct(Table.RemoveColumns(Type_Mytbl_Duped, {"Column3"}), {"Column1"}))
+        )
+        //Table.ToColumns(Table.Transpose(Table.RemoveColumns(Type_Mytbl_Duped_ValueType, {"Column2"})))
         ,
-        Type_TF = Table.TransformColumnTypes(DBRenamed, Type_MyList),
+        Type_TF = Table.TransformColumnTypes(DBRenamed, Type_MyDistinctList),
         // Replace all errors
         Error_MyList = Table.ToColumns(
             Table.Transpose(
@@ -419,7 +455,7 @@
         NullFrom0 = Table.ReplaceValue(
             Error_Bye, 0, null, Replacer.ReplaceValue, List.Intersect({CN_RNSource, Num0ToNull})
         ),
-        Roundingtbl = Table.SelectRows(Type_Mytbl, each List.Contains({5, 3, 2, 1, 0}, [Column3])),
+        Roundingtbl = Table.SelectRows(Type_Mytbl_Duped, each List.Contains({5, 3, 2, 1, 0}, [Column3])),
         RoundingList = List.Zip({Roundingtbl[Column1], Roundingtbl[Column3]}),
         FnRound = List.Accumulate(
             RoundingList,
@@ -431,14 +467,14 @@
         FilledDown = Table.FillDown(
             Table.ReplaceValue(FnRound, "", null, Replacer.ReplaceValue, ColText_FillDown), ColText_FillDown
         ),
-        MyTextList = Table.SelectRows(Type_Mytbl, each [Column2] = type text)[Column1],
+        MyTextList = List.Distinct(Table.SelectRows(Type_Mytbl_Duped, each [Column2] = type text)[Column1]),
         BlankText = Table.ReplaceValue(FilledDown, null, "", Replacer.ReplaceValue, MyTextList),
-        TrimUppertbl = Table.SelectRows(Type_Mytbl, each List.Contains({Text.Trim, Text.Upper}, [Column3])),
+        TrimUppertbl = Table.SelectRows(Type_Mytbl_Duped, each List.Contains({Text.Trim, Text.Upper}, [Column3])),
         TrimUpperList = List.Zip({TrimUppertbl[Column1], TrimUppertbl[Column3]}),
         FnText = List.Accumulate(
             TrimUpperList, BlankText, (x, y) => Table.TransformColumns(x, {{y{0}, y{1}, type text}})
         ),
-        NASpacetbl = Table.SelectRows(Type_Mytbl, each List.Contains({" ", "-"}, [Column3])),
+        NASpacetbl = Table.SelectRows(Type_Mytbl_Duped, each List.Contains({" ", "-"}, [Column3])),
         NASpaceList = List.Zip({NASpacetbl[Column1], NASpacetbl[Column3]}),
         FnRemove = List.Accumulate(
             NASpaceList, FnText, (x, y) => Table.TransformColumns(x, {{y{0}, each Text.Remove(_, y{1}), type text}})
@@ -465,11 +501,24 @@
                     Replacer.ReplaceText,
                     {"公盘地址"}
                 },
-                {List.Contains({1}, NumIndicator), "【", "", Replacer.ReplaceText, MyTextList},
-                {List.Contains({1}, NumIndicator), "】", "", Replacer.ReplaceText, MyTextList}
+                {List.Contains({1}, _inputnum), "【", "", Replacer.ReplaceText, MyTextList},
+                {List.Contains({1}, _inputnum), "】", "", Replacer.ReplaceText, MyTextList}
             },
             DigitSpace_Removed,
             (x, y) => if y{0} then Table.ReplaceValue(x, y{1}, y{2}, y{3}, y{4}) else x
-        )
+        ),
+        MyDateList = Table.SelectRows(Type_Mytbl_Duped, each [Column2] = type date)[Column1],
+        PresentedDate =
+            if _inputnum = 2 then
+                List.Accumulate(
+                    MyDateList,
+                    ConditionalReplaced,
+                    (x, y) =>
+                        Table.TransformColumns(
+                            x, {{y, each if _ = null then "" else Date.ToText(_, "yyyy/M/d"), type text}}
+                        )
+                )
+            else
+                ConditionalReplaced
     in
-        ConditionalReplaced
+        PresentedDate

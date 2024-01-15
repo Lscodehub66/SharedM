@@ -1,5 +1,5 @@
 let
-    Source = Table.Buffer(fx("Excel")("台账24")),
+    Source = Table.Buffer(fx("Ws")("台账24")),
     Sheetlist = List.Select(Source[Item], each Text.StartsWith(_, "项目收入情况")),
     HD = List.Accumulate(
         Sheetlist,

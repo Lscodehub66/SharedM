@@ -1,7 +1,7 @@
 // let LoadCode = Load("Indice_Table_Data","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
 let
     Status_DateTP = Table.Buffer(Load("Status_DateTP")),
-    mIndice = Table.Buffer(fx("Excel")("DEALSMASTER_=mIndice")),
+    mIndice = Table.Buffer(fx("Ws")("DEALSMASTER","=mIndice")),
     Dimtbl_Indice = Table.Buffer(Load("Dimtbl_Indice")),
     //
     Source = fx("Merge")(Status_DateTP, mIndice, "Date", "Date", {""}, {""}),

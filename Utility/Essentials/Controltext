@@ -1,14 +1,20 @@
 let
-    
     M1 = Date.From(fx("Parameter")("Monday")),
+    ThisWB = Load("ThisWorkbook"),
     Record = [
-        
         当前_YYW = fx("YYW")(Date.AddDays(M1, -3)),
         上周_YYW = fx("YYW")(Date.AddDays(M1, -10)),
-             Path_YYYYMMDD = Date.ToText(M1,"yyyyMMdd"),
-             _SpdTenor = try Load("_SpdTenor") otherwise "3",
-             Remote ="C:\Users\ktkt2\OneDrive\EXE Team\DataHub\",
-             Global ="\\itd-m09-fs02\dcm$\"
+        Path_YYYYMMDD = Date.ToText(M1, "yyyyMMdd"),
+        _SpdTenor = try Load("_SpdTenor") otherwise "3",
+        Remote = "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\",
+        Global = "\\itd-m09-fs02\dcm$\",
+        GPS = try if
+            Text.Contains(Record.Field(ThisWB, "FullPath"), "ktkt2", Comparer.OrdinalIgnoreCase)
+            or Text.StartsWith(ThisWB, "http", Comparer.OrdinalIgnoreCase)
+        then
+            "Remote"
+        else
+            "Global" otherwise fx("Parameter")("GPS")
     ]
 in
     Record

@@ -1,6 +1,6 @@
 // let LoadCode = Load("wNIMSum_Writer","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in    EVA
 let
-    Datatbl = Load("wNIMSum"),
+    Datatbl = Table.Buffer(Load("wNIMSum")),
     #"Removed Top Rows" = Table.Skip(Datatbl, 1),
     #"Changed Type1" = Table.TransformColumnTypes(
         #"Removed Top Rows", {{"Column2", type number}, {"Column3", type number}}

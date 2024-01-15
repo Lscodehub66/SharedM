@@ -1,12 +1,14 @@
 // let LoadCode = Load("RecentNIM_Indice","Code"), EVA = Expression.Evaluate(LoadCode, #shared)
 let
+    _range = {"StartOfRecent.Date", "当前"},
+    //**
     _VolCol = "V_NIM_1D",
     _CountCol = "CT_NIM_1D",
     Col = {_VolCol, _CountCol},
     ExpDateCol = {"A_Date", "每周第一天"},
     RecentDimDate =
         let
-            datetbl = fx("DateFromRecord")(fx("DateRange")({"StartOfRecent.Date", "当前"}), {"A_Date", "每周第一天"}),
+            datetbl = fx("DateFromRecord")(fx("DateRange")(_range), {"A_Date", "每周第一天"}),
             Renamed = Table.RenameColumns(datetbl, {{"A_Date", "Date"}}, MissingField.Ignore),
             InnerMerged = Table.NestedJoin(Renamed, {"Date"}, CWB("mIndice"), {"Date"}, "Data", JoinKind.Inner),
             #"Removed Columns" = Table.RemoveColumns(InnerMerged, {"Data"})
@@ -39,7 +41,7 @@ let
         (x, y) => Table.AddColumn(x, y{1}, each List.Sum(Table.Column([Custom], y{0})), type number)
     ),
     Custom2 = fx("Exp")(Custom1, "Custom"),
-    AddedKey = Table.AddKey(Custom2, {"Date"},true),
-    #"Sorted Rows" = Table.Sort(    AddedKey, {{"Date", Order.Descending}})
+    AddedKey = Table.AddKey(Custom2, {"Date"}, true),
+    #"Sorted Rows" = Table.Sort(AddedKey, {{"Date", Order.Descending}})
 in
     #"Sorted Rows"

@@ -1,4 +1,4 @@
-//let LoadCode = Load("QPipe_Folder","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+//let LoadCode = Load("Pipe_Folder","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
     Source = Load("fxConnect")("PipeF"),
     fxPipe_Transform = Load("fxPipe_Transform"),

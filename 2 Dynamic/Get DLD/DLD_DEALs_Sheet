@@ -1,6 +1,6 @@
 
 let
-    Source = fx("Excel")("DOWNLOAD_文档Deals"),
+    Source = fx("Ws")("DOWNLOAD","文档Deals"),
     #"Removed Top Rows" = Table.Skip(Source,2),
     Custom1 = fx("RemoveBlankColumns")(#"Removed Top Rows"),
     #"Transposed Table" = Table.Transpose(Custom1),

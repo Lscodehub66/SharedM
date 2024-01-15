@@ -1,5 +1,5 @@
 //Tombstones to Merge with Directory to use rich fields
-//let LoadCode = Load("QTomb_R4R1","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+//let LoadCode = Load("Tomb_R4R1","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
     Source = Load("Tomb_R2R3"),
        MergeSource =  CWB("Directory"),

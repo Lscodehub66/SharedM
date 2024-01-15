@@ -1,5 +1,5 @@
 let
-    CWBSource = try CWB("mBISL") otherwise fx("Excel")("DEALSMASTER_=MBISL"),
+    CWBSource = try CWB("mBISL") otherwise fx("Ws")("DEALSMASTER","=MBISL"),
     SCol = Table.SelectColumns(CWBSource, {"债券简称", "定价日", "PROJECT_CODE","Check","PRJ对账号"}, MissingField.UseNull),
     Inserted = Table.AddColumn(SCol, "Comparer", each fx("Comparer")("Y", [PROJECT_CODE], [定价日], "yyMMdd")),
     SCol1 = Table.SelectColumns(Inserted, {"债券简称", "Comparer","PRJ对账号","Check"})

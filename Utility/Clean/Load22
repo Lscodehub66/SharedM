@@ -1,0 +1,48 @@
+//let Name = "Load",Path  = if (try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Remote" ) = "Remote" then "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM\" else "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\SharedM\",  EVA = Expression.Evaluate ( Text.FromBinary ( Binary.Buffer ( File.Contents ( Path&Name ) ) ) ,#shared )in    EVA////
+(NameInput as text, optional PathInput as any) =>
+    let
+        //NameInput = "", PathInput = null,
+        GPS = try Table.Buffer(Excel.CurrentWorkbook(){[Name = "GPS"]}[Content])[Column1]{0} otherwise "Remote",
+          _csvkey = { "CSV","CSVDATE"},
+        _pathkey ={null, "1", "Code","Content"} &   _csvkey,
+     
+        
+        
+        
+        Name_File =
+            if NameInput = "Control_Date" then
+                "Control"
+            else if List.Contains(_csvkey,PathInput ) then
+                NameInput & ".csv"
+            else
+                Text.Replace(NameInput, ".", "_"),
+        //
+        Folder_Root =
+            if GPS = "Remote" then
+                "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\"
+            else
+                "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\",
+        Path = Folder_Root & "SharedM\",
+        Path_GitHub = "https://raw.githubusercontent.com/Lscodehub66/DataHub/main/",
+        //
+        File_Folder = Folder.Files(Path),
+        File_Filtered = Table.SelectRows(File_Folder, each [Name] = Name_File),
+        File_Content = File_Filtered{0}[Content],
+        //"Code" "CSV" options here
+        File_Code = Text.FromBinary(Binary.Buffer(File_Content)),
+        File_CSV = Table.PromoteHeaders(Csv.Document(File_Content), [PromoteAllScalars = true]),
+        AddedKey = if NameInput = "DimFX" then Table.AddKey(File_CSV, {"YYQQ", "Base Currency"}, true) else File_CSV,
+        //
+        EVA_Existing = Expression.Evaluate(Name_File, #shared),
+        EVA_Code = Expression.Evaluate(File_Code, #shared),
+        EVA = try EVA_Existing otherwise EVA_Code,
+        //
+        Output = if PathInput = "Content" then File_Content else if PathInput = "Code" or PathInput = "1" then File_Code else if PathInput = "CSV" then AddedKey 
+      else  if PathInput = "CSVDATE" then fx("Data")(AddedKey) else EVA,
+        SCol_Output =
+            if Value.Type( PathInput ) = type list and not List.Contains({null,{null}},PathInput) then
+                 Table.SelectColumns(Output, PathInput , MissingField.UseNull)
+            else
+               Output
+    in
+        SCol_Output
