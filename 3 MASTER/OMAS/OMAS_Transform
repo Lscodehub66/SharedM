@@ -1,4 +1,4 @@
-//let LoadCode = Load("QOMAS_Transform","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+//let LoadCode = Load("OMAS_Transform","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 
 let
     Source = fx("Source")("OMAS")[Content]{0},

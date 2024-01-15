@@ -16,7 +16,8 @@
                     Table.PrefixColumns(Fulldatetbl, _Mergeinput{3}), {{_Mergeinput{3} & ".A_Date", "A_Date"}}
                 )
             else
-                Fulldatetbl, //= fx("DateRange")({"Now.Date", "NextTwoYearEnd.Date"},{ CWB("deal_master"),"兑付日", {""},"兑付日"})
+                Fulldatetbl,
+        //= fx("DateRange")({"Now.Date", "NextTwoYearEnd.Date"},{ CWB("deal_master"),"兑付日", {""},"兑付日"})
         //
         Merged = Table.NestedJoin(
             _Mergeinput{0},
@@ -29,7 +30,11 @@
             "DummyData",
             JoinKind.Inner
         ),
-        Removed = Table.RemoveColumns(Merged, {"DummyData"}, MissingField.Ignore),
+        Removed =
+            if _Mergeinput{1} = "定价日" then
+                fx("SortNIndex")(Table.RemoveColumns(Merged, {"DummyData"}, MissingField.Ignore))
+            else
+                Table.RemoveColumns(Merged, {"DummyData"}, MissingField.Ignore),
         Exp = Table.ExpandTableColumn(
             Merged,
             "DummyData",

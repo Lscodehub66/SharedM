@@ -1,0 +1,21 @@
+// let LoadCode = Load("QRC_Compliance","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    Source = {"台账23_合规", "台账24_合规"},
+    ToTable = Table.FromColumns({Source}, {"Name"}),
+    #"Added Custom" = Table.AddColumn(ToTable, "Custom", each Table.Buffer(fx("Source")([Name]))),
+    #"Added Custom1" = Table.AddColumn(#"Added Custom", "Timestamp", each DateTime.FixedLocalNow(), type datetime),
+    #"Removed Columns" = Table.RemoveColumns(#"Added Custom1", {"Name"}, MissingField.Ignore),
+    Exp = Table.ExpandTableColumn(#"Removed Columns", "Custom", Table.ColumnNames(#"Removed Columns"[Custom]{0})),
+    Custom2 = fx("PRJSync")(Exp, "序号", "项目定价日", "PRJ对账号"),
+    #"Sorted Rows1" = Table.Sort(Custom2, {{"PRJ对账号", Order.Descending}}),
+    #"Added Index" = Table.AddIndexColumn(#"Sorted Rows1", "Index", 1, 1, Int64.Type),
+    Sorted = Table.Sort(#"Added Index", {{"PRJ对账号", Order.Descending}}),
+    Reordered = fx("1st")(Sorted, {"Index"}),
+    Output =
+        let
+            name = "QRC_Compliance",
+            output = if fx("Parameter")("GPS") = "Remote" then CWB(name) else try Reordered otherwise CWB(name)
+        in
+            output
+in
+    Output

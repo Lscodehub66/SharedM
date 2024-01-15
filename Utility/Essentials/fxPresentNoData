@@ -21,11 +21,9 @@
             "区县",
             "城市",
             "发行人主上市地",
-       
             "细分行业",
             "板块二级",
             "板块三级",
-        
             "IS_LEAD",
             "IS_B&D",
             "是否合名",
@@ -35,8 +33,14 @@
             "备证分类",
             "外部评审机构",
             "外部评审方式",
-            "上市类型"
-       
+            "上市类型",
+            "KYC Entity Status",
+            "KYC Entity Name",
+            "Short Name",
+            "中介人角色",
+            "Project Team",
+            "Project Name",
+            "Signer Initials"
         },
         ListToPresentNoData = List.Intersect({Table.ColumnNames(Source), PresentNoDataList}),
         ReplaceNull = Table.ReplaceValue(Source, null, "--", Replacer.ReplaceValue, ListToPresentNoData),

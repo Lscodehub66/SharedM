@@ -14,7 +14,7 @@
                 {"DOWNLOAD", "美元债一级", {1, "", "Column"}},
                 {"DOWNLOAD", "ECON", {"Column1", "Date Time"}},
                 {"KYC", "MASTER", {"Column2", "序号"}},
-                {"台账23", "合规", {"Column3", "团队"}},
+                {"台账23", "合规", {"Column3", "团队"}}, {"台账24", "合规", {"Column3", "团队"}},
                 {"台账23", "收入情况2023", {"Column2", "Project Name"}},
                 {"DMI", "*SOLE*DMI", {1}},
                 {"违约", "*SOLE*违约", {1}},

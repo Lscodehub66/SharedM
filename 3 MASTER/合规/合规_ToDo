@@ -1,11 +1,51 @@
 // let LoadCode = Load("合规_ToDo","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
     Source = Load("合规_MergeDIR"),
-      Filtered = Table.SelectRows(Source, each [IS_KYC_DONE] <>  "Y" and [PROJECT_NAME] <> ""),
-    SelectedCol1 = Table.SelectColumns(Filtered, Get("Header_S_ToDo"), MissingField.UseNull),
-    // { "PRJ对账号",  "PROJECT_NAME","定价日", "COVERAGE", "新规角色",  "Mandated", "主体简称", "发行人", "发行人成立地", "KYC expiry date", "KYC Entity Status"}
-    Sorted = Table.Buffer(Table.Sort(SelectedCol1, {{"PRJ对账号", Order.Ascending}})),
-    RemoveWaitlist = Table.Distinct(Sorted, {"发行人"}),
-    Sorted1 = Table.Sort(RemoveWaitlist, {{"PRJ对账号", Order.Descending}})
+    ABDelimiter =
+        if Table.HasColumns(Source, "主体简称") then
+            Table.RenameColumns(Source, {{"主体简称", "Short Name"}})
+        else
+            Table.AddColumn(Source, "Short Name", each Text.BeforeDelimiter([#"信用主体(备证行)"], "("), type text),
+    Replaced1 = Table.AddColumn(
+        Table.RemoveColumns(ABDelimiter, {"Project Name"}, MissingField.Ignore),
+        "Project Name",
+        each if [多发行体] > 1 then [PROJECT_NAME] & "(" & [Short Name] & ")" else [PROJECT_NAME],
+        type text
+    ),
+    #"Added Col" = Table.AddColumn(
+        Replaced1,
+        "中介人角色",
+        each
+            if [新规角色] = "n/a" then
+                "n/a"
+            else if Text.Contains([新规角色], "OC") then
+                "Overall Coordinator"
+            else
+                "Capital Market Intermediaries",
+        type text
+    ),
+    #"Added Col1" = Table.AddColumn(
+        #"Added Col", "Project Team", each Text.Replace(Text.Remove([COVERAGE], "组"), "FI", "FI&C"), type text
+    ),
+    Renamed = Table.RenameColumns(
+        #"Added Col1",
+        {{"发行人", "KYC Entity Name"}, {"KYC Status", "KYC Entity Status"}, {"EXE", "Signer Initials"}},
+        MissingField.Ignore
+    ),
+    Filtered = Table.SelectRows(Renamed, each [IS_KYC_DONE] <> "Y" and [Project Name] <> ""),
+    SCol1 = Table.SelectColumns(Filtered, Get("Header_S_ToDo"), MissingField.UseNull),
+    Combined = fx(
+        "Combine"
+    )(
+        {
+            SCol1,
+            #table({"PRJ对账号", "Project Name", "定价日"}, {{99999, "[DCM填写]", DateTime.Date(DateTime.FixedLocalNow())}})
+        },
+        {null},
+        {0}
+    ),
+    RemoveWaitlist = Table.Distinct(Combined, {"KYC Entity Name"}),
+    Sorted = fx("SortNIndex")(RemoveWaitlist, "定价日"),
+    Presented = fx("PresentNoData")(Sorted)
 in
-    Sorted1
+    Presented

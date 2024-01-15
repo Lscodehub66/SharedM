@@ -1,4 +1,4 @@
-// let LoadCode = Load("QDMIHKMacau","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+// let LoadCode = Load("DMIHKMacau","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
     Source = fx("Source")("DMI"),
 SelectedCol = Table.SelectRows(Table.SelectColumns(Source, {"信用主体","省份"}), each Text.Contains([省份],"香港") or Text.Contains([省份],"澳门") or Text.Contains([省份],"其他")),

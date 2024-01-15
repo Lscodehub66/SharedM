@@ -1,5 +1,5 @@
 //From Directory to Tombstones: Group Directory Tranches into Projects
-//let LoadCode = Load("QTomb_Writer","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+//let LoadCode = Load("Tomb_Writer","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
     CWB_Directory = CWB("Directory"),
     FilteredSource = Table.Buffer(Table.SelectRows(CWB_Directory, each [首次违约日] = null)),

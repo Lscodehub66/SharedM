@@ -6,8 +6,6 @@
         Name_File =
             if NameInput = "Control_Date" then
                 "Control"
-            else if Text.StartsWith(NameInput, "Q") then
-                Text.RemoveRange(NameInput, 0)
             else if PathInput = "CSV" then
                 NameInput & ".csv"
             else

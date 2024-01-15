@@ -1,4 +1,4 @@
-(TableName as table, optional NumIndicator as nullable number) =>
+(TableName as table, optional _inputnum as nullable number) =>
     let
         Source = TableName,
         //Global RenameColumns
@@ -26,7 +26,6 @@
         //Date ValueType
         Date1 = {
             "CLIENT_SINCE",
-            "Date",
             "KYC Deadline",
             "上会审批日",
             "上市日期",
@@ -49,7 +48,10 @@
             "YearStart",
             "OneYearAgo"
         }
-            & List.Select(CN_RNSource, each Text.Contains(_, "date", Comparer.OrdinalIgnoreCase)),
+            & List.Select(
+                CN_RNSource,
+                each Text.Contains(_, "date", Comparer.OrdinalIgnoreCase) and not Text.StartsWith(_, "是否")
+            ),
         //
         //Number ValueTyp
         Num0ToNull = {"Δ1周", "Δ年初至今", "PRJ对账号"},
@@ -145,7 +147,6 @@
             & List.Select(CN_RNSource, each Text.StartsWith(_, "Index_") or Text.EndsWith(_, ".num")),
         Text_Trim = {"PROJECT_CODE", "期数", "外部评审机构", "外部评审方式", "FolderPath", "地区分布", "类型分布"},
         Text_Upper = {
-          
             "CCY",
             "信用主体",
             "ISIN",
@@ -167,8 +168,6 @@
             "地区覆盖",
             "承销商",
             "FolderName",
-            "是否债券违约",
-            "是否中资主体",
             "覆盖地区",
             "状态",
             "DMI字段",
@@ -198,7 +197,6 @@
             "Series_Indice",
             "SeriesCN",
             "Series",
-            "是否IG",
             "上市类型",
             "KYC Status",
             "补充OMAS updates",
@@ -219,7 +217,6 @@
             "Approved by RO",
             "大股东持股",
             "大股东",
-            "是否上市公司",
             "行政级别",
             "平台重要性",
             "主营业务",
@@ -255,8 +252,6 @@
             "备注",
             "年期",
             "序号",
-            "是否存单",
-            "是否永续债",
             "牵头经办人",
             "特殊条款",
             "特殊条款说明",
@@ -308,7 +303,6 @@
             "OTHER_ISIN",
             "Stats",
             "BISL_ROLE",
-            "是否合名",
             "港分_ROLE",
             "澳分_ROLE",
             "BOCOM_DEAL?",
@@ -325,7 +319,6 @@
             "月",
             "周",
             "年月",
-            "是否首发",
             "美元规模分类",
             "Structure",
             "结构分类",
@@ -363,13 +356,13 @@
             "BBG_Page",
             "路演形式",
             "BBG_Msg",
-            "是否首次品种",
             "项目亮点"
         }
             & List.Select(
                 CN_RNSource,
                 each
-                    Text.StartsWith(_, "IS_", Comparer.OrdinalIgnoreCase)
+                    Text.Contains(_, "是否")
+                    or Text.StartsWith(_, "IS_", Comparer.OrdinalIgnoreCase)
                     or Text.StartsWith(_, "Filter_", Comparer.OrdinalIgnoreCase)
             ),
         //Type Transformation
@@ -465,11 +458,24 @@
                     Replacer.ReplaceText,
                     {"公盘地址"}
                 },
-                {List.Contains({1}, NumIndicator), "【", "", Replacer.ReplaceText, MyTextList},
-                {List.Contains({1}, NumIndicator), "】", "", Replacer.ReplaceText, MyTextList}
+                {List.Contains({1}, _inputnum), "【", "", Replacer.ReplaceText, MyTextList},
+                {List.Contains({1}, _inputnum), "】", "", Replacer.ReplaceText, MyTextList}
             },
             DigitSpace_Removed,
             (x, y) => if y{0} then Table.ReplaceValue(x, y{1}, y{2}, y{3}, y{4}) else x
-        )
+        ),
+        MyDateList = Table.SelectRows(Type_Mytbl, each [Column2] = type date)[Column1],
+        PresentedDate =
+            if _inputnum = 2 then
+                List.Accumulate(
+                    MyDateList,
+                    ConditionalReplaced,
+                    (x, y) =>
+                        Table.TransformColumns(
+                            x, {{y, each if _ = null then "" else Date.ToText(_, "yyyy/M/d"), type text}}
+                        )
+                )
+            else
+                ConditionalReplaced
     in
-        ConditionalReplaced
+        PresentedDate
