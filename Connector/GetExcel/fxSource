@@ -1,124 +1,84 @@
-(_input as nullable text) =>
+(_input as text) =>
     let
-        // _input = FText2,
-        _excelkey = Text.Remove(Text.BeforeDelimiter(Text.Upper(_input ?? ""), "_"), {" "}),
-        _sheetkey =
-            if List.Contains({"DMI", "银行", "违约"}, _excelkey) then
-                "*SOLE*" & _excelkey
+        // _input = _debugfxSource,
+        excelkey =
+            if _input = "DMI" then
+                "美元债一级"
+            else
+                Text.Remove(Text.BeforeDelimiter(Text.Upper(_input ?? ""), "_"), {" "}),
+        sheetkey =
+            if List.Contains({"美元债一级", "银行", "违约"}, excelkey) then
+                excelkey
             else
                 Text.Replace(Text.AfterDelimiter(Text.Upper(_input ?? ""), "_"), "=", ""),
-        _dimfdexcel = Load("DimFDExcel"),
-        _dimbinary = Load("DimFDExcel_Content"),
-        _dimsheet = Table.FromRows(
-            {
-                {"DOWNLOAD", "美元债一级", {1, "", "Column"}},
-                {"DOWNLOAD", "ECON", {"Column1", "Date Time"}},
-                {"KYC", "MASTER", {"Column2", "序号"}},
-                {"台账23", "合规", {"Column3", "团队"}}, {"台账24", "合规", {"Column3", "团队"}},
-                {"台账23", "收入情况2023", {"Column2", "Project Name"}},
-                {"DMI", "*SOLE*DMI", {1}},
-                {"违约", "*SOLE*违约", {1}},
-                {"银行", "*SOLE*银行", {1}},
-                {"YY", "城投", {0}},
-                {"YY", "金融", {0}},
-                {"YY", "产业", {0}},
-                {"BBGFX", "VALUE", {"Column1", "Base Currency"}}
-            },
-            {"Excel_Key.1", "PK_Sheet", "SkipFindAnchor"}
-        ),
-        // Search in dimsheet else search in dimfdexcel
-        #"Filtered dimsheet" = Table.SelectRows(
-            _dimsheet,
-            each
-                [Excel_Key.1] = _excelkey
-                and (Text.Contains(([PK_Sheet] ?? ""), _sheetkey) or Text.Contains(_sheetkey, ([PK_Sheet] ?? "")))
-        ),
-        _IsEmpty =
-        // 一 overview - leftouter join
-        if (_input ?? "") = "" then
-            Table.Join(_dimfdexcel, {"Excel_Key"}, _dimsheet, {"Excel_Key.1"}, JoinKind.LeftOuter)
-            // 二  SheetTotbl search null & _sheetkey null
-        else if Table.IsEmpty(#"Filtered dimsheet") or _sheetkey = "" then
-            Table.AddColumn(Table.SelectRows(_dimfdexcel, each [Excel_Key] = _excelkey), "PK_Sheet", each null)
-            //三 Found SheetTotbl then join FDExcel
-        else
-            Table.Join(#"Filtered dimsheet", {"Excel_Key.1"}, _dimfdexcel, {"Excel_Key"}),
-        #"Joined Content" = Table.Join(
-            _IsEmpty, {"FDPath", "FileName"}, _dimbinary, {"Folder Path", "FileName.Extracted"}
-        ),
-        #"Added ExcelWB" = Table.AddColumn(#"Joined Content", "ExcelWB", each fx("ExcelWB")([Content])),
-        RemovedCol = Table.RemoveColumns(
-            #"Added ExcelWB",
-            {
-                "Index",
-                "Excel_Key",
-                "Excel_Key.1",
-                "FDPath",
-                "FileName.Extracted",
-                "FileName.1",
-                "PK_Excel3",
-                "Folder Path"
-            },
-            MissingField.Ignore
-        ),
-        #"Filtered Sheet" = Table.AddColumn(
-            RemovedCol,
-            "Sheet",
-            each
-                if [PK_Sheet] = null then
-                    Table.SelectRows(
-                        [ExcelWB],
-                        (Magic) =>
-                            if Text.Contains(_input ?? "", "=") then
-                                Text.Upper(Magic[Item]) = _sheetkey
-                            else
-                                Text.Contains(Magic[Item], _sheetkey, Comparer.OrdinalIgnoreCase)
-                    )
-                else if Text.StartsWith(([PK_Sheet] ?? ""), "*") then
-                    Table.FirstN([ExcelWB], 1)
-                else
-                    Table.SelectRows(
-                        [ExcelWB],
-                        (Magic) => Text.Contains(Magic[Item], ([PK_Sheet] ?? ""), Comparer.OrdinalIgnoreCase)
-                    )
-        ),
-        FnTable = Table.AddColumn(
-            #"Filtered Sheet",
-            "Table",
-            each
-                if Table.HasColumns(#"Filtered Sheet", "SkipFindAnchor") and ([SkipFindAnchor] ?? "") <> "" then
-                    fx("SheetTotbl")([Sheet][Data]{0}, [SkipFindAnchor])
-                else if _sheetkey <> "" then
-                    [Sheet][Data]{0}
-                else
-                    [Sheet]
-        ),
-        //***
-        #"Removed Errors" =
-            if (_input ?? "") = "" then
-                Table.RemoveRowsWithErrors(FnTable, {"Table"})
-            else if Text.Contains(FnTable[File Path]{0}, "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\DEALs MASTER") then
-                Table.FirstN(Table.RemoveRowsWithErrors(FnTable, {"Table"}), 1)
-            else
-                FnTable,
-        CN_ColumnToExpand = Table.ColumnNames(#"Removed Errors"[Table]{0}),
-        Output =
-            if (_input ?? "") = "" then
-                Table.SelectColumns(
-                    #"Removed Errors",
-                    {"File Path", "FileName", "ExcelWB", "PK_Sheet", "Sheet", "Table"},
-                    MissingField.Ignore
-                )
-            else if List.ContainsAll(CN_ColumnToExpand, {"Item", "Data"}) then
-                fx(
+        transformationkey = excelkey & "." & sheetkey,
+        #"SkipNPromote" = [
+            YY.城投 = 0,
+            YY.金融 = 0,
+            YY.产业 = 0,
+            #"美元债一级.美元债一级" = 1,
+            #"违约.违约" = 1,
+            #"银行.银行" = 1,
+            DOWNLOAD.美元债一级 = 1
+        ],
+        Is0 = Record.HasFields(#"SkipNPromote", transformationkey),
+        Record1 = [
+            #"美元债一级.美元债一级" = 1,
+            #"违约.违约" = 1,
+            #"银行.银行" = 1,
+            DOWNLOAD.美元债一级 = 1
+        ],
+        Is1 = Record.HasFields(Record1, transformationkey),
+        #"FindAncorValue" = [
+            BBGFX.VALUE = {"Column1", "Base Currency"},
+            DOWNLOAD.美元债一级 = {1, "", "Column"},
+            DOWNLOAD.ECON = {"Column1", "Date Time"},
+            KYC.MASTER = {"Column2", "序号"},
+            台账23.合规 = {"Column3", "团队"},
+            台账24.合规 = {"Column3", "团队"},
+            台账24.收入情况2023 = {"Column2", "Project Name"},
+            台账23.收入情况2023 = {"Column2", "Project Name"}
+        ],
+        Is2 = Record.HasFields(#"FindAncorValue", transformationkey),
+        Fn = fx("ExcelRecord")(excelkey),
+        Output0 =
+            let
+                tbl1 = Table.SelectRows(
+                    Fn, each Text.Contains([Name], sheetkey, Comparer.OrdinalIgnoreCase)
+                )[Data]{
+                    0
+                },
+                #"Promoted Headers" = fx(
                     "Data"
                 )(
-                    Table.ExpandTableColumn(
-                        Table.SelectColumns(#"Removed Errors", {"Table", "File Path"}), "Table", CN_ColumnToExpand
-                    )
+                    fx("RemoveBlankColumns")(Table.PromoteHeaders(tbl1, [PromoteAllScalars = true]))
                 )
-            else
-                fx("Data")(#"Removed Errors"{0}[Table])
-             
+            in
+                fx("Data")(#"Promoted Headers"),
+        Output1 =
+            let
+                tbl = Fn[Data]{0},
+                #"Removed Top Rows" = Table.Skip(tbl, 1),
+                #"Promoted Headers" = fx(
+                    "Data"
+                )(
+                    Table.PromoteHeaders(#"Removed Top Rows", [PromoteAllScalars = true])
+                )
+            in
+                fx("Data")(#"Promoted Headers"),
+        Output2 =
+            let
+                tbl2 = Table.SelectRows(
+                    Fn, each Text.Contains([Name], sheetkey, Comparer.OrdinalIgnoreCase)
+                )[Data]{
+                    0
+                },
+                Custom1 = fx("SheetTotbl")(tbl2, Record.Field(#"FindAncorValue", transformationkey))
+            in
+                fx("Data")(Custom1),
+        results = if Is0 = true then Output0 else if Is1 = true then
+            Output1
+        else
+            try Output2 otherwise fx("Excel")(_input)
     in
-        Output
+        results

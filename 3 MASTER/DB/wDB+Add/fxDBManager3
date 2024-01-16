@@ -44,10 +44,8 @@
         // Weekly
         // Remember to check the referenced name if you revise previous steps **Referenced Dummy Step **
         _CROSSROAD = if MorW = "W" then fx("UpdatorTS")(RemovedDupe) else RemovedDupe,
-            FnDBUpdated = if MorW = "M" then fx("DBUpdator")( _CROSSROAD) else  _CROSSROAD,
-       
 
-        BISL_对帐号 = Load("fxPRJSync")(    FnDBUpdated , "台账序号", "定价日", "PRJ对账号"),
+        BISL_对帐号 = Load("fxPRJSync")(    _CROSSROAD , "台账序号", "定价日", "PRJ对账号"),
         #"Invoked Entity Manager" =
             if List.Contains(HD, "板块二级") and MorW = "M" then
                 fx("DB_Entity")(BISL_对帐号)

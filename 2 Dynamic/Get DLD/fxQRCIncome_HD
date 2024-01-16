@@ -1,0 +1,68 @@
+(tbl as table) =>
+    let
+        Sheet = Table.Buffer(tbl),
+        Custom1 = Table.SelectColumns(
+            Sheet, List.Transform(List.Numbers(1, 25, 1), each "Column" & Text.From(_)), MissingField.Ignore
+        ),
+        #"Kept First Rows" = Table.FirstN(Custom1, 4),
+        #"Transposed Table" = Table.Transpose(#"Kept First Rows"),
+        #"Filled Down" = Table.FillDown(#"Transposed Table", {"Column1", "Column2", "Column3", "Column4"}),
+        #"Kept First Rows1" = Table.FirstN(#"Filled Down", 30),
+        #"Trimmed Text" = Table.TransformColumns(
+            Table.TransformColumnTypes(#"Kept First Rows1", {{"Column1", type text}}, "en-US"),
+            {
+                {"Column1", Text.Trim, type text},
+                {"Column2", Text.Trim, type text},
+                {"Column3", Text.Trim, type text},
+                {"Column4", Text.Trim, type text}
+            }
+        ),
+        #"Cleaned Text" = Table.TransformColumns(
+            #"Trimmed Text",
+            {
+                {"Column1", Text.Clean, type text},
+                {"Column2", Text.Clean, type text},
+                {"Column3", Text.Clean, type text},
+                {"Column4", Text.Clean, type text}
+            }
+        ),
+        #"Replaced Value" = Table.ReplaceValue(
+            #"Cleaned Text", "）", ")", Replacer.ReplaceText, {"Column1", "Column2", "Column3", "Column4"}
+        ),
+        #"Replaced Value1" = Table.ReplaceValue(
+            #"Replaced Value", "（", "(", Replacer.ReplaceText, {"Column1", "Column2", "Column3", "Column4"}
+        ),
+        #"Added Custom" = Table.AddColumn(
+            #"Replaced Value1", "Column5", each Text.Combine(List.Distinct({[Column2], [Column3], [Column4]}), ".")
+        ),
+        #"Grouped Rows" = Table.Group(#"Added Custom", {"Column5"}, {{"Custom", each _, type table}}),
+        #"Added Index" = Table.TransformColumns(
+            #"Grouped Rows",
+            {
+                {
+                    "Custom",
+                    each
+                        Table.ReplaceValue(
+                            Table.AddIndexColumn(_, "Index", 1, 1, Int64.Type),
+                            each [Column5],
+                            each if [Index] >= 2 then [Column5] & "." & Text.From([Index]) else [Column5],
+                            Replacer.ReplaceValue,
+                            {"Column5"}
+                        )
+                }
+            }
+        ),
+        #"Removed Other Columns" = Table.SelectColumns(#"Added Index", {"Custom"}),
+        #"Expanded Custom" = Table.ExpandTableColumn(
+            #"Removed Other Columns",
+            "Custom",
+            {"Column1", "Column2", "Column3", "Column4", "Column5"},
+            {"Column1", "Column2", "Column3", "Column4", "Column5"}
+        ),
+        #"Transposed Table1" = fx("RemoveBlankColumns")(Table.Transpose(#"Expanded Custom")),
+        #"Removed Top Rows" = Table.Buffer(Table.LastN(#"Transposed Table1", 1)),
+        Zipped = List.Zip({Table.ColumnNames(#"Removed Top Rows"), Record.ToList(#"Removed Top Rows"{0})}),
+        Renamed = Table.RenameColumns(Custom1, Zipped),
+        Skipped = Table.Skip(Renamed,4)
+    in
+        Skipped 

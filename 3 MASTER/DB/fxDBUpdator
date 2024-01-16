@@ -34,7 +34,7 @@
         #"Update 台账序号" = if Table.HasColumns(Source, {"Check", "台账序号"}) then fx("DB_Revise")(Fn, 补齐tbl, "Check") else Fn,
         补齐tbl2 =
             let
-                Source = Load("合规_23_22"),
+                Source = CWB("QRC_Compliance"),
                 #"Added Custom" = fx("FolderPath")(Source),
                 #"Added Custom1" = Table.AddColumn(
                     #"Added Custom", "补齐.IS_KYC_DONE", each

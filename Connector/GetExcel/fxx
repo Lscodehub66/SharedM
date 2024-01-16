@@ -1,19 +1,12 @@
-(_input as text) =>
+(_input as text, optional _input2 as nullable text, optional _input3 as nullable text) =>
     let
-        // _input = _debugfxSource,
+        //  _input = _debugfxSource, _input2 = "美元债一级",_input3 = null,
         _inputroot = "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\"
         // C:\Users\kingsley.tong\Desktop\DataHub\
         ,
-        excelkey =
-            if _input = "DMI" then
-                "美元债一级"
-            else
-                Text.Remove(Text.BeforeDelimiter(Text.Upper(_input ?? ""), "_"), {" "}),
-        sheetkey =
-            if List.Contains({"美元债一级", "银行", "违约"}, excelkey) then
-                excelkey
-            else
-                Text.Replace(Text.AfterDelimiter(Text.Upper(_input ?? ""), "_"), "=", ""),
+        excelkey = if _input = "DMI" then "美元债一级" else Text.Upper(_input ?? ""),
+        sheetkey = if List.Contains({"美元债一级", "银行", "违约"}, excelkey) then excelkey else Text.Upper(_input2 ?? ""),
+        comparerkey = _input3,
         yyyyMMdd = Text.Replace(fx("Parameter")("Monday"), "/", ""),
         gps = fx("Parameter")("GPS"),
         RecordOfRecord = [
@@ -60,7 +53,7 @@
         #"ExcelWB" = Table.SelectRows(Excel.Workbook(File.Contents(#">>path")), each ([Kind] <> "DefinedName")),
         //fx("ExcelWB")(#">>path"),
         #"Is true" = sheetkey = "",
-        #"Is ExactMatch" = Text.Contains(_input ?? "", "="),
+        #"Is ExactMatch" = Text.Contains(_input3 ?? "", "="),
         #"Math By" =
             if #"Is true" = true then
                 Table.SelectColumns(
