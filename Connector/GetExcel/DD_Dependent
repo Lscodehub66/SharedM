@@ -1,0 +1,35 @@
+// DD_dependent
+let
+    Source = Table.FromRows(
+        {
+            {"金融机构", "板块", "板块二级"},
+            {"地方国企", "中资属性", "级别"},
+            {"地方平台", "板块", "板块二级"},
+            {"银行", "板块二级", "板块三级"},
+            {"非银", "板块二级", "板块三级"}
+        },
+        {"Column1", "SelectRow", "SelectCol"}
+    ),
+    buffered = Table.Buffer(CWB("deal_master")),
+    Custom5 = Table.AddColumn(
+        Source,
+        "Filtered",
+        each
+            Table.SelectRows(
+                buffered, (Magic) => if [SelectRow] = "" then true else Record.Field(Magic, [SelectRow]) = [Column1]
+            )
+    ),
+    Custom2 = Table.AddColumn(
+        Custom5,
+        "Custom",
+        each
+            List.Buffer(
+                List.RemoveItems(List.Distinct(Table.Column([Filtered], [SelectCol])), {"", "--", "【】", null})
+            ),
+        type list
+    ),
+    #"Added Custom1" = Table.AddColumn(Custom2, "Count", each List.Count([Custom]), Int64.Type),
+    #"Sorted Rows" = Table.Sort(#"Added Custom1", {{"Count", Order.Descending}}),
+    #"Removed Other Columns" = Table.SelectColumns(#"Sorted Rows", {"Column1", "Custom", "Count"})
+in
+    #"Removed Other Columns"

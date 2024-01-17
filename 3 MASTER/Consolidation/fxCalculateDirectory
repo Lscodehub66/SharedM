@@ -23,7 +23,7 @@
                 )
             else
                 #"Expanded DimTime",
-        QRC合规 = Table.RenameColumns(Load("合规_23_22", null, {"PRJ对账号", "发行人"}), {{"发行人", "修改.发行人"}}),
+        QRC合规 = Table.RenameColumns(Table.SelectColumns(CWB("QRC_Compliance"), {"PRJ对账号", "发行人"},MissingField.UseNull), {{"发行人", "修改.发行人"}}),
         Issuer_revised = fx("DB_Revise")(ExeTime, QRC合规, "PRJ对账号"),
         ReplacedCCY = Table.ReplaceValue(Issuer_revised, "美元债", "", Replacer.ReplaceValue, {"货币细分"}),
         CN_Base = List.Buffer(CWB("BaseDirectory_CN")),

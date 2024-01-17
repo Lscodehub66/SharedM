@@ -1,7 +1,7 @@
 //let LoadCode = Load("Reviewed_IssuerPQ","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
     CWBName = "tbl_review_issuer",
-    Source =  try CWB(    CWBName ) otherwise fx("Source")("DYNAMIC_"&    CWBName ),
+    Source =  try CWB(    CWBName ) otherwise fx("Ws")("DYNAMIC",CWBName ),
   Filtered    = Table.SelectRows ( Source, each ( [定价日] <> null ) and [ISIN] <> null and [删除及隐藏] <> "删除" and [删除及隐藏] <> "【删除】"),
     Custom1 = if GNG = "GO" then Table.TransformColumns(Filtered, {{"主体评级", each if _ <> "【】" then Text.Replace(_,"【】","【--】") else _},
 {"发行评级", each if _ <> "【】" then Text.Replace(_,"【】","【--】") else _},

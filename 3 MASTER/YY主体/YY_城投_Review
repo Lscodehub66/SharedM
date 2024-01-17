@@ -1,5 +1,5 @@
 let
-    Source = fx("Source")("YY_城投"),
+    Source = fx("Wstbl")("YY","城投"),
     FnSource = Load("fxConnect_YY")(Source),
     Merged = fx("Merge")(
         FnSource,

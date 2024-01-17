@@ -7,7 +7,7 @@
         DataType = fx("Data")(Source),
         RemovedCol = Table.RemoveColumns(DataType, {"是否IG", "是否首发", "BOCOM_DEAL?", "期限"}, MissingField.Ignore),
         //Add DebutIssuance
-        Calculated_DEBUT =
+        #"Calculated Debut" =
             if List.Contains(Table.ColumnNames(RemovedCol), "DEBUT_DATE") then
                 Table.AddColumn(
                     RemovedCol, "是否首发", each if [DEBUT_DATE] = null then "--" else if [定价日] = [DEBUT_DATE] then
@@ -17,7 +17,24 @@
                 )
             else
                 RemovedCol,
-        #"Added FolderPath" = fx("FolderPath")(Calculated_DEBUT),
+        #"Replaced NullAmount" =
+            if Table.HasColumns(#"Calculated Debut", {"兑付日", "发行规模(亿)", "债券余额"}) then
+                Table.ReplaceValue(
+                    #"Calculated Debut",
+                    null,
+                    each
+                        if [兑付日] >= Date.From(DateTime.FixedLocalNow()) then
+                            Number.From([#"发行规模(亿)"])
+                        else if [兑付日] < Date.From(DateTime.FixedLocalNow()) then
+                            0
+                        else
+                            null,
+                    Replacer.ReplaceValue,
+                    {"债券余额"}
+                )
+            else
+                #"Calculated Debut",
+        #"Added FolderPath" = fx("FolderPath")(#"Replaced NullAmount"),
         #"Added 美元规模分类" = fx("GroupSize")(#"Added FolderPath"),
         #"Added 年期结构货币分类" = fx("GpTenorSTRCCY")(#"Added 美元规模分类"),
         #"Added 清算地" = fx("ISINToCSD")(#"Added 年期结构货币分类"),

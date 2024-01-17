@@ -1,18 +1,18 @@
 (TableName as table) =>
-let
-    Source = TableName,
-    Col1 = Table.AddColumn(Source, "IS_BISLDeal", each "Y", type text),
-Col2 = Table.AddColumn(
-        Col1, "Count_BISLDeal", each 1, type number
-    ),
-    Col3 = Table.AddColumn(
-       Col2,
-        "Count_JGC",
-        each if Text.Contains(([BISL_ROLE] ?? ""), "GC") then 1 else null,
-        type number
-    ),
-    Col4= Table.AddColumn(
-         Col3, "Count_JBR", each if [Count_JGC] <> 1 then 1 else null, type number
-    )
-in
-    Col4
+    let
+        Source = TableName,
+        Col1 = Table.AddColumn(Source, "IS_BISLDeal", each "Y", type text),
+        Col2 = Table.AddColumn(Col1, "Count_BISLDeal", each 1, type number),
+        Col3 = Table.AddColumn(
+            Col2,
+            "Count_JGC",
+            each
+                if Text.Contains(([BISL_ROLE] ?? ""), "GC") or not List.Contains({"", "--", null}, [IS_LEAD]) then
+                    1
+                else
+                    null,
+            type number
+        ),
+        Col4 = Table.AddColumn(Col3, "Count_JBR", each if [Count_JGC] <> 1 then 1 else null, type number)
+    in
+        Col4

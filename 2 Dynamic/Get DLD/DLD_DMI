@@ -1,6 +1,6 @@
 //let LoadCode = Load("DLD_DMI","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-    DMI = Table.AddColumn(fx("Source")("DOWNLOAD_美元债一级"), "DataSource", each "DMI", type text),
+    DMI = Table.AddColumn(fx("Wstbl")("DOWNLOAD","美元债一级"), "DataSource", each "DMI", type text),
     Source = Table.Buffer(DMI),
     CN_Source = List.Buffer(Table.ColumnNames(Source)),
     bbg = fx("Excel")("DOWNLOAD_tbl_dmi_isin"),

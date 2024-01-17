@@ -1,0 +1,47 @@
+// DD
+let
+    Source = Table.FromList(
+        {
+            "备证行全称",
+            "发行品种",
+            "上市",
+            "通过分行",
+            "品种主题",
+            "货币细分",
+            "货币",
+            "结构",
+            "BISL_ROLE",
+            "新规角色",
+            "上市分类",
+            "IS_B&D",
+            "ESG",
+            "港分_ROLE",
+            "项目来源",
+            "EXE",
+            "COVERAGE",
+            "评级分类",
+            "IS_LEAD",
+            "增发判定",
+            "是否合名",
+            "中资属性",
+            "板块",
+            "年期分类"
+        }
+    ),
+    buffered = Table.Buffer(CWB("deal_master")),
+    #"Added Custom" = Table.AddColumn(
+        Source,
+        "Custom",
+        each
+            List.Buffer(
+                List.RemoveItems(
+                    Table.Column(Table.Distinct(Table.SelectColumns(buffered, {[Column1]})), [Column1]),
+                    {"", "--", "【】", null}
+                )
+            ),
+        type list
+    ),
+    #"Added Custom1" = Table.AddColumn(#"Added Custom", "Count", each List.Count([Custom]), Int64.Type),
+    #"Sorted Rows" = Table.Sort(#"Added Custom1", {{"Count", Order.Descending}})
+in
+    #"Sorted Rows"

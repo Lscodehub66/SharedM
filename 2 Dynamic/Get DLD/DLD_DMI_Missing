@@ -1,7 +1,7 @@
 // let LoadCode = Load("DLD_DMI_Missing","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
     // Get ISIN
-    Source = fx("Source")("DOWNLOAD_美元债一级"),
+    Source = fx("Wstbl")("DOWNLOAD","美元债一级"),
     需填写 = {"ISIN", "定价日", "信用主体"},
     需留空 = {"债券简称", "货币"},
     Bracket1 = {"主题债券", "发行架构", "IPT", "FPG", "联席全球协调人"},

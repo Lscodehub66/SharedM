@@ -1,5 +1,5 @@
 let
-    Source = Table.Buffer(try CWB("DMIHeaders") otherwise fx("Source")("DYNAMIC_DMIHeaders")),
+    Source = Table.Buffer(try CWB("DMIHeaders") otherwise fx("Ws")("DYNAMIC","=DMIHeaders")),
     CurrentDMI =
         let
             Custom1 = fx("Excel")("DOWNLOAD_美元债一级"),

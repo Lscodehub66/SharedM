@@ -1,6 +1,6 @@
 
     let
-        Source =  fx("Source")("银行")  ,
+        Source =  fx("Wstbl")("银行")  ,
         //Ref
         AddCol = Table.AddColumn(Source, "信用主体简称", each fx("SNBankCorp")([发行人全称])),
         SelectedCol = Table.SelectColumns(

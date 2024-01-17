@@ -56,8 +56,17 @@
             台账24 = [Folder = "\\itd-m09-fs02\dcm$\【QRC】DCM项目情况表\", File = "DCM台账2024.xlsx"]
         ],
         Record = Record.Field(RecordOfRecord, excelkey),
-        #">>path" = if gps = "Remote" then _inputroot else Record[Folder] & Record[File],
-        #"ExcelWB" = Table.SelectRows(Excel.Workbook(File.Contents(#">>path")), each ([Kind] <> "DefinedName")),
+        #">>path" = if gps = "Remote" then _inputroot & Record[File] else Record[Folder] & Record[File],
+        #"DM Backuppath" = _inputroot & "Backup\DEALs MASTER.xlsm",
+        #"Excel Content" =
+            if excelkey = "DEALSMASTER" then
+                try
+                    Excel.Workbook(File.Contents(#">>path"))
+                otherwise
+                    Excel.Workbook(File.Contents(#"DM Backuppath"))
+            else
+                Excel.Workbook(File.Contents(#">>path")),
+        #"ExcelWB" = Table.SelectRows(#"Excel Content", each ([Kind] <> "DefinedName")),
         //fx("ExcelWB")(#">>path"),
         #"Is true" = sheetkey = "",
         #"Is ExactMatch" = Text.Contains(_input ?? "", "="),

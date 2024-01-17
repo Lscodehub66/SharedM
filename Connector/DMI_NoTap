@@ -1,5 +1,5 @@
 let
-    Source = fx("Source")("DMI"),
+    Source = fx("Wstbl")("DMI"),
     #"Filtered Rows" = Table.SelectRows(Source, each not Text.Contains([发行方式], "增发")),
     Custom1 = fx("DupeCount")(#"Filtered Rows", "ISIN")
 in

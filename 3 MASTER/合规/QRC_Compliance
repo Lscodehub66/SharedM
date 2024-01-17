@@ -1,8 +1,8 @@
 // let LoadCode = Load("QRC_Compliance","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-    Source = {"台账23_合规", "台账24_合规"},
+    Source = {"台账23", "台账24"},
     ToTable = Table.FromColumns({Source}, {"Name"}),
-    #"Added Custom" = Table.AddColumn(ToTable, "Custom", each Table.Buffer(fx("Source")([Name]))),
+    #"Added Custom" = Table.AddColumn(ToTable, "Custom", each Table.Buffer(fx("Wstbl")([Name],"合规"))),
     #"Added Custom1" = Table.AddColumn(#"Added Custom", "Timestamp", each DateTime.FixedLocalNow(), type datetime),
     #"Removed Columns" = Table.RemoveColumns(#"Added Custom1", {"Name"}, MissingField.Ignore),
     Exp = Table.ExpandTableColumn(#"Removed Columns", "Custom", Table.ColumnNames(#"Removed Columns"[Custom]{0})),

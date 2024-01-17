@@ -1,14 +1,14 @@
 // let LoadCode = Load("mDMI","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
     Source = CWB("mDMI"),
-    Weekly = fx("Source")("DOWNLOAD_美元债一级"),
+    Weekly = fx("Wstbl")("DOWNLOAD","美元债一级"),
     Combined =
         if Date.DayOfWeek(Load("MondayDate")) <> 1 then
             Source
         else
             fx("Combine")({Weekly, Source}, {"ISIN", "定价日"}, {0}),
     #"Merged Queries" = Table.NestedJoin(
-        Combined, {"ISIN", "定价日"}, fx("Source")("DMI"), {"ISIN", "定价日"}, "Data", JoinKind.LeftAnti
+        Combined, {"ISIN", "定价日"}, fx("Wstbl")("DMI"), {"ISIN", "定价日"}, "Data", JoinKind.LeftAnti
     ),
     Removed = Table.RemoveColumns(#"Merged Queries", {"Data"}, MissingField.Ignore),
     Sorted = fx("SortNIndex")(Removed)

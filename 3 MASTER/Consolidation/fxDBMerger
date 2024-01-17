@@ -8,7 +8,7 @@
                 fx("Merge")(Source, DMI_Outstanding, "ISIN", "ISIN", {"债券余额"}, {"债券余额"})
             else
                 Source,
-        mCreditB = try Table.Buffer(CWB("mCredit", "1")) otherwise Table.Buffer(fx("Excel")("DEALSMASTER_=MCREDIT")),
+        mCreditB = try Table.Buffer(CWB("mCredit", "1")) otherwise Table.Buffer(fx("Ws")("DEALSMASTER","=mCredit")),
         #"Transformed SBLCName" = Table.RenameColumns(
             fx("FormerName")(JoinDMI, "备证行全称"), {"Dummy.信用主体", "Dummy.SBLC"}, MissingField.UseNull
         ),

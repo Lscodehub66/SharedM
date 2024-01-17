@@ -183,7 +183,7 @@ let
             TransformationTable_Entity = Table.PrefixColumns(
                 Table.SelectRows(
                     Table.SelectColumns(
-                        try CWB("mCredit") otherwise fx("Excel")("DEALSMASTER_=mCredit"), {"信用主体", "曾用名"}
+                        try CWB("mCredit") otherwise fx("Ws")("DEALSMASTER","=mCredit"), {"信用主体", "曾用名"}
                     ),
                     each [曾用名] <> ""
                 ),

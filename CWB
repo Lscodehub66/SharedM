@@ -41,7 +41,7 @@
             if Text.Contains(_key, "CN") then
                 Table.ColumnNames(List)
             else if _inputname = "DMI" then
-                fx("Source")("DMI")
+                fx("Wstbl")("DMI")
             else
                 List
     in

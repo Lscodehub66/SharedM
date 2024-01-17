@@ -1,6 +1,6 @@
 //let LoadCode = Load("KYC_Master_TF","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-    Source = try CWB("KYC_Master") otherwise fx("Source")("KYC_Master"),
+    Source = try CWB("KYC_Master") otherwise fx("Wstbl")("KYC","MASTER"),
     //
     TFtbl_QRC_ClientName = Table.Buffer(Get("TFtbl_QRC_ClientName")),
     CleanedName = fx("Replace")(Source, {"项目名称（集团全称）"}, "主体"),
