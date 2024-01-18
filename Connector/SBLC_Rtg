@@ -1,5 +1,5 @@
 let
-    Source = fx("Excel")("DOWNLOAD"),
+    Source = fx("Ws")("DOWNLOAD"),
     Data = Source{[Item = "Tables_value"]}[Data],
     #"Removed Other Columns" = Table.SelectColumns(
         Data, {"Column61", "Column62", "Column66", "Column67", "Column68"}, MissingField.UseNull

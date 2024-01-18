@@ -183,7 +183,7 @@ let
             TransformationTable_Entity = Table.PrefixColumns(
                 Table.SelectRows(
                     Table.SelectColumns(
-                        try CWB("mCredit") otherwise fx("Ws")("DEALSMASTER","=mCredit"), {"信用主体", "曾用名"}
+                        try CWB("mCredit") otherwise fx("Ws")("DEALSMASTER", "=mCredit"), {"信用主体", "曾用名"}
                     ),
                     each [曾用名] <> ""
                 ),
@@ -942,8 +942,8 @@ let
                 "Check"
             },
             //   CN = ColumnNames
-            CN_BaseDirectory_Deal = Table.ColumnNames(fx("Excel")("DIRECTORY_TBL_DEAL")),
-            CN_mChart = Table.ColumnNames(fx("Excel")("DEALSMASTER_MCHART")),
+            CN_BaseDirectory_Deal = Table.ColumnNames(fx("Ws")("DIRECTORY", "TBL_DEAL")),
+            CN_mChart = Table.ColumnNames(fx("Ws")("DEALSMASTER", "MCHART")),
             // Selection
             Key = Text.Replace(Text.Upper(Text.Trim(TextName)), "_", ""),
             CNSource =

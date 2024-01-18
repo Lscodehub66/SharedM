@@ -1,5 +1,5 @@
 let
-    Source = fx("Data")(fx("Excel")("DEALSMASTER"){[Item = "ESG", Kind = "Table"]}[Data]),
+    Source = fx("Data")(fx("Ws")("DEALSMASTER"){[Item = "ESG", Kind = "Table"]}[Data]),
     #"Duplicated Column" = Table.DuplicateColumn(Source, "筹款用途", "Dummy.Dupe"),
     #"Uppercased Text" = Table.TransformColumns(#"Duplicated Column", {{"Dummy.Dupe", Text.Upper, type text}}),
     Add_Before = Table.AddColumn(

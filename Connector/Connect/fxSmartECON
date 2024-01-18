@@ -1,6 +1,6 @@
 (optional FTextToIndicateFuture as nullable text) =>
     let
-        Source = fx("Excel")("DOWNLOAD_ECON"),
+        Source = fx("Ws")("DOWNLOAD","ECON"),
         RlvLvl = Load("RlvLvl"),
         US_addon = Load("US_addon"),
         BufferedMon = List.Buffer(Load("Controller")[Monday]){0},

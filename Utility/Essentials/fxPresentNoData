@@ -25,7 +25,7 @@
             "板块二级",
             "板块三级",
             "IS_LEAD",
-            "IS_B&D",
+            "IS_B&D","IS_BnD", 
             "是否合名",
             "主体备注",
             "SPECIALs",
@@ -40,7 +40,7 @@
             "中介人角色",
             "Project Team",
             "Project Name",
-            "Signer Initials"
+            "Signer Initials","项目状态"
         },
         ListToPresentNoData = List.Intersect({Table.ColumnNames(Source), PresentNoDataList}),
         ReplaceNull = Table.ReplaceValue(Source, null, "--", Replacer.ReplaceValue, ListToPresentNoData),

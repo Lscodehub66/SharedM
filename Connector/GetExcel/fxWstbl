@@ -17,7 +17,7 @@
             DOWNLOAD.ECON = {"Column1", "Date Time"},
             KYC.MASTER = {"Column2", "序号"},
             台账23.合规 = {"Column3", "团队"},
-            台账24.合规 = {"Column2", "序号"},
+            台账24.合规 = {"Column4", "項目代碼(Project Code)"},
             台账24.收入情况2023 = {"Column2", "Project Name"},
             台账23.收入情况2023 = {"Column2", "Project Name"}
         ],

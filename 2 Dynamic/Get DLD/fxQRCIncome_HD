@@ -35,7 +35,30 @@
         #"Added Custom" = Table.AddColumn(
             #"Replaced Value1", "Column5", each Text.Combine(List.Distinct({[Column2], [Column3], [Column4]}), ".")
         ),
-        #"Grouped Rows" = Table.Group(#"Added Custom", {"Column5"}, {{"Custom", each _, type table}}),
+        #"Replaced Value2" = Table.ReplaceValue(
+            #"Added Custom", "承销费", "承销费.USD", Replacer.ReplaceValue, {"Column5"}
+        ),
+        #"Replaced Value3" = Table.ReplaceValue(
+            #"Replaced Value2",
+            " ",
+            each
+                if not List.ContainsAll({"A".."Z", "+", " "}, Text.ToList([Column5]), Comparer.OrdinalIgnoreCase) then
+                    ""
+                else
+                    " ",
+            Replacer.ReplaceText,
+            {"Column5"}
+        ),
+         #"Replaced Value4" = Table.ReplaceValue(
+           #"Replaced Value3", "(USD)", ".USD", Replacer.ReplaceText, {"Column5"}
+        ),
+              #"Replaced Value5" = Table.ReplaceValue(
+           #"Replaced Value4", "(其他币种)", ".其他", Replacer.ReplaceText, {"Column5"}
+        ),
+                      #"Replaced Value6" = Table.ReplaceValue(
+           #"Replaced Value5", "ISIN Code", "ISIN", Replacer.ReplaceValue, {"Column5"}
+        ),
+        #"Grouped Rows" = Table.Group(#"Replaced Value6", {"Column5"}, {{"Custom", each _, type table}}),
         #"Added Index" = Table.TransformColumns(
             #"Grouped Rows",
             {
@@ -45,7 +68,7 @@
                         Table.ReplaceValue(
                             Table.AddIndexColumn(_, "Index", 1, 1, Int64.Type),
                             each [Column5],
-                            each if [Index] >= 2 then [Column5] & "." & Text.From([Index]) else [Column5],
+                            each if [Index] >= 2 then [Column5] & Text.From([Index]) else [Column5],
                             Replacer.ReplaceValue,
                             {"Column5"}
                         )
@@ -63,6 +86,6 @@
         #"Removed Top Rows" = Table.Buffer(Table.LastN(#"Transposed Table1", 1)),
         Zipped = List.Zip({Table.ColumnNames(#"Removed Top Rows"), Record.ToList(#"Removed Top Rows"{0})}),
         Renamed = Table.RenameColumns(Custom1, Zipped),
-        Skipped = Table.Skip(Renamed,4)
+        Skipped = Table.Skip(Renamed, 4)
     in
-        Skipped 
+        Skipped

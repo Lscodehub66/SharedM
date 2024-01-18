@@ -9,7 +9,7 @@ let
                 )[PK]
         )
     ),
-    Source = fx("Excel")("Download_Graphs_value"),
+    Source = fx("Ws")("DOWNLOAD","Graphs_value"),
     NoBlankCol = Load("fxRemoveBlankColumns")(Source),
     #"Kept First Rows" = Table.FirstN(NoBlankCol, 20),
     #">>1_Combined" = fx("Combine")({#">>1_HD", #"Kept First Rows"}),

@@ -1,7 +1,7 @@
 let
  Source            = CWB("tbl_review_shortname" ), 
  DMI_Credit = fx("Ws")("DEALSMASTER","DMI_Credit"),
- ColNow_mCredit = Table.ColumnNames(fx("Excel")("DEALSMASTER_mCredit")),
+ ColNow_mCredit = Table.ColumnNames(fx("Ws")("DEALSMASTER","mCredit")),
  Filtered          = Table.Distinct(Table.SelectRows ( Source, each w <> null and [信用主体] <> "" )), 
  Renamed           = Table.RenameColumns (  Filtered , { { "IN_板块", "板块" }, { "IN.中资属性", "中资属性" }, { "SHORTNAMER", "信用主体简称" } }, MissingField.Ignore ),
     MergedQ2 = fx("Merge")( Renamed ,  DMI_Credit, "信用主体", "信用主体", {"DEBUT_DATE"}, { "DEBUT_DATE"}),

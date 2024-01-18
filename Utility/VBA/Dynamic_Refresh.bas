@@ -5,6 +5,7 @@ Sub RefreshDownload()
     ActiveWorkbook.Connections("Query - DimMonday").Refresh
     ActiveWorkbook.Connections("Query - DMIHeaders_Check").Refresh
     ActiveWorkbook.Connections("Query - DMIHeaders").Refresh
+    ActiveWorkbook.Connections("Query - QRC_Income24").Refresh
     ActiveWorkbook.Connections("Query - DLD_Conso").Refresh
     ActiveWorkbook.Connections("Query - DLD_Filter_Credit").Refresh
 
@@ -57,6 +58,7 @@ Sub RefreshAll()
 
 
 End Sub
+
 
 
 

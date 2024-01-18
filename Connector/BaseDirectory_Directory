@@ -3,7 +3,7 @@
 
 let
 
-    Source = fx("Excel")("DEALSMASTER_=DIRECTORY"),
+    Source = fx("Ws")("DEALSMASTER","=DIRECTORY"),
      #"Replaced Value" = Table.ReplaceValue( fx("Data")(Source) ,"--",null,Replacer.ReplaceValue,{"收窄基点"}),
     #"Changed Type" = Table.TransformColumnTypes(#"Replaced Value",{{"收窄基点", type number}}),
     Additional = {null},

@@ -1,0 +1,7 @@
+// DimDate
+let
+    Text = "(_numtext as text) => let ",
+    Old = Text.AfterDelimiter(Load("QRC_Income", "Code"), "//**"),
+    EVA = Expression.Evaluate(Text & Old, #shared)
+in
+    EVA

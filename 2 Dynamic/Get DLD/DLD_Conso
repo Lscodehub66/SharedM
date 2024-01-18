@@ -2,7 +2,7 @@
 let
     Source = Load("DLD_DMI"),
     Fn = fx("ShowFilter")(Source),
-    Fn1 = Load("fxIsFIMTN")(Fn),
+    Fn1 = fx("IsFIMTN")(Fn),
     Fn1_R = Table.ReplaceValue(
         Fn1, "Y", each if [Filter_Bond] <> "" or [Filter_Exch] <> "" then "" else "【Y】", Replacer.ReplaceValue, {
             "IS_FIMTN"

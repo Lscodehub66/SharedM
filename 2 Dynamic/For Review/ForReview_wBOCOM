@@ -22,24 +22,24 @@ let
             )
         else
             Source,
-    DLD_QRC = Table.Buffer(Load("DLD_QRC_24")),
+    DLD_QRC = Table.Buffer(Load("QRC_Income24")),
     MergedQ = try fx("Merge")(Prep, DLD_QRC, "ISIN", "ISIN", {""}, {""}) otherwise Prep,
     Filtered = Table.SelectRows(
         MergedQ,
-        each if Table.HasColumns(MergedQ, "担任角色") then [BISL_ROLE] <> "--" or [担任角色] <> "" else [BISL_ROLE] <> "--"
+        each if Table.HasColumns(MergedQ,  "IS_JGC") then [BISL_ROLE] <> "--" or [IS_JGC] <> "" else [BISL_ROLE] <> "--"
     ),
     #">>ExpandedList" = List.RemoveItems(Table.ColumnNames(MergedQ), Table.ColumnNames(Prep)),
     SCol = fx("Data")(Table.SelectColumns(Filtered, HD, MissingField.UseNull)),
     Replaced =
-        if Table.HasColumns(Filtered, "担任角色") then
+        if Table.HasColumns(Filtered, "IS_JGC") then
             Table.ReplaceValue(
                 SCol,
                 each [BISL_ROLE],
                 each
-                    if [担任角色] <> "" and [BISL_ROLE] = "【】" then
-                        [担任角色]
-                    else if [担任角色] <> "" and [BISL_ROLE] <> [担任角色] then
-                        "【" & [BISL_ROLE] & "】" & "#(lf)" & "【" & [担任角色] & "】"
+                    if [IS_JGC] <> "" and [BISL_ROLE] = "【】" then
+                        [IS_JGC]
+                    else if [IS_JGC] <> "" and [BISL_ROLE] <> [IS_JGC] then
+                        "【" & [BISL_ROLE] & "】" & "#(lf)" & "【" & [IS_JGC] & "】"
                     else
                         [BISL_ROLE],
                 Replacer.ReplaceValue,

@@ -2,7 +2,7 @@
 (_inputname as text, optional _inputkey as nullable text) =>
     let
         ThisExcel = Excel.CurrentWorkbook(){[Name = _inputname]}[Content],
-        DM = fx("Excel")("DEALSMASTER_=" & _inputname),
+        DM = fx("Ws")("DEALSMASTER", "="& _inputname),
         _key = if _inputkey = null then "" else _inputkey,
         _tblname = Text.Replace(Text.Upper(Text.Trim(_inputname)), "_", ""),
         NamedList = {

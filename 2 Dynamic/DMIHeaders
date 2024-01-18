@@ -1,6 +1,6 @@
 //let LoadCode = Load("DMIHeaders","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-    Custom1 = try CWB("DMIHeaders") otherwise fx("Excel")("DYNAMIC_DMIHeaders"),
+    Custom1 = try CWB("DMIHeaders") otherwise fx("Ws")("DYNAMIC","DMIHeaders"),
     Custom2 = CWB("DMIHeaders_Check", "1"),
     Custom3 = fx("Combine")({Custom2, Custom1})
 in

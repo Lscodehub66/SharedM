@@ -1,6 +1,6 @@
 // let LoadCode = Load("DLD_BBG_Corp","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-    Source = fx("Excel")("DOWNLOAD_tbl_dmi_isin"),
+    Source = fx("Ws")("DOWNLOAD","tbl_dmi_isin"),
     RCol = Table.RemoveColumns(Source, {"Index"}, MissingField.Ignore),
     FBlank = Table.SelectRows(
         RCol, each not List.IsEmpty(List.RemoveMatchingItems(Record.FieldValues(_), {"", null}))

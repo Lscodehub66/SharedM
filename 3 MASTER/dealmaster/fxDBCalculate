@@ -35,7 +35,8 @@
             else
                 #"Calculated Debut",
         #"Added FolderPath" = fx("FolderPath")(#"Replaced NullAmount"),
-        #"Added 美元规模分类" = fx("GroupSize")(#"Added FolderPath"),
+        #"Added BBGFX" = fx("AddBBGFX")(#"Added FolderPath"),
+        #"Added 美元规模分类" = fx("GroupSize")(#"Added BBGFX"),
         #"Added 年期结构货币分类" = fx("GpTenorSTRCCY")(#"Added 美元规模分类"),
         #"Added 清算地" = fx("ISINToCSD")(#"Added 年期结构货币分类"),
         #"Added 评级分类" = fx("GpRtg")(#"Added 清算地", {"发行评级", "评级分类"}),

@@ -2,7 +2,7 @@ let
     Source = Table.Buffer(try CWB("DMIHeaders") otherwise fx("Ws")("DYNAMIC","=DMIHeaders")),
     CurrentDMI =
         let
-            Custom1 = fx("Excel")("DOWNLOAD_美元债一级"),
+            Custom1 = fx("Ws")("DOWNLOAD","美元债一级"),
             #"Promoted Headers" = Table.PromoteHeaders(Custom1, [PromoteAllScalars = true]),
             #"Promoted Headers1" = Table.FromColumns(
                 {Table.ColumnNames(Table.PromoteHeaders(#"Promoted Headers", [PromoteAllScalars = true]))}, {"DMI字段"}

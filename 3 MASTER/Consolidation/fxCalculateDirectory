@@ -2,8 +2,8 @@
     let
         Key = Text.Upper(Text.Trim(_inputkey ?? "")),
         Source = TableName,
-        MergedQ = fx("Merge")(Source, CWB("Table_PRJMerge"), "COMPARER", "COMPARER", {"承销费原币"}, {""}),
-        NthMandate = fx("NthMandated")(MergedQ, {"YYMMDD", "信用主体简称"}),
+        ReplacedCCY = Table.ReplaceValue(Source, "美元债", "", Replacer.ReplaceValue, {"货币细分"}),
+        NthMandate = fx("NthMandated")(ReplacedCCY, {"YYMMDD", "信用主体简称"}),
         #"Count Multi-Tranche" = fx("AddMultiCount")(NthMandate),
         #"Merged Queries1" = Table.NestedJoin(
             #"Count Multi-Tranche", {"定价会时间"}, Load("DimTime"), {"Time"}, "Data", JoinKind.LeftOuter
@@ -23,15 +23,38 @@
                 )
             else
                 #"Expanded DimTime",
-        QRC合规 = Table.RenameColumns(Table.SelectColumns(CWB("QRC_Compliance"), {"PRJ对账号", "发行人"},MissingField.UseNull), {{"发行人", "修改.发行人"}}),
-        Issuer_revised = fx("DB_Revise")(ExeTime, QRC合规, "PRJ对账号"),
-        ReplacedCCY = Table.ReplaceValue(Issuer_revised, "美元债", "", Replacer.ReplaceValue, {"货币细分"}),
+        //
+        #"ToRevise:Fee19" =
+            let
+                Source = fx("Data")(Load("Fee19", "CSV")),
+                #"Inserted Division" = Table.AddColumn(
+                    Source, "补齐.承销费.原币", each Number.Round([承销费.原币] / [多笔], 0), Int64.Type
+                ),
+                #"Removed Other Columns" = Table.SelectColumns(#"Inserted Division", {"COMPARER", "补齐.承销费.原币"})
+            in
+                #"Removed Other Columns",
+        #"ToRevise:Issuer" =
+            let
+                Source = CWB("QRC_Compliance"),
+                Output = Table.RenameColumns(
+                    Table.SelectColumns(Source, {"PRJ对账号", "发行人"}, MissingField.UseNull), {{"发行人", "修改.发行人"}}
+                )
+            in
+                Output,
+        //
+        #"Merged 21Fee" = fx(
+            "Merge"
+        )(
+            ExeTime, CWB("QRC_Income"), "PRJ对账号", "PRJ对账号", {"承销费.原币", "承销费.美元", "QRC汇率因子"}, {""}
+        ),
+        #"Revised 19Fee" = fx("DB_Revise")(#"Merged 21Fee", #"ToRevise:Fee19", "COMPARER"),
+        #"Revised Issuer" = fx("DB_Revise")(#"Revised 19Fee", #"ToRevise:Issuer", "PRJ对账号"),
         CN_Base = List.Buffer(CWB("BaseDirectory_CN")),
         CN_CWB = List.Buffer(CWB("Directory", "CN")),
         Reordered = Table.ReorderColumns(
-            ReplacedCCY, CN_Base & List.RemoveItems(CN_CWB, CN_Base), MissingField.Ignore
+            #"Revised Issuer", CN_Base & List.RemoveItems(CN_CWB, CN_Base), MissingField.Ignore
         ),
-        SCol = Table.SelectColumns(ReplacedCCY, CN_Base, MissingField.Ignore),
+        SCol = Table.SelectColumns(#"Revised Issuer", CN_Base, MissingField.Ignore),
         Output = if Text.Contains(Key, "BASE") then SCol else Reordered
     in
         Output
