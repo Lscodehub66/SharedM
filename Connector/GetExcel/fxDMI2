@@ -14,7 +14,7 @@
                 {"发行结构", "发行架构"},
                 {"票息", "票息_DMI"},
                 {"ticker", "TICKER"},
-                {"交易所", "发行场所"}
+                {"交易所", "发行场所"},{"临时isin","ISIN_TEMP"}
             },
             MissingField.Ignore
         ),

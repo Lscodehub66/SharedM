@@ -1,7 +1,8 @@
 // let LoadCode = Load("DLD_Conso","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-    Source = Load("DLD_DMI"),
-    Fn = fx("ShowFilter")(Source),
+    DLDSource = Load("DLD_DMI"),
+    CWBSource = fx("DMI2")( CWB("DLD_DMI"),"Y"),
+    Fn = fx("ShowFilter")(CWBSource),
     Fn1 = fx("IsFIMTN")(Fn),
     Fn1_R = Table.ReplaceValue(
         Fn1, "Y", each if [Filter_Bond] <> "" or [Filter_Exch] <> "" then "" else "【Y】", Replacer.ReplaceValue, {

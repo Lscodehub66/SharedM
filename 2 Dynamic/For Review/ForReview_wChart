@@ -1,9 +1,19 @@
 // let LoadCode = Load("ForReview_wChart","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-Source = Load("Filtered_Add"),
-Filtered = Table.SelectRows(Source, each [删除及隐藏] = "FIMTN" ),
-SCol = Table.SelectColumns(Filtered, Get("CN_mChart"),MissingField.Ignore),
-    ACol = Table.AddColumn(SCol, "mChart", each "Y"),
-    Custom1 = fx("SelfJoin_R")(ACol, CWB("ForReview_wChart"), {"ISIN"})
+    _input = "wChart",
+    _PK = "ISIN",
+    Name = "m" & Text.AfterDelimiter(_input, "w"),
+    HD = fx("ForReviewHD")(_input),
+    Sourceold = Load("Filtered_Add"),
+    Source = CWB("Filtered_Add"),
+    Filtered = Table.SelectRows(Source, each [删除及隐藏] = "FIMTN"),
+    ACol =
+        if not Table.HasColumns(Filtered, Name) then
+            Table.AddColumn(Filtered, Name, each "Y", type text)
+        else
+            Filtered,
+    SCol = Table.SelectColumns(ACol, HD, MissingField.UseNull),
+    SelfJoined = fx("SelfJoin_R")(SCol, CWB("ForReview_" & _input), {_PK}),
+    Sorted = fx("SortNIndex")(SelfJoined)
 in
- Custom1
+    Sorted

@@ -1,0 +1,9 @@
+//let LoadCode = Load("DLD_Filter_Credit","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA 
+let
+  Source = CWB("DLD_DMI"),
+    Fn = fx("ShowFilter")(Source),   #"Removed Other Columns" = Table.SelectColumns(   Fn ,{"Filter_Credit", "信用主体", "省份"}),
+    #"Filtered Rows" = Table.SelectRows(#"Removed Other Columns", each not List.Contains({"","*","**"},[Filter_Credit] )),
+    Custom1 = fx("SelfJoin_R")( #"Filtered Rows", CWB("DLD_Filter_Credit"), {"信用主体"}),
+    Custom2 = if Table.RowCount(Custom1) = 0 then Table.InsertRows(Custom1,0, {[Filter_Credit =  "本周无筛除信用主体", 信用主体 = "",省份=""]}) else Custom1
+in
+    Custom2

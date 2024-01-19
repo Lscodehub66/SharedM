@@ -205,8 +205,17 @@ let
                 {{"2023/10/06", "BBGcorp", "DLD_BBG_Corp"}}, {"Date", "From", "To"}
             ),
             // 【Prefix】Rename_
+            Rename_DMI_Connect =             {
+                {"定价", "定价_DMI"},
+                {"IPT", "IPT_DMI"},
+                {"FPG", "FPG_DMI"},{"行业", "DMI行业"},
+              
+                {"票息", "票息_DMI"},
+                {"ticker", "TICKER"},
+                {"交易所", "发行场所"},{"临时isin","ISIN_TEMP"}
+            },
             Rename_DB_DataFormat = {
-                {"IN_板块", "板块"},
+                {"IN_板块", "板块"},  
                 {"发行人注册地", "发行人成立地"},
                 {"FLOATER_FORMULA", "计息基准"},
                 {"发行价格", "发行价"},
@@ -983,6 +992,8 @@ let
             RenameSource =
                 if Text.Contains(Key, "合规") then
                     Rename_Connect_合规
+                else if Text.Contains(Key, "DMICONNECT") then
+                    Rename_DMI_Connect
                 else if Text.Contains(Key, "KYC") then
                     Rename_Connect_KYC
                 else if Text.Contains(Key, "DMI") and (Text.Contains(Key, "违约") or Text.Contains(Key, "DEFAULT")) then

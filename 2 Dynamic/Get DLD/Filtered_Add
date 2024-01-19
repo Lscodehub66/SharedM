@@ -1,9 +1,44 @@
 // let LoadCode = Load("Filtered_Add","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-    Source = Load("Filtered_wFIMTN"),
-    CN_Source = List.Buffer(Table.ColumnNames(Source)),
-    Clean_TBC = if List.Contains(CN_Source, "IS_FIMTN") then fx("Replace")(Source, {"IS_FIMTN"}, "RTBC") else Source,
-    Clean_Structure = fx("Replace")(Table.DuplicateColumn(Clean_TBC, "发行架构", "结构"), {"结构"}, "结构"),
+    Source1 = CWB("DLD_Conso", "1"),
+    Filtered = Table.SelectRows(
+        Source1,
+        each List.Contains({null, "", "--"}, [Filter_Bond]) and List.Contains({null, "", "--"}, [Filter_Exch])
+    ),
+    Custom1 = Table.AddColumn(Filtered, "删除及隐藏", each if [IS_FIMTN] = "Y" or [IS_FIMTN] = "【Y】" then "FIMTN" else ""),
+    Replaced = Table.ReplaceValue(
+        Custom1, "新增", each if [删除及隐藏] = "FIMTN" then "n/a" else "新增", Replacer.ReplaceValue, {"mBond", "mIssue"}
+    ),
+    #"Added BISL_ROLE" =
+        if not Table.HasColumns(Replaced, "BISL_ROLE") then
+            Table.AddColumn(
+                Replaced,
+                "BISL_ROLE",
+                each
+                    if Text.Contains([联席全球协调人], "BOCOM") then
+                        "JGC"
+                    else if Text.Contains([牵头经办人], "BOCOM") then
+                        "JBR"
+                    else if Text.Contains([联席全球协调人], "【") then
+                        "【】"
+                    else
+                        "--"
+            )
+        else
+            Replaced,
+    BBG_HD = Get("Header_Exp_Dynamic_BBG"),
+    BBG_HDExp = List.Transform(BBG_HD, each if List.Contains({"计息基准", "SBLC提供者"}, _) then "Dummy" & _ else _),
+    BBG_Merged = fx("Merge")(#"Added BISL_ROLE", CWB("DLD_BBG_Corp"), "Check", "Check", BBG_HD, BBG_HDExp),
+    #"CrossChecked BBG" = fx("CrossCheck")(BBG_Merged),
+    // End of MultiSource
+    #"//GNG_Multi" = if fx("Parameter")("MultiSource") = "ON" then "GO" else "NO-GO",
+    Crossroad =
+        if #"//GNG_Multi" <> "GO" then
+            Table.RenameColumns(#"Added BISL_ROLE", {{"债项评级", "发行评级"}, {"穆迪/标普", "主体评级"}}, MissingField.UseNull)
+        else
+            #"CrossChecked BBG",
+    Custom2 = fx("RCol")(Crossroad),
+    Clean_Structure = fx("Replace")(Table.DuplicateColumn(Custom2, "发行架构", "结构"), {"结构"}, "结构"),
     Added = List.Accumulate(
         {
             "Reopen",
@@ -26,7 +61,7 @@ let
         Clean_Structure,
         (x, y) => fx("Add" & y)(x)
     ),
-    Replaced = Table.ReplaceValue(
+    Replaced2 = Table.ReplaceValue(
         Added,
         each [债券简称],
         each
@@ -39,7 +74,7 @@ let
     ),
     DM = {"mIssue", "mStats", "mBISL", "mEXE", "mCredit"},
     #"Operational Columns" = List.Accumulate(
-        DM, Replaced, (x, y) => if not Table.HasColumns(x, y) then Table.AddColumn(x, y, each "", type text) else x
+        DM, Replaced2, (x, y) => if not Table.HasColumns(x, y) then Table.AddColumn(x, y, each "", type text) else x
     ),
     WeeklyAddTapSwith = CWB("WeeklyAddTap"),
     Appended =

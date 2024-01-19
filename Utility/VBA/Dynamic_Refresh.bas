@@ -1,22 +1,78 @@
+Sub ShowStep1MsgBox()
+    Dim msgBoxText As String
+    Dim timeDelay As Double
+    Dim msgBox As Object
+
+    msgBoxText = "Loading data from <1.Weekly Download.xlsx>"
+
+    timeDelay = 5
+
+    Set msgBox = CreateObject("WScript.Shell")
+    msgBox.Popup msgBoxText, timeDelay, "Step1 Msg", vbInformation
+End Sub
+
+Sub ShowStep2MsgBox()
+    Dim msgBoxText As String
+    Dim timeDelay As Double
+    Dim msgBox As Object
+
+    msgBoxText = "Applying transformation on filtered deal list."
+
+    timeDelay = 5
+
+    Set msgBox = CreateObject("WScript.Shell")
+    msgBox.Popup msgBoxText, timeDelay, "Step1 Msg", vbInformation
+End Sub
+
+Sub RefreshSource()
+    '
+    ' RefreshSource Macro
+    '
+
+
+
+    ActiveWorkbook.Connections("Query - DLD_BBG_Corp").Refresh
+    ActiveWorkbook.Connections("Query - DLD_DMI").Refresh
+    ActiveWorkbook.Connections("Query - DMIHeaders_Check").Refresh
+    ActiveWorkbook.Connections("Query - DimMonday").Refresh
+    ActiveWorkbook.Connections("Query - QRC_Income24").Refresh
+    Call ShowStep1MsgBox
+
+
+End Sub
+
+
+
 Sub RefreshDownload()
     '
     ' RefreshDownload Macro
     '
-    ActiveWorkbook.Connections("Query - DimMonday").Refresh
-    ActiveWorkbook.Connections("Query - DMIHeaders_Check").Refresh
+
     ActiveWorkbook.Connections("Query - DMIHeaders").Refresh
-    ActiveWorkbook.Connections("Query - QRC_Income24").Refresh
     ActiveWorkbook.Connections("Query - DLD_Conso").Refresh
     ActiveWorkbook.Connections("Query - DLD_Filter_Credit").Refresh
 
 End Sub
+
+Sub RefreshAdd()
+    '
+    ' RefreshDownload Macro
+    '
+    ActiveWorkbook.Connections("Query - Filtered_Add").Refresh
+    Call ShowStep2MsgBox
+
+End Sub
+
+
+
+
 Sub RefreshDLDForReview()
     '
     ' RefreshDLDForReview Macro
     '
 
     '
-    ActiveWorkbook.Connections("Query - Filtered_Add").Refresh
+    Call CopyInCase
     ActiveWorkbook.Connections("Query - ForReview_wIssue").Refresh
     ActiveWorkbook.Connections("Query - ForReview_wBond").Refresh
     ActiveWorkbook.Connections("Query - ForReview_wCredit").Refresh
@@ -58,6 +114,9 @@ Sub RefreshAll()
 
 
 End Sub
+
+
+
 
 
 

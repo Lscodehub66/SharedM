@@ -4,8 +4,9 @@ let
     _PK = "ISIN",
     Name = "m" & Text.AfterDelimiter(_input, "w"),
     HD = fx("ForReviewHD")(_input),
-    Consotbl = Load("DLD_Filtered"),
-    Filtered = Table.SelectRows(Consotbl, each not List.Contains({"n/a"}, Record.Field(_, Name))),
+    Sourceold = Load("DLD_Filtered"),
+    Source = Table.SelectRows(CWB("Filtered_Add"), each [IS_FIMTN] <> "Y" and  [IS_FIMTN] <> "【Y】" ),
+    Filtered = Table.SelectRows(Source, each not List.Contains({"n/a"}, Record.Field(_, Name))),
     Custom2 = fx("SelfJoin_R")(Filtered, CWB("ForReview_" & _input), {_PK}),
     SCol = Table.SelectColumns(Custom2, HD, MissingField.UseNull),
     Sorted = fx("SortNIndex")(SCol)

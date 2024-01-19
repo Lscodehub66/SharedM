@@ -4,7 +4,8 @@ let
     _PK = "Check",
     Name = "m" & Text.AfterDelimiter(_input, "w"),
     HD = fx("ForReviewHD")(_input),
-    Source = Load("DLD_Filtered"),
+    Sourceold = Load("DLD_Filtered"),
+    Source = Table.SelectRows(CWB("Filtered_Add"), each [IS_FIMTN] <> "Y" and  [IS_FIMTN] <> "【Y】" ),
     Prep =
         if not List.Contains(Table.ColumnNames(Source), "BISL_ROLE") then
             Table.AddColumn(
@@ -22,14 +23,19 @@ let
             )
         else
             Source,
-    DLD_QRC = Table.Buffer(Load("QRC_Income24")),
+    DLD_QRC = CWB("QRC_Income24"),
     MergedQ = try fx("Merge")(Prep, DLD_QRC, "ISIN", "ISIN", {""}, {""}) otherwise Prep,
+    Custom1 = Table.RenameColumns(MergedQ, {{"序号", "台账序号"}}, MissingField.Ignore),
     Filtered = Table.SelectRows(
-        MergedQ,
-        each if Table.HasColumns(MergedQ,  "IS_JGC") then [BISL_ROLE] <> "--" or [IS_JGC] <> "" else [BISL_ROLE] <> "--"
+        Custom1,
+        each if Table.HasColumns(Custom1, "IS_JGC") then [BISL_ROLE] <> "--" or [IS_JGC] <> "" else
+            [BISL_ROLE] <> "--"
     ),
-    #">>ExpandedList" = List.RemoveItems(Table.ColumnNames(MergedQ), Table.ColumnNames(Prep)),
-    SCol = fx("Data")(Table.SelectColumns(Filtered, HD, MissingField.UseNull)),
+    ACol0 = Table.AddColumn(
+        Filtered, "COVERAGE", each if not List.Contains({null, "", "--"}, [团队]) then [团队] & "组" else "", type text
+    ),
+    #">>ExpandedList" = List.RemoveItems(Table.ColumnNames(Custom1), Table.ColumnNames(Prep)),
+    SCol = fx("Data")(Table.SelectColumns(ACol0, HD, MissingField.UseNull)),
     Replaced =
         if Table.HasColumns(Filtered, "IS_JGC") then
             Table.ReplaceValue(
@@ -53,7 +59,7 @@ let
                 Replaced, "", "nil", Replacer.ReplaceValue, List.RemoveItems(#">>ExpandedList", {"新规角色", "COVERAGE"})
             ) otherwise Replaced,
     BlankToInput = Table.ReplaceValue(
-        BlankToNil, "", "【】", Replacer.ReplaceValue, {"台账序号", "EXE", "PROJECT_CODE", "期数", "新规角色", "COVERAGE"}
+        BlankToNil, "", "【】", Replacer.ReplaceValue, {"台账序号", "EXE", "PROJECT_CODE", "新规角色", "COVERAGE"}
     ),
     BlankToInput1 = Table.ReplaceValue(
         BlankToInput, "", each if [BISL_ROLE] <> "JBR" then "【】" else "", Replacer.ReplaceValue, {
