@@ -7,17 +7,11 @@ let
     Sourceold = Load("DLD_Filtered"),
     Source = Table.SelectRows(CWB("Filtered_Add"), each [IS_FIMTN] <> "Y" and [IS_FIMTN] <> "【Y】"),
     Filtered = Table.SelectRows(Source, each not List.Contains({"n/a"}, Record.Field(_, Name))),
-    
-    SelfJoined = fx("SelfJoin_R")(Filtered , CWB("ForReview_" & _input), {_PK}),
+    SelfJoined = fx("SelfJoin_R")(Filtered, CWB("ForReview_" & _input), {_PK}),
     SCol = Table.SelectColumns(SelfJoined, HD, MissingField.UseNull),
-   Fn =  fx("AddStats2")(SCol),
-    Replaced = Table.ReplaceValue(
-        Fn ,
-        "",
-        each if not List.Contains({null, "", "--"}, [#"最终账簿(亿)"]) then "新增" else "",
-        Replacer.ReplaceValue,
-        {"mStats"}
-    ),
-    Sorted = fx("SortNIndex")(Replaced )
+    Fn = fx("AddStats2")(SCol),
+    Fn2 = fx("NewOrInDB")(Fn),
+    Sorted = fx("SortNIndex")(Fn2),
+    SCol2 = Table.SelectColumns(Sorted, HD, MissingField.UseNull)
 in
-    Sorted
+    SCol2

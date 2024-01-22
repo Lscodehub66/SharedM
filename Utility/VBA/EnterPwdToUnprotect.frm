@@ -15,12 +15,27 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 
 
+
 Private Sub CheckBox6_Click()
+
+End Sub
+
+Private Sub CheckBox1_Click()
 
 End Sub
 
 Private Sub cmdCancel_Click()
 Unload Me
+End Sub
+
+Private Sub CheckBox_Refresh_Click()
+If CheckBox_Refresh.Value = True Then
+cmdRefresh.Visible = True
+cmdProtect.Visible = False
+Else
+cmdRefresh.Visible = False
+cmdProtect.Visible = True
+End If
 End Sub
 
 Private Sub cmdProtect_BeforeDragOver(ByVal Cancel As MSForms.ReturnBoolean, ByVal Data As MSForms.DataObject, ByVal X As Single, ByVal Y As Single, ByVal DragState As MSForms.fmDragState, ByVal Effect As MSForms.ReturnEffect, ByVal Shift As Integer)
@@ -44,7 +59,10 @@ Dim wSheet As Worksheet
     If Err <> 0 Then
         MsgBox "Wrong Password entered. All worksheets could not " & _
         "be unprotected.", vbCritical, "Incorrect"
-        End If
+      Else
+          MsgBox "All Sheets are now uprotected", vbOKOnly, "DONE"
+        
+                                          End If
     On Error GoTo 0
     Unload Me
 End Sub
@@ -58,6 +76,33 @@ Private Sub Label5_Click()
 End Sub
 
 Private Sub Label2_Click()
+
+End Sub
+
+Private Sub cmdRefresh_Click()
+Dim wSheet As Worksheet
+
+
+    On Error Resume Next
+    For Each wSheet In Worksheets
+        If wSheet.ProtectContents = True Then
+            wSheet.Unprotect Password:=txtPwd.Text
+        End If
+    Next wSheet
+    If Err <> 0 Then
+        MsgBox "Wrong Password entered. All worksheets could not " & _
+        "be unprotected.", vbCritical, "Incorrect"
+        
+          Else
+         Result = MsgBox("All Sheets are now uprotected.Proceed to refresh?", vbYesNo, "Proceed?")
+          End If
+                      If Result = vbYes Then
+                      Unload Me
+                      ActiveWorkbook.RefreshAll
+                        
+                                          End If
+    On Error GoTo 0
+    Unload Me
 
 End Sub
 

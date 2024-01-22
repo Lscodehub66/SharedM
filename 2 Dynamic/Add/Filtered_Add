@@ -6,13 +6,10 @@ let
         each List.Contains({null, "", "--"}, [Filter_Bond]) and List.Contains({null, "", "--"}, [Filter_Exch])
     ),
     Custom1 = Table.AddColumn(Filtered, "删除及隐藏", each if [IS_FIMTN] = "Y" or [IS_FIMTN] = "【Y】" then "FIMTN" else ""),
-    Replaced = Table.ReplaceValue(
-        Custom1, "新增", each if [删除及隐藏] = "FIMTN" then "n/a" else "新增", Replacer.ReplaceValue, {"mBond", "mIssue"}
-    ),
     #"Added BISL_ROLE" =
-        if not Table.HasColumns(Replaced, "BISL_ROLE") then
+        if not Table.HasColumns(Custom1, "BISL_ROLE") then
             Table.AddColumn(
-                Replaced,
+                Custom1,
                 "BISL_ROLE",
                 each
                     if Text.Contains([联席全球协调人], "BOCOM") then
@@ -21,11 +18,13 @@ let
                         "JBR"
                     else if Text.Contains([联席全球协调人], "【") then
                         "【】"
-                    else if Table.HasColumns( Replaced, "DataSource") and [DataSource] = "BBG" then "【】" else
+                    else if Table.HasColumns(Custom1, "DataSource") and [DataSource] = "BBG" then
+                        "【】"
+                    else
                         "--"
             )
         else
-            Replaced,
+            Custom1,
     Clean_Structure = fx("Replace")(Table.DuplicateColumn(#"Added BISL_ROLE", "发行架构", "结构"), {"结构"}, "结构"),
     Added = List.Accumulate(
         {
@@ -61,10 +60,8 @@ let
         Replacer.ReplaceValue,
         {"债券简称"}
     ),
-    DM = {"mIssue", "mStats", "mBISL", "mEXE", "mCredit","债券备注"},
-    #"Operational Columns" = List.Accumulate(
-        DM, Replaced2, (x, y) => if not Table.HasColumns(x, y) then Table.AddColumn(x, y, each "", type text) else x
-    ),
+    // DM = {"mIssue", "mStats", "mBISL", "mEXE", "mCredit","债券备注"},
+    #"Operational Columns" = fx("NewOrInDB")(Replaced2),
     WeeklyAddTapSwith = CWB("WeeklyAddTap"),
     Appended =
         if WeeklyAddTapSwith = "OFF" then

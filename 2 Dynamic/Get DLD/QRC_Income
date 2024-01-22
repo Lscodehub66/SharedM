@@ -1,6 +1,6 @@
 // let LoadCode = Load("QRC_Income","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-  _numtext = "20",
+_numtext = "20",
   //**
     Source = Table.Buffer(fx("Ws")("台账24")),
     Sheetlist = Table.SelectRows(Source, each Text.StartsWith([Item], "项目收入情况") and Text.Contains([Item], _numtext )),
@@ -81,7 +81,7 @@ let
         {"融资规模.其他"}
     ),
     #"Changed Type" = Table.TransformColumnTypes(
-        其他2Replaced其他, {{"融资规模.USD", Int64.Type}, {"融资规模.其他", Int64.Type}, {"融资规模.其他2", Int64.Type}}
+        其他2Replaced其他, {{"融资规模.USD", Int64.Type}, {"融资规模.其他", Int64.Type}, {"融资规模.其他2" , Int64.Type} , {"承销费.USD" , Int64.Type},{ "承销费.其他"  , Int64.Type}}
     ),
     #"Replaced Errors" = Table.ReplaceErrorValues(#"Changed Type", {{"融资规模.其他", null}}),
     #"Inserted Division" = Table.AddColumn(
@@ -106,7 +106,7 @@ let
                 [承销费.USD]
             else
                 [承销费.其他],
-        Int64.Type
+        type number
     ),
     #"Inserted Multiplication" = Table.AddColumn(#"Added Fee", "承销费.美元", each [承销费.原币] * [QRC汇率因子], type number),
     #"Added Custom3" = Table.AddColumn(

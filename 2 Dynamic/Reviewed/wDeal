@@ -8,18 +8,12 @@ let
     Filtered = Table.SelectRows(
         RemovedCol, each ([定价日] <> null) and [ISIN] <> null and [删除及隐藏] <> "删除" and [删除及隐藏] <> "【删除】"
     ),
-    wBond = CWB(p & "wBond", "1"),
-    Merged3 = fx(
-        "Merge"
-    )(
-        Filtered, try Table.AddColumn(wBond, "mBond", each "Y", type text) otherwise wBond, "ISIN", "ISIN", {""}, {
-            ""
-        }
-    ),
-    SourceDB = fx("Combine")({Merged3, CWB("ForReview_wChart","1")}, null, {10}),
+    wBond = Load("ForReview_wBond"),
+    Merged3 = fx("Merge")(Filtered, wBond, "ISIN", "ISIN", {""}, {""}),
+    SourceDB = fx("Combine")({Merged3, CWB("ForReview_wChart", "1")}, null, {10}),
     //
-    wStats = Table.SelectRows(CWB(p & "wStats", "1"), each not List.Contains({null, "", "--"}, [#"最终账簿(亿)"])),
-    wBOCOM = Table.AddColumn(CWB(p & "wBOCOM"), "mBISL", each "Y", type text),
+    wStats = Load("ForReview_wStats"),
+    wBOCOM = Load("ForReview_wBOCOM"),
     wCredit = Load("wCredit_Reviewed"),
     Filtered_Add = CWB("Filtered_Add"),
     Merged = List.Accumulate(
@@ -36,7 +30,9 @@ let
             )(
                 x,
                 if Table.HasColumns(y{0}, y{1}) then
-                    Table.TransformColumns(y{0}, {{y{1}, each "Y"}})
+                    Table.TransformColumns(
+                        y{0}, {{y{1}, each if not List.Contains({"n/a", "已收录", "", "--"}, _) then "Y" else _}}
+                    )
                 else
                     Table.AddColumn(y{0}, y{1}, each "Y", type text),
                 y{2},
@@ -45,8 +41,11 @@ let
                 {""}
             )
     ),
+    FirstTime = Table.ReplaceValue(
+        Merged, null, each if [mCredit] = "Y" then [定价日] else null, Replacer.ReplaceValue, {"DEBUT_DATE"}
+    ),
     Custom1 = Table.TransformColumns(
-        Merged,
+        FirstTime,
         {
             {"主体评级", each if _ <> "【】" then Text.Replace(_, "【】", "【--】") else _},
             {"发行评级", each if _ <> "【】" then Text.Replace(_, "【】", "【--】") else _},
@@ -61,12 +60,11 @@ let
         }
     ),
     TF = fx("SelfJoin_IPG")(Custom1),
-    
     CN = Table.ColumnNames(TF),
     DM = {"mIssue", "mStats", "mBISL", "mEXE", "mCredit"},
     HD = List.Distinct(List.Accumulate(DM, {"mBond"} & CWB("mBond", "CN"), (x, y) => x & {y} & CWB(y, "CN"))),
     Reordered = Table.SelectColumns(TF, HD, MissingField.Ignore),
-    Replaced = Table.ReplaceValue(    Reordered, "新增","Y",Replacer.ReplaceValue,DM& {"mBond"}),
+    Replaced = Table.ReplaceValue(Reordered, "新增", "Y", Replacer.ReplaceValue, DM & {"mBond"}),
     Custom2 = fx("DBManager2")(Replaced)
 in
     Custom2

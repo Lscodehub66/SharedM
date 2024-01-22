@@ -33,7 +33,7 @@
             "兑付日",
             "到期日",
             "发行日",
-            "发行起始日",
+            "发行起始日","DEBUT_DATE",
             "定价日",
             "假设KYC到期日",
             "行权兑付日",
@@ -79,7 +79,7 @@
         Num0 = {"FEE", "Relevance", "Year.Num", "兑付日.YearNum", "账户数", "金额 (MM USD)", "发行数", "DayOfWeek.Num"}
             & List.Select(CN_RNSource, each Text.StartsWith(_, "CT_") or Text.StartsWith(_, "承销费")),
         Num = {
-            "IPT_YIELD",
+            "IPT_YIELD","承销费.其他",
             "Count_BISLDeal",
             "Count_JBR",
             "Count_JGC",

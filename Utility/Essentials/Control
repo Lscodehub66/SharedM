@@ -1,4 +1,5 @@
 let
+
     M1 = Date.From(fx("Parameter")("Monday")) ?? Date.StartOfWeek(Date.From(DateTime.FixedLocalNow()), Day.Monday),
     Record = [
         wNIMStart.Date = #date(2013, 1, 1),

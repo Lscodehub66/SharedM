@@ -9,7 +9,7 @@ let
         let
             Getisin = fx("DMIMissing")(Source),
             Custom2 = fx("Merge")(Getisin, bbg, "ISIN", "ISIN", {""}, {""}),
-            ACol3 =
+            ACol3 = 
                 if Table.HasColumns(Custom2, "DataSource") then
                     Table.ReplaceValue(Custom2, "DMI", "BBG", Replacer.ReplaceValue, {"DataSource"})
                 else
