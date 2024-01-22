@@ -17,7 +17,7 @@ let
         else
             TF,
     //  AddedIndex = Table.AddIndexColumn(GetRtg, "Index",1,1),
-    Merged = fx("Merge")(GetRtg, CWB("SBLCUniverse"), "备证行全称", "备证行全称", {"SortValue"}),
+    Merged = fx("Merge")(GetRtg, CWB("mSBLC"), "备证行全称", "备证行全称", {"SortValue"}),
     Replaced = Table.ReplaceValue(   Merged ,"--/--/--","",Replacer.ReplaceValue,{"备证行评级"}),  
     Sorted = Table.Sort(    Replaced , {{"SortValue", Order.Descending}}),
     #"Added Index" = Table.AddIndexColumn(Sorted, "Index", 1, 1),

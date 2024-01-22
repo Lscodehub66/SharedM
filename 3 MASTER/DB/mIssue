@@ -8,5 +8,6 @@ let
     Parameter = fx("Parameter")("RemoveFrom_DB") ?? "",
     Added = if Text.Contains(Parameter, "Stop") then DB_Source else fx("AddToDB")(DB, Load("wDynamicPQ"), Parameter),
     Managed = fx("DBManager3")(Added, "Check")
+
 in
-    Managed
+    Managed 

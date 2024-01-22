@@ -16,7 +16,7 @@ let
             ""
         }
     ),
-    SourceDB = fx("Combine")({Merged3, CWB("ForReview_wChart")}, null, {10}),
+    SourceDB = fx("Combine")({Merged3, CWB("ForReview_wChart","1")}, null, {10}),
     //
     wStats = Table.SelectRows(CWB(p & "wStats", "1"), each not List.Contains({null, "", "--"}, [#"最终账簿(亿)"])),
     wBOCOM = Table.AddColumn(CWB(p & "wBOCOM"), "mBISL", each "Y", type text),
@@ -61,10 +61,12 @@ let
         }
     ),
     TF = fx("SelfJoin_IPG")(Custom1),
+    
     CN = Table.ColumnNames(TF),
     DM = {"mIssue", "mStats", "mBISL", "mEXE", "mCredit"},
     HD = List.Distinct(List.Accumulate(DM, {"mBond"} & CWB("mBond", "CN"), (x, y) => x & {y} & CWB(y, "CN"))),
     Reordered = Table.SelectColumns(TF, HD, MissingField.Ignore),
-    Custom2 = fx("DBManager2")(Reordered)
+    Replaced = Table.ReplaceValue(    Reordered, "新增","Y",Replacer.ReplaceValue,DM& {"mBond"}),
+    Custom2 = fx("DBManager2")(Replaced)
 in
     Custom2

@@ -1,8 +1,14 @@
-// let LoadCode = Load("DLD_Conso2","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+// let LoadCode = Load("DLD_Conso_Filter","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-     DLDSource = Load("DLD_DMI"),
-    CWBSource = fx("DMI2")( CWB("DLD_DMI"),"Y"),
-    Fn = fx("ShowFilter")(CWBSource),
+    DLDSource = Load("DLD_DMI"),
+    CWBSource = fx("DMI2")(CWB("DLD_DMIBBG"), "Y"),
+    #"//GNG_Multi" = if fx("Parameter")("MultiSource") = "ON" then "GO" else "NO-GO",
+    Crossroad =
+        if #"//GNG_Multi" <> "GO" then
+            Table.RenameColumns(CWBSource, {{"债项评级", "发行评级"}, {"穆迪/标普", "主体评级"}}, MissingField.UseNull)
+        else
+            fx("CheckerBBG")(CWBSource),
+    Fn = fx("ShowFilter")(Crossroad),
     Fn1 = Load("fxIsFIMTN")(Fn),
     Fn1_R = Table.ReplaceValue(
         Fn1, "Y", each if [Filter_Bond] <> "" or [Filter_Exch] <> "" then "" else "【Y】", Replacer.ReplaceValue, {
@@ -50,6 +56,7 @@ let
                 ACol
     ),
     _HD = {
+        "Timestamp",
         "Index",
         "Filter_Bond",
         "Filter_Exch",
@@ -64,12 +71,24 @@ let
         "mCredit"
     },
     #"Filtered Rows" = Table.SelectRows(Fn2, each List.Contains({"", "*", "**"}, [Filter_Credit])),
+    // 只显示database没有的isin
+    #">>>ShowAll" =
+        if fx("Parameter")("ShowAll") = "OFF" then
+            Table.SelectRows(#"Filtered Rows", each [mIssue] = "新增")
+        else
+            #"Filtered Rows",
     Revised = fx(
         "SelfJoin_R"
     )(
-        #"Filtered Rows", Table.SelectColumns(CWB("DLD_Conso"), _HD, MissingField.Ignore), {"ISIN"}
+        #">>>ShowAll", Table.SelectColumns(CWB("DLD_Conso_Filter"), _HD, MissingField.Ignore), {"ISIN"}
     ),
-    #"Sorted Rows" = fx("SortNIndex")(Revised),
+    Stamped = Table.AddColumn(
+        Table.RemoveColumns(Revised, {"Timestamp"}, MissingField.Ignore),
+        "Timestamp",
+        each DateTime.LocalNow(),
+        type datetime
+    ),
+    #"Sorted Rows" = fx("SortNIndex")(Stamped),
     #"Reordered" = fx("1st")(#"Sorted Rows", _HD)
 in
     #"Reordered"

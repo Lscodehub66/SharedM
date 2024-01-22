@@ -58,13 +58,13 @@
         // Revalidate mCurated
 
         #"Replaced WeeklyMissing" =
-            if List.ContainsAll(CN_Source, {"SPECIALs", "DataSource"}) then
+            if List.ContainsAll(CN_Source, {"债券备注", "DataSource"}) then
                 Table.ReplaceValue(
                     _CROSSROAD ,
-                    each [SPECIALs],
-                    each if [DataSource] = "BBG" then "wDMI Missing(BBG)" else [SPECIALs],
+                    each [债券备注],
+                    each if [DataSource] = "BBG" then "wDMI Missing(BBG)" else [债券备注],
                     Replacer.ReplaceValue,
-                    {"SPECIALs"}
+                    {"债券备注"}
                 )
             else
                 _CROSSROAD ,

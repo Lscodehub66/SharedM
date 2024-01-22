@@ -1,0 +1,76 @@
+//let LoadCode = Load("DLD_QRC_Income24","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    _numtext = "2024",
+    //**
+    Source = Table.Buffer(fx("Ws")("台账24")),
+    Sheetlist = Table.SelectRows(Source, each Text.StartsWith([Item], "项目收入情况") and Text.Contains([Item], _numtext)),
+    #"Added Custom" = Table.AddColumn(Sheetlist, "Custom", each fx("QRCIncome_HD")([Data]), type table),
+    #"Added Custom0" = Table.AddColumn(
+        #"Added Custom",
+        "Filtered",
+        each
+            fx(
+                "RemoveBlankColumns"
+            )(
+                Table.SelectRows(
+                    [Custom], (Magic) => not List.Contains({null, "", "--"}, Record.Field(Magic, "ISIN"))
+                )
+            ),
+        type table
+    ),
+    #"Added Custom1" = Table.AddColumn(
+        #"Added Custom0", "HD", each List.Buffer(Table.ColumnNames([Filtered])), type list
+    ),
+    #">>ExpHD" = List.Buffer(List.Sort(List.Distinct(List.Union(#"Added Custom1"[HD])), Order.Ascending)),
+    #"Removed Columns" = Table.Buffer(Table.SelectColumns(#"Added Custom1", {"Filtered"})),
+    Custom1 = Table.ExpandTableColumn(#"Removed Columns", "Filtered", #">>ExpHD"),
+    #"Removed Columns2" = fx("Data")(Table.RemoveColumns(Custom1, {"费用Due Date", "费用overdue"}, MissingField.Ignore)),
+    #"Added Custom3" = Table.AddColumn(
+        #"Removed Columns2", "IS_JGC", each if [担任角色] = "JGC" then "JGC" else "NON-JGC", type text
+    ),
+    Custom2 = fx("PRJSync")(#"Added Custom3", "序号", "项目定价日", "PRJ对账号"),
+    #"Added Conditional Column" = Table.AddColumn(
+        Custom2, "IS_BnD", each if Text.Contains([#"B&D/LeftLead"], "B&D") then [#"B&D/LeftLead"] else "", type text
+    ),
+    #"Added Conditional Column1" = Table.AddColumn(
+        #"Added Conditional Column",
+        "IS_LEAD",
+        each if Text.Contains([#"B&D/LeftLead"], "Lead") then "Left-lead" else "",
+        type text
+    ),
+    #"Sorted Rows1" = Table.Sort(#"Added Conditional Column1", {{"PRJ对账号", Order.Ascending}}),
+    #"Added Index" = Table.AddIndexColumn(#"Sorted Rows1", "Index", 1, 1, Int64.Type),
+    Sorted = fx("PresentNoData")(Table.Sort(#"Added Index", {{"PRJ对账号", Order.Descending}})),
+    SCol = Table.SelectColumns(
+        Sorted,
+        {
+            "Index",
+            "项目定价日",
+            "ISIN",
+            "Project Name",
+            "项目名称(集团全称)",
+            "团队",
+            "IS_JGC",
+            "IS_BnD",
+            "IS_LEAD",
+            "新规角色",
+            "币种",
+            "承销费.原币",
+            "承销费.美元",
+            "QRC汇率因子",
+            "项目状态",
+            "序号",
+            "PRJ对账号"
+        },
+        MissingField.Ignore
+    ),
+    Renamed = Table.RenameColumns(Output, {"项目定价日", "定价日"}, MissingField.Ignore),
+    Output =
+        let
+            name = "DLD_QRC_Income24",
+            Crossroad = if fx("Parameter")("GPS") = "Remote" then CWB(name) else try Renamed otherwise CWB(name),
+            Filtered = Table.SelectRows(Crossroad, each Date.ToText([定价日], "yyyy") = _numtext)
+        in
+            Filtered
+in
+    Output

@@ -17,5 +17,12 @@ let
     Custom1 = fx("Combine")({#"Removed Columns", #"Expanded Data"}),
     TF = Table.TransformColumns(Custom1, {{"DMI字段", each if _ <> "" then "【" & _ & "】" else _}}),
      Custom2 = if Table.RowCount(TF) = 0 then Table.InsertRows(TF,0, {[DMI字段 =  "**DMI字段检查**", 状态 = "OK"]}) else TF
+    , Stamped = Table.AddColumn(
+        Table.RemoveColumns( Custom2 , {"Timestamp"}, MissingField.Ignore),
+        "Timestamp",
+        each DateTime.LocalNow(),
+        type datetime
+    )
+
 in
- Custom2 
+ Stamped 

@@ -1,16 +1,27 @@
 (TableName as table) =>
     let
         Source = TableName,
+        NewCol = {"最终账簿(亿)", "账户数", "地区分布", "类型分布"},
+        RefCol = {"认购额(亿)", "投资者账户数", "投资者分布", "投资者类型"},
+        Zipped = List.Zip({RefCol, NewCol}),
         PrepNumCol = List.Accumulate(
             {"认购额(亿)", "发行规模(亿)", "投资者账户数"},
             Source,
             (x, y) => if not Table.HasColumns(x, y) then Table.AddColumn(x, y, each null, type number) else x
         ),
         Replaced = Table.ReplaceValue(PrepNumCol, null, "", Replacer.ReplaceValue, {"投资者类型", "投资者分布"}),
-        A1 = Table.AddColumn(Replaced, "最终账簿(亿)", each Number.Round([#"认购额(亿)"], 1), type number),
-        A2 = Table.AddColumn(A1, "账户数", each Number.Round([投资者账户数], 1), type number),
-        DupeCol = Table.DuplicateColumn(Table.DuplicateColumn(A2, "投资者分布", "地区分布"), "投资者类型", "类型分布"),
-        Cleaned = fx("Replace")(DupeCol, {"地区分布", "类型分布"}, "投资者"),
-       Rp = Table.ReplaceValue(Cleaned,"，，","，",Replacer.ReplaceText,{"地区分布", "类型分布"})
+        DupeCol = List.Accumulate(Zipped, Replaced, (x, y) => Table.DuplicateColumn(x, y{0}, y{1})),
+        CrossRoad = if Table.HasColumns(Source, NewCol) then Source else DupeCol,
+        TF = Table.TransformColumns(
+            CrossRoad,
+            {
+                {"地区分布", each Text.Upper(Text.Trim(_)), type text},
+                {"类型分布", each Text.Upper(Text.Trim(_)), type text},
+                {"最终账簿(亿)", each Number.Round(_, 1), type number},
+                {"账户数", each Number.Round(_, 1), type number}
+            }
+        ),
+        Cleaned = fx("Replace")(TF, {"地区分布", "类型分布"}, "投资者"),
+        Rp = Table.ReplaceValue(Cleaned, "，，", "，", Replacer.ReplaceText, {"地区分布", "类型分布"})
     in
-       Rp 
+        Rp

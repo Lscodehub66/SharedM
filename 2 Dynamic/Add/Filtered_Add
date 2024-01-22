@@ -1,6 +1,6 @@
 // let LoadCode = Load("Filtered_Add","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-    Source1 = CWB("DLD_Conso", "1"),
+    Source1 = CWB("DLD_Conso_Filter"),
     Filtered = Table.SelectRows(
         Source1,
         each List.Contains({null, "", "--"}, [Filter_Bond]) and List.Contains({null, "", "--"}, [Filter_Exch])
@@ -21,27 +21,16 @@ let
                         "JBR"
                     else if Text.Contains([联席全球协调人], "【") then
                         "【】"
-                    else
+                    else if Table.HasColumns( Replaced, "DataSource") and [DataSource] = "BBG" then "【】" else
                         "--"
             )
         else
             Replaced,
-    BBG_HD = Get("Header_Exp_Dynamic_BBG"),
-    BBG_HDExp = List.Transform(BBG_HD, each if List.Contains({"计息基准", "SBLC提供者"}, _) then "Dummy" & _ else _),
-    BBG_Merged = fx("Merge")(#"Added BISL_ROLE", CWB("DLD_BBG_Corp"), "Check", "Check", BBG_HD, BBG_HDExp),
-    #"CrossChecked BBG" = fx("CrossCheck")(BBG_Merged),
-    // End of MultiSource
-    #"//GNG_Multi" = if fx("Parameter")("MultiSource") = "ON" then "GO" else "NO-GO",
-    Crossroad =
-        if #"//GNG_Multi" <> "GO" then
-            Table.RenameColumns(#"Added BISL_ROLE", {{"债项评级", "发行评级"}, {"穆迪/标普", "主体评级"}}, MissingField.UseNull)
-        else
-            #"CrossChecked BBG",
-    Custom2 = fx("RCol")(Crossroad),
-    Clean_Structure = fx("Replace")(Table.DuplicateColumn(Custom2, "发行架构", "结构"), {"结构"}, "结构"),
+    Clean_Structure = fx("Replace")(Table.DuplicateColumn(#"Added BISL_ROLE", "发行架构", "结构"), {"结构"}, "结构"),
     Added = List.Accumulate(
         {
             "Reopen",
+            "BnD",
             "SBLC",
             "Exchange",
             "BankBranch",
@@ -52,7 +41,7 @@ let
             "CpnString",
             "IPGString",
             "FPGString",
-            "Price_FPGRange",
+            "PriceFinal",
             "SpdTighten",
             "PtTighten",
             "Tenor",
@@ -72,7 +61,7 @@ let
         Replacer.ReplaceValue,
         {"债券简称"}
     ),
-    DM = {"mIssue", "mStats", "mBISL", "mEXE", "mCredit"},
+    DM = {"mIssue", "mStats", "mBISL", "mEXE", "mCredit","债券备注"},
     #"Operational Columns" = List.Accumulate(
         DM, Replaced2, (x, y) => if not Table.HasColumns(x, y) then Table.AddColumn(x, y, each "", type text) else x
     ),
@@ -91,6 +80,12 @@ let
         try Table.ReorderColumns(Appended, CWB("Filtered_Add", "CN"), MissingField.Ignore) otherwise Appended, HD2
     ),
     Checked = fx("CheckNDupe")(Reordered),
-    Sorted = fx("SortNIndex")(Checked)
+    Stamped = Table.AddColumn(
+        Table.RemoveColumns(Checked, {"Timestamp"}, MissingField.Ignore),
+        "Timestamp",
+        each DateTime.LocalNow(),
+        type datetime
+    ),
+    Sorted = fx("SortNIndex")(Stamped)
 in
     Sorted

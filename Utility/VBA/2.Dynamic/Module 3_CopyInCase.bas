@@ -1,10 +1,11 @@
 
 Sub CopyIncase()
-    Call Copytbl("wBond")
+    Call Copytbl("wIssue")
     Call Copytbl("wStats")
     Call Copytbl("wCredit")
     Call Copytbl("wChart")
     Call Copytbl("wBOCOM")
+    Call Copytbl("wBond")
 End Sub
 Function Copytbl(nameinput As String)
 
@@ -18,11 +19,14 @@ Function Copytbl(nameinput As String)
 
 
 
-    tblname = "ForReview_" & nameinput
+       If Not nameinput = "wNews_Input" Then tblname = "ForReview_" & nameinput Else tblname = nameinput
     suffix = "[#All]"
     tbl = tblname & suffix
     num = Range(tbl).Rows.Count + 4
 
+    
+    If Not IsEmpty(Range(tblname & "[Index]")) Then
+    
     Application.ScreenUpdating = False
 
     Application.Goto Reference:=tbl
@@ -36,9 +40,11 @@ Function Copytbl(nameinput As String)
     Selection.Font.Color = RGB(167, 167, 167)
 
     Range("A2").Select
-
+End If
 
 End Function
+
+
 
 
 

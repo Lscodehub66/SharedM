@@ -1,0 +1,7 @@
+// DimDate
+let
+    Text = "SCol = Table.SelectColumns(Filtered, 需填写 , MissingField.UseNull) in SCol ",
+    Old = Text.BeforeDelimiter(Load("DLD_DMI_Missing", "Code"), "//**"),
+    EVA = Expression.Evaluate( Old & Text, #shared)
+in
+    EVA

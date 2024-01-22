@@ -7,8 +7,9 @@ let
     Sourceold = Load("DLD_Filtered"),
     Source = Table.SelectRows(CWB("Filtered_Add"), each [IS_FIMTN] <> "Y" and  [IS_FIMTN] <> "【Y】" ),
     Filtered = Table.SelectRows(Source, each not List.Contains({"n/a"}, Record.Field(_, Name))),
-    Custom2 = fx("SelfJoin_R")(Filtered, CWB("ForReview_" & _input), {_PK}),
-    SCol = Table.SelectColumns(Custom2, HD, MissingField.UseNull),
-    Sorted = fx("SortNIndex")(SCol)
+       SCol = Table.SelectColumns(  Filtered, HD, MissingField.UseNull),
+    Custom2 = fx("SelfJoin_R")( SCol, CWB("ForReview_" & _input), {_PK}),
+ 
+    Sorted = fx("SortNIndex")(    Custom2)
 in
     Sorted

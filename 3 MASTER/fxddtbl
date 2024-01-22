@@ -15,11 +15,12 @@
         DistinctedSCol = Table.Distinct(
             Table.SelectColumns(IfThenFilter, if _Dependent is null then {_IndirectName} else {_Dependent})
         ),
+       NoNA =  Table.SelectRows(DistinctedSCol, each not List.Contains(  {"", "--", "【】", null}, Record.Field(_,Table.ColumnNames(DistinctedSCol){0}))),
         IfThenRename =
             if _Dependent = null and _Preceding = null then
-                DistinctedSCol
+                NoNA
             else
-                Table.RenameColumns(DistinctedSCol, {{_Dependent, _IndirectName}}),
+                Table.RenameColumns(NoNA, {{_Dependent, _IndirectName}}),
         MergedQ =
             try
                 fx(

@@ -3,10 +3,16 @@
     let
         //NameInput = "", PathInput = null,
         GPS = try Table.Buffer(Excel.CurrentWorkbook(){[Name = "GPS"]}[Content])[Column1]{0} otherwise "Remote",
+          _csvkey = { "CSV","CSVDATE"},
+        _pathkey ={null, "1", "Code"} &   _csvkey,
+     
+        
+        
+        
         Name_File =
             if NameInput = "Control_Date" then
                 "Control"
-            else if PathInput = "CSV" then
+            else if List.Contains(_csvkey,PathInput ) then
                 NameInput & ".csv"
             else
                 Text.Replace(NameInput, ".", "_"),
@@ -17,7 +23,7 @@
             else
                 "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\",
         Path_Folder =
-            if not List.Contains({null, "1", "Code", "CSV"}, PathInput) then
+            if not List.Contains( _pathkey, PathInput) then
                 PathInput
             else
                 Folder_Root & "SharedM",
@@ -36,7 +42,8 @@
         EVA_Code = Expression.Evaluate(File_Code, #shared),
         EVA = try EVA_Existing otherwise EVA_Code,
         //
-        Output = if PathInput = "Code" or PathInput = "1" then File_Code else if PathInput = "CSV" then AddedKey else EVA,
+        Output = if PathInput = "Code" or PathInput = "1" then File_Code else if PathInput = "CSV" then AddedKey 
+      else  if PathInput = "CSVDATE" then fx("Data")(AddedKey) else EVA,
         SCol_Output =
             if ColList = null or ColList = {null} then
                 Output

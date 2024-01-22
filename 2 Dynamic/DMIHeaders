@@ -5,7 +5,7 @@ let
     Custom3 = fx(
         "Combine"
     )(
-        {Table.FromRows(Get("Rename_DMI_Connect"), {"DMI字段", "状态"}), Custom2, Custom1}, {"DMI字段"}
+        {Table.FromRows(Get("Rename_DMI_Connect"), {"DMI字段", "状态"}), Custom2, Custom1}, {"DMI字段"},{2}
     ),
     #"Filtered Rows" = Table.SelectRows(
         Custom3, each not List.Contains({"Renamed", "OK"}, [状态], Comparer.OrdinalIgnoreCase)

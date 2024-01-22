@@ -1,14 +1,23 @@
 // let LoadCode = Load("ForReview_wStats","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
- let
- _input = "wStats",
+let
+    _input = "wStats",
     _PK = "Check",
     Name = "m" & Text.AfterDelimiter(_input, "w"),
     HD = fx("ForReviewHD")(_input),
-   Sourceold = Load("DLD_Filtered"),
-    Source = Table.SelectRows(CWB("Filtered_Add"), each [IS_FIMTN] <> "Y" and  [IS_FIMTN] <> "【Y】" ),
+    Sourceold = Load("DLD_Filtered"),
+    Source = Table.SelectRows(CWB("Filtered_Add"), each [IS_FIMTN] <> "Y" and [IS_FIMTN] <> "【Y】"),
     Filtered = Table.SelectRows(Source, each not List.Contains({"n/a"}, Record.Field(_, Name))),
-    SelfJoined = fx("SelfJoin_R")(Filtered, CWB("ForReview_" & _input), {_PK}),
-    SCol = Table.SelectColumns(    SelfJoined, HD, MissingField.UseNull),
-    Sorted = fx("SortNIndex")(SCol)
+    
+    SelfJoined = fx("SelfJoin_R")(Filtered , CWB("ForReview_" & _input), {_PK}),
+    SCol = Table.SelectColumns(SelfJoined, HD, MissingField.UseNull),
+   Fn =  fx("AddStats2")(SCol),
+    Replaced = Table.ReplaceValue(
+        Fn ,
+        "",
+        each if not List.Contains({null, "", "--"}, [#"最终账簿(亿)"]) then "新增" else "",
+        Replacer.ReplaceValue,
+        {"mStats"}
+    ),
+    Sorted = fx("SortNIndex")(Replaced )
 in
     Sorted

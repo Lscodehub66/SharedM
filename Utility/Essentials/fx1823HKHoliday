@@ -1,0 +1,7 @@
+
+let
+    Text = "(_input as text) => let ",
+    Old = Text.AfterDelimiter(Load("1823HKHoliday", "Code"), "//**"),
+    EVA = Expression.Evaluate(Text & Old, #shared)
+in
+    EVA

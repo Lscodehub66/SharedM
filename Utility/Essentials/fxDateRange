@@ -1,8 +1,9 @@
 (_input as list, optional _Mergeinput as list) =>
     let
-        Source = Load("Control"),
-        Start = Record.Field(Source, _input{0}),
-        End = Record.Field(Source, _input{1}),
+        First = if Value.Type(_input{0}) = type date then _input{0} else fx("Control." & _input{0}),
+        Second = if Value.Type(_input{1}) = type date then _input{1} else fx("Control." & _input{1}),
+        Start = List.Min({First, Second}),
+        End = List.Max({First, Second}),
         DateList = List.Reverse(List.Generate(() => Start, each _ <= End, each Date.AddDays(_, 1))),
         Datetbl = #table(type table [A_Date = date], List.Transform(DateList, each {_})),
         Fulldatetbl =

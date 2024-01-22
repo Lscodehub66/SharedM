@@ -1,0 +1,42 @@
+(TableName as table) =>
+    let
+        Source = TableName,
+        NewCol = {"交割天数", "交割T+n", "交割日"},
+        Prep = Table.RemoveColumns(Source, NewCol, MissingField.Ignore),
+        tbl = Table.Buffer(Load("CNHKDate18-24", "CSVDATE")),
+        Fn = (start as nullable date, end as nullable date) =>
+            let
+                First = List.Min({start, end}),
+                Second = List.Max({start, end}),
+                DateList = List.Reverse(List.Generate(() => First, each _ <= Second, each Date.AddDays(_, 1))),
+                IsNull =
+                    List.Contains({start, end}, null)
+                    or List.Max({start, end}) > List.Max(tbl[A_Date])
+                    or List.Max({start, end}) < List.Min(tbl[A_Date]),
+                Filtered = Table.SelectRows(tbl, each List.Contains(DateList, [A_Date])),
+                #"Filtered Rows" = Table.SelectRows(Filtered, each [大陆及香港假期] = ""),
+                Custom1 =
+                    if IsNull = true then
+                        null
+                    else if start > end then
+                        Table.RowCount(#"Filtered Rows") * (-1)
+                    else
+                        Table.RowCount(#"Filtered Rows")
+            in
+                Custom1,
+        #"Added T+n" = Table.AddColumn(Prep, "交割天数", each Fn([定价日], [起息日期]) - 1, Int64.Type),
+        #"Added Col" = Table.AddColumn(
+            #"Added T+n",
+            "交割T+n",
+            each
+              if List.Contains({1..8}, [交割天数]) then
+                    "T+" & Number.ToText([交割天数])
+                else
+                    "【】" ,
+            type text
+        ),
+        #"Added Col1" = Table.AddColumn(
+            #"Added Col", "交割日", each if not Text.Contains([#"交割T+n"], "【") then [起息日期] else null, type date
+        )
+    in
+        #"Added Col1"

@@ -1,0 +1,10 @@
+let
+    Source = Load("DLD_DMI"),
+    BBGtbl = Load("DLD_BBG_Corp"),
+    BBG_HD = Get("Header_Exp_Dynamic_BBG"), 
+        BBG_HDExp = List.Transform(BBG_HD, each if List.Contains({"计息基准", "SBLC提供者"}, _) then "Dummy" & _ else _),
+        BBG_Merged = fx("Merge")(Source, BBGtbl, "Check", "Check", BBG_HD, BBG_HDExp),
+    Replaced = Table.ReplaceValue(BBG_Merged, "","【】", Replacer.ReplaceValue, {"发行人"})
+        
+in
+      Replaced

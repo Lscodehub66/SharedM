@@ -1,0 +1,22 @@
+
+        let
+          holiday_source = Json.Document(
+            Web.Contents(
+              "https://sp1.baidu.com/8aQDcjqpAAV3otqbppnN2DJv/api.php?&query=法定节假日&tn=wisetpl&format=json&resource_id=39042&oe=utf8"
+            )
+          ), 
+          holidayList = holiday_source[data]{0}[holiday], 
+          holidayTable1 = Table.FromRecords(List.Combine(List.Transform(holidayList, each _[list]))), 
+          holidayTable2 = Table.TransformColumnTypes(
+            holidayTable1, 
+            {{"date", type date}, {"name", type text}}
+          ), 
+          holidayTable3 = Table.Group(
+            holidayTable2, 
+            {"date"}, 
+            {"name", each Text.Combine([name], ","), type text}
+          ),  
+      
+    #"Filtered Rows" = Table.SelectRows(holidayTable3, each [date] > #date(2013, 1, 1)),
+    #"Renamed Columns1" = Table.RenameColumns(#"Filtered Rows",{{"name", "假期简称"}, {"date", "Date"}})
+    in #"Renamed Columns1"

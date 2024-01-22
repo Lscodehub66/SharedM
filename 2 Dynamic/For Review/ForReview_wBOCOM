@@ -23,7 +23,7 @@ let
             )
         else
             Source,
-    DLD_QRC = CWB("QRC_Income24"),
+    DLD_QRC = CWB("DLD_QRC_Income24"),
     MergedQ = try fx("Merge")(Prep, DLD_QRC, "ISIN", "ISIN", {""}, {""}) otherwise Prep,
     Custom1 = Table.RenameColumns(MergedQ, {{"序号", "台账序号"}}, MissingField.Ignore),
     Filtered = Table.SelectRows(

@@ -1,9 +1,9 @@
 //let LoadCode = Load("DLD_DMI","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-    DMI = Table.AddColumn(fx("Wstbl")("DOWNLOAD","美元债一级"), "DataSource", each "DMI", type text),
+    DMI = Table.AddColumn(fx("Wstbl")("DOWNLOAD", "美元债一级"), "DataSource", each "DMI", type text),
     Source = Table.Buffer(DMI),
     CN_Source = List.Buffer(Table.ColumnNames(Source)),
-    bbg = fx("Ws")("DOWNLOAD","tbl_dmi_isin"),
+    bbg = fx("Ws")("DOWNLOAD", "tbl_dmi_isin"),
     //
     ToCombine =
         let
@@ -19,7 +19,8 @@ let
             Table.Buffer(SCol),
     Date = fx("DateRange")({"PreviousMon.Date", "Sunday.Date"}),
     #"//GNG_Multi" = if fx("Parameter")("MultiSource") = "ON" then "GO" else "NO-GO",
-    Appended1 = if #"//GNG_Multi" <> "GO" then Source else Table.Combine({ToCombine, Source})
-    
+    Appended1 = if #"//GNG_Multi" <> "GO" then Source else Table.Combine({ToCombine, Source}),
+    Checked =   fx("CheckNDupe")( Appended1 ),
+    Stamped = fx("1st")(Table.AddColumn(        Checked , "Timestamp", each DateTime.LocalNow(),type datetime),{"Timestamp"})
 in
-    Appended1
+    Stamped

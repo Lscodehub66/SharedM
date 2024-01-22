@@ -7,7 +7,7 @@
         _tblname = Text.Replace(Text.Upper(Text.Trim(_inputname)), "_", ""),
         NamedList = {
             "MONDAY",
-            "UPDATORWEEKLY",
+            "UPDATORWEEKLY","SHOWALL",
             "REMOVEFROMDB",
             "澳门FILTER",
             "香港FILTER",

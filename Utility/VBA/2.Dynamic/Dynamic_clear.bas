@@ -18,7 +18,7 @@ Private Sub Worksheet_Change(Byval Target As Range)
         ' changed.
         ' Place your code here.
 
-
+        Call BakcupCopy
 
         Sheet3.Activate
         Application.Goto Reference:="FridayRun"
@@ -39,15 +39,35 @@ Private Sub Worksheet_Change(Byval Target As Range)
         Selection.ClearContents
 
 
-
-
-
-        Sheet1.Activate
-        Application.Goto Reference:="ForReview_wBond"
+        Worksheets("3_wBond").Activate
+        ActiveSheet.Range("D6:Z60").Select
         Selection.ClearContents
+        ActiveSheet.Range("B2").Select
 
-        Application.Goto Reference:="Step3Button"
+        Worksheets("wIssue").Activate
+        ActiveSheet.Range("D6:Z60").Select
         Selection.ClearContents
+        ActiveSheet.Range("B2").Select  
+
+        Worksheets("wStats").Activate
+        ActiveSheet.Range("D6:Z60").Select
+        Selection.ClearContents
+        ActiveSheet.Range("B2").Select
+
+        Worksheets("wBOCOM").Activate
+        ActiveSheet.Range("D6:Z60").Select
+        Selection.ClearContents
+        ActiveSheet.Range("B2").Select
+
+        Worksheets("wCredit").Activate
+        ActiveSheet.Range("D6:Z60").Select
+        Selection.ClearContents
+        ActiveSheet.Range("B2").Select
+
+        Worksheets("wChart").Activate
+        ActiveSheet.Range("D6:Z60").Select
+        Selection.ClearContents
+        ActiveSheet.Range("B2").Select
 
         Sheet7.Activate
         Application.Goto Reference:="DLD_BBG_Corp"
@@ -58,26 +78,13 @@ Private Sub Worksheet_Change(Byval Target As Range)
         Application.Goto Reference:="DLD_DMI"
         Selection.ClearContents
 
-        Sheet8.Activate
-        Application.Goto Reference:="ForReview_wIssue"
-        Selection.ClearContents
 
-        Sheet9.Activate
-        Application.Goto Reference:="ForReview_wStats"
-        Selection.ClearContents
 
         Sheet11.Activate
         Application.Goto Reference:="wNews_Input_ToClear"
         Selection.ClearContents
 
-        Sheet14.Activate
-        Application.Goto Reference:="ForReview_wCredit"
-        Selection.ClearContents
 
-
-        Sheet15.Activate
-        Application.Goto Reference:="ForReview_wBOCOM"
-        Selection.ClearContents
 
         Sheet16.Activate
         Application.Goto Reference:="Filtered_Add"
@@ -92,9 +99,6 @@ Private Sub Worksheet_Change(Byval Target As Range)
         Application.Goto Reference:="FinalButton"
         Selection.ClearContents
 
-        Sheet20.Activate
-        Application.Goto Reference:="ForReview_wChart"
-        Selection.ClearContents
 
         Sheet3.Select
         Range("C6").Select
@@ -103,3 +107,5 @@ Private Sub Worksheet_Change(Byval Target As Range)
 
     End If
 End Sub
+
+

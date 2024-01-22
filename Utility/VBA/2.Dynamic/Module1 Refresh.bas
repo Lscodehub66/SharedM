@@ -3,7 +3,7 @@ Sub ShowStep1MsgBox()
     Dim timeDelay As Double
     Dim msgBox As Object
 
-    msgBoxText = "Loading data from <1.Weekly Download.xlsx>"
+    msgBoxText = "Step 1 Loading data frrom <1.Weekly Download.xlsx>"
 
     timeDelay = 5
 
@@ -16,12 +16,12 @@ Sub ShowStep2MsgBox()
     Dim timeDelay As Double
     Dim msgBox As Object
 
-    msgBoxText = "Applying transformation on filtered deal list."
+    msgBoxText = "Step 2 Loading. Filter and transform"
 
     timeDelay = 5
 
     Set msgBox = CreateObject("WScript.Shell")
-    msgBox.Popup msgBoxText, timeDelay, "Step1 Msg", vbInformation
+    msgBox.Popup msgBoxText, timeDelay, "Step2 Msg", vbInformation
 End Sub
 
 Sub RefreshSource()
@@ -35,7 +35,7 @@ Sub RefreshSource()
     ActiveWorkbook.Connections("Query - DLD_DMI").Refresh
     ActiveWorkbook.Connections("Query - DMIHeaders_Check").Refresh
     ActiveWorkbook.Connections("Query - DimMonday").Refresh
-    ActiveWorkbook.Connections("Query - QRC_Income24").Refresh
+    ActiveWorkbook.Connections("Query - DLD_QRC_Income24").Refresh
     Call ShowStep1MsgBox
 
 
@@ -43,7 +43,7 @@ End Sub
 
 
 
-Sub RefreshDownload()
+Sub RefreshForFilter()
     '
     ' RefreshDownload Macro
     '
@@ -51,6 +51,7 @@ Sub RefreshDownload()
     ActiveWorkbook.Connections("Query - DMIHeaders").Refresh
     ActiveWorkbook.Connections("Query - DLD_Conso").Refresh
     ActiveWorkbook.Connections("Query - DLD_Filter_Credit").Refresh
+    Call ShowStep2MsgBox
 
 End Sub
 
@@ -59,7 +60,7 @@ Sub RefreshAdd()
     ' RefreshDownload Macro
     '
     ActiveWorkbook.Connections("Query - Filtered_Add").Refresh
-    Call ShowStep2MsgBox
+
 
 End Sub
 
