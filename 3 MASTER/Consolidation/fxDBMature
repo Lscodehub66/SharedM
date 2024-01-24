@@ -21,16 +21,9 @@
                 Table.RenameColumns(#"Conditional Replace", List.Zip({List1a, List1b}))
             else
                 #"Grouped Outstanding",
-        List3 = Get(Key),
+        List3 = if  Text.Contains(Key, "SOE") then Get("Maturity2024_SOE") else if NumText = "" then {""} else Get("Maturity2024") ,
         SCol = if List3 <> {""} then Table.SelectColumns(Renamed, List3, MissingField.UseNull) else Renamed,
-        FnSort = fx("SortNIndex")(SCol),
-        Output =
-            try
-                CWB(_inputkey)
-            otherwise
-                if not Text.Contains(Key, "MATUR") and Key <> "" then
-                    fx("DBMonitor")(_inputkey)
-                else
-                    FnSort
+        FnSort = fx("SortNIndex")(SCol)
     in
-        Output
+      
+  FnSort 

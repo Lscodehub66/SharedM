@@ -8,7 +8,7 @@ let
     #"Changed Type" = Table.TransformColumnTypes(#"Replaced Value",{{"收窄基点", type number}}),
     Additional = {"FolderPath"},
     CN_Source = Table.ColumnNames(Source),
-    CN_CWB = CWB("tbl_deal","CN"),
+    CN_CWB = CWB("tbl_Directory","CN"),
     List = List.RemoveItems(List.Distinct(CN_CWB&List.Intersect({CN_Source,Additional})),{null}),
     SCol = Table.SelectColumns(#"Changed Type",List, MissingField.UseNull)
 
