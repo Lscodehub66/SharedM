@@ -205,17 +205,18 @@ let
                 {{"2023/10/06", "BBGcorp", "DLD_BBG_Corp"}}, {"Date", "From", "To"}
             ),
             // 【Prefix】Rename_
-            Rename_DMI_Connect =             {
+            Rename_DMI_Connect = {
                 {"定价", "定价_DMI"},
                 {"IPT", "IPT_DMI"},
-                {"FPG", "FPG_DMI"},{"行业", "DMI行业"},
-              
+                {"FPG", "FPG_DMI"},
+                {"行业", "DMI行业"},
                 {"票息", "票息_DMI"},
                 {"ticker", "TICKER"},
-                {"交易所", "发行场所"},{"临时isin","ISIN_TEMP"}
+                {"交易所", "发行场所"},
+                {"临时isin", "ISIN_TEMP"}
             },
             Rename_DB_DataFormat = {
-                {"IN_板块", "板块"},  
+                {"IN_板块", "板块"},
                 {"发行人注册地", "发行人成立地"},
                 {"FLOATER_FORMULA", "计息基准"},
                 {"发行价格", "发行价"},
@@ -765,7 +766,6 @@ let
                 "发行评级",
                 "货币",
                 "合计发行规模(亿)",
-                "债券余额",
                 "兑付日",
                 "期限",
                 "票息",
@@ -774,25 +774,26 @@ let
                 "板块",
                 "地区",
                 "城市",
+                "结构分类",
+                "评级分类",
+                "信用主体",
+                "定价日",
+                "月",
+                "覆盖地区",
+                "覆盖分类",
+                "覆盖团队",
+                "债券余额",
                 "投标资历分类",
                 "年期分类",
                 "合计美元规模分类",
                 "余额美元规模分类",
-                "结构分类",
-                "评级分类",
-                "覆盖地区",
-                "覆盖分类",
-                "覆盖团队",
                 "角色",
                 "IS_BISLDeal",
                 "Count_BISLDeal",
                 "Count_JBR",
                 "Count_JGC",
-                "信用主体",
                 "合计亿美元",
                 "余额亿美元",
-                "定价日",
-                "月",
                 "Check"
             },
             Header_Maturity2024_SOE = List.Transform(

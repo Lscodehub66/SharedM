@@ -24,7 +24,7 @@ let
     ACheck = Table.AddColumn(
         fx("Data")(ConditionalCol), "TextCheck", each Text.Select([#"发行人名称英文*"], {"A".."Z", "0".."9"})
     ),
-    Renamed = Table.RenameColumns(ACheck, Get("Rename_Connect_KYC"), MissingField.Ignore)
+    Renamed = Table.RenameColumns(ACheck, = fx("Rename.KYC"), MissingField.Ignore)
     // Rename_Pair   {"发行人名称英文*", "发行人"}, {"项目名称（集团全称）", "信用主体"}
 in
     Renamed

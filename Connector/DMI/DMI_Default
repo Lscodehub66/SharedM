@@ -3,7 +3,7 @@ let
     Source = fx("Wstbl")("违约"),
     SourceDMI = fx("Wstbl")("DMI"),
     Header_DMI违约 = Get("DMIDefault"),
-    Rename_DMI违约 = Get("Rename_DMIDefault"),
+    Rename_DMI违约 = fx("Rename.违约"),
     SCol = Table.SelectColumns(Source, Header_DMI违约, MissingField.UseNull),
     //{"ISIN码", "发行人名称", "违约日期", "违约类型", "地区"}
     //** skipped

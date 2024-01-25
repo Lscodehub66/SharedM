@@ -6,7 +6,7 @@ let
     #"Added Custom1" = Table.AddColumn(#"Added Custom", "Timestamp", each DateTime.FixedLocalNow(), type datetime),
     #"Removed Columns" = Table.TransformColumns(
         Table.RemoveColumns(#"Added Custom1", {"Name"}, MissingField.Ignore),
-        {{"Custom", each Table.RenameColumns(_, Get("Rename_Connect_合规"), MissingField.Ignore)}}
+        {{"Custom", each Table.RenameColumns(_,  fx("Rename.QRCCOMPLIANCE"), MissingField.Ignore)}}
     ),
     Exp = Table.ExpandTableColumn(#"Removed Columns", "Custom", Table.ColumnNames(#"Removed Columns"[Custom]{0})),
     Custom2 = fx("PRJSync")(Exp, "序号", "项目定价日", "PRJ对账号"),

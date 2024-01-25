@@ -23,7 +23,8 @@
                 #"Grouped Outstanding",
         List3 = if  Text.Contains(Key, "SOE") then Get("Maturity2024_SOE") else if NumText = "" then {""} else Get("Maturity2024") ,
         SCol = if List3 <> {""} then Table.SelectColumns(Renamed, List3, MissingField.UseNull) else Renamed,
-        FnSort = fx("SortNIndex")(SCol)
+        OuputRenamed = Table.RenameColumns(SCol, fx("Rename.MATURE2024"),MissingField.Ignore),
+        FnSort = fx("SortNIndex")( OuputRenamed)
     in
       
   FnSort 

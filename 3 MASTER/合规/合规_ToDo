@@ -32,7 +32,7 @@ let
         {{"发行人", "KYC Entity Name"}, {"KYC Status", "KYC Entity Status"}, {"EXE", "Signer Initials"}},
         MissingField.Ignore
     ),
-    Filtered = Table.SelectRows(fx("Data")(Renamed),each [IS_KYC_DONE] <> "Y" and [Project Name] <> ""),
+    Filtered = Table.SelectRows(fx("Data")(Renamed), each [IS_KYC_DONE] <> "Y" and [Project Name] <> ""),
     SCol1 = Table.SelectColumns(Filtered, Get("Header_S_ToDo"), MissingField.UseNull),
     Combined = fx(
         "Combine"

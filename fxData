@@ -33,7 +33,8 @@
             "兑付日",
             "到期日",
             "发行日",
-            "发行起始日","DEBUT_DATE",
+            "发行起始日",
+            "DEBUT_DATE",
             "定价日",
             "假设KYC到期日",
             "行权兑付日",
@@ -56,6 +57,26 @@
                 each Text.Contains(_, "date", Comparer.OrdinalIgnoreCase) and not Text.StartsWith(_, "是否")
             ),
         //
+        Int64 = {
+            "曾作为JGC",
+            "曾作为JBR",
+            "曾作为承销商",
+            "账户数",
+            "发行数",
+            "DayOfWeek.Num",
+            "Count_BISLDeal",
+            "Count_JBR",
+            "Count_JGC",
+            "ISIN_BISLDeal",
+            "ISIN_JBR",
+            "ISIN_JGC",
+            "多品种",
+            "多币种",
+            "多期限",
+            "多笔",
+            "Tranches",
+            "WEEKNUM"
+        },
         //Number ValueTyp
         Num0ToNull = {"Δ1周", "Δ年初至今", "PRJ对账号"},
         Num5 = List.Select(CN_RNSource, each Text.StartsWith(_, "R_") or Text.StartsWith(_, "C_"))
@@ -76,16 +97,11 @@
                 CN_RNSource, each Text.StartsWith(_, "S_") or Text.StartsWith(_, "Spd_") or Text.StartsWith(_, "I_")
             ),
         Num1 = {"最终账簿(亿)", "收窄Num"} & List.Select(CN_RNSource, each Text.StartsWith(_, "V_")),
-        Num0 = {"FEE", "Relevance", "Year.Num", "兑付日.YearNum", "账户数", "金额 (MM USD)", "发行数", "DayOfWeek.Num"}
+        Num0 = {"FEE", "Relevance", "Year.Num", "兑付日.YearNum", "金额 (MM USD)"}
             & List.Select(CN_RNSource, each Text.StartsWith(_, "CT_") or Text.StartsWith(_, "承销费")),
         Num = {
-            "IPT_YIELD","承销费.其他",
-            "Count_BISLDeal",
-            "Count_JBR",
-            "Count_JGC",
-            "ISIN_BISLDeal",
-            "ISIN_JBR",
-            "ISIN_JGC",
+            "IPT_YIELD",
+            "承销费.其他",
             "定价YIELD_Num",
             "IPT_SPD",
             "WPIR",
@@ -98,12 +114,6 @@
             "SGD",
             "Size (MM)",
             "TOTAL_FEE",
-            "Tranches",
-            "WEEKNUM",
-            "多品种",
-            "多币种",
-            "多期限",
-            "多笔",
             "定价息差",
             "年份",
             "当前",
@@ -406,6 +416,7 @@
                         Table.FromColumns({DateTime1, {type datetime}, {}}),
                         Table.FromColumns({Time1, {type time}, {}}),
                         Table.FromColumns({Date1, {type date}}),
+                        Table.FromColumns({Int64, {Int64.Type}}),
                         Table.FromColumns({Num5, {type number}, {5}}),
                         Table.FromColumns({Num3, {}, {3}}),
                         Table.FromColumns({Num2, {}, {2}}),
