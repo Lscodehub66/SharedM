@@ -64,11 +64,11 @@ let
         },
         MissingField.Ignore
     ),
-    Renamed = Table.RenameColumns(Output, {"项目定价日", "定价日"}, MissingField.Ignore),
+    Renamed = Table.RenameColumns(SCol, {"项目定价日", "定价日"}, MissingField.Ignore),
     Output =
         let
             name = "DLD_QRC_Income24",
-            Crossroad = if fx("Parameter")("GPS") = "Remote" then CWB(name) else try Renamed otherwise CWB(name),
+            Crossroad = if fx("Parameter")("GPS") = "Remote" then CWB(name) else Renamed ,
             Filtered = Table.SelectRows(Crossroad, each Date.ToText([定价日], "yyyy") = _numtext)
         in
             Filtered
