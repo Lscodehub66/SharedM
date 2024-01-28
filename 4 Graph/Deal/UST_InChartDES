@@ -1,0 +1,18 @@
+let
+    Source = Table.FromRows(
+        Json.Document(
+            Binary.Decompress(
+                Binary.FromText(
+                    "fVLLTsJQEP0X1iYUdKHfYli4cG+MH3CpIFha6oMI0ipifGAAUSylD7Uf4525vSt/wSlFMRpN7uJkcuecM2dmfT2TV/JKVsllluZomZBsm+KMidd6XGyA2oOrW/DL8tTA4uj9Wac6WC/JYwE2XGFpol6BqC9Zh3u1uKtnCksz3lxWWU158z94qVmc9HG3LNkBDq/BbGL9Fo50EZo4qcOVEdfMv5RQL4pwiA0GRoX+gFEE30G7A9Nx7JbjqJIyw76BDw74T59u5h5mKKf8nlJ07+G+DQcj0Ho7G1ub2+QHtIt/Zv7uZKEy4ya0nFXWCIGngh3IyxJOaotEH/ZQ02S/BdU7IhKhQ1xoOdwvY9OVTSeR7AxFf/Qlxj2NoqX6Qt4aiyACdoS6mhidPn6amEsTWklX+yUcR+dkWQwG3NvHQTcVTk1wzwCzlSTqu5K1kyBVX7YmYL2CeQiVgAd7cVTioca9AIeXaDN4DsRuVbRLaU5w2KM9iPAYzzo86oI5fWNqOj8tJ9mtWwX9BF9ssHvpOdFdQXATR6fcY9RClUyh8AE=",
+                    BinaryEncoding.Base64
+                ),
+                Compression.Deflate
+            )
+        ),
+        let
+            _t = ((type nullable text) meta [Serialized.Text = true])
+        in
+            type table [Start = _t, End = _t, Description = _t]
+    )
+in
+    Source
