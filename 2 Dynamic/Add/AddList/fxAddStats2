@@ -22,6 +22,9 @@
             }
         ),
         Cleaned = fx("Replace")(TF, {"地区分布", "类型分布"}, "投资者"),
-        Rp = Table.ReplaceValue(Cleaned, "，，", "，", Replacer.ReplaceText, {"地区分布", "类型分布"})
+        Rp = Table.ReplaceValue(Cleaned, "，，", "，", Replacer.ReplaceText, {"地区分布", "类型分布"}),
+        Rp1 = Table.ReplaceValue(
+             Rp , "", each if [#"最终账簿(亿)"] <> null then "【】" else "", Replacer.ReplaceValue, {"地区分布", "类型分布"}
+        )
     in
-        Rp
+        Rp1

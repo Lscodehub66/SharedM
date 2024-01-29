@@ -1,4 +1,7 @@
-Sub Macro2()
+
+
+
+Sub ArialKaiti()
 
     Dim rngCell As Range
     Dim i As Long

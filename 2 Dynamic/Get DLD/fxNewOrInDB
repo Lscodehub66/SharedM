@@ -10,9 +10,34 @@
                 )
             else
                 Source,
+        Replaced =
+            if Table.HasColumns(RoleCheck, {"删除及隐藏"}) then
+                List.Accumulate(
+                    {"mIssue", "mBond", "mStats", "mBISL", "mEXE"},
+                    RoleCheck,
+                    (x, y) =>
+                        if Table.HasColumns(x, y) then
+                            Table.ReplaceValue(
+                                x,
+                                each Record.Field(_, y),
+                                each if [删除及隐藏] = "FIMTN" then "n/a" else Record.Field(_, y),
+                                Replacer.ReplaceValue,
+                                {y}
+                            )
+                        else
+                            x
+                )
+            else
+                RoleCheck,
         Fn = List.Accumulate(
-            {{"mStats", "最终账簿(亿)"}, {"mBISL", "BISL_ROLE"}, {"mEXE", "BISL_ROLE"}},
-            RoleCheck,
+            {
+                {"mIssue", "Check"},
+                {"mBond", "ISIN"},
+                {"mStats", "最终账簿(亿)"},
+                {"mBISL", "BISL_ROLE"},
+                {"mEXE", "BISL_ROLE"}
+            },
+            Replaced,
             (x, y) =>
                 if not Table.HasColumns(x, y{0}) then
                     Table.AddColumn(
@@ -30,19 +55,26 @@
                         {y{0}}
                     )
         ),
-        Replaced =
-            if Table.HasColumns(Source, {"mBond", "mIssue", "删除及隐藏"}) then
+        Replaced2 =
+            if Table.HasColumns(Fn, {"mChart"}) then
                 Table.ReplaceValue(
-                    Fn, "新增", each if [删除及隐藏] = "FIMTN" then "n/a" else "新增", Replacer.ReplaceValue, {
-                        "mBond",
-                        "mIssue"
-                    }
+                    Fn,
+                    "",
+                    each if List.Contains({"【Y】", "Y"}, [IS_FIMTN]) then "新增" else "n/a",
+                    Replacer.ReplaceValue,
+                    {"mChart"}
                 )
             else
                 Fn,
         DM = {"mCredit", "债券备注"},
         #"Operational Columns" = List.Accumulate(
-            DM, Replaced, (x, y) => if not Table.HasColumns(x, y) then Table.AddColumn(x, y, each "", type text) else x
-        )
+            DM, Replaced2, (x, y) => if not Table.HasColumns(x, y) then Table.AddColumn(x, y, each "", type text) else
+                x
+        ),
+        Replaced3 =
+            if Table.HasColumns(Fn, {"mCredit"}) then
+                Table.ReplaceValue(#"Operational Columns", "", "新增", Replacer.ReplaceValue, {"mCredit"})
+            else
+                #"Operational Columns"
     in
-        #"Operational Columns"
+        Replaced3

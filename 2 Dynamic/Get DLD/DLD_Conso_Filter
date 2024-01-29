@@ -26,7 +26,10 @@ let
         {
             {"Credit", "信用主体", {"Index", "信用主体简称", "板块", "板块二级", "板块三级", "中资属性", "级别"}},
             {"Bond", "ISIN", {"Index"}},
-            {"Issue", "Check", {"Index"}}
+            {"Chart", "ISIN", {"Index"}},
+            {"Issue", "Check", {"Index"}},
+            {"Stats", "Check", {"Index"}},
+            {"BISL", "Check", {"Index"}}
         },
         Fn1_R1,
         (x, y) =>
@@ -49,11 +52,12 @@ let
                         else if y{0} = "Credit" and Record.Field(_, "级别") = "【】" then
                             "修改"
                         else
-                            "新增",
+                            "",
                     type text
-                )
+                ),
+                Output = if y{0} = "BISL" then Table.DuplicateColumn(ACol, "mBISL","mEXE") else ACol
             in
-                ACol
+               Output
     ),
     _HD = {
         "Timestamp",
@@ -74,7 +78,7 @@ let
     // 只显示database没有的isin
     #">>>ShowAll" =
         if fx("Parameter")("ShowAll") = "OFF" then
-            Table.SelectRows(#"Filtered Rows", each [mIssue] = "新增")
+            Table.SelectRows(#"Filtered Rows", each [mIssue] <> "已收录")
         else
             #"Filtered Rows",
     Revised = fx(

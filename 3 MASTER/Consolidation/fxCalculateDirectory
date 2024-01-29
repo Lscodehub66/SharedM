@@ -54,13 +54,8 @@
         Reordered = Table.ReorderColumns(
             #"Revised Issuer", CN_Base & List.RemoveItems(CN_CWB, CN_Base), MissingField.Ignore
         ),
-        Stamped = Table.AddColumn(
-        Table.RemoveColumns(Reordered, {"Timestamp"}, MissingField.Ignore),
-        "Timestamp",
-        each DateTime.LocalNow(),
-        type datetime
-    ),
-        SCol = Table.SelectColumns(  Stamped , CN_Base, MissingField.Ignore),
-        Output = if Text.Contains(Key, "BASE") then SCol else   Stamped 
+       
+        SCol = Table.SelectColumns(   Reordered , CN_Base, MissingField.Ignore),
+        Output = if Text.Contains(Key, "BASE") then SCol else    Reordered
     in
         Output

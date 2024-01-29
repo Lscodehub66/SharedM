@@ -1,11 +1,11 @@
 // let LoadCode = Load("ForReview_wBOCOM","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
+    DeleteCheck = List.Buffer(Table.SelectRows(CWB("ForReview_wIssue"), each [删除及隐藏] = "【删除】")[Check]),
     _input = "wBOCOM",
     _PK = "Check",
     Name = "m" & Text.AfterDelimiter(_input, "w"),
     HD = fx("ForReviewHD")(_input),
-    Sourceold = Load("DLD_Filtered"),
-    Source = Table.SelectRows(CWB("Filtered_Add"), each [IS_FIMTN] <> "Y" and [IS_FIMTN] <> "【Y】"),
+    Source = Table.SelectRows(CWB("Filtered_Add"), each [mBISL] = "新增"),
     Prep =
         if not List.Contains(Table.ColumnNames(Source), "BISL_ROLE") then
             Table.AddColumn(
@@ -36,10 +36,11 @@ let
     ),
     #">>ExpandedList" = List.RemoveItems(Table.ColumnNames(Custom1), Table.ColumnNames(Prep)),
     SCol = fx("Data")(Table.SelectColumns(ACol0, HD, MissingField.UseNull)),
+    SelfJoined = fx("SelfJoin_R")(SCol, CWB("ForReview_" & _input), {_PK}),
     Replaced =
-        if Table.HasColumns(Filtered, "IS_JGC") then
+        if Table.HasColumns(SelfJoined, "IS_JGC") then
             Table.ReplaceValue(
-                SCol,
+                SelfJoined,
                 each [BISL_ROLE],
                 each
                     if [IS_JGC] <> "" and [BISL_ROLE] = "【】" then
@@ -52,7 +53,7 @@ let
                 {"BISL_ROLE"}
             )
         else
-            SCol,
+            SelfJoined,
     BlankToNil =
         try
             Table.ReplaceValue(
@@ -64,13 +65,15 @@ let
     BlankToInput1 = Table.ReplaceValue(
         BlankToInput, "", each if [BISL_ROLE] <> "JBR" then "【】" else "", Replacer.ReplaceValue, {
             "IS_LEAD",
-            "IS_B&D"
+            "OTHER_ROLE"
         }
     ),
     BlankToInput2 = Table.ReplaceValue(BlankToInput1, "", "--", Replacer.ReplaceValue, {"是否合名"}),
-    SelfJoined = fx("SelfJoin_R")(BlankToInput2, CWB("ForReview_" & _input), {_PK}),
-    Fn2 = fx("NewOrInDB")(SelfJoined),
-    Sorted = fx("SortNIndex")(Fn2),
+    Fn2 = fx("NewOrInDB")(BlankToInput2),
+    Filtered1 = Table.SelectRows(
+        Fn2, each List.Contains({"新增"}, [mBISL]) and not List.Contains(DeleteCheck, [Check])
+    ),
+    Sorted = fx("SortNIndex")(Filtered1),
     SCol2 = Table.SelectColumns(Sorted, HD, MissingField.UseNull)
 in
     SCol2

@@ -437,7 +437,7 @@ let
                 "期数",
                 "BISL_ROLE",
                 "IS_LEAD",
-                "IS_B&D",
+                "OTHER_ROLE",
                 "是否合名"
             },
             Header_ForReviewHD = {
@@ -477,7 +477,7 @@ let
                 "期数",
                 "BISL_ROLE",
                 "IS_LEAD",
-                "IS_B&D",
+                "OTHER_ROLE",
                 "是否合名",
                 "SHORTNAMER",
                 "板块",
@@ -928,7 +928,7 @@ let
                 "Count_JGC",
                 "ISIN_144A",
                 "ISIN_TEMP",
-                "IS_B&D",
+                "OTHER_ROLE",
                 "IS_BISLDeal",
                 "IS_CLIENT",
                 "IS_DEFAULT",

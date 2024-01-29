@@ -250,7 +250,7 @@ let //
         "外部评审机构",
         "BISL_ROLE",
         "IS_LEAD",
-        "IS_B&D",
+        "OTHER_ROLE",
         "是否合名",
         "港分_ROLE",
         "澳分_ROLE",

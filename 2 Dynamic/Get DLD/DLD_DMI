@@ -9,7 +9,7 @@ let
         let
             Getisin = fx("DMIMissing")(Source),
             Custom2 = fx("Merge")(Getisin, bbg, "ISIN", "ISIN", {""}, {""}),
-            ACol3 = 
+            ACol3 =
                 if Table.HasColumns(Custom2, "DataSource") then
                     Table.ReplaceValue(Custom2, "DMI", "BBG", Replacer.ReplaceValue, {"DataSource"})
                 else
@@ -17,10 +17,22 @@ let
             SCol = Table.SelectColumns(ACol3, CN_Source, MissingField.UseNull)
         in
             Table.Buffer(SCol),
+    ToCombine1 =
+        let
+            Source = CWB("DLD_Add_Tap"),
+            Filtered = Table.SelectRows(Source, each not List.Contains({"", null, "False"}, [ISIN])),
+            ACol3 = Table.AddColumn(Filtered, "DataSource", each "AddTap", type text),
+            SCol = Table.SelectColumns(ACol3, CN_Source, MissingField.UseNull)
+        in
+            SCol,
     Date = fx("DateRange")({"PreviousMon.Date", "Sunday.Date"}),
     #"//GNG_Multi" = if fx("Parameter")("MultiSource") = "ON" then "GO" else "NO-GO",
-    Appended1 = if #"//GNG_Multi" <> "GO" then Source else Table.Combine({ToCombine, Source}),
-    Checked =   fx("CheckNDupe")( Appended1 ),
-    Stamped = fx("1st")(Table.AddColumn(        Checked , "Timestamp", each DateTime.LocalNow(),type datetime),{"Timestamp"})
+    Appended1 = if #"//GNG_Multi" <> "GO" then Source else Table.Combine({ToCombine,  ToCombine1,Source}),
+    Checked = fx("CheckNDupe")(Appended1),
+    Stamped = fx(
+        "1st"
+    )(
+        Table.AddColumn(Checked, "Timestamp", each DateTime.LocalNow(), type datetime), {"Timestamp"}
+    )
 in
     Stamped

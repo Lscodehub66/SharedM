@@ -3,8 +3,7 @@ let
     p = "ForReview_",
     wIssue = CWB(p & "wIssue", "1"),
     //
-    ACol1 = Table.AddColumn(wIssue, "mIssue", each "Y"),
-    RemovedCol = Table.RemoveColumns(ACol1, Get("Header_MergeRemoval"), MissingField.Ignore),
+    RemovedCol = Table.RemoveColumns(wIssue, Get("Header_MergeRemoval"), MissingField.Ignore),
     Filtered = Table.SelectRows(
         RemovedCol, each ([定价日] <> null) and [ISIN] <> null and [删除及隐藏] <> "删除" and [删除及隐藏] <> "【删除】"
     ),
@@ -17,32 +16,15 @@ let
     wCredit = Load("wCredit_Reviewed"),
     Filtered_Add = CWB("Filtered_Add"),
     Merged = List.Accumulate(
-        {
-            {wStats, "mStats", "Check"},
-            {wBOCOM, "mEXE", "Check"},
-            {wCredit, "mCredit", "信用主体"},
-            {Filtered_Add, "DLD_Add", "Check"}
-        },
+        {{wStats, "Check"}, {wBOCOM, "Check"}, {wCredit, "信用主体"}, {Filtered_Add, "Check"}},
         SourceDB,
-        (x, y) =>
-            fx(
-                "Merge"
-            )(
-                x,
-                if Table.HasColumns(y{0}, y{1}) then
-                    Table.TransformColumns(
-                        y{0}, {{y{1}, each if not List.Contains({"n/a", "已收录", "", "--"}, _) then "Y" else _}}
-                    )
-                else
-                    Table.AddColumn(y{0}, y{1}, each "Y", type text),
-                y{2},
-                y{2},
-                {""},
-                {""}
-            )
+        (x, y) => fx("Merge")(x, y{0}, y{1}, y{1}, {""}, {""})
+    ),
+    #"Global Y" = Table.ReplaceValue(
+        Merged, "新增", "Y", Replacer.ReplaceValue, {"mIssue", "mBond", "mStats", "mBISL", "mEXE", "mCredit", "mChart"}
     ),
     FirstTime = Table.ReplaceValue(
-        Merged, null, each if [mCredit] = "Y" then [定价日] else null, Replacer.ReplaceValue, {"DEBUT_DATE"}
+        #"Global Y", null, each if [mCredit] = "Y" then [定价日] else null, Replacer.ReplaceValue, {"DEBUT_DATE"}
     ),
     Custom1 = Table.TransformColumns(
         FirstTime,

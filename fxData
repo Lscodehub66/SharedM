@@ -15,7 +15,7 @@
                 {"FEATURED", "品种主题"},
                 {"ticker", "TICKER"},
                 {"交易所", "发行场所"},
-                {"临时isin", "ISIN_TEMP"}
+                {"临时isin", "ISIN_TEMP"} ,   {"IS_B&D", "OTHER_ROLE"}
             },
             MissingField.Ignore
         ),
@@ -191,9 +191,9 @@
             "境内主体评级",
             "交割T+n"
         },
-        Text_NoNA = {"增发判定", "修改.增发判定", "主题债券", "品种主题", "备证行全称"},
+        Text_NoNA = {"增发判定", "修改.增发判定", "主题债券", "品种主题", "备证行全称","期数"},
         Text1 = {
-            "地区覆盖",
+            "地区覆盖","OTHER_ROLE","角色资历分类",
             "假期简称",
             "是否中国假期",
             "B&D/LeftLead",

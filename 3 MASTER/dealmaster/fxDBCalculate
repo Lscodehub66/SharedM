@@ -94,14 +94,9 @@
         ),
         Written_CCYSize = Load("fxWriteCCYSize")(Written_Tenor, "发行规模(亿)", "货币", "增发判定"),
         Written_Theme = Load("fxWriteTheme")(Written_CCYSize),
-        Written_BISLRole = fx(
-            "Replace"
-        )(
-            Table.AddColumn(Written_Theme, "角色", each [IS_LEAD] & [BISL_ROLE] & [#"IS_B&D"], type text), {"角色"},
-            "ROLE"
-        ),
+ Written_Role = fx("WriteRole")(  Written_Theme),
         //
-        CombinedName = Load("fxNameCombiner")(Written_BISLRole),
+        CombinedName = Load("fxNameCombiner")( Written_Role),
         // Add Comparer
         AddedComp = Table.AddColumn(
             CombinedName,
