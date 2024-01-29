@@ -6,7 +6,7 @@ let
  //**   
     Header_DirectoryToTombsWriter = Get("Header_DirectoryToTombsWriter"),
     MergedQ = fx("Merge")(Source, CWB("Directory"), "COMPARER", "COMPARER", Header_DirectoryToTombsWriter,null,{"COMPARER"}),
-    // { "定价日", "年月", "首次违约日" } & { "备证行", "信用主体简称", "通过分行", "角色" }
+    // { "定价日", "年M月", "首次违约日" } & { "备证行", "信用主体简称", "通过分行", "角色" }
     AddedR1 = Table.AddColumn(
         MergedQ,
         "P1",
@@ -22,7 +22,7 @@ let
         AddedR1, "R4", each if Text.Contains([角色], "及") then Text.Replace([角色], "及", "#(lf)") else "#(lf)" & [角色]
     ),
     MergedCol = Table.CombineColumns(
-        AddedR4, {"R2", "R3", "R4", "年月"}, Combiner.CombineTextByDelimiter("#(lf)", QuoteStyle.None), "P2"
+        AddedR4, {"R2", "R3", "R4", "年M月"}, Combiner.CombineTextByDelimiter("#(lf)", QuoteStyle.None), "P2"
     ),
     SCol = Table.SelectColumns(MergedCol, {"定价日", "P1", "P2"}, MissingField.UseNull)
 in

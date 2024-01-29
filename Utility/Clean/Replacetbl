@@ -166,7 +166,7 @@ let
         {"CCDC", ""},
         {"B&DFOP", "及交割行"},
         {"B&DDvP", "及交割行"},
-        {"Arranger", "及安排行"},{"Sustainability SA","及可持续结构顾问"},
+        {"Arranger", "及安排行"},{"Sustainability SA","及可持续结构顾问"},{"SustainabilitySA","及可持续结构顾问"},
         {"Sole", "独家"},
         {"Dealer", "承销商"},
         {"Leftlead", "牵头"},

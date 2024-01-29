@@ -11,9 +11,10 @@ let
     Fn = fx("AddStats2")(SCol),
     Fn2 = fx("NewOrInDB")(Fn),
     Filtered = Table.SelectRows(
-        Fn2, each List.Contains({"新增"}, Record.Field(_, Name)) or List.Contains(CheckList, [Check])
+         Fn2, each List.Contains({"新增"}, Record.Field(_, Name)) or List.Contains(CheckList, [Check])
     ),
-    Sorted = fx("SortNIndex")(Filtered),
+     Fn3 = Table.ReplaceValue(  Filtered, "新增", each if [删除及隐藏] ="【删除】" then "" else "新增",Replacer.ReplaceValue,{"mStats"} ),
+    Sorted = fx("SortNIndex")( Fn3),
     SCol2 = Table.SelectColumns(Sorted, HD, MissingField.UseNull)
 in
     SCol2

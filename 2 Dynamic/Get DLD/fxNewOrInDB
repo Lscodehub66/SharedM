@@ -76,5 +76,6 @@
                 Table.ReplaceValue(#"Operational Columns", "", "新增", Replacer.ReplaceValue, {"mCredit"})
             else
                 #"Operational Columns"
+       
     in
         Replaced3

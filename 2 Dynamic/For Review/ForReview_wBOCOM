@@ -73,7 +73,10 @@ let
     Filtered1 = Table.SelectRows(
         Fn2, each List.Contains({"新增"}, [mBISL]) and not List.Contains(DeleteCheck, [Check])
     ),
-    Sorted = fx("SortNIndex")(Filtered1),
+    Replaced2 = Table.ReplaceValue(
+        Filtered1, "新增", each if [删除及隐藏] = "【删除】" then "" else "新增", Replacer.ReplaceValue, {"mBISL","mEXE"}
+    ),
+    Sorted = fx("SortNIndex")(Replaced2),
     SCol2 = Table.SelectColumns(Sorted, HD, MissingField.UseNull)
 in
     SCol2

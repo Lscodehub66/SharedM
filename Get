@@ -505,7 +505,7 @@ let
                 "信用主体(备证行)",
                 "发行人成立地"
             },
-            Header_DirectoryToTombsWriter = {"定价日", "年月", "首次违约日"} & {"备证行", "信用主体简称", "通过分行", "角色"},
+            Header_DirectoryToTombsWriter = {"定价日", "年M月", "首次违约日"} & {"备证行", "信用主体简称", "通过分行", "角色"},
             Header_S_ToDo = {
                 "PRJ对账号",
                 "Signer Initials",

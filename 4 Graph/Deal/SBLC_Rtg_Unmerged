@@ -1,12 +1,11 @@
 let
-Source = fx("Ws")("DOWNLOAD"),
-Data = Source{[Item = "Tables_value"]}[Data],
-#"Removed Other Columns" = Table.SelectColumns(
-Data, {"Column61", "Column62", "Column66", "Column67", "Column68"}, MissingField.UseNull
-),
-Cleaned = fx("Replace")(#"Removed Other Columns",List.LastN(Table.ColumnNames(#"Removed Other Columns"), 3),"评级"),
-Custom1 = fx("SheetTotbl")(Cleaned, {"Column61", "Index", null})
+ Source = fx("Ws")("DOWNLOAD"),
+    Data = Source{[Item = "Tables_value"]}[Data],
+    Custom2 = fx("SheetTotbl")(Data, {"Column1","Index"}),
+    #"Removed Other Columns1" = Table.SelectColumns(Custom2,{"Entity",  "Moody's", "SP", "FITCH"}, MissingField.UseNull),
+        #"Filtered Rows" = Table.SelectRows(   #"Removed Other Columns1" , each ([Entity] <> null)),
+    Cleaned = fx("Replace")(      #"Filtered Rows", {"Moody's", "SP", "FITCH"}, "评级"),
+        Indexed = fx("Sort")(      Cleaned  , {""})
    
 in
-
-Custom1  
+   Indexed 

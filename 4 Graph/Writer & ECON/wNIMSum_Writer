@@ -1,6 +1,15 @@
 // let LoadCode = Load("wNIMSum_Writer","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in    EVA
 let
-    Datatbl = Table.Buffer(Load("wNIMSum")),
+  
+    Source = let Source =  CWB("wNIMSum_Load"),
+    #"Removed Other Columns" = Table.SelectColumns(Source,{"Column1", "Column2", "Column3"})
+,
+
+    TF = Table.TransformColumns(       #"Removed Other Columns" ,{{"Column1", each if _="亿美元" then "V_NIM_7D" else if _=  "笔数"  then  "CT_NIM_7D" else _, type text}})
+in
+    TF,
+    
+    Datatbl = Table.Buffer(Source),
     #"Removed Top Rows" = Table.Skip(Datatbl, 1),
     #"Changed Type1" = Table.TransformColumnTypes(
         #"Removed Top Rows", {{"Column2", type number}, {"Column3", type number}}

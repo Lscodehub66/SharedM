@@ -31,7 +31,7 @@ let
             [
                 Column0 = 7,
                 Column1 = "较IPG收窄最高",
-                Column2 = fx("MaxTighten_Writer")("近3月")[描述]{0}
+                Column2 =  fx("Write_MaxTighten")(CWB("USDCNH_Tighten_Pivot3M"),"近3月")[描述]{0}
             ],
             [
                 Column0 = 8,

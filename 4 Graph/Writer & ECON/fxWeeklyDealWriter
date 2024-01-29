@@ -137,7 +137,7 @@
             Grouped,
             each [增发判定],
             each
-                if Text.Contains([增发判定], "原始") and Text.Contains([增发判定], "增发") then
+                if Text.Contains([增发判定], "原始") and Text.Contains([增发判定], "增发") or ([多笔]>1 and Text.Contains([增发判定], "增发")) then
                     "定价及增发"
                 else if Text.Contains([增发判定], "增发") then
                     "增发"
