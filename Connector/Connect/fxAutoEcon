@@ -1,0 +1,90 @@
+(optional _inputkey as nullable text) =>
+    let
+        datepair = if _inputkey = null then {"PreviousMon.Date", "Sunday.Date"} else {
+            "Monday.Date",
+            "ThisSunday.Date"
+        },
+        tblkey = if _inputkey = null then "wEcon" else "wFuture",
+        key = if _inputkey = null then "上周主要经济数据" else "未来一周主要经济数据",
+        RlvLvl = Load("RlvLvl"),
+        US_addon = Load("US_addon"),
+        Source = fx("Wstbl")("DOWNLOAD", "ECON"),
+        #"Filtered Rows0" = Table.SelectRows(Source, each [Date Time] <> null and [Ticker] <> null),
+        #"Changed Type" = Table.TransformColumnTypes(#"Filtered Rows0", {{"Column5", type text}}),
+        #"Inserted Date" = Table.AddColumn(
+            Table.AddColumn(#"Changed Type", "日期", each DateTime.Date([Date Time]), type date), "YYYYMMDD", each Date.ToText([日期],"yyyyMMdd"),type text
+        ),
+        #"Inserted Time" = Table.AddColumn(#"Inserted Date", "时间", each DateTime.Time([Date Time]), type time),
+        #"Duplicated Column" = fx(
+            "Replacer"
+        )(
+            Table.DuplicateColumn(#"Inserted Time", "Column2", "区域"), {"区域"}, {"US", "CH", "EC"}, {"美国", "中国", "欧元区"}
+        ),
+        #"Inserted Text After Delimiter" = fx(
+            "Replace"
+        )(
+            Table.AddColumn(
+                #"Duplicated Column",
+                "范围",
+                each
+                    if
+                        Text.Contains([Column5] ?? "", "/")
+                        or not List.ContainsAny(Text.ToList([Column5] ?? ""), {"A".."Z"}, Comparer.OrdinalIgnoreCase)
+                    then
+                        ""
+                    else
+                        Text.Upper(Text.BeforeDelimiter([Column5] ?? "", " ")),
+                type text
+            ),
+            {"范围"},
+            "MMM0月"
+        ),
+        #"Date Filtered" = fx("DateRange")(datepair, {#"Inserted Text After Delimiter", "日期"}),
+        #"Filtered Rows" = Table.SelectRows(
+            #"Date Filtered", each if [区域] = "美国" then [Relevance] > RlvLvl + US_addon else [Relevance] > RlvLvl
+        ),
+        #"Inserted Text" = Table.AddColumn(
+            #"Filtered Rows",
+            "区域范围",
+            each if not Text.Contains([Event] ?? "", [区域]) then Text.Combine({[区域], [范围]}, "") else "",
+            type text
+        ),
+        #"Inserted Merged Column" = Table.AddColumn(
+            #"Inserted Text", "事件", each Text.Combine({[区域范围], [Event]}, ""), type text
+        ),
+        TextNum = List.Accumulate(
+            {{"Prior", "前值"}, {"Survey", "预期"}, {"Actual", "现值"}},
+            #"Inserted Merged Column",
+            (x, y) => Load("fxECON_TextNum")(x, y{0}, y{1})
+        ),
+        #"Removed Columns" = Table.RemoveColumns(
+            TextNum, {"Date Time", "Column2", "Column3", "Event", "Column5", "Survey", "Actual", "Prior", "Revised"}
+        ),
+        #"Sorted by Date" = Table.Sort(#"Removed Columns", {{"日期", Order.Ascending}}),
+        Sorted0 = Table.Sort(#"Sorted by Date", {{"区域", Order.Descending}, {"Relevance", Order.Descending}}),
+        Renamed = Table.RenameColumns(Sorted0, {{"事件", key}, {"Ticker", "TICKER"}}, MissingField.Ignore),
+        #"Added Index1" = Table.AddColumn(Renamed, "IS_ECON", each "", type text),
+        RemoveColumns = Table.RemoveColumns(
+            #"Added Index1",
+            List.Select(Table.ColumnNames(#"Added Index1"), each Text.Contains(_, "Column"))
+                & {"Date Time", "Event", "Survey", "Actual", "Prior", "Revised", "区域范围", "Table"},
+            MissingField.Ignore
+        ),
+        #"Reordered Columns" = Table.ReorderColumns(RemoveColumns, Get("ROAUTOECON"), MissingField.Ignore),
+        DateTexted = fx("Data")(Table.TransformColumns(#"Reordered Columns", {{"日期", each Date.ToText(_, "M月d日"), type text}})),
+    Self = let   #"Merged Queries" = Table.NestedJoin(
+                     DateTexted ,
+                    {"TICKER", "YYYYMMDD"},
+                   CWB("wEcon"),
+                    {"TICKER", "YYYYMMDD"},
+                    "Query2",
+                    JoinKind.LeftOuter
+                ),
+                #"Expanded Query2" = Table.ExpandTableColumn(#"Merged Queries", "Query2", {"IS_ECON"}, {"DummyMark"}),
+                #"Replaced Value" = Table.ReplaceValue(
+                    #"Expanded Query2", null, each if [DummyMark] = 1 then 1 else null, Replacer.ReplaceValue, {
+                        "IS_ECON"
+                    }
+                ),
+                #"Removed Columns" = Table.RemoveColumns(#"Replaced Value", {"DummyMark"}) in      #"Removed Columns"
+                in Self

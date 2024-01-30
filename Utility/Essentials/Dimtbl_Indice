@@ -37,8 +37,8 @@ let
         {"Column1", "KEY_INDICE", "市场指数"}
             & List.Select(
                 Table.ColumnNames(#"Renamed Columns"), each Text.StartsWith(_, "IS") or Text.Contains(_, "Index")
-            )
-            & {"RESIDENCE"}
+                 )
+            & {"RESIDENCE","ObjectName"}
     ),
     SCol = Table.SelectColumns(#"Renamed Columns", CN, MissingField.Ignore),
     Custom2 = fx("Merge")(SCol, Source1, "Column1", "Column1", {""}, {""}),

@@ -282,6 +282,21 @@ let
                 "ESG_Indicator",
                 "SBLC_Provider_Name"
             },
+
+
+                HD_RO_AUTOECON =     { "IS_ECON",
+                "未来一周主要经济数据",
+                "上周主要经济数据",
+                "日期",
+                "区域",
+                "Relevance",
+                "预期",
+                "现值",
+                "前值",
+                "范围",
+                "时间",
+                "TICKER",
+                "YYYYMMDD"},
             HD_RO_NEWECON = {
                 "Index",
                 "未来一周主要经济数据",
@@ -1029,6 +1044,8 @@ let
                     HD_RO_ECON
                 else if Text.Contains(Key, "RONEWECON") then
                     HD_RO_NEWECON
+    else if Text.Contains(Key, "ROAUTOECON") then
+                     HD_RO_AUTOECON 
                 else if Text.Contains(Key, "WCURATED") then
                     Header_S_Dynamic_wCurated
                 else if Text.Contains(Key, "USDCNH") then

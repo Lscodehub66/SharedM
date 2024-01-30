@@ -1,11 +1,11 @@
-// let LoadCode = Load("Writers","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
+// let LoadCode = Load("GraphToPPT","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
 let
     Source = CWB("Indice_Table"),
     #"Grouped Rows" = Table.Group(
         Table.SelectRows(Source, each [Index_Writer] <> null),
-        {"Index_Writer"},
+        {"Index_Writer","ObjectName"},
         {
-            {"ObjectName", each Text.Combine(List.Distinct([ObjectName]), ";"), type text},
+          
             {"Description", each "上周，" & Text.Combine(List.Distinct([CN_描述]), "，"), type text}
         }
     ),
@@ -13,45 +13,63 @@ let
     Custom1 = Table.TransformColumns(
         Sorted, {{"Description", each Text.Replace(Text.Replace(_, "上周，3个月", "年期方面，3个月"), "美国国债利率", ""), type text}}
     ),
-    #"Renamed Columns" = Table.Buffer(Table.RenameColumns(Custom1, {{"Index_Writer", "Column0"}})),
-    Inserted = Table.InsertRows(
-        #"Renamed Columns",
-        4,
-        {[Column0 = 5,
-                ObjectName = "ustbox",
+    #"Removed Columns" = Table.RemoveColumns(Custom1,{"Index_Writer"}),
+
+  #">NewsDES" = let Source = fx("Ws")("DYNAMIC","wNews_Input"),
+    #"Filtered Rows" = List.Buffer(Table.SelectRows(Source, each ([Index] <> null))[新闻]),
+    #"Removed Columns" = Text.Combine(#"Filtered Rows","#(lf)")
+in
+    #"Removed Columns",
+
+    
+Inserted0 = Table.InsertRows(
+        #"Removed Columns",
+        0,{[ ObjectName = "newsbox", Description =  #">NewsDES"]}),
+
+
+
+
+Inserted = Table.InsertRows(
+      Inserted0 ,
+        5,
+        {[  ObjectName = "ustbox",
                 Description = "自2022年3月启动加息以来，美联储共加息11次，在7月加息25bps后，9月、11月及12月连续3次暂停加息，当前基准利率为5.25-5.50%区间" ],
             [
-                Column0 = 5,
+                
                 ObjectName = "ustcgbspdbox",
                 Description = "中美利差自2022年3月起持续深度倒挂，11月开始倒挂幅度明显缓和"
             ],
             [
-                Column0 = 5,
+              
                 ObjectName = "ustcgbspdbox",
                 Description = Load("Spd_TrendPQ")[描述]{0}
             ],
             [
-                Column0 = 6,
-                ObjectName = "一级市场规模",
+              
+                ObjectName = "yearlynimbox",
                 Description = Load("Write_YearlyNIM")
             ],
             [
-                Column0 = 7,
-                ObjectName = "较IPG收窄平均",
+           
+                ObjectName = "ipgtighteningbox",
                 Description = Load("AvgTighten_Writer")[描述]{0}
             ],
             [
-                Column0 = 8,
-                ObjectName = "较IPG收窄最高",
+               
+                ObjectName = "ipgtighteningbox",
                 Description = fx("Write_MaxTighten")(CWB("USDCNH_Tighten_Pivot3M"), "近3月")[描述]{0}
             ],
             [
-                Column0 = 9,
-                ObjectName = "新发行活动跟踪",
+        
+                ObjectName = "nimsummarybox",
                 Description = Load("wNIMSum_Writer")[描述]{0} & "。"
             ]
         }
-    )
-   // #"Appended Query" = Table.Combine({Inserted, Load("Writer_DealPQ")})
+    ),
+    #"Grouped Rows1" = Table.Group(Inserted, {"ObjectName"}, {{"Description", each Text.Combine(List.Distinct([Description]), "，"), type text}}),
+   // #"Appended Query" = Table.Combine({Inserted, Load("Writer_DealPQ")}),
+
+   Merged = fx("Merge")(#"Grouped Rows1", CWB("ToPPT"),"ObjectName","ObjectName",{""},{""}),
+    Reordered = fx("1st")(Merged,{"PPTSlide"})
 in
-   Inserted 
+    Reordered

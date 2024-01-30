@@ -126,7 +126,7 @@
             {
                 {"定价日", each List.Max([定价日]), type date},
                 {"板块", each Text.Combine(List.Distinct([板块]), ""), type text},
-                {"货币", each Text.Combine(List.Distinct([货币]), ";"), type text},
+                {"货币细分", each Text.Combine(List.Distinct([货币细分]), ";"), type text},
                 {"增发判定", each Text.Combine(List.Distinct([增发判定]), ""), type text},
                 {"多笔", each if List.Count([ISIN]) > 1 then Number.Round(List.Count([ISIN]), 0) else 0, type number},
                 {"描述", each Text.Combine(List.Distinct([描述2]), "#(lf)"), type text},
@@ -160,7 +160,7 @@
             type text
         ),
         AddedCol = Table.AddColumn(#"Added Suffix", "Writer", each if [总述] <> "" then [总述] & "#(lf)" & [描述] else [描述]),
-        List = {"信用主体及评级", "定价日", "板块", "货币", "Writer"},
+        List = {"信用主体及评级", "定价日", "板块", "货币细分", "Writer"},
         SCol = Table.SelectColumns(AddedCol, if _input = null then List else List & {"Custom"}, MissingField.UseNull)
     in
         SCol

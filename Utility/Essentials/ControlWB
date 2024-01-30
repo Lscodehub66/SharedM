@@ -1,6 +1,7 @@
 
 let
-    M1 = Date.From(fx("Parameter")("Monday")),
+    Mondaytext = fx("Parameter")("Monday"),
+    M1 = Date.From(  Mondaytext),
     ThisWB = Load("ThisWorkbook"),
     Record = [
       
@@ -12,6 +13,15 @@ let
         else
             "Global" otherwise fx("Parameter")("GPS")
     ],
-  Combined = Record.Combine({Record,ThisWB}) 
+  Getppt = let pptfolder =  if Record.Field(Record, "GPS") = "Global" then  "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\Weekly\"
+else "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\Weekly\",
+pptfile =  Mondaytext  & "\Markets - Weekly Update - " & Mondaytext  & ".pptx" ,
+pptpath = pptfolder & pptfile in pptpath,
+Record2 = [PPT_Path = Getppt],
+
+
+
+
+  Combined = Record.Combine({Record,Record2 ,ThisWB}) 
 in
      Combined

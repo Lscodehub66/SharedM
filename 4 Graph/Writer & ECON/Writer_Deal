@@ -1,12 +1,18 @@
 // let LoadCode = Load("Writer_Deal","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
 let
-    Source = Load("Recent_Data"),
-    Custom1 = fx("DateRange")({"PreviousMon.Date", "Sunday.Date"}, {Source, "定价日"}),
-    Source2 = CWB("Writer_Dealtbl"),
-    Buffered = Table.Buffer(  Source2 ),
-    WriteNewIssue = fx("WeeklyDealWriter")( Buffered ),
+  
+    Source2 = CWB("Writer_Dealtbl"),   //Source = Load("Recent_Data"),Custom1 = fx("DateRange")({"PreviousMon.Date", "Sunday.Date"}, {Source, "定价日"}),
+    Buffered = Table.Buffer(Source2),
+    WriteNewIssue = fx("WeeklyDealWriter")(Buffered),
+    Replaced = Table.ReplaceValue(
+        WriteNewIssue,
+        each [货币],
+        each if not List.Contains({"USD", "CNH"}, [货币]) then "Others" else [货币],
+        Replacer.ReplaceValue,
+        {"货币"}
+    ),
     #"Renamed Columns" = Table.RenameColumns(
-        WriteNewIssue, {{"货币", "Column1"}, {"板块", "Column0"}, {"Writer", "Column2"}}, MissingField.UseNull
+        Replaced, {{"货币", "Column1"}, {"板块", "Column0"}, {"Writer", "Column2"}}, MissingField.UseNull
     ),
     #"Merged Queries" = Table.NestedJoin(
         #"Renamed Columns", {"Column0"}, Load("dd_板块"), {"板块"}, "dd_板块", JoinKind.LeftOuter
@@ -16,7 +22,7 @@ let
         #"Expanded dd_板块", {{"SortValue", Order.Ascending}, {"Column1", Order.Ascending}, {"定价日", Order.Ascending}}
     ),
     #"Removed Other Columns1" =
-        if Table.RowCount(Source) = 0 then
+        if Table.RowCount(Source2) = 0 then
             #table({"Column0", "Column1", "Column2"}, {{"", "", "No Data For Writer to Write"}})
         else
             Table.SelectColumns(Output, {"Column0", "Column1", "Column2"}, MissingField.UseNull)

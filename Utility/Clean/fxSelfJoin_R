@@ -1,4 +1,4 @@
-// fx("SelfJoin_R")(#"Checked Price", CWB("DLD_priceNstats"), {"Check"})
+// fx("SelfJoin_R")(#"Checked Price", Table.SelectColumns(CWB(tblkey),{"Mark 1", "TICKER","Date"})), {"TICKER","Date"})
 (tblname as table, tbltojoin as table, MergeKey as list) =>
     let
         // tblname = DLD_p2,   tbltojoin  = CWB("DLD_priceNstats"),    MergeKey = {"Check"},
