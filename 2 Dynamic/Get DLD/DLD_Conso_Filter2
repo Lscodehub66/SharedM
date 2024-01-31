@@ -1,0 +1,90 @@
+// let LoadCode = Load("DLD_Conso_Filter2","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    DLDSource = Load("DLD_DMI"),
+    CWBSource = fx("DMI2")(CWB("DLD_DMIBBG"), "Y"),
+    #"//GNG_Multi" = if fx("Parameter")("MultiSource") = "ON" then "GO" else "NO-GO",
+    Crossroad =
+        if #"//GNG_Multi" <> "GO" then
+            Table.RenameColumns(CWBSource, {{"债项评级", "发行评级"}, {"穆迪/标普", "主体评级"}}, MissingField.UseNull)
+        else
+            fx("CheckerBBG")(CWBSource),
+    Fn = fx("ShowFilter")(Crossroad),
+    Fn1 = Load("fxIsFIMTN")(Fn),
+    Fn1_R = Table.ReplaceValue(
+        Fn1, "Y", each if [Filter_Bond] <> "" or [Filter_Exch] <> "" then "" else "【Y】", Replacer.ReplaceValue, {
+            "IS_FIMTN"
+        }
+    ),
+    Fn1_R1 = Table.ReplaceValue(
+        Fn1_R,
+        each [Filter_Bond],
+        each if [DataSource] = "BBG" then "" else [Filter_Bond],
+        Replacer.ReplaceValue,
+        {"Filter_Bond"}
+    ),
+    // {"Index", "DBIndex_Bond", "ISIN_Bond", "DBIndex_Chart", "ISIN_Chart", "DBIndex_Issue", "Check_Issue", "DBIndex_Stats", "Check_Stats", "DBIndex_BISL", "Check_BISL", "DBIndex_Credit", "信用主体_Credit"}
+    Fn2 = List.Accumulate(
+        {
+            {"Credit", "信用主体", {"Index", "信用主体简称", "板块", "板块二级", "板块三级", "中资属性", "级别"}},
+            {"Bond", "ISIN", {"Index"}},
+            {"Chart", "ISIN", {"Index"}},
+            {"Issue", "Check", {"Index"}},
+            {"Stats", "Check", {"Index"}},
+            {"BISL", "Check", {"Index"}}
+        },
+        Fn1_R1,
+        (x, y) =>
+            let
+                DBName = "m" & y{0},
+                IndexinCWB = "DBIndex_" & y{0},
+                PKinCWB = y{1} & "_" & y{0},
+                //DBName & ColName
+                DBtbl = Table.SelectColumns(CWB("DB_PrimaryKey"), {IndexinCWB, PKinCWB}),
+                PK = y{1},
+                SourceM = Table.NestedJoin(x, {PK}, DBtbl, {PKinCWB}, "Data" & PK, JoinKind.LeftOuter),
+                Exp = Table.ExpandTableColumn(SourceM, "Data" & PK, {IndexinCWB}, {IndexinCWB}),
+                Prep = Table.RemoveColumns(Exp, {DBName}, MissingField.Ignore),
+                ACol = Table.AddColumn(
+                    Prep, DBName, each if Record.Field(_, "DBIndex_" & y{0}) <> null then "已收录" else "", type text
+                ),
+                Output = if y{0} = "BISL" then Table.DuplicateColumn(ACol, "mBISL", "mEXE") else ACol
+            in
+                Output
+    ),
+    _HD = {
+        "Timestamp",
+        "Index",
+        "Filter_Bond",
+        "Filter_Exch",
+        "IS_FIMTN",
+        "ISIN",
+        "定价日",
+        "债券简称",
+        "货币",
+        "发行规模(亿)",
+        "mIssue",
+        "mBond",
+        "mCredit"
+    },
+    #"Filtered Rows" = Table.SelectRows(Fn2, each List.Contains({"", "*", "**"}, [Filter_Credit])),
+    // 只显示database没有的isin
+    #">>>ShowAll" =
+        if fx("Parameter")("ShowAll") = "OFF" then
+            Table.SelectRows(#"Filtered Rows", each [mIssue] <> "已收录")
+        else
+            #"Filtered Rows",
+    Revised = fx(
+        "SelfJoin_R"
+    )(
+        #">>>ShowAll", Table.SelectColumns(CWB("DLD_Conso_Filter"), _HD, MissingField.Ignore), {"ISIN"}
+    ),
+    Stamped = Table.AddColumn(
+        Table.RemoveColumns(Revised, {"Timestamp"}, MissingField.Ignore),
+        "Timestamp",
+        each DateTime.LocalNow(),
+        type datetime
+    ),
+    #"Sorted Rows" = fx("SortNIndex")(Stamped),
+    #"Reordered" = fx("1st")(#"Sorted Rows", _HD)
+in
+    #"Reordered"

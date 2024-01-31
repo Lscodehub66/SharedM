@@ -117,8 +117,9 @@
                     ""
         ),
         #"Translated BOCOM" = fx("Replace")(Bocom, {Col6}, "角色"),
+        AddedStats = Table.AddColumn(    #"Translated BOCOM","StatsDES", each if [Stats] <> "" then  "。最终认购统计如下：" & Text.Replace([Stats], "#(lf)","") else "",type text),
         Merged = Table.AddColumn(
-            #"Translated BOCOM",
+            AddedStats ,
             "描述",
             each
                 fx(
@@ -131,13 +132,14 @@
                         & Record.Field(_, Col4)
                         & "，"
                         & Record.Field(_, Col5)
-                        & Record.Field(_, Col6),
+                        & Record.Field(_, Col6) & Record.Field(_, "StatsDES"),
                     "，"
                 )
         ),
-        Stats = Table.AddColumn(Merged, "描述2", each if [Stats] <> "" then [描述] & "#(lf)" & [Stats] else [描述], type text),
+        
+      //  Stats = Table.AddColumn(Merged, "描述2", each if [Stats] <> "" then [描述] & "#(lf)" & [Stats] else [描述], type text),
         Grouped = Table.Group(
-            Stats,
+               Merged,
             {"信用主体及评级", "板块"},
             {
                 {"新发总结板块", each Text.Combine(List.Distinct([新发总结板块]), ";"), type text},
@@ -154,7 +156,7 @@
                             0,
                     type number
                 },
-                {"描述", each Text.Combine(List.Distinct([描述2]), "#(lf)"), type text},
+                {"描述", each Text.Combine(List.Distinct([描述]), "#(lf)"), type text},
                 {"Custom", each _, type table}
             }
         ),    IsByCCY = List.Sum( Grouped [多币种]) = 0,

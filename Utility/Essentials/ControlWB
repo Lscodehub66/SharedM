@@ -18,10 +18,14 @@ else "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\Weekly\",
 pptfile =  Mondaytext  & "\Markets - Weekly Update - " & Mondaytext  & ".pptx" ,
 pptpath = pptfolder & pptfile in pptpath,
 Record2 = [PPT_Path = Getppt],
+Get5 =  if Record.Field(Record, "GPS") = "Global" then  "\\itd-m09-fs02\dcm$\0 DCM Base\4 Markets\Data\5. Weekly List.xlsx"
+else "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\DataLake\Backup\5. Weekly List.xlsx",
+
+Record3 = [WeeklyList_Path = Get5],
 
 
 
 
-  Combined = Record.Combine({Record,Record2 ,ThisWB}) 
+  Combined = Record.Combine({Record,Record2 ,Record3 ,ThisWB}) 
 in
      Combined

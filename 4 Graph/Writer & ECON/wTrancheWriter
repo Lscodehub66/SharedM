@@ -1,0 +1,17 @@
+let
+Source2 = CWB("Writer_Dealtbl"),
+    WriteNewIssue = Table.Buffer( fx("WeeklyDealWriter")(Source2, "Custom")),
+
+    Grouped = Table.Group(
+        WriteNewIssue,
+        {"新发总结板块"},
+        {{"Description", each   Text.Combine([Writer], "#(lf)")}}
+   ),
+    #"Added Col" = Table.AddColumn(
+       Grouped, 
+        "ObjectName",
+        each if [新发总结板块] = "城投板块" then "nimlgfvbox" else if [新发总结板块] = "投资级板块" then "nimigbox" else "nimothersbox",
+        type text
+    )
+in
+    #"Added Col"

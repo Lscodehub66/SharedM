@@ -1,0 +1,27 @@
+//let LoadCode = Load("BySBLC","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    Source = fx("DBMonitor")("SBLC"),
+    SCol = Table.SelectColumns(Source, CWB("tbl_HD1")[Column1], MissingField.UseNull),
+    #"Grouped Rows" = Table.Group(
+        SCol, {"备证行"}, {{"CountAll", each Table.RowCount(_), Int64.Type}, {"Custom", each _, type table}}
+    ),
+    CWBSource =
+        let
+            Source = CWB("tbl_filter1"), #"Added Index" = Table.AddIndexColumn(Source, "SortValue", 1, 1, Int64.Type)
+        in
+            #"Added Index",
+    #"Merged Queries1" = Table.NestedJoin(#"Grouped Rows", {"备证行"}, CWBSource, {"备证行"}, "CWBSource", JoinKind.Inner),
+    #"Expanded CWBSource" = Table.ExpandTableColumn(
+        #"Merged Queries1", "CWBSource", {"Count", "SortValue"}, {"Count", "SortValue"}
+    ),
+    Transformed = Table.AddColumn(
+        #"Expanded CWBSource",
+        "Custom1",
+        each Table.FirstN(Table.Sort([Custom], {{"定价日", Order.Descending}}), [Count]),
+        type table
+    ),
+    #"Sorted Rows" = Table.Sort(Transformed, {{"SortValue", Order.Ascending}}),
+    #"Removed Other Columns" = fx("Exp")(Table.SelectColumns(#"Sorted Rows", {"Custom1"}), "Custom1"),
+    Custom1 = fx("Data")(#"Removed Other Columns", 2)
+in
+    Custom1
