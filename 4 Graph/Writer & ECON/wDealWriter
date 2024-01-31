@@ -1,0 +1,58 @@
+let
+    Source2 = CWB("Writer_Dealtbl"),
+    //Source = Load("Recent_Data"),Custom1 = fx("DateRange")({"PreviousMon.Date", "Sunday.Date"}, {Source, "定价日"}),
+    Buffered = Table.Buffer(Source2),
+    WriteNewIssue = fx("WeeklyDealWriter")(Buffered, "Custom"),
+    #"Grouped Rows" = Table.Group(
+        WriteNewIssue,
+        {"新发总结板块", "货币细分"},
+        {{"Count", each Table.RowCount(_), Int64.Type}, {"Custom", each _, type table}}
+    ),
+    #"Sorted Rows1" = Table.Sort(#"Grouped Rows", {{"Count", Order.Descending}}),
+    #"Grouped Rows1" = Table.Group(#"Sorted Rows1", {"新发总结板块"}, {{"Custom", each _, type table}}),
+    #"Sorted Rows" = Table.TransformColumns(
+        #"Grouped Rows1",
+        {
+            {
+                "Custom",
+                each
+                    Table.AddColumn(
+                        Table.Sort(_, {{"Count", Order.Descending}}),
+                        "描述4",
+                        each Number.ToText([Count], "0") & "笔" & [货币细分],
+                        type text
+                    ),
+                type table
+            }
+        }
+    ),
+    #"Added Col" = Table.AddColumn(
+        #"Sorted Rows", "描述4", each Text.Combine(Table.Column([Custom], "描述4"), "、"), type text
+    ),
+    Custom1 = Table.AddColumn(
+        #"Added Col",
+        "ObjectName",
+        each if [新发总结板块] = "城投板块" then "nimlgfvbox" else if [新发总结板块] = "投资级板块" then "nimigbox" else "nimothersbox",
+        type text
+    ),
+    #"Merged Columns" = Table.CombineColumns(
+        Custom1, {"新发总结板块", "描述4"}, Combiner.CombineTextByDelimiter("共发行", QuoteStyle.None), "总结1"
+    ),
+    #"Aggregated Custom.1" = Table.TransformColumns(
+        #"Merged Columns",
+        {
+            {
+                "Custom",
+                each Table.AggregateTableColumn(_, "Custom", {{"Writer", each Text.Combine(_, "#(lf)"), "Writer"}})
+            }
+        }
+    ),
+    #"Aggregated Custom1" = Table.AggregateTableColumn(
+        #"Aggregated Custom.1", "Custom", {{"Writer", each Text.Combine(_, "#(lf)"), "Writer"}}
+    ),
+    #"Added Prefix" = Table.TransformColumns(#"Aggregated Custom1", {{"总结1", each "上周，" & _ & "。", type text}}),
+    #"Merged Columns1" = Table.CombineColumns(
+        #"Added Prefix", {"总结1", "Writer"}, Combiner.CombineTextByDelimiter("#(lf)", QuoteStyle.None), "Description"
+    )
+in
+    #"Merged Columns1"

@@ -8,13 +8,29 @@
         Col4 = "4品种",
         Col5 = "5价格",
         Col6 = "6担任",
-        NewCols = {"多笔", "信用主体及评级", "多笔主体", "描述", "描述2", "总述"} & {Col1, Col2, Col3, Col4, Col5, Col6},
-        RColprep = Table.RemoveColumns(Source, NewCols, MissingField.Ignore),
-        ddd = Table.AddColumn(RColprep, Col1, each Date.ToText([定价日], "ddd"), type text),
-        dddcn = fx("Replace")(ddd, {Col1}, "DDDCN"),
-        FnDupeCount = Table.RenameColumns(
-            fx("DupeCount")(dddcn, "信用主体简称"), {"Dupe.Count", "多笔"}, MissingField.UseNull
+        NewCols = {"新发总结板块", "多笔", "信用主体及评级", "多笔主体", "描述", "描述2", "总述"} & {Col1, Col2, Col3, Col4, Col5, Col6},
+        Prep = Table.RemoveColumns(Source, NewCols, MissingField.Ignore),
+        //
+        Added = Table.AddColumn(
+            Prep,
+            "新发总结板块",
+            each
+                if [投标资历分类] = "SOE Creds" then
+                    "城投板块"
+                else if [主体评级分类] = "IG" then
+                    "投资级板块"
+                else if [板块] = "金融机构" or Text.Contains([中资属性], "央企") then
+                    "【投资级板块】"
+                else if ([中资属性] = "民企" and [板块] = "房地产")  or [主体评级分类] = "HY" then
+                    "高收益板块"
+                else if [板块] = "主权/政府" then
+                    "其他板块"
+                else
+                    "【其他板块】",
+            type text
         ),
+        ddd = Table.AddColumn(Added, Col1, each Text.Replace([DayName.CN], "星期", "周"), type text),
+        FnDupeCount = Table.RenameColumns(fx("DupeCount")(ddd, "信用主体简称"), {"Dupe.Count", "多笔"}, MissingField.UseNull),
         EntityWRtg = Table.AddColumn(
             FnDupeCount,
             "信用主体及评级",
@@ -122,22 +138,35 @@
         Stats = Table.AddColumn(Merged, "描述2", each if [Stats] <> "" then [描述] & "#(lf)" & [Stats] else [描述], type text),
         Grouped = Table.Group(
             Stats,
-            {"信用主体及评级"},
+            {"信用主体及评级", "板块"},
             {
+                {"新发总结板块", each Text.Combine(List.Distinct([新发总结板块]), ";"), type text},
                 {"定价日", each List.Max([定价日]), type date},
-                {"板块", each Text.Combine(List.Distinct([板块]), ""), type text},
                 {"货币细分", each Text.Combine(List.Distinct([货币细分]), ";"), type text},
                 {"增发判定", each Text.Combine(List.Distinct([增发判定]), ""), type text},
                 {"多笔", each if List.Count([ISIN]) > 1 then Number.Round(List.Count([ISIN]), 0) else 0, type number},
+                {
+                    "多币种",
+                    each
+                        if List.Count([ISIN]) > 1 and List.Count(List.Distinct([货币])) > 1 then
+                            Number.Round(List.Count(List.Distinct([货币])), 0)
+                        else
+                            0,
+                    type number
+                },
                 {"描述", each Text.Combine(List.Distinct([描述2]), "#(lf)"), type text},
                 {"Custom", each _, type table}
             }
-        ),
+        ),    IsByCCY = List.Sum( Grouped [多币种]) = 0,
         #"Replaced Value" = Table.ReplaceValue(
             Grouped,
             each [增发判定],
             each
-                if Text.Contains([增发判定], "原始") and Text.Contains([增发判定], "增发") or ([多笔]>1 and Text.Contains([增发判定], "增发")) then
+                if
+                    Text.Contains([增发判定], "原始")
+                    and Text.Contains([增发判定], "增发")
+                    or ([多笔] > 1 and Text.Contains([增发判定], "增发"))
+                then
                     "定价及增发"
                 else if Text.Contains([增发判定], "增发") then
                     "增发"
@@ -160,7 +189,8 @@
             type text
         ),
         AddedCol = Table.AddColumn(#"Added Suffix", "Writer", each if [总述] <> "" then [总述] & "#(lf)" & [描述] else [描述]),
-        List = {"信用主体及评级", "定价日", "板块", "货币细分", "Writer"},
+     
+        List = {"新发总结板块", "信用主体及评级", "定价日", "板块", "货币细分", "Writer"},
         SCol = Table.SelectColumns(AddedCol, if _input = null then List else List & {"Custom"}, MissingField.UseNull)
     in
         SCol
