@@ -2,6 +2,7 @@
 let
     Mondaytext = fx("Parameter")("Monday"),
     M1 = Date.From(  Mondaytext),
+    Duedate = fx("NextWorkDay")( fx("Control.Sunday.Date"), Load("HKHolidays", "CSVDATE"), "Date")  ,
     ThisWB = Load("ThisWorkbook"),
     Record = [
       
@@ -22,10 +23,10 @@ Get5 =  if Record.Field(Record, "GPS") = "Global" then  "\\itd-m09-fs02\dcm$\0 D
 else "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\DataLake\Backup\5. Weekly List.xlsx",
 
 Record3 = [WeeklyList_Path = Get5],
+Record4 = [Due.Date = fx("NextWorkDay")( fx("Control.Sunday.Date"), Load("HKHolidays", "CSVDATE"), "Date")],
 
 
 
-
-  Combined = Record.Combine({Record,Record2 ,Record3 ,ThisWB}) 
+  Combined = Record.Combine({Record,Record2 ,Record3, ThisWB ,Record4}) 
 in
      Combined

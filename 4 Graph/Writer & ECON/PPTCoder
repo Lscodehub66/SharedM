@@ -1,0 +1,31 @@
+// let LoadCode = Load("PPTCoder","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
+let
+    Source = CWB("tbl_pptcode"),
+    #"Trimmed Text" = Table.TransformColumns(
+        Source,
+        {
+            {"1", Text.Trim, type text},
+            {"2", Text.Trim, type text},
+            {"3", Text.Trim, type text},
+            {"4", Text.Trim, type text},
+            {"5", Text.Trim, type text}
+        }
+    ),
+    #"Merged Columns" = Table.CombineColumns(
+        #"Trimmed Text", {"1", "2", "3", "4", "5"}, Combiner.CombineTextByDelimiter("#(lf)", QuoteStyle.None),
+        "Merged"
+    ),
+    #"Added Prefix" = Table.TransformColumns(#"Merged Columns", {{"Merged", each "#(lf)" & _ & "#(lf)", type text}}),
+    #"Replaced Value" = Table.ReplaceValue(
+        #"Added Prefix",
+        "oPPShape.TextFrame.DeleteText",
+        each
+            if Text.Contains([Merged], "nimlgfvsumbox") or Text.Contains([Merged], "nimigsumbox") then
+                "oPPShape.TextFrame.DeleteText" & "#(lf)" & "oPPShape.TextFrame.TextRange.Font.Bold = True"
+            else
+                "oPPShape.TextFrame.DeleteText",
+        Replacer.ReplaceText,
+        {"Merged"}
+    )
+in
+    #"Replaced Value"
