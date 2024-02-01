@@ -3,7 +3,7 @@
 let
     fxJSON_TF =Load("fxJSON_TF"),
     //
-    GPS  = try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Remote", 
+    GPS  = try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Global", 
     Source = if GPS = "Remote" then Folder.Files("C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM\Utility\json") else 
     Folder.Files("\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\SharedM\Utility\json"),
    // En

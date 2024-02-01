@@ -1,12 +1,12 @@
 let
+    InputMakerList = {"ES", "CL"},
     HKHolidaytbl = Table.Buffer(fx("Data")(Load("HKHolidays", "CSV"))),
     Source = Load("FOMCCal", "CSV"),
     #"Filtered Rows" = Table.SelectRows(Source, each ([YYYY] = "2024")),
-    #"Removed Other Columns" = Table.SelectColumns(#"Filtered Rows", {"Value", "Date_End"}),
-    #"Changed Type" = Table.TransformColumnTypes(#"Removed Other Columns", {{"Date_End", type date}}),
-    #"Renamed Columns" = Table.RenameColumns(#"Changed Type", {{"Date_End", "Start Date"}}),
+    #"Changed Type" = Table.TransformColumnTypes(#"Filtered Rows", {{"Date_End", type date}}),
+    #"Added Custom3" = Table.AddColumn(#"Changed Type", "Start Date", each Date.AddDays([Date_End], 1), type date),
     #"Added Custom" = Table.AddColumn(
-        #"Renamed Columns", "Due Date", each fx("NextWorkDay")([Start Date], HKHolidaytbl, "Date"), type date
+        #"Added Custom3", "Due Date", each fx("NextWorkDay")([Start Date], HKHolidaytbl, "Date"), type date
     ),
     #"Added Custom1" = Table.AddColumn(
         #"Added Custom",
@@ -20,6 +20,13 @@ let
         each "FOMC Meeting Date: " & [Value] & "," & Date.ToText([Due Date], "yyyy"),
         type text
     ),
-    #"Removed Columns" = Table.RemoveColumns(#"Added Custom2", {"Value"})
+    #"Sorted Rows" = Table.Sort(#"Added Custom2", {{"Due Date", Order.Ascending}}),
+    #"Added Index" = Table.AddIndexColumn(#"Sorted Rows", "Index", 1, 1, Int64.Type),
+    #"Added Custom4" = Table.AddColumn(
+        #"Added Index", "Assignee", each if Number.IsOdd([Index]) then "Eugenia Sen" else "Cindy Liu", type text
+    ),
+    #"Removed Other Columns" = Table.SelectColumns(
+        #"Added Custom4", {"Task Name", "Description", "Assignee", "Start Date", "Due Date"}
+    )
 in
-    #"Removed Columns"
+    #"Removed Other Columns"

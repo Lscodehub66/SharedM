@@ -8,7 +8,7 @@
         key = if _inputkey = null then "上周主要经济数据" else "未来一周主要经济数据",
         RlvLvl = Load("RlvLvl"),
         US_addon = Load("US_addon"),
-        Source = fx("Wstbl")("DOWNLOAD", "ECON"),
+        Source = CWB("DLD_Econ"),
         #"Filtered Rows0" = Table.SelectRows(Source, each [Date Time] <> null and [Ticker] <> null),
         #"Changed Type" = Table.TransformColumnTypes(#"Filtered Rows0", {{"Column5", type text}}),
         #"Inserted Date" = Table.AddColumn(
