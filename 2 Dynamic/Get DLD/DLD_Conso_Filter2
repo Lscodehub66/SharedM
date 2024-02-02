@@ -23,6 +23,8 @@ let
         {"Filter_Bond"}
     ),
     // {"Index", "DBIndex_Bond", "ISIN_Bond", "DBIndex_Chart", "ISIN_Chart", "DBIndex_Issue", "Check_Issue", "DBIndex_Stats", "Check_Stats", "DBIndex_BISL", "Check_BISL", "DBIndex_Credit", "信用主体_Credit"}
+    
+    
     Fn2 = List.Accumulate(
         {
             {"Credit", "信用主体", {"Index", "信用主体简称", "板块", "板块二级", "板块三级", "中资属性", "级别"}},
@@ -35,14 +37,15 @@ let
         Fn1_R1,
         (x, y) =>
             let
+             DBtbl = Table.Buffer(CWB("DB_PrimaryKey")),
                 DBName = "m" & y{0},
                 IndexinCWB = "DBIndex_" & y{0},
                 PKinCWB = y{1} & "_" & y{0},
                 //DBName & ColName
-                DBtbl = Table.SelectColumns(CWB("DB_PrimaryKey"), {IndexinCWB, PKinCWB}),
+
                 PK = y{1},
                 SourceM = Table.NestedJoin(x, {PK}, DBtbl, {PKinCWB}, "Data" & PK, JoinKind.LeftOuter),
-                Exp = Table.ExpandTableColumn(SourceM, "Data" & PK, {IndexinCWB}, {IndexinCWB}),
+                Exp = Table.ExpandTableColumn(SourceM, "Data" & PK, {"Index"}, {IndexinCWB}),
                 Prep = Table.RemoveColumns(Exp, {DBName}, MissingField.Ignore),
                 ACol = Table.AddColumn(
                     Prep, DBName, each if Record.Field(_, "DBIndex_" & y{0}) <> null then "已收录" else "", type text
@@ -51,6 +54,7 @@ let
             in
                 Output
     ),
+     credit =   fx("Merge")(Fn2,CWB("mCredit"),"信用主体","信用主体",{"信用主体简称", "板块", "板块二级", "板块三级", "中资属性", "级别"},{""}),
     _HD = {
         "Timestamp",
         "Index",
@@ -66,7 +70,7 @@ let
         "mBond",
         "mCredit"
     },
-    #"Filtered Rows" = Table.SelectRows(Fn2, each List.Contains({"", "*", "**"}, [Filter_Credit])),
+    #"Filtered Rows" = Table.SelectRows( credit , each List.Contains({"", "*", "**"}, [Filter_Credit])),
     // 只显示database没有的isin
     #">>>ShowAll" =
         if fx("Parameter")("ShowAll") = "OFF" then

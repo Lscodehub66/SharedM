@@ -8,6 +8,7 @@ let
         Now.Date = Date.From(DateTime.FixedLocalNow()),
         Monday.Date = Date.StartOfWeek(M1, Day.Monday),
         PreviousMon.Date = Date.StartOfWeek(Date.AddDays(M1, -7), Day.Monday),
+                PreviousMon = Date.ToText(Date.StartOfWeek(Date.AddDays(M1, -7), Day.Monday),"yyyyMMdd"),
         Sunday.Date = Date.AddDays(Date.StartOfWeek(M1, Day.Monday), -1),
         ThisSunday.Date = Date.EndOfWeek(M1, Day.Monday),
         NextMon.Date =Date.StartOfWeek(Date.AddDays(M1, 7), Day.Monday),

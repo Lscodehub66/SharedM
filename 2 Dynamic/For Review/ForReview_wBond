@@ -1,5 +1,6 @@
 // let LoadCode = Load("ForReview_wBond","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
+    DeleteTempISIN = List.Buffer(List.RemoveItems(fx("DEALSMASTER","=MISSUE")[ISIN_TEMP],"")),
     DeleteISIN = List.Buffer(Table.SelectRows(CWB("ForReview_wIssue"), each [删除及隐藏] = "【删除】")[ISIN]),
     _input = "wBond",
     _PK = "ISIN",

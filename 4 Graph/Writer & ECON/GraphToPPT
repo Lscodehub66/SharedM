@@ -1,4 +1,4 @@
-// let LoadCode = Load("GraphToPPT","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
+// let LoadCode = Load("PPTBoxMap","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
 let
     Source = CWB("Indice_Table"),
     #"Grouped Rows" = Table.Group(
@@ -57,7 +57,8 @@ let
             ], [
                 ObjectName = "commentaryhdbox",
                 Description = Date.ToText(fx("Control.PreviousMon.Date"), "每周市场评论（yyyy年M月d日") & Date.ToText(fx("Control.当前"), " - yyyy年M月d日）")  
-            ]
+            ], [ObjectName = "syndboxmarketcolorsum",Description ="【】"], [ObjectName = "syndboxmarketcolorig",Description ="【】"],
+             [ObjectName = "syndboxmarketcolorlgfv",Description ="【】"], [ObjectName = "syndboxmarketcolorhy",Description ="【】"], [ObjectName = "syndboxustcurve",Description ="【】"]
         }
     ),
     #"Grouped Rows1" = Table.Group(
@@ -70,7 +71,7 @@ let
     )(
         {#"Grouped Rows1", Load("wSummaryWriter"), Load("wTrancheWriter")}, {null}, {0}
     ),
-    Merged = fx("Merge")(#"Appended Query", CWB("GraphToPPT"), "ObjectName", "ObjectName", {""}, {""}),
+    Merged = fx("Merge")(#"Appended Query", CWB("PPTBoxMap"), "ObjectName", "ObjectName", {""}, {""}),
     Reordered = fx("1st")(Merged, {"PPTSlide"})
 in
     Reordered

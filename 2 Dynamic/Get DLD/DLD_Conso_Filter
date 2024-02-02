@@ -22,6 +22,7 @@ let
         Replacer.ReplaceValue,
         {"Filter_Bond"}
     ),
+
     Fn2 = List.Accumulate(
         {
             {"Credit", "信用主体", {"Index", "信用主体简称", "板块", "板块二级", "板块三级", "中资属性", "级别"}},
@@ -59,6 +60,7 @@ let
             in
                Output
     ),
+     credit =   fx("Merge")(Fn2,CWB("mCredit"),"信用主体","信用主体",{"信用主体简称", "板块", "板块二级", "板块三级", "中资属性", "级别"},{""}),
     _HD = {
         "Timestamp",
         "Index",
@@ -74,7 +76,7 @@ let
         "mBond",
         "mCredit"
     },
-    #"Filtered Rows" = Table.SelectRows(Fn2, each List.Contains({"", "*", "**"}, [Filter_Credit])),
+    #"Filtered Rows" = Table.SelectRows( credit, each List.Contains({"", "*", "**"}, [Filter_Credit])),
     // 只显示database没有的isin
     #">>>ShowAll" =
         if fx("Parameter")("ShowAll") = "OFF" then

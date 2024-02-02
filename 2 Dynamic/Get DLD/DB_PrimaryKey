@@ -1,29 +1,19 @@
 // let LoadCode = Load("DB_PrimaryKey","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-    Source = List.Accumulate(
-        {
-            {"Bond", "ISIN"},
-            {"Chart", "ISIN"},
-            {"Issue", "Check"},
-            {"Stats", "Check"},
-            {"BISL", "Check"},
-            {"Credit", "信用主体"}
-        },
-        Table.TransformColumnTypes(Table.FromColumns({{1..2000}}, {"Index"}), {{"Index", Int64.Type}}),
-        (x, y) =>
-            let
-                DBName = "m" & y{0},
-                //DBName & ColName
-                DBtbl = fx("Ws")("DEALSMASTER", "=m" & y{0}),
-                HD_Index = "DBIndex_" & y{0},
-                HD_PK = y{1},
-                HD_PKexp =HD_PK &   "_" &  y{0},
-                SourceM = Table.SelectColumns(DBtbl, {y{1}}),
-                Sorted = fx("Sort")(SourceM, {y{1}}, HD_Index),
-                Merged = fx("Merge")(x, Sorted, "Index", HD_Index, {HD_Index, HD_PK}, {"DBIndex_" & y{0}, HD_PKexp})
-            in
-                Merged
+    File = Table.Buffer(fx("Ws")("DEALSMASTER")),
+    DBPKList = {
+        {"Bond", "ISIN"},
+        {"Chart", "ISIN"},
+        {"Issue", "Check"},
+        {"Stats", "Check"},
+        {"BISL", "Check"},
+        {"Credit", "信用主体"}
+    },
+    List1 = List.Accumulate(
+        DBPKList, {{1..2000}}, (x, y) => x & {Table.Column(File{[Item = "m" & y{0}, Kind = "Table"]}[Data], y{1})}
     ),
-    #"Filtered Rows" = Table.SelectRows(Source, each not List.Contains({null, ""}, [Check_Issue]))
+    List2 = List.Accumulate(DBPKList, {"Index"}, (x, y) => x & {y{1} & "_" & y{0}}),
+    tbl = Table.FromColumns(List1, List2),
+    #"Filtered Rows" = Table.SelectRows(tbl, each not List.Contains({null, ""}, [Check_Issue]))
 in
     #"Filtered Rows"
