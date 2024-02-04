@@ -1,6 +1,6 @@
 let
     Source2 = CWB("Writer_Dealtbl"),
-    WriteNewIssue = Table.Buffer( fx("WeeklyDealWriter")(Source2, "Custom")),
+    WriteNewIssue = Table.Buffer( fx("DealReporter")(Source2, "Custom")),
     #"Grouped Rows" = Table.Group(
         WriteNewIssue,
         {"新发总结板块", "货币细分"},

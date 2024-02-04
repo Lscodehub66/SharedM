@@ -76,7 +76,8 @@ let
     Replaced2 = Table.ReplaceValue(
         Filtered1, "新增", each if [删除及隐藏] = "【删除】" then "" else "新增", Replacer.ReplaceValue, {"mBISL","mEXE"}
     ),
-    Sorted = fx("SortNIndex")(Replaced2),
+    WeeklyOnly = fx("DateRange")({"wFilter_PreviousMon.Date","Sunday.Date"},{   Replaced2,"定价日"}),
+    Sorted = fx("SortNIndex")(   WeeklyOnly),
     SCol2 = Table.SelectColumns(Sorted, HD, MissingField.UseNull)
 in
     SCol2

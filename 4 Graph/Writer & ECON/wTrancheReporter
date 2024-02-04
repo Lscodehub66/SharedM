@@ -1,0 +1,33 @@
+let
+    Source2 = CWB("Writer_Dealtbl"),
+    WriteNewIssue = Table.Buffer(fx("DealReporter")(Source2, "Custom")),
+    reviewed =
+        let
+            Joined = fx(
+                "Merge"
+            )(
+                WriteNewIssue, CWB("Reporter_Sector", "1"), "信用主体及评级", "信用主体及评级", {"新发总结板块"}, {"Dummy新发"}
+            ),
+            #"Replaced Value" = Table.ReplaceValue(
+                Joined,
+                each [新发总结板块],
+                each
+                    if not List.Contains({null, "", "--", "【】"}, [Dummy新发]) and [Dummy新发] <> [新发总结板块] then
+                        [Dummy新发]
+                    else
+                        [新发总结板块],
+                Replacer.ReplaceValue,
+                {"新发总结板块"}
+            ),
+            #"Removed Columns" = Table.RemoveColumns(#"Replaced Value", {"Dummy新发"})
+        in
+            try #"Removed Columns" otherwise WriteNewIssue,
+    Grouped = Table.Group(reviewed, {"新发总结板块"}, {{"Description", each Text.Combine([Writer], "#(lf)")}}),
+    #"Added Col" = Table.AddColumn(
+        Grouped,
+        "ObjectName",
+        each if [新发总结板块] = "城投板块" then "nimlgfvbox" else if [新发总结板块] = "投资级板块" then "nimigbox" else "nimothersbox",
+        type text
+    )
+in
+    #"Added Col"

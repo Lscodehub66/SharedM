@@ -20,7 +20,7 @@ let
         近半年 = Date.AddQuarters(M1, -2),
         近3季度 = Date.AddQuarters(M1, -3),
         年初 = fx("NextWeekDay")(Date.StartOfYear(M1)),
-        去年初 = if Date.QuarterOfYear(M1) = 1 then fx("NextWeekDay")(Date.StartOfYear(Date.AddYears(M1, -1))) else null,
+        去年初 = if Date.Month(M1) = 1 then fx("NextWeekDay")(Date.StartOfYear(Date.AddYears(M1, -1))) else null,
         近1年 = fx("NextWeekDay")(Date.AddYears(M1, -1)),
         近5年 = fx("NextWeekDay")(Date.AddYears(M1, -5)),
         近3月 = fx("NextWeekDay")(Date.AddMonths(M1, -3)),

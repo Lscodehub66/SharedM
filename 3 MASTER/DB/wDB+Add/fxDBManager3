@@ -44,9 +44,19 @@
         // Weekly
         // Remember to check the referenced name if you revise previous steps **Referenced Dummy Step **
         _CROSSROAD = if MorW = "W" then fx("UpdatorTS")(RemovedDupe) else RemovedDupe,
-#"Revalidated FRN" = if Table.HasColumns(_CROSSROAD, {"票息","品种主题"}) then Table.ReplaceValue(_CROSSROAD, "", each if Text.Contains([票息]??"", "+") then "浮息" else "",
-Replacer.ReplaceValue,{"品种主题"}) else   _CROSSROAD,
-        BISL_对帐号 = Load("fxPRJSync")(    #"Revalidated FRN" , "台账序号", "定价日", "PRJ对账号"),
+        #"Fill in Original" = if MorW = "M" then fx("NthISIN")(_CROSSROAD) else _CROSSROAD,
+        #"Revalidated FRN" =
+            if Table.HasColumns(#"Fill in Original", {"票息", "品种主题"}) then
+                Table.ReplaceValue(
+                    #"Fill in Original",
+                    "",
+                    each if Text.Contains([票息] ?? "", "+") then "浮息" else "",
+                    Replacer.ReplaceValue,
+                    {"品种主题"}
+                )
+            else
+                #"Fill in Original",
+        BISL_对帐号 = Load("fxPRJSync")(#"Revalidated FRN", "台账序号", "定价日", "PRJ对账号"),
         #"Invoked Entity Manager" =
             if List.Contains(HD, "板块二级") and MorW = "M" then
                 fx("DB_Entity")(BISL_对帐号)
@@ -71,8 +81,7 @@ Replacer.ReplaceValue,{"品种主题"}) else   _CROSSROAD,
                     Replaced1
             else
                 #"Invoked Entity Manager",
-   
-        PresentedNull = fx("PresentNoData")( #"Replaced 债券简称"),
+        PresentedNull = fx("PresentNoData")(#"Replaced 债券简称"),
         //Sort as last step
         RCol = fx("RCol")(PresentedNull),
         Sorted = fx("SortNIndex")(RCol)

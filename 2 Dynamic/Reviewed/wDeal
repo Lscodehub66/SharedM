@@ -47,6 +47,6 @@ let
     HD = List.Distinct(List.Accumulate(DM, {"mBond"} & CWB("mBond", "CN"), (x, y) => x & {y} & CWB(y, "CN"))),
     Reordered = Table.SelectColumns(TF, HD, MissingField.Ignore),
     Replaced = Table.ReplaceValue(Reordered, "新增", "Y", Replacer.ReplaceValue, DM & {"mBond"}),
-    Custom2 = fx("DBManager2")(Replaced)
+    Custom2 = fx("Data")(fx("DBManager2")(Replaced),1)
 in
     Custom2

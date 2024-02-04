@@ -12,7 +12,7 @@ let
     joined = Table.Buffer(fx("DateRange")({    RecordValue ,"Monday.Date"},{Source,"定价日"})),
     MaxNum = List.Max(List.Buffer(joined[收窄Num])),
     MaxFound = Table.SelectRows(joined, each [收窄Num] = MaxNum),
-    Custom1 = fx("WeeklyDealWriter")(MaxFound,"all"),
+    Custom1 = fx("DealReporter")(MaxFound,"all"),
     #"Removed Other Columns" = Table.SelectColumns(Custom1,{"Custom"}),
     ACol = Table.AddColumn(#"Removed Other Columns", "Column0", each RecordValue & "新发交易中较IPG收窄的最高幅度为", type text),
     #"Expanded Custom" = Table.ExpandTableColumn(  ACol , "Custom",{"年M月","多笔主体","3详情规模","发行品种","5价格收窄"}),

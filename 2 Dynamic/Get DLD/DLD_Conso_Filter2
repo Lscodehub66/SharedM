@@ -8,7 +8,14 @@ let
             Table.RenameColumns(CWBSource, {{"债项评级", "发行评级"}, {"穆迪/标普", "主体评级"}}, MissingField.UseNull)
         else
             fx("CheckerBBG")(CWBSource),
-    Fn = fx("ShowFilter")(Crossroad),
+    RemoveStupid = Table.RemoveColumns(
+        Table.NestedJoin(
+            Crossroad, {"ISIN", "定价日"}, Load("StupidDMI", "CSVDATE"), {"ISIN", "定价日"}, "tbldmistupid",
+            JoinKind.LeftAnti
+        ),
+        {"tbldmistupid"}
+    ),
+    Fn = fx("ShowFilter")(RemoveStupid),
     Fn1 = Load("fxIsFIMTN")(Fn),
     Fn1_R = Table.ReplaceValue(
         Fn1, "Y", each if [Filter_Bond] <> "" or [Filter_Exch] <> "" then "" else "【Y】", Replacer.ReplaceValue, {
@@ -23,8 +30,6 @@ let
         {"Filter_Bond"}
     ),
     // {"Index", "DBIndex_Bond", "ISIN_Bond", "DBIndex_Chart", "ISIN_Chart", "DBIndex_Issue", "Check_Issue", "DBIndex_Stats", "Check_Stats", "DBIndex_BISL", "Check_BISL", "DBIndex_Credit", "信用主体_Credit"}
-    
-    
     Fn2 = List.Accumulate(
         {
             {"Credit", "信用主体", {"Index", "信用主体简称", "板块", "板块二级", "板块三级", "中资属性", "级别"}},
@@ -32,17 +37,17 @@ let
             {"Chart", "ISIN", {"Index"}},
             {"Issue", "Check", {"Index"}},
             {"Stats", "Check", {"Index"}},
-            {"BISL", "Check", {"Index"}}
+            {"BISL", "Check", {"Index"}},
+            {"TempDMI", "ISIN", {"Index"}}
         },
         Fn1_R1,
         (x, y) =>
             let
-             DBtbl = Table.Buffer(CWB("DB_PrimaryKey")),
+                DBtbl = Table.Buffer(CWB("DB_PrimaryKey")),
                 DBName = "m" & y{0},
                 IndexinCWB = "DBIndex_" & y{0},
                 PKinCWB = y{1} & "_" & y{0},
                 //DBName & ColName
-
                 PK = y{1},
                 SourceM = Table.NestedJoin(x, {PK}, DBtbl, {PKinCWB}, "Data" & PK, JoinKind.LeftOuter),
                 Exp = Table.ExpandTableColumn(SourceM, "Data" & PK, {"Index"}, {IndexinCWB}),
@@ -54,7 +59,22 @@ let
             in
                 Output
     ),
-     credit =   fx("Merge")(Fn2,CWB("mCredit"),"信用主体","信用主体",{"信用主体简称", "板块", "板块二级", "板块三级", "中资属性", "级别"},{""}),
+    Repalced1 =
+        if Table.HasColumns(Fn2, {"mTempDMI", "Filter_Bond"}) then
+            Table.ReplaceValue(
+                Fn2,
+                each [Filter_Bond],
+                each if [mTempDMI] <> "" then "【临时isin】" else [Filter_Bond],
+                Replacer.ReplaceValue,
+                {"Filter_Bond"}
+            )
+        else
+            Fn2,
+    credit = fx(
+        "Merge"
+    )(
+        Repalced1, CWB("mCredit"), "信用主体", "信用主体", {"信用主体简称", "板块", "板块二级", "板块三级", "中资属性", "级别"}, {""}
+    ),
     _HD = {
         "Timestamp",
         "Index",
@@ -70,7 +90,7 @@ let
         "mBond",
         "mCredit"
     },
-    #"Filtered Rows" = Table.SelectRows( credit , each List.Contains({"", "*", "**"}, [Filter_Credit])),
+    #"Filtered Rows" = Table.SelectRows(credit, each List.Contains({"", "*", "**"}, [Filter_Credit])),
     // 只显示database没有的isin
     #">>>ShowAll" =
         if fx("Parameter")("ShowAll") = "OFF" then

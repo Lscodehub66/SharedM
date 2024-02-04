@@ -1,10 +1,9 @@
 let
     Mondaytext = fx("Parameter")("Monday"),
-
-      yyyyMMdd0 = fx("Control.PreviousMon"),
+    yyyyMMdd0 = fx("Control.PreviousMon"),
     M1 = Date.From(Mondaytext),
     Duedate = fx("NextWorkDay")(fx("Control.Sunday.Date"), Load("HKHolidays", "CSVDATE"), "Date"),
-    ThisWB = Load("ThisWorkbook"),
+    ThisWB = Record.RemoveFields(Load("ThisWorkbook"),{"Monday","Updator"},MissingField.Ignore),
     Record = [
         GPS = try
             if
@@ -21,13 +20,13 @@ let
             "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\Weekly\"
         else
             "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\Weekly\",
-            pptfolder = weeklyfolder & Mondaytext & "\" ,
-            pptfolder0 =  weeklyfolder & yyyyMMdd0 & "\"  ,
-    pptfile = "Markets - Weekly Update - "& Mondaytext & ".pptx",
-    pptfile0 = "Markets - Weekly Update - "& yyyyMMdd0 & ".pptx",
-    Record2a = [PPT_Folder = pptfolder ],
-Record2b = [PPT_File =  pptfile],
-  Record1a = [OldPPT_Folder = pptfolder0 ],
+    pptfolder = weeklyfolder & Mondaytext & "\",
+    pptfolder0 = weeklyfolder & yyyyMMdd0 & "\",
+    pptfile = "Markets - Weekly Update - " & Mondaytext & ".pptx",
+    pptfile0 = "Markets - Weekly Update - " & yyyyMMdd0 & ".pptx",
+    Record2a = [PPT_Folder = pptfolder],
+    Record2b = [PPT_File = pptfile],
+    Record1a = [OldPPT_Folder = pptfolder0],
     Record1b = [OldPPT_File = pptfile0],
     Get5 =
         if Record.Field(Record, "GPS") = "Global" then
@@ -48,6 +47,9 @@ Record2b = [PPT_File =  pptfile],
     Record3 = [WeeklyList_Path = Get5],
     RecordDM = [DM_Path = GetDM],
     Record4 = [Due.Date = fx("NextWorkDay")(fx("Control.Sunday.Date"), Load("HKHolidays", "CSVDATE"), "Date")],
-    Combined = Record.Combine({Record0, Record1a, Record1b, Record2a,Record2b, Record3, RecordDM, ThisWB, Record, Record4})
+    Record5 = [BMK_Year = if fx("Control.去年初") = null then "△年初至今" else "△去年初至今"],
+    Combined = Record.Combine(
+        {Record0, Record1a, Record1b, Record2a, Record2b, Record3, RecordDM, ThisWB,Record5,Record4 }
+    )
 in
     Combined

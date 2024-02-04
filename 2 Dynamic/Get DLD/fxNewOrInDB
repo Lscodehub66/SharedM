@@ -30,13 +30,7 @@
             else
                 RoleCheck,
         Fn = List.Accumulate(
-            {
-                {"mIssue", "Check"},
-                {"mBond", "ISIN"},
-                {"mStats", "最终账簿(亿)"},
-                {"mBISL", "BISL_ROLE"},
-                {"mEXE", "BISL_ROLE"}
-            },
+            {{"mIssue", "Check"}, {"mBond", "ISIN"}, {"mBISL", "BISL_ROLE"}, {"mEXE", "BISL_ROLE"}},
             Replaced,
             (x, y) =>
                 if not Table.HasColumns(x, y{0}) then
@@ -55,17 +49,35 @@
                         {y{0}}
                     )
         ),
+        Replaced1 =
+            if Table.HasColumns(Fn, {"mStats", "最终账簿(亿)", "地区分布"}) then
+                Table.ReplaceValue(
+                    Fn,
+                    "",
+                    each
+                        if
+                            not List.Contains({null, "【】", ""}, [#"最终账簿(亿)"])
+                            and not List.Contains({null, "【】", ""}, [地区分布])
+                        then
+                            "新增"
+                        else
+                            "",
+                    Replacer.ReplaceValue,
+                    {"mStats"}
+                )
+            else
+                Fn,
         Replaced2 =
             if Table.HasColumns(Fn, {"mChart"}) then
                 Table.ReplaceValue(
-                    Fn,
+                    Replaced1,
                     "",
                     each if List.Contains({"【Y】", "Y"}, [IS_FIMTN]) then "新增" else "n/a",
                     Replacer.ReplaceValue,
                     {"mChart"}
                 )
             else
-                Fn,
+                Replaced1,
         DM = {"mCredit", "债券备注"},
         #"Operational Columns" = List.Accumulate(
             DM, Replaced2, (x, y) => if not Table.HasColumns(x, y) then Table.AddColumn(x, y, each "", type text) else
@@ -76,6 +88,5 @@
                 Table.ReplaceValue(#"Operational Columns", "", "新增", Replacer.ReplaceValue, {"mCredit"})
             else
                 #"Operational Columns"
-       
     in
         Replaced3

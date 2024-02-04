@@ -1,4 +1,4 @@
-// let LoadCode = Load("PPTBoxMap","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
+// let LoadCode = Load("PPT_Launcher","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
 let
     Source = CWB("Indice_Table"),
     #"Grouped Rows" = Table.Group(
@@ -14,11 +14,27 @@ let
     #">NewsDES" =
         let
             Source = fx("Ws")("DYNAMIC", "wNews_Input"),
-            #"Filtered Rows" = List.Buffer(Table.SelectRows(Source, each ([Index] <> null))[新闻]),
-            #"Removed Columns" = Text.Combine(#"Filtered Rows", "#(lf)")
+            TF = Table.TransformColumns(
+                Source,
+                {
+                    {
+                        "新闻",
+                        each
+                            if Text.EndsWith(_, "。") then
+                                Text.BeforeDelimiter(_, "。", {0, RelativePosition.FromEnd})
+                            else
+                                _,
+                        type text
+                    }
+                }
+            ),
+            NewsList = List.Buffer(List.RemoveItems(TF[新闻], {"", null})),
+            Combined = Text.Combine(NewsList, "#(lf)")
         in
-            #"Removed Columns",
+            Combined,
     Inserted0 = Table.InsertRows(#"Removed Columns", 0, {[ObjectName = "newsbox", Description = #">NewsDES"]}),
+    
+    _syntaxTBC =  "【Syndicate】" ,
     Inserted = Table.InsertRows(
         Inserted0,
         5,
@@ -54,11 +70,32 @@ let
             [
                 ObjectName = "coverdatebox",
                 Description = Date.ToText(fx("ControlWB.Due.Date"), "更新至：yyyy年M月d日")
-            ], [
+            ],
+            [
                 ObjectName = "commentaryhdbox",
-                Description = Date.ToText(fx("Control.PreviousMon.Date"), "每周市场评论（yyyy年M月d日") & Date.ToText(fx("Control.当前"), " - yyyy年M月d日）")  
-            ], [ObjectName = "syndboxmarketcolorsum",Description ="【】"], [ObjectName = "syndboxmarketcolorig",Description ="【】"],
-             [ObjectName = "syndboxmarketcolorlgfv",Description ="【】"], [ObjectName = "syndboxmarketcolorhy",Description ="【】"], [ObjectName = "syndboxustcurve",Description ="【】"]
+                Description = Date.ToText(fx("Control.PreviousMon.Date"), "每周市场评论（yyyy年M月d日")
+                    & Date.ToText(fx("Control.当前"), " - yyyy年M月d日）")
+            ],
+            [
+                ObjectName = "syndboxmarketcolorsum",
+                Description =  _syntaxTBC 
+            ],
+            [
+                ObjectName = "syndboxmarketcolorig",
+                Description =  _syntaxTBC 
+            ],
+            [
+                ObjectName = "syndboxmarketcolorlgfv",
+                Description =  _syntaxTBC 
+            ],
+            [
+                ObjectName = "syndboxmarketcolorhy",
+                Description =  _syntaxTBC 
+            ],
+            [
+                ObjectName = "syndboxustcurve",
+                Description =  _syntaxTBC 
+            ]
         }
     ),
     #"Grouped Rows1" = Table.Group(
@@ -69,9 +106,11 @@ let
     #"Appended Query" = fx(
         "Combine"
     )(
-        {#"Grouped Rows1", Load("wSummaryWriter"), Load("wTrancheWriter")}, {null}, {0}
+        {#"Grouped Rows1", Load("wSummaryReporter"), Load("wTrancheReporter")}, {null}, {0}
     ),
-    Merged = fx("Merge")(#"Appended Query", CWB("PPTBoxMap"), "ObjectName", "ObjectName", {""}, {""}),
-    Reordered = fx("1st")(Merged, {"PPTSlide"})
+    Merged= fx("Merge")(#"Appended Query", CWB("PPT_Launcher"), "ObjectName", "ObjectName", {"PPTSlide"}, {"PPTSlide"}),
+    AddedCode = fx("PPTCode_Writer")(Merged),
+    SCol = Table.SelectColumns(AddedCode, {"PPTSlide", "ObjectName", "Description", "VBACode"}),
+    #"Sorted Rows" = Table.Sort(SCol, {{"PPTSlide", Order.Ascending}, {"ObjectName", Order.Ascending}})
 in
-    Reordered
+    #"Sorted Rows"

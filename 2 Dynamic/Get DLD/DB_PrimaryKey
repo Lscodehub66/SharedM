@@ -1,5 +1,11 @@
 // let LoadCode = Load("DB_PrimaryKey","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
+    TempISIN = {
+        List.Buffer(
+            fx("Ws")("DEALSMASTER", "DMI_TempISIN")[ISIN_TEMP]
+                & List.RemoveItems(fx("Ws")("DEALSMASTER", "=MISSUE")[ISIN_TEMP], {""})
+        )
+    },
     File = Table.Buffer(fx("Ws")("DEALSMASTER")),
     DBPKList = {
         {"Bond", "ISIN"},
@@ -13,7 +19,7 @@ let
         DBPKList, {{1..2000}}, (x, y) => x & {Table.Column(File{[Item = "m" & y{0}, Kind = "Table"]}[Data], y{1})}
     ),
     List2 = List.Accumulate(DBPKList, {"Index"}, (x, y) => x & {y{1} & "_" & y{0}}),
-    tbl = Table.FromColumns(List1, List2),
+    tbl = Table.FromColumns(List1 & TempISIN, List2 & {"ISIN_TempDMI"}),
     #"Filtered Rows" = Table.SelectRows(tbl, each not List.Contains({null, ""}, [Check_Issue]))
 in
     #"Filtered Rows"

@@ -22,9 +22,15 @@
             }
         ),
         Cleaned = fx("Replace")(TF, {"地区分布", "类型分布"}, "投资者"),
-        Rp = Table.ReplaceValue(Cleaned, "，，", "，", Replacer.ReplaceText, {"地区分布", "类型分布"}),
+        AddedPeak = Table.AddColumn(
+            Table.RemoveColumns(Cleaned, {"建账峰值(亿)"}, MissingField.Ignore),
+            "建账峰值(亿)",
+            each if [#"最终账簿(亿)"] <> null and [账户数] = null and [地区分布] = "" and [类型分布] = "" then [#"最终账簿(亿)"] else null,
+            type number
+        ),
+        Rp = Table.ReplaceValue(AddedPeak, "，，", "，", Replacer.ReplaceText, {"地区分布", "类型分布"}),
         Rp1 = Table.ReplaceValue(
-             Rp , "", each if [#"最终账簿(亿)"] <> null then "【】" else "", Replacer.ReplaceValue, {"地区分布", "类型分布"}
+            Rp, "", each if [#"最终账簿(亿)"] <> null then "【】" else "", Replacer.ReplaceValue, {"地区分布", "类型分布"}
         )
     in
         Rp1

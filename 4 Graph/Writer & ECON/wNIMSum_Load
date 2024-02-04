@@ -1,5 +1,34 @@
 let
-Source = Load("wNIMSum"),
-    TF = Table.TransformColumns(    Source ,{{"Column1", each if Text.StartsWith(_ ,"V_" )then "亿美元" else if  Text.StartsWith(_ ,"CT_" )then "笔数"  else _, type text}})
+    _range = {"BeforePreviousMon.Date", "Sunday.Date"},
+    ExpDateCol = {"A_Date", "每周第一天"},
+    Source = fx("DateFromRecord")(fx("DateRange")(_range), {"A_Date", "每周第一天"}),
+    CWBtbl = Table.Group(
+        CWB("Recent60"),
+        {"定价日"},
+        {{"CT_NIM_1D", each Table.RowCount(_), Int64.Type}, {"V_NIM_1D", each List.Sum([亿美元]), type number}}
+    ),
+    Custom1 = fx("Merge")(Source, CWBtbl, "A_Date", "定价日", {"CT_NIM_1D", "V_NIM_1D"}, {""}),
+    #"Replaced Value" = Table.ReplaceValue(Custom1, null, 0, Replacer.ReplaceValue, {"CT_NIM_1D", "V_NIM_1D"}),
+    #"Grouped Rows" = Table.Group(
+        #"Replaced Value",
+        {"每周第一天"},
+        {
+            {"V_NIM_7D", each List.Sum([V_NIM_1D]), type number},
+            {"CT_NIM_7D", each List.Sum([CT_NIM_1D]), type number}
+        }
+    ),
+    #"Sorted Rows" = Table.Sort(#"Grouped Rows", {{"每周第一天", Order.Ascending}}),
+    #"Demoted Headers1" = Table.DemoteHeaders(#"Sorted Rows"),
+    #"Transposed Table1" = Table.Transpose(#"Demoted Headers1"),
+    TF = Table.TransformColumns(
+        #"Transposed Table1",
+        {
+            {
+                "Column1",
+                each if Text.StartsWith(_, "V_") then "亿美元" else if Text.StartsWith(_, "CT_") then "笔数" else _,
+                type text
+            }
+        }
+    )
 in
-     TF 
+    TF

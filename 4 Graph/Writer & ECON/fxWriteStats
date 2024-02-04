@@ -25,10 +25,9 @@
                 else
                     ""
         ),
-        ReplacedCrcy = fx("Replace")(AddCol, {"认购额描述"}, "货币"),
         Merged1 = Table.TransformColumns(
             Table.CombineColumns(
-                ReplacedCrcy, {"账户描述", "认购额描述"}, Combiner.CombineTextByDelimiter("", QuoteStyle.None), "Dummy认购描述"
+                AddCol, {"账户描述", "认购额描述"}, Combiner.CombineTextByDelimiter("", QuoteStyle.None), "Dummy认购描述"
             ),
             {{"Dummy认购描述", each Text.Replace(Text.Replace(_, ".0倍", "倍"), "0倍", "倍")}}
         ),
@@ -42,7 +41,7 @@
         ),
         Merged = Table.AddColumn(
             TF,
-            "Stats",
+            "Dummy.Stats",
             each fx("PowerTrim")(Text.Combine({[Dummy认购描述], [Dummy地区分布], [Dummy类型分布]}, "#(lf)"), "#(lf)"),
             type text
         ),
@@ -50,13 +49,30 @@
             Merged,
             {
                 {
-                    "Stats",
+                    "Dummy.Stats",
                     each if Text.EndsWith(_, "；") then Text.BeforeDelimiter(_, "；", {0, RelativePosition.FromEnd}) else
                         _,
                     type text
                 }
             }
         ),
-        Output = if Table.HasColumns(Source, RefCol) then RemovedEnd else Source
+        AddCol1a =
+            if Table.HasColumns(Source, "建账峰值(亿)") then
+                Table.AddColumn(
+                    RemovedEnd,
+                    "Stats",
+                    each
+                        if [Dummy.Stats] <> "" then
+                            [Dummy.Stats]
+                        else if [#"建账峰值(亿)"] <> null then
+                            "建账峰值超" & Number.ToText([#"建账峰值(亿)"]) & "亿" & [货币]
+                        else
+                            "",
+                    type text
+                )
+            else
+                Table.RenameColumns(RemovedEnd, {{"Dummy.Stats", "Stats"}}),
+        ReplacedCrcy = fx("Replace")(AddCol1a, {"Stats"}, "货币"),
+        Output = if Table.HasColumns(Source, RefCol) then ReplacedCrcy else Source
     in
         Output

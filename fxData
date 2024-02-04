@@ -96,7 +96,7 @@
             & List.Select(
                 CN_RNSource, each Text.StartsWith(_, "S_") or Text.StartsWith(_, "Spd_") or Text.StartsWith(_, "I_")
             ),
-        Num1 = {"最终账簿(亿)", "收窄Num"} & List.Select(CN_RNSource, each Text.StartsWith(_, "V_")),
+        Num1 = {"最终账簿(亿)","建账峰值(亿)", "收窄Num"} & List.Select(CN_RNSource, each Text.StartsWith(_, "V_")),
         Num0 = {"FEE", "Relevance", "Year.Num", "兑付日.YearNum", "金额 (MM USD)"}
             & List.Select(CN_RNSource, each Text.StartsWith(_, "CT_") or Text.StartsWith(_, "承销费")),
         Num = {
@@ -158,7 +158,7 @@
             "RangeEnd"
         }
             & List.Select(CN_RNSource, each Text.StartsWith(_, "Index_") or Text.EndsWith(_, ".num")),
-        Text_Trim = {"PROJECT_CODE", "期数", "外部评审机构", "外部评审方式", "FolderPath", "地区分布", "类型分布", "投资者分布", "投资者类型"},
+        Text_Trim = {"PROJECT_CODE", "期数", "外部评审机构", "外部评审方式", "FolderPath", "地区分布", "类型分布", "投资者分布", "投资者类型","新闻"},
         Text_Upper = {
             "CCY",
             "信用主体",

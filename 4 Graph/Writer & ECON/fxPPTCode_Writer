@@ -1,0 +1,45 @@
+(TableName as table) =>
+    let
+        _boldobject = {"nimlgfvsumbox", "nimigsumbox"},
+        tbl =
+            let
+                Source = Table.Buffer(
+                    Table.FromRows(
+                        Json.Document(
+                            Binary.Decompress(
+                                Binary.FromText(
+                                    "bY27DsIwDEV/pcrUSpU3RpZ+AFi0gqHNkIKhpY+gOPw/jqnEwnbt63PctqammHnEeh5vlO1TxMAr6My5KQ1io4PEwtjyRwzutRHagy4474xcHvsnXePBLQnrNlBiRXcfCB1HOrv5nVqtmmHkiw9T7/0kIqKYRDuQ50LDya0P+m+Gr8faDw==",
+                                    BinaryEncoding.Base64
+                                ),
+                                Compression.Deflate
+                            )
+                        ),
+                        let
+                            _t = ((type nullable text) meta [Serialized.Text = true])
+                        in
+                            type table [Column1 = _t, Column2 = _t, Column3 = _t]
+                    )
+                ),
+                ToList = Table.ToRows(Source)
+            in
+                List.Buffer(ToList),
+        Source = TableName,
+        ChangedType = List.Accumulate(Table.ColumnNames(Source), Source, (x,y) => Table.TransformColumnTypes(x, {{y, type text}})),
+        vba1 = Table.AddColumn(
+            ChangedType ,
+            "BeforePasteValue",
+            each
+                Text.Combine({if List.Contains(_boldobject, [ObjectName]) then 
+                    "oPPShape.TextFrame.DeleteText" & "#(lf)" & "oPPShape.TextFrame.TextRange.Font.Bold = True" 
+                else
+                    "oPPShape.TextFrame.DeleteText", "oPPShape.TextFrame.TextRange.Text = _ "},"#(lf)"),
+            type text
+        ),
+        VBA2 = Table.AddColumn(
+            vba1,
+            "VBACode",
+            each List.Accumulate(tbl, "", (x, y) => Text.Combine({x, y{0} & Record.Field(_, y{1}) & y{2}}, "#(lf)")),
+            type text
+        )
+    in
+        VBA2

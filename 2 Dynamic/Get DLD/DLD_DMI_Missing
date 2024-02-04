@@ -34,7 +34,7 @@ let
     ),
     Custom2 = fx("Merge")(TF, Load("DLD_BBG_Corp"), "ISIN", "ISIN", {""}, {""}),
     // Custom5 = List.Intersect({Table.ColumnNames(Custom2), Table.ColumnNames(DLD_DMI)}), SCol1 = Table.SelectColumns(Custom2, Custom5),
-    Custom3 = fx("RemoveBlankColumns")(Custom2, true),
+    Custom3 = if Table.RowCount(Custom2) <> 0 then fx("RemoveBlankColumns")(Custom2, true) else Custom2,
     ACol3 = Table.AddColumn(Custom3, "DataSource",each "BBG", type text)
 in
     ACol3
