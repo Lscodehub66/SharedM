@@ -12,7 +12,10 @@
         #"Filtered Rows0" = Table.SelectRows(Source, each [Date Time] <> null and [Ticker] <> null),
         #"Changed Type" = Table.TransformColumnTypes(#"Filtered Rows0", {{"Column5", type text}}),
         #"Inserted Date" = Table.AddColumn(
-            Table.AddColumn(#"Changed Type", "日期", each DateTime.Date([Date Time]), type date), "YYYYMMDD", each Date.ToText([日期],"yyyyMMdd"),type text
+            Table.AddColumn(#"Changed Type", "日期", each DateTime.Date([Date Time]), type date),
+            "YYYYMMDD",
+            each Date.ToText([日期], "yyyyMMdd"),
+            type text
         ),
         #"Inserted Time" = Table.AddColumn(#"Inserted Date", "时间", each DateTime.Time([Date Time]), type time),
         #"Duplicated Column" = fx(
@@ -57,34 +60,33 @@
             #"Inserted Merged Column",
             (x, y) => Load("fxECON_TextNum")(x, y{0}, y{1})
         ),
-        #"Removed Columns" = Table.RemoveColumns(
-            TextNum, {"Date Time", "Column2", "Column3", "Event", "Column5", "Survey", "Actual", "Prior", "Revised"}
-        ),
-        #"Sorted by Date" = Table.Sort(#"Removed Columns", {{"日期", Order.Ascending}}),
-        Sorted0 = Table.Sort(#"Sorted by Date", {{"区域", Order.Descending}, {"Relevance", Order.Descending}}),
-        Renamed = Table.RenameColumns(Sorted0, {{"事件", key}, {"Ticker", "TICKER"}}, MissingField.Ignore),
-        #"Added Index1" = Table.AddColumn(Renamed, "IS_ECON", each "", type text),
-        RemoveColumns = Table.RemoveColumns(
-            #"Added Index1",
-            List.Select(Table.ColumnNames(#"Added Index1"), each Text.Contains(_, "Column"))
-                & {"Date Time", "Event", "Survey", "Actual", "Prior", "Revised", "区域范围", "Table"},
-            MissingField.Ignore
-        ),
-        #"Reordered Columns" = Table.ReorderColumns(RemoveColumns, Get("ROAUTOECON"), MissingField.Ignore),
-        DateTexted = fx("Data")(Table.TransformColumns(#"Reordered Columns", {{"日期", each Date.ToText(_, "M月d日"), type text}})),
-    Self = let   #"Merged Queries" = Table.NestedJoin(
-                     DateTexted ,
+        Renamed = Table.RenameColumns(TextNum, {{"事件", key}, {"Ticker", "TICKER"}}, MissingField.Ignore),
+        #"Added inputcolumn" = Table.AddColumn(Renamed, "IS_ECON", each "", type text),
+            #"Added Monday" = Table.AddColumn(   #"Added inputcolumn" , "Monday.Date", each fx("Control.Monday.Date"), type date),
+        #"Removed Columns" = Table.SelectColumns(      #"Added Monday" , Get("ROAUTOECON"), MissingField.Ignore),
+        Sorted0 = Table.Sort(#"Removed Columns", {{"Relevance", Order.Descending}, {"日期", Order.Ascending}}),
+        DateTexted = fx("Data")(Table.TransformColumns(Sorted0, {{"日期", each Date.ToText(_, "M月d日"), type text}})),
+        Self =
+            let
+                #"Merged Queries" = Table.NestedJoin(
+                    DateTexted,
                     {"TICKER", "YYYYMMDD"},
-                   CWB("wEcon"),
+                    if _inputkey = null then
+                        CWB("wEcon")
+                    else
+                        CWB("wFuture"),
                     {"TICKER", "YYYYMMDD"},
                     "Query2",
                     JoinKind.LeftOuter
                 ),
                 #"Expanded Query2" = Table.ExpandTableColumn(#"Merged Queries", "Query2", {"IS_ECON"}, {"DummyMark"}),
                 #"Replaced Value" = Table.ReplaceValue(
-                    #"Expanded Query2", null, each if [DummyMark] = 1 then 1 else null, Replacer.ReplaceValue, {
+                    #"Expanded Query2", "", each if [DummyMark] = "Y" then "Y" else "", Replacer.ReplaceValue, {
                         "IS_ECON"
                     }
                 ),
-                #"Removed Columns" = Table.RemoveColumns(#"Replaced Value", {"DummyMark"}) in      #"Removed Columns"
-                in Self
+                #"Removed Columns" = Table.RemoveColumns(#"Replaced Value", {"DummyMark"})
+            in
+                #"Removed Columns"
+    in
+        Self

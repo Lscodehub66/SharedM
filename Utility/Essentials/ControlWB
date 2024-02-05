@@ -48,6 +48,7 @@ let
     RecordDM = [DM_Path = GetDM],
     Record4 = [Due.Date = fx("NextWorkDay")(fx("Control.Sunday.Date"), Load("HKHolidays", "CSVDATE"), "Date")],
     Record5 = [BMK_Year = if fx("Control.去年初") = null then "△年初至今" else "△去年初至今"],
+    
     Combined = Record.Combine(
         {Record0, Record1a, Record1b, Record2a, Record2b, Record3, RecordDM, ThisWB,Record5,Record4 }
     )

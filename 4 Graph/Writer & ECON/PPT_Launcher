@@ -33,15 +33,14 @@ let
         in
             Combined,
     Inserted0 = Table.InsertRows(#"Removed Columns", 0, {[ObjectName = "newsbox", Description = #">NewsDES"]}),
-    
-    _syntaxTBC =  "【Syndicate】" ,
+    _syntaxTBC = "【Syndicate】",
     Inserted = Table.InsertRows(
         Inserted0,
         5,
         {
             [
                 ObjectName = "ustbox",
-                Description = "自2022年3月启动加息以来，美联储共加息11次，在7月加息25bps后，9月、11月及12月连续3次暂停加息，当前基准利率为5.25-5.50%区间"
+                Description = "自2022年3月启动加息以来，美联储共加息11次，在7月加息25bps后，9月、11月、12月及2024年1月连续4次暂停加息，当前基准利率为5.25-5.50%区间"
             ],
             [
                 ObjectName = "ustcgbspdbox",
@@ -78,28 +77,40 @@ let
             ],
             [
                 ObjectName = "syndboxmarketcolorsum",
-                Description =  _syntaxTBC 
+                Description = _syntaxTBC
             ],
             [
                 ObjectName = "syndboxmarketcolorig",
-                Description =  _syntaxTBC 
+                Description = _syntaxTBC
             ],
             [
                 ObjectName = "syndboxmarketcolorlgfv",
-                Description =  _syntaxTBC 
+                Description = _syntaxTBC
             ],
             [
                 ObjectName = "syndboxmarketcolorhy",
-                Description =  _syntaxTBC 
+                Description = _syntaxTBC
             ],
             [
                 ObjectName = "syndboxustcurve",
-                Description =  _syntaxTBC 
+                Description = _syntaxTBC
+            ],
+            [
+                ObjectName = "syndboxpipeline",
+                Description = _syntaxTBC
             ]
         }
     ),
+    Mergedsynd = fx("Merge")(Inserted, CWB("tbl_syndinput", "1"), "ObjectName", "ObjectName", {"Input"}, {"Input"}),
+    Replaced = Table.ReplaceValue(
+        Mergedsynd,
+        each [Description],
+        each if not List.Contains({null, ""}, [Input]) then [Input] else [Description],
+        Replacer.ReplaceValue,
+        {"Description"}
+    ),
     #"Grouped Rows1" = Table.Group(
-        Inserted,
+        Replaced,
         {"ObjectName"},
         {{"Description", each Text.Combine(List.Distinct([Description]), "#(lf)"), type text}}
     ),
@@ -108,7 +119,17 @@ let
     )(
         {#"Grouped Rows1", Load("wSummaryReporter"), Load("wTrancheReporter")}, {null}, {0}
     ),
-    Merged= fx("Merge")(#"Appended Query", CWB("PPT_Launcher"), "ObjectName", "ObjectName", {"PPTSlide"}, {"PPTSlide"}),
+    objlist = List.Buffer(#"Appended Query"[ObjectName]),
+    Inserted2 = List.Accumulate(
+        {{"nimigsumbox", "上周，投资级板块无新发。"}, {"nimlgfvsumbox", "上周，城投板块无新发。"}, {"nimigbox", "n/a"}, {"nimlgfvbox", "n/a"}},
+        #"Appended Query",
+        (x, y) =>
+            if not List.Contains(objlist, y{0}) then
+                Table.InsertRows(x, 0, {[ObjectName = y{0}, Description = y{1}]})
+            else
+                x
+    ),
+    Merged = fx("Merge")(Inserted2, CWB("PPT_Launcher"), "ObjectName", "ObjectName", {"PPTSlide"}, {"PPTSlide"}),
     AddedCode = fx("PPTCode_Writer")(Merged),
     SCol = Table.SelectColumns(AddedCode, {"PPTSlide", "ObjectName", "Description", "VBACode"}),
     #"Sorted Rows" = Table.Sort(SCol, {{"PPTSlide", Order.Ascending}, {"ObjectName", Order.Ascending}})

@@ -1,0 +1,6 @@
+let
+  
+    daynum = Date.Day(DateTime.Date(DateTime.FixedLocalNow())),
+    Refreshqrc = if List.Contains({1..7},daynum) then "Y" else "",
+    Record = [IS_MONTHLY =    Refreshqrc]
+    in Record

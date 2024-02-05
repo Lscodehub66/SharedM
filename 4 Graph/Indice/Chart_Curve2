@@ -11,8 +11,11 @@ let
     ),
     Source = CWB("Chart_Curve2"),
     RemovedRows = Table.RemoveLastN(Source, 1),
-    Demote = Table.DemoteHeaders(RemovedRows),
+    #"Removed Columns" = Table.RemoveColumns(RemovedRows,{"Index"},MissingField.Ignore),
+    Demote = Table.DemoteHeaders(#"Removed Columns"),
     Combined = fx("Combine")({Demote, Transposed}),
-    #"Promoted Headers" = Table.PromoteHeaders(Combined, [PromoteAllScalars = true])
+    #"Promoted Headers" = Table.PromoteHeaders(Combined, [PromoteAllScalars = true]),
+    Fn = fx("Sort")(   #"Promoted Headers",{""},"N")
 in
-    #"Promoted Headers"
+  Fn
+   

@@ -1,11 +1,13 @@
 let
-    Source = fx("DateRange")({#date(2021,1,1),#date(2024,12,31)},{""}),
+    Source = fx("DateRange")({#date(2018,1,1),#date(2024,12,31)},{""}),
     #"Inserted Day of Week" = Table.AddColumn(Source, "DayOfWeek.Num", each Date.DayOfWeek([A_Date],Day.Monday), Int64.Type),
     #"Merged Queries" = fx("Merge")(#"Inserted Day of Week",Load("HKHoliday18-24","CSVDATE"),  "A_Date", "Date", {""}),
     #"Merged Queries1" = fx("Merge")(#"Merged Queries",Load("ChinaDateStatus18-24","CSVDATE"),  "A_Date", "Date", {""}),
     #"Added Custom" = Table.AddColumn(#"Merged Queries1", "Custom", each if [是否中国假期] = "假期" then "CN假期" else if [是否中国假期]="周末" then "周末" else "",type text),
     #"Merged Columns" = Table.CombineColumns(#"Added Custom",{"假期简称", "Custom"},Combiner.CombineTextByDelimiter(";", QuoteStyle.None),"大陆及香港假期"),
     #"Replaced Value" = Table.ReplaceValue(#"Merged Columns",";",each if not Text.Contains([大陆及香港假期],";CN") or Text.StartsWith([大陆及香港假期],";CN")  then "" else ";",Replacer.ReplaceText,{"大陆及香港假期"}),
-    #"Removed Other Columns1" = Table.SelectColumns(#"Replaced Value",{"A_Date", "DayOfWeek.Num", "大陆及香港假期"})
+    Custom1 = Table.ReplaceValue(  #"Replaced Value",each if [DayOfWeek.Num] >4 then each [大陆及香港假期] else "--",each if [大陆及香港假期] = "" then "周末" else if  Text.Contains([大陆及香港假期],"周末") then  [大陆及香港假期] else  [大陆及香港假期]&";周末" ,Replacer.ReplaceText,{"大陆及香港假期"}),
+    #"Removed Other Columns1" = Table.SelectColumns(Custom1,{"A_Date",  "大陆及香港假期"}),
+    #"Sorted Rows" = Table.Sort(#"Removed Other Columns1",{{"A_Date", Order.Descending}})
 in
-    #"Removed Other Columns1"
+    #"Sorted Rows"

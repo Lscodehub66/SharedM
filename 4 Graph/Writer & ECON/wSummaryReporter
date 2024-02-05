@@ -36,4 +36,5 @@ let
     #"Merged Columns" = Table.CombineColumns(
         Custom1, {"新发总结板块", "描述4"}, Combiner.CombineTextByDelimiter("共发行", QuoteStyle.None), "Description"
     ),
-    Custom2 = Table.TransformColumns(#"Merged Columns", {{"Description", each "上周，" & _ & "。", type text}})  in    Custom2
+    Custom2 = Table.TransformColumns(#"Merged Columns", {{"Description", each "上周，" & _ & "。", type text}}) in Custom2
+    

@@ -10,7 +10,7 @@
         ),
         //
         CN_Source = List.Buffer(Table.ColumnNames(Source)),
-        IndexColname = if _inputkey = null then "Index" else _inputkey,
+        IndexColname = if List.Contains({null, "N", "NoIndex"}, _inputkey ) then "Index" else _inputkey,
         GNG = if List.Contains({"N", "NoIndex"}, _inputkey) or _inputHD = {""} then "" else "Reversed",
         FirstOrder = if GNG = "Reversed" then Order.Ascending else Order.Descending,
         //  Order.Ascending=0

@@ -274,7 +274,7 @@
             type text
         ),
         Replaced = Table.ReplaceValue(#"Merged Columns", "，，", "，", Replacer.ReplaceText, {"Writer"}),
-        List = {"新发总结板块", "信用主体及评级", "定价日", "板块", "货币细分", "Writer"},
+        List = {"新发总结板块", "信用主体及评级", "定价日", "中资属性","板块", "货币细分", "Writer"},
         SCol = Table.SelectColumns(Replaced, if _input = null then List else List & {"Custom"}, MissingField.UseNull)
     in
         SCol

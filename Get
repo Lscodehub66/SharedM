@@ -296,7 +296,7 @@ let
                 "范围",
                 "时间",
                 "TICKER",
-                "YYYYMMDD"},
+                "YYYYMMDD","Monday.Date"},
             HD_RO_NEWECON = {
                 "Index",
                 "未来一周主要经济数据",

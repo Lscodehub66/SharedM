@@ -1,0 +1,10 @@
+let
+    Source2 = CWB("Writer_Dealtbl"),
+    WriteNewIssue = Table.Buffer(fx("DealReporter")(Source2, "Custom")),
+    Filtered = Table.SelectRows(WriteNewIssue, each Text.Contains([新发总结板块],"【")),
+    #"Removed Other Columns" = Table.Distinct(Table.SelectColumns( Filtered , {"新发总结板块","信用主体及评级", "中资属性","板块"}),{"信用主体及评级"}),
+    Self = fx("Reporter_SectorReviewed")(#"Removed Other Columns"),
+    #"Changed Type" = Table.TransformColumnTypes(Self, {{"新发总结板块", type text}}),
+    #"Sorted Rows" = fx("Sort") (#"Changed Type", {"新发总结板块"})
+in
+    #"Sorted Rows"

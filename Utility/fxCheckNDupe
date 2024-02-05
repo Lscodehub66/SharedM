@@ -1,4 +1,4 @@
-// 
+// fx("CheckNDupe")(, null, "ObjectName","Due.Date"，null, null)
 (
     TableName as table,
     optional OptionalNewColName as nullable text,
