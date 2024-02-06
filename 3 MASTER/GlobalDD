@@ -1,0 +1,74 @@
+// let LoadCode = Load("GlobalDD","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    File = Table.Buffer(CWB("deal_master")),
+    DBPKList = {
+        "通过分行",
+        "品种主题",
+        "货币细分",
+        "货币",
+        "结构",
+        "交割T+n",
+        "BISL_ROLE",
+        "新规角色",
+        "上市分类",
+        "OTHER_ROLE",
+        "ESG",
+        "港分_ROLE",
+        "项目来源",
+        "COVERAGE",
+        "评级分类",
+        "IS_LEAD",
+        "增发判定",
+        "是否合名",
+        "中资属性",
+        "板块",
+        "年期分类"
+    },
+    List1 = List.Accumulate(
+        DBPKList,
+        {{"删除", "隐藏"}},
+        (x, y) =>
+            let
+                Sorthd = List.Buffer(fx("ControlDD." & y)),
+                branch = List.Select(
+                    List.RemoveItems(List.Distinct(Table.Column(File, y)), {"", "--", "【】", null}),
+                    each not Text.Contains(_, ")")
+                ),
+                Others = List.RemoveItems(List.Distinct(Table.Column(File, y)), {"", "--", "【】", null}),
+                dd = if y = "通过分行" then branch else Others,
+                output = List.Buffer(try fx("SortList")(dd, Sorthd) otherwise dd)
+            in
+                x & {output}
+    ),
+    dependend = {
+        {"金融机构", "板块", "板块二级"},
+        {"地方国企", "中资属性", "级别"},
+        {"地方平台", "板块", "板块二级"},
+        {"银行", "板块二级", "板块三级"},
+        {"非银", "板块二级", "板块三级"}
+    },
+    dependend_dd = List.Accumulate(
+        dependend,
+        {{"--", "【】"}},
+        (x, y) =>
+            let
+                Sorthd = List.Buffer(fx("ControlDD." & y{0})),
+                Custom5 = Table.SelectRows(File, each Record.Field(_, y{1}) = y{0}),
+                dd = List.RemoveItems(List.Distinct(Table.Column(Custom5, y{2})), {"", "--", "【】", null}),
+                output = List.Buffer(try fx("SortList")(dd, Sorthd) otherwise dd)
+            in
+                x & {output}
+    ),
+    dependend_Col = List.Transform(dependend, each List.First(_)),
+    Headers = {"删除及隐藏"} & DBPKList & {"Filter"} & dependend_Col,
+    AddList1 = {
+        fx("ControlDD.备证行全称"),
+        fx("ControlDD.地区"),
+        fx("ControlDD.上市"),
+        Load("DimMonday"),
+        fx("ControlDD.Updator")
+    },
+    AddToHeaders = {"备证行全称", "地区", "上市", "DimMonday", "Updator"},
+    tbl = Table.FromColumns(AddList1 & List1 & dependend_dd, AddToHeaders & Headers)
+in
+    tbl

@@ -16,7 +16,7 @@
             "ISEXCHFILTER",
             "MULTISOURCE",
             "GPS",
-            "WEEKLYADDTAP"
+            "WEEKLYADDTAP","SYNCMEXE"
         },
         Source =
             if List.Contains(

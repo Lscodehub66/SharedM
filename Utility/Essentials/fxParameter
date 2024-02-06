@@ -1,6 +1,6 @@
 (_input as nullable text) =>
 let
- Parameters = {"GPS", "Monday", "WeeklyFilter", "UpdatorWeekly", "ShowAll","MultiSource", "Prefix", "RemoveFrom_DB"},
+ Parameters = {"GPS", "Monday", "WeeklyFilter", "UpdatorWeekly", "ShowAll","MultiSource", "Prefix", "RemoveFrom_DB","Sync_mEXE"},
     Source =
         if _input = null then
             Parameters
