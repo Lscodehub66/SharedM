@@ -2,6 +2,7 @@
 (TableName as table, optional FTextUSDCNHHKD as text, optional Collist as any) =>
     let
         // FTextUSDCNHHKD = "USD", Collist = {"原始规模(亿)", "原始"},
+             FXSource = Table.Buffer(CWB("FXtbl")),
         Source = fx("Data")(TableName),
         CN_Source = List.Buffer(Table.ColumnNames(Source)),
         NewCol = List.Transform({"亿美元", "亿元", "亿港币"}, each Prefix & _),
@@ -17,7 +18,7 @@
             else
                 fx("MergeDimDate")(Prep, "定价日", {"YYQQ"}, {"DummyCol1"}),
         #"Merged Queries" = Table.NestedJoin(
-            AddedYYQQ, {"DummyCol1", "货币"}, Load("DimFX", "CSV"), {"YYQQ", "Base Currency"}, "DimFX",
+            AddedYYQQ, {"DummyCol1", "货币"},   FXSource , {"YYQQ", "Base Currency"}, "DimFX",
             JoinKind.LeftOuter
         ),
         #"Expanded DimFX" = Table.ExpandTableColumn(#"Merged Queries", "DimFX", {"USD", "CNH", "HKD"}),

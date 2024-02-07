@@ -77,7 +77,7 @@
                     "【】"
         ),
         Output =
-            if Text.Contains(Key, "PRICE") then
+            if Text.Contains(Key, "价格") then
                 Table.AddColumn(#"Price Missing w FPT Range", "Dummy.PriceCheck", each "Checked", type text)
             else
                 Table.AddColumn(BBGCheck_2, "Dummy.BBGCheck", each "Checked", type text)

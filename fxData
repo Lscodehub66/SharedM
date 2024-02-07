@@ -33,8 +33,7 @@
             "兑付日",
             "到期日",
             "发行日",
-            "发行起始日",
-            "DEBUT_DATE",
+            "发行起始日",    
             "定价日",
             "假设KYC到期日",
             "行权兑付日",
@@ -514,9 +513,9 @@
                     MyDateList,
                     ConditionalReplaced,
                     (x, y) =>
-                        Table.TransformColumns(
+                      try  Table.TransformColumns(
                             x, {{y, each if _ = null then "" else Date.ToText(_, "yyyy/M/d"), type text}}
-                        )
+                        ) otherwise x
                 )
             else
                 ConditionalReplaced

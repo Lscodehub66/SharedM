@@ -2,9 +2,9 @@
 let
     Source = (TableToClean as table, TableToCleanColumn as list, _key as nullable text) =>
         let
-            Clntbl = Table.Buffer(Load("Replacetbl")),
+          Clnlist= List.Buffer(fx("ReplacerRecords." & (_key ?? "") )),
             #"Cln Selected" = Table.FromRows(
-                Table.SelectRows(Clntbl, each Text.Contains([Column1], (_key ?? "")))[Column2]{0}, {
+             Clnlist , {
                     "Find",
                     "Replace"
                 }

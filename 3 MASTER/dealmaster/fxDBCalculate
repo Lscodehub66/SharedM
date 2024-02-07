@@ -77,23 +77,7 @@
         BOCOMDEAL = Load("fxBOCOMDEAL")(Slicer_Listing),
         // Add CN DES and combine shortnames
         Written_Stats = fx("WriteStats")(BOCOMDEAL),
-        Written_Tenor = Table.AddColumn(
-            Written_Stats,
-            "期限",
-            each
-                if [期限备注] = null then
-                    ""
-                else if Text.Contains([期限备注], "天") or Text.Contains([期限备注], "月") then
-                    [期限备注]
-                else if Text.Contains([期限备注], "(") then
-                    [年期] & "年" & [期限备注]
-                else if not Text.Contains([年期], "P") then
-                    [年期] & "年"
-                else if Text.Contains([年期], "P") then
-                    "永续(前" & Text.AfterDelimiter([年期], "PNC") & "年不可赎回)"
-                else
-                    ""
-        ),
+        Written_Tenor = fx("WriteTenor")(Written_Stats),
         Written_CCYSize = Load("fxWriteCCYSize")(Written_Tenor, "发行规模(亿)", "货币", "增发判定"),
         Written_Theme = Load("fxWriteTheme")(Written_CCYSize),
         Written_Role = fx("WriteRole")(Written_Theme),

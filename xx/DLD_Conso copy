@@ -37,7 +37,7 @@ let
     #"Inserted FRN" = fx("AddFRNString")(Add_FIMTN),
     #"Inserted IPG" = fx("AddIPGString")(#"Inserted FRN"),
     #"Inserted FPG" = fx("AddFPGString")(#"Inserted IPG"),
-    #"Checked Price" = fx("CrossCheck")(#"Inserted FPG", "PRICE"),
+    #"Checked Price" = fx("CrossCheck")(#"Inserted FPG", "价格"),
     //
     CWBConso = Load("DLD_ConsoPrice_CWB"),
     Joined = Table.Join(#"Checked Price", "Check", CWBConso, "Dummy.Check", JoinKind.LeftOuter),

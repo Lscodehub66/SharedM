@@ -8,7 +8,7 @@
         //
         FnCount = fx("AddMultiCount")(RColprep ,"信用主体简称"),
         ddd = Table.AddColumn(FnCount, Col1, each Date.ToText([定价日], "ddd"), type text),
-        dddcn = fx("Replace")(ddd, {Col1}, "DDDCN"),
+        dddcn = fx("Replace")(ddd, {Col1}, "周几"),
         EntityWRtg = Table.AddColumn(
             dddcn,
             "信用主体及评级",

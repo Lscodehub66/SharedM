@@ -1,5 +1,5 @@
 (TableName as table) =>
 
 let
-Source = fx("CrossCheck")(TableName, "PRICE")
+Source = fx("CrossCheck")(TableName, "价格")
 in   Source
