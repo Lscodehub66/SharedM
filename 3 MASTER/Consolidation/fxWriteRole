@@ -2,13 +2,36 @@
     let
         Source = TableName,
         RefCol = {"IS_LEAD", "BISL_ROLE", "OTHER_ROLE"},
-        NewCol = {"角色", "角色资历分类"},
+        NewCol = {"BOCOM担任", "角色", "角色资历分类"},
         Prep = Table.RemoveColumns(Source, NewCol, MissingField.Ignore),
         ACol = Table.AddColumn(Prep, "角色", each [IS_LEAD] & [BISL_ROLE] & [#"OTHER_ROLE"], type text),
-        Replaced = fx("Replace")(ACol, {"角色"}, "角色"),
-        ACol1 = Table.AddColumn(
-            Replaced, "角色资历分类", each if Text.Contains([角色], "全球协调人") then "JGC资历" else "Non-JGC资历", type text
+        #"Added Col" = Table.AddColumn(
+            ACol,
+            "BOCOM担任",
+            each
+                if List.Contains({"--", "", null}, [#"BOCOM_DEAL?"]) then
+                    ""
+                else if [是否合名] = "合名" then
+                    "交通银行担任" & [港分_ROLE]
+                else if
+                    Text.Contains([BISL_ROLE], "GC")
+                    or Text.Contains([IS_LEAD], "Sole")
+                    and not Text.Contains([港分_ROLE], "GC")
+                    and not Text.Contains([澳分_ROLE], "GC")
+                then
+                    "交银国际担任" & [角色]
+                else if [BISL_ROLE] <> "--" and [港分_ROLE] = "--" and [澳分_ROLE] = "--" then
+                    "交银国际担任" & [角色]
+                else if List.Contains({[澳分_ROLE], [港分_ROLE]}, "GC") then
+                    "交通银行担任全球协调人"
+                else if List.Contains({[澳分_ROLE], [港分_ROLE]}, "JBR") then
+                    "交通银行担任账簿管理人"
+                else
+                    "",
+            type text
         ),
-        Output = if not Table.HasColumns(Source, RefCol) then Source else ACol1
+        Replaced = fx("Replace")(#"Added Col", {"角色", "BOCOM担任"}, "角色"),
+        ACol2 = Table.AddColumn(Replaced, "角色资历分类", each if Text.Contains([角色], "全球协调人") then "JGC资历" else "", type text),
+        Output = if not Table.HasColumns(Source, RefCol) then Source else ACol2
     in
         Output

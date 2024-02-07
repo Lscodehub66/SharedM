@@ -2,17 +2,19 @@
     let
         Source = TableName,
         // Duration =  fx("AddDuration")(   Source , {"兑付日","起息日期","年期.Years"},{"Abs","Year",1}),
-          Duration1 = fx("AddDuration")(Source, {"兑付日", "起息日期", "年期.Days"}, {"Abs", "Day", 0}),
-    Custom2 = fx("AddDuration")(Duration1, {"兑付日", "起息日期", "年期.yr"}, {"Abs", "Year", 1}),
-    Custom3 = Table.AddColumn(Custom2, "永续年期.Num", each
-                if Text.Contains(([#"发行期限(年)"] ?? ""), "Perp", Comparer.OrdinalIgnoreCase)
-                then [年期.yr] else null, type number),
+        Duration1 = fx("AddDuration")(Source, {"兑付日", "起息日期", "年期.Days"}, {"Abs", "Day", 0}),
+        Custom2 = fx("AddDuration")(Duration1, {"兑付日", "起息日期", "年期.yr"}, {"Abs", "Year", 1}),
+        Custom3 = Table.AddColumn(
+            Custom2,
+            "永续年期.Num",
+            each if Text.Contains(([#"发行期限(年)"] ?? ""), "Perp", Comparer.OrdinalIgnoreCase) then [年期.yr] else null,
+            type number
+        ),
         Added = Table.AddColumn(
             Custom3,
             "年期.Years",
             each
-                if
-                    [永续年期.Num] <> null                 then
+                if [永续年期.Num] <> null then
                     null
                 else if List.Contains({null, 0}, [年期.Days]) and Table.HasColumns(Source, "发行期限(年)") then
                     try Number.Round(Number.From([#"发行期限(年)"]), 1) otherwise null
@@ -20,20 +22,40 @@
                     [年期.yr],
             type number
         ),
-    #"Added Custom" = Table.AddColumn(Added, "NextCall.Date", each if [行权兑付日] = null or [兑付日] = null then null else if [行权兑付日] >= [兑付日] then null else [行权兑付日],type date),
+        #"Added Custom" = Table.AddColumn(
+            Added,
+            "NextCall.Date",
+            each if [行权兑付日] = null or [兑付日] = null then null else if [行权兑付日] >= [兑付日] then null else [行权兑付日],
+            type date
+        ),
         Duration2 = fx("AddDuration")(#"Added Custom", {"NextCall.Date", "起息日期", "不可赎回.yr"}, {"Abs", "Year", 1}),
-    #"Inserted Division" = Table.AddColumn(Duration2, "不可赎回占比", each    if Text.Contains(([#"发行期限(年)"] ?? ""), "Perp", Comparer.OrdinalIgnoreCase) then null else  Number.Round([不可赎回.yr] / [年期.Years], 1), type number),
-    #"Added NC" = Table.AddColumn(
-            #"Inserted Division", "年期.不可赎回", 
-         
+        #"Inserted Division" = Table.AddColumn(
+            Duration2,
+            "不可赎回占比",
+            each
+                if Text.Contains(([#"发行期限(年)"] ?? ""), "Perp", Comparer.OrdinalIgnoreCase) then
+                    null
+                else
+                    Number.Round([不可赎回.yr] / [年期.Years], 1),
+            type number
+        ),
+        #"Added NC" = Table.AddColumn(
+            #"Inserted Division",
+            "年期.不可赎回",
             each
                 if [不可赎回.yr] = 0 then
                     null
-                else if [永续年期.Num] <> null then   [永续年期.Num]   
-                
-                else   if ([年期.Years]??0) <=1 then null       else    if [不可赎回占比] =1 or (([不可赎回占比]??0) <=0.2  and ([年期.Years]??0) <=15 ) then null else    [不可赎回.yr],
-          type number        ),
-    #"Added tenor" = Table.AddColumn(
+                else if [永续年期.Num] <> null then
+                    [永续年期.Num]
+                else if ([年期.Years] ?? 0) <= 1 then
+                    null
+                else if [不可赎回占比] = 1 or (([不可赎回占比] ?? 0) <= 0.2 and ([年期.Years] ?? 0) <= 15) then
+                    null
+                else
+                    [不可赎回.yr],
+            type number
+        ),
+        #"Added tenor" = Table.AddColumn(
             #"Added NC",
             "年期",
             each
@@ -45,14 +67,17 @@
                     Text.From([#"年期.Years"]),
             type text
         ),
-    AddedCustom = Table.AddColumn(
+        AddedCustom = Table.AddColumn(
             #"Added tenor",
             "期限备注",
-            each if ([年期.Years] ?? 0) >= 0.9 and ([年期.Years] ?? 0) <=1 then Number.ToText([年期.Days], "0天") else "",
+            each if ([年期.Years] ?? 0) >= 0.9 and ([年期.Years] ?? 0) <= 1 then Number.ToText([年期.Days], "0天") else "",
             type text
         ),
-    ChangedType = Table.TransformColumnTypes(AddedCustom, {{"年期", type text}}),
-    Output = if List.ContainsAny( (_inputkey??{null}), {"All","Debug"}, Comparer.OrdinalIgnoreCase) then  ChangedType  else Table.SelectColumns( ChangedType , List.Distinct(Table.ColumnNames(Source) &
-     {"年期","期限备注"})) 
-in
-   Output
+        ChangedType = Table.TransformColumnTypes(AddedCustom, {{"年期", type text}}),
+        Output =
+            if List.ContainsAny((_inputkey ?? {null}), {"All", "Debug"}, Comparer.OrdinalIgnoreCase) then
+                ChangedType
+            else
+                Table.SelectColumns(ChangedType, List.Distinct(Table.ColumnNames(Source) & {"年期", "期限备注"}))
+    in
+        Output

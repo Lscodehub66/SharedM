@@ -2,6 +2,7 @@
     let
         Source = TableName,
         //Global RenameColumns
+      
         DBRenamed = Table.RenameColumns(
             Source,
             {
@@ -15,69 +16,23 @@
                 {"FEATURED", "品种主题"},
                 {"ticker", "TICKER"},
                 {"交易所", "发行场所"},
-                {"临时isin", "ISIN_TEMP"},
-                {"IS_B&D", "OTHER_ROLE"}
+                {"临时isin", "ISIN_TEMP"} ,   {"IS_B&D", "OTHER_ROLE"}
             },
             MissingField.Ignore
         ),
         CN_RNSource = List.Buffer(Table.ColumnNames(DBRenamed)),
         //DateTime ValueType
-        DateTime1 = {"Timestamp", "定价会日期时间", "Date Time"},
-        Time1 = {"定价会时间"},
+        DateTime1 = List.Buffer(fx("Type.DateTime")),
+        Time1 =  List.Buffer(fx("Type.Time")),
         //Date ValueType
-        Date1 = {
-            "CLIENT_SINCE",
-            "交割日",
-            "KYC Deadline",
-            "上会审批日",
-            "上市日期",
-            "兑付日",
-            "到期日",
-            "发行日",
-            "发行起始日",
-            "定价日",
-            "假设KYC到期日",
-            "行权兑付日",
-            "起息日",
-            "起息日期",
-            "违约日期",
-            "项目定价日",
-            "首次付息日",
-            "项目定价日",
-            "首次违约日",
-            "Monday",
-            "LastFriday",
-            "LastMonday",
-            "OneWeekBefore",
-            "YearStart",
-            "OneYearAgo"
-        }
+        Date1 = List.Buffer(fx("Type.Date"))
+      
             & List.Select(
                 CN_RNSource,
                 each Text.Contains(_, "date", Comparer.OrdinalIgnoreCase) and not Text.StartsWith(_, "是否")
             ),
         //
-        Int64 = {
-            "曾作为JGC",
-            "曾作为JBR",
-            "曾作为承销商",
-            "账户数",
-            "发行数",
-            "DayOfWeek.Num",
-            "Count_BISLDeal",
-            "Count_JBR",
-            "Count_JGC",
-            "ISIN_BISLDeal",
-            "ISIN_JBR",
-            "ISIN_JGC",
-            "多品种",
-            "多币种",
-            "多期限",
-            "多笔",
-            "Tranches",
-            "Nth_ISIN",
-            "WEEKNUM"
-        },
+        Int64 =List.Buffer(fx("Type.Int64")),
         //Number ValueTyp
         Num0ToNull = {"Δ1周", "Δ年初至今", "PRJ对账号"},
         Num5 = List.Select(CN_RNSource, each Text.StartsWith(_, "R_") or Text.StartsWith(_, "C_"))
@@ -93,11 +48,11 @@
                 or Text.Contains(_, "债券余额")
         )
             & {"排行榜份额(%)"},
-        Num2 = {"投资级", "高收益级", "iTraxx Asia", "VIX", "BISL下单量", "BISL分配量", "交银下单量.除BISL外"}
+        Num2 = {"投资级", "高收益级", "iTraxx Asia", "VIX", "BISL下单量", "BISL分配量","交银下单量.除BISL外"}
             & List.Select(
                 CN_RNSource, each Text.StartsWith(_, "S_") or Text.StartsWith(_, "Spd_") or Text.StartsWith(_, "I_")
             ),
-        Num1 = {"最终账簿(亿)", "建账峰值(亿)", "收窄Num"} & List.Select(CN_RNSource, each Text.StartsWith(_, "V_")),
+        Num1 = {"最终账簿(亿)","建账峰值(亿)", "收窄Num"} & List.Select(CN_RNSource, each Text.StartsWith(_, "V_")),
         Num0 = {"FEE", "Relevance", "Year.Num", "兑付日.YearNum", "金额 (MM USD)"}
             & List.Select(CN_RNSource, each Text.StartsWith(_, "CT_") or Text.StartsWith(_, "承销费")),
         Num = {
@@ -159,7 +114,7 @@
             "RangeEnd"
         }
             & List.Select(CN_RNSource, each Text.StartsWith(_, "Index_") or Text.EndsWith(_, ".num")),
-        Text_Trim = {"PROJECT_CODE", "期数", "外部评审机构", "外部评审方式", "FolderPath", "地区分布", "类型分布", "投资者分布", "投资者类型", "新闻"},
+        Text_Trim = {"PROJECT_CODE", "期数", "外部评审机构", "外部评审方式", "FolderPath", "地区分布", "类型分布", "投资者分布", "投资者类型","新闻"},
         Text_Upper = {
             "CCY",
             "信用主体",
@@ -192,32 +147,11 @@
             "境内主体评级",
             "交割T+n"
         },
-        Text_NoNA = {"增发判定", "修改.增发判定", "主题债券", "品种主题", "备证行全称", "期数"},
+        Text_NoNA = {"增发判定", "修改.增发判定", "主题债券", "品种主题", "备证行全称","期数"},
         Text1 = {
-            "地区覆盖",
-            "OTHER_ROLE",
-            "角色资历分类",
-            "上周主要经济数据",
-            "发布(HKT) ",
-            "主体备注",
-            "YYYY.至今",
-            "DDMMMYYYY",
-            "DayName.CN",
-            "MonthName.CN",
-            "年M月",
-            "每周第一天","备证行曾用名",
-            "DayName",
-            "DayShortName",
-            "信用主体及评级",
-            "年期分类",
-            "覆盖分类",
-            "YYQQ",
-            "前值",
-            "预期",
-            "现值",
-            "ObjectName",
+            "地区覆盖","OTHER_ROLE","角色资历分类","上周主要经济数据", "发布(HKT) ", "前值", "预期", "现值", "ObjectName",
             "假期简称",
-            "是否中国假期",
+            "是否中国假期", 
             "B&D/LeftLead",
             "Project Name",
             "债券名称",
@@ -536,10 +470,9 @@
                     MyDateList,
                     ConditionalReplaced,
                     (x, y) =>
-                        try
-                            Table.TransformColumns(
-                                x, {{y, each if _ = null then "" else Date.ToText(_, "yyyy/M/d"), type text}}
-                            ) otherwise x
+                      try  Table.TransformColumns(
+                            x, {{y, each if _ = null then "" else Date.ToText(_, "yyyy/M/d"), type text}}
+                        ) otherwise x
                 )
             else
                 ConditionalReplaced

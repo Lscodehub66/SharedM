@@ -1,116 +1,27 @@
 (TableName as table) =>
     let
         //
-        Source = Table.Buffer(TableName),
-        CN_Source = List.Buffer(Table.ColumnNames(Source)),
-        //Prep
-        DataType = fx("Data")(Source),
-        RemovedCol = Table.RemoveColumns(DataType, {"是否IG", "是否首发", "BOCOM_DEAL?", "期限"}, MissingField.Ignore),
-        //Add DebutIssuance
-        #"Calculated Debut" =
-            if List.Contains(Table.ColumnNames(RemovedCol), "DEBUT_DATE") then
-                Table.AddColumn(
-                    RemovedCol, "是否首发", each if [DEBUT_DATE] = null then "--" else if [定价日] = [DEBUT_DATE] then
-                        "Y"
-                    else
-                        ""
-                )
-            else
-                RemovedCol,
-        #"Replaced NullAmount" =
-            if Table.HasColumns(#"Calculated Debut", {"兑付日", "发行规模(亿)", "债券余额"}) then
-                Table.ReplaceValue(
-                    #"Calculated Debut",
-                    null,
-                    each
-                        if [兑付日] >= Date.From(DateTime.FixedLocalNow()) then
-                            Number.From([#"发行规模(亿)"])
-                        else if [兑付日] < Date.From(DateTime.FixedLocalNow()) then
-                            0
-                        else
-                            null,
-                    Replacer.ReplaceValue,
-                    {"债券余额"}
-                )
-            else
-                #"Calculated Debut",
-        #"Added FolderPath" = fx("FolderPath")(#"Replaced NullAmount"),
-        #"Added BBGFX" = fx("AddBBGFX")(#"Added FolderPath"),
-        #"Added 美元规模分类" = fx("GroupSize")(#"Added BBGFX"),
-        #"Added 年期结构货币分类" = fx("GpTenorSTRCCY")(#"Added 美元规模分类"),
-        #"Added 清算地" = fx("ISINToCSD")(#"Added 年期结构货币分类"),
-        #"Added 评级分类" = fx("GpRtg")(#"Added 清算地", {"发行评级", "评级分类"}),
-        #"Added 主体评级分类" = fx("GpRtg")(#"Added 评级分类", {"主体评级", "主体评级分类", "EN"}),
-        #"Added 是否IG" = Table.AddColumn(
-            #"Added 主体评级分类",
-            "是否IG",
-            each
-                if [评级分类] = "投资级" and [主体评级分类] = "IG" then
-                    "主体及债项"
-                else if [主体评级分类] = "IG" and [评级分类] = "无评级" then
-                    "仅主体"
-                else if [主体评级分类] = "IG" and [评级分类] = "高收益" then
-                    "CrossOver"
-                else if [主体评级分类] = "--" and [评级分类] = "IG" and Text.Contains([结构], "备证") then
-                    "仅债项(备证)"
-                else
-                    "--",
-            type text
-        ),
-        Slicer_Listing =
-            if Table.HasColumns(Source, "上市") then
-                Table.AddColumn(
-                    #"Added 是否IG",
-                    "上市分类",
-                    each
-                        if List.Contains({null, "", "--"}, [上市]) then
-                            "--"
-                        else if Text.Contains([上市], ";") then
-                            "多地上市"
-                        else if not List.Contains({"港交所", "新交所", "澳交所", "未上市"}, [上市]) then
-                            "其他"
-                        else
-                            [上市]
-                )
-            else
-                #"Added 是否IG",
-        BOCOMDEAL = Load("fxBOCOMDEAL")(Slicer_Listing),
-        // Add CN DES and combine shortnames
-        Written_Stats = fx("WriteStats")(BOCOMDEAL),
-        Written_Tenor = Table.AddColumn(
-            Written_Stats,
-            "期限",
-            each
-                if [期限备注] = null then
-                    ""
-                else if Text.Contains([期限备注], "天") or Text.Contains([期限备注], "月") then
-                    [期限备注]
-                else if Text.Contains([期限备注], "(") then
-                    [年期] & "年" & [期限备注]
-                else if not Text.Contains([年期], "P") then
-                    [年期] & "年"
-                else if Text.Contains([年期], "P") then
-                    "永续(前" & Text.AfterDelimiter([年期], "PNC") & "年不可赎回)"
-                else
-                    ""
-        ),
-        Written_CCYSize = Load("fxWriteCCYSize")(Written_Tenor, "发行规模(亿)", "货币", "增发判定"),
-        Written_Theme = Load("fxWriteTheme")(Written_CCYSize),
-        Written_Role = fx("WriteRole")(Written_Theme),
+        Source = Table.Buffer(fx("Data")(TableName)),
         //
-        CombinedName = Load("fxNameCombiner")(Written_Role),
-        // Add Comparer
-        AddedComp = Table.AddColumn(
-            CombinedName,
-            "COMPARER",
-            each
-                if [PROJECT_NAME] <> "" then
-                    Text.From([YYMMDD]) & Text.Upper(Text.Remove([PROJECT_NAME], " "))
-                else
-                    Text.From([YYMMDD]) & [信用主体简称],
-            type text
-        ),
-        Checked = fx("CheckNDupe")(AddedComp),
+        #"Added IsDebut" = fx("AddIsDebut")(Source),
+        #"Replaced NullAmount" = fx("ReplaceNullOutstanding")(#"Added IsDebut"),
+        #"Added FolderPath" = fx("FolderPath")(#"Replaced NullAmount"),
+        #"Added 清算地" = fx("AddClearing")(#"Added FolderPath"),
+        #"Added BBGFX" = fx("AddBBGFX")(#"Added 清算地"),
+        #"Added BOCOMDEAL?" = fx("fxAddBOCOMDEAL")(#"Added BBGFX"),
+        #"Added 美元规模分类" = fx("GroupSize")(#"Added BOCOMDEAL?"),
+        #"Added 年期结构货币分类" = fx("GpTenorSTRCCY")(#"Added 美元规模分类"),
+        #"Added Listing" = fx("GpListing")(#"Added 年期结构货币分类"),
+        #"Added AllRtg" = fx("GpRtgIsIG")(#"Added Listing"),
+        //
+        Written_Stats = fx("WriteStats")(#"Added AllRtg"),
+        Written_Tenor = fx("WriteTenor")(Written_Stats),
+        Written_CCYSize = fx("WriteCCYSize")(Written_Tenor),
+        Written_Theme = fx("WriteTheme")(Written_CCYSize),
+        Written_Role = fx("WriteRole")(Written_Theme),
+        CombinedName = fx("NameCombiner")(Written_Role),
+        //
+        Checked = fx("CheckNDupe")(CombinedName),
         Sorted = fx("SortNIndex")(Checked),
         Presented = fx("PresentNoData")(Sorted)
     in

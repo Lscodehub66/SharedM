@@ -1,0 +1,132 @@
+// let LoadCode = Load("DLD_Conso","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    Source = Load("DLD_DMI"),
+    //
+    Add_BISL = Table.AddColumn(
+        Source,
+        "BISL_ROLE",
+        each
+            if Text.Contains([联席全球协调人], "BOCOM") then
+                "JGC"
+            else if Text.Contains([牵头经办人], "BOCOM") then
+                "JBR"
+            else if Text.Contains([联席全球协调人], "【") then
+                "【】"
+            else
+                "--"
+    ),
+    // Multisource steps
+    BBG_HD = Get("Header_Exp_Dynamic_BBG"),
+    BBG_HDExp = List.Transform(BBG_HD, each if List.Contains({"计息基准", "SBLC提供者"}, _) then "Dummy" & _ else _),
+    BBG_Merged = fx("Merge")(Add_BISL, Load("DLD_BBG_Corp"), "Check", "Check", BBG_HD, BBG_HDExp),
+    //{"发行人成立地", "发行人主上市地", "补充OMAS updates", "定价息差", "发行评级", "主体评级","ESG_Indicator","计息基准","票息"}
+    #"CrossChecked BBG" = fx("CrossCheck")(BBG_Merged),
+    // End of MultiSource
+    #"//GNG_Multi" =
+        if Text.Contains(Load("Controller")[Multi]{0}, "BBG") or Load("Controller")[Multi]{0} = "ON" then
+            "GO"
+        else
+            "NO-GO",
+    Crossroad =
+        if #"//GNG_Multi" <> "GO" then
+            Table.RenameColumns(Add_BISL, {{"债项评级", "发行评级"}, {"穆迪/标普", "主体评级"}}, MissingField.UseNull)
+        else
+            #"CrossChecked BBG",
+    // facilitate FIMTN Review
+    Add_FIMTN = Table.TransformColumns(Load("fxIsFIMTN")(Crossroad), {{"IS_FIMTN", each if _ = "Y" then "【Y】" else _}}),
+    #"Inserted FRN" = fx("AddFRNString")(Add_FIMTN),
+    #"Inserted IPG" = fx("AddIPGString")(#"Inserted FRN"),
+    #"Inserted FPG" = fx("AddFPGString")(#"Inserted IPG"),
+    #"Checked Price" = fx("CrossCheck")(#"Inserted FPG", "价格"),
+    //
+    CWBConso = Load("DLD_ConsoPrice_CWB"),
+    Joined = Table.Join(#"Checked Price", "Check", CWBConso, "Dummy.Check", JoinKind.LeftOuter),
+    #"Replaced Value" = List.Accumulate(
+        {"Dummy.IS_FIMTN", "Dummy.IPG", "Dummy.FPG", "Dummy.定价", "Dummy.投资者类型", "Dummy.投资者分布", "Dummy.Check"},
+        Joined,
+        (x, y) => try Table.TransformColumns(x, {{y, each if _ = null then "" else _, type text}}) otherwise y
+    ),
+    #"Replaced null" = List.Accumulate(
+        {"认购额(亿)", "投资者账户数"},
+        #"Replaced Value",
+        (x, y) => Table.ReplaceValue(x, null, each Record.Field(_, "Dummy." & y), Replacer.ReplaceValue, {y})
+    ),
+    #"Replaced Blank" = List.Accumulate(
+        {"IPG", "FPG", "定价", "投资者类型", "投资者分布"},
+        #"Replaced null",
+        (x, y) =>
+            Table.ReplaceValue(
+                Table.ReplaceValue(x, "", each Record.Field(_, "Dummy." & y), Replacer.ReplaceValue, {y}),
+                "【】",
+                each
+                    if not List.Contains({"", "【】"}, Record.Field(_, "Dummy." & y)) then
+                        Record.Field(_, "Dummy." & y)
+                    else
+                        "【】",
+                Replacer.ReplaceValue,
+                {y}
+            )
+    ),
+    #"Replaced both Non-blank" = List.Accumulate(
+        {"IS_FIMTN", "IPG", "FPG", "定价", "认购额(亿)", "投资者账户数", "投资者类型", "投资者分布"},
+        #"Replaced Blank",
+        (x, y) =>
+            Table.ReplaceValue(
+                x,
+                each Record.Field(_, y),
+                each
+                    if
+                        not List.Contains({null, "", "【】"}, Record.Field(_, y))
+                        and not List.Contains({null, "", "【】"}, Record.Field(_, "Dummy." & y))
+                        and Record.Field(_, y) <> Record.Field(_, "Dummy." & y)
+                    then
+                        Record.Field(_, "Dummy." & y)
+                    else
+                        Record.Field(_, y),
+                Replacer.ReplaceValue,
+                {y}
+            )
+    ),
+    Checked = fx(
+        "CheckNDupe"
+    )(
+        if List.IsEmpty(List.Intersect({Add_FIMTN[Check], CWBConso[Dummy.Check]})) then
+            #"Checked Price"
+        else
+            #"Replaced both Non-blank"
+    ),
+    Sorted = fx("SortNIndex")(Checked),
+    //
+    CN_FIMTN_Review = Get("Header_S_Dynamic_FIMTN"),
+    CN_DLD_Conso_CWB = CWB("DLD_Conso", "CN"),
+    CN = List.Distinct(
+        {
+            "Index",
+            "信用主体",
+            "ISIN",
+            "定价日",
+            "IS_FIMTN",
+            "IPG",
+            "FPG",
+            "定价",
+            "认购额(亿)",
+            "投资者账户数",
+            "投资者类型",
+            "投资者分布",
+            "货币",
+            "主题债券",
+            "浮息定价",
+            "IPT_DMI",
+            "FPG_DMI",
+            "联席全球协调人",
+            "牵头经办人",
+            "英文简称",
+            "债券简称"
+        }
+            & CN_FIMTN_Review
+            & CN_DLD_Conso_CWB
+            & Table.ColumnNames(Sorted)
+    ),
+    Reordered = try Table.ReorderColumns(Sorted, CN, MissingField.Ignore) otherwise Sorted
+in
+    Reordered

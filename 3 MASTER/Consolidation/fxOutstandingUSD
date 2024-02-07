@@ -1,7 +1,7 @@
 (TableName as table, optional inputNewCol as list, optional smallerslicer as nullable number) =>
     let
         // FX
-        FXSource = Load("DimFX", "CSV"),
+        FXSource = Table.Buffer(CWB("FXtbl")),
         HD_S = {"Base Currency", "USD"},
         NewCol = if inputNewCol = null or inputNewCol = {null} then {"余额亿美元", "余额美元规模分类"} else inputNewCol,
         Count = List.Count(NewCol),

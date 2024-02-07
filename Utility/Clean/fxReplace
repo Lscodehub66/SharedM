@@ -1,10 +1,14 @@
 // fxReplacer
 let
-    Source = (TableToClean as table, TableToCleanColumn as list, _key as nullable text) =>
+    Source = (TableToClean as table, _inputHD as list, _key as nullable text) =>
         let
-            Clntbl = Table.Buffer(Load("Replacetbl")),
+          
+          MyHD = List.Intersect({Table.ColumnNames(TableToClean),_inputHD}),
+          
+          
+          Clnlist= List.Buffer(fx("ControlRP." & (_key ?? "") )),
             #"Cln Selected" = Table.FromRows(
-                Table.SelectRows(Clntbl, each Text.Contains([Column1], (_key ?? "")))[Column2]{0}, {
+             Clnlist , {
                     "Find",
                     "Replace"
                 }
@@ -25,7 +29,7 @@ let
                         else
                             FindReplaceList{n}{1},
                         Replacer.ReplaceText,
-                        TableToCleanColumn
+                        MyHD
                     )
                 in
                     if n = Counter - 1 then

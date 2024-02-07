@@ -2,11 +2,12 @@ let
 
     M1 = Date.From(fx("Parameter")("Monday")) ?? Date.StartOfWeek(Date.From(DateTime.FixedLocalNow()), Day.Monday),
     Record = [
+        Monday.Text = Date.From(fx("Parameter")("Monday")) ?? Date.StartOfWeek(Date.From(DateTime.FixedLocalNow()), Day.Monday),
         wNIMStart.Date = #date(2013, 1, 1),
         StartOfRecent.Date = #date(2022, 1, 1),
         23年初 = #date(2023, 1, 1),
         Now.Date = Date.From(DateTime.FixedLocalNow()),
-        Monday.Date = Date.StartOfWeek(M1, Day.Monday),
+        Monday.Date = Date.StartOfWeek(Date.From(fx("Parameter")("Monday")) ?? Date.StartOfWeek(Date.From(DateTime.FixedLocalNow()), Day.Monday), Day.Monday),
         PreviousMon.Date = Date.StartOfWeek(Date.AddDays(M1, -7), Day.Monday),
                 PreviousMon = Date.ToText(Date.StartOfWeek(Date.AddDays(M1, -7), Day.Monday),"yyyyMMdd"),
         Sunday.Date = Date.AddDays(Date.StartOfWeek(M1, Day.Monday), -1),

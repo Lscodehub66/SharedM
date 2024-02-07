@@ -1,0 +1,17 @@
+(TableName as table) =>
+    let
+        Source = TableName,
+        RefCol = {"定价日", "DEBUT_DATE"},
+        NewCol = {"是否首发"},
+        Prep = Table.RemoveColumns(Source, NewCol, MissingField.Ignore),
+        output =
+            if Table.HasColumns(Source, RefCol) then
+                Table.AddColumn(
+                    Table.RemoveColumns(Source, NewCol, MissingField.Ignore),
+                    NewCol{0},
+                    each if [DEBUT_DATE] = null then "--" else if [定价日] = [DEBUT_DATE] then "Y" else ""
+                )
+            else
+                Source
+    in
+        output

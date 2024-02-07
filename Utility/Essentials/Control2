@@ -1,0 +1,3 @@
+ M1 = Date.From(fx("Parameter")("Monday")) ?? Date.StartOfWeek(Date.From(DateTime.FixedLocalNow()), Day.Monday),
+    Record = [Monday.Date = fx("Control.Monday.Date"),Due.Date = fx("NextWorkDay")(fx("Control.Sunday.Date"), Load("HKHolidays", "CSVDATE"), "Date"),
+     Start.Date = fx("PreviousWorkDay")(fx("Control.Sunday.Date"), HKHolidaytbl, "Date"),]

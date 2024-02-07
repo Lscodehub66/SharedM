@@ -1,0 +1,25 @@
+(TableName as table) =>
+    let
+        Source = TableName,
+        NewCol = {"期限"},
+        RefCol = {"年期", "期限备注"},
+        Replaced = Table.ReplaceValue(Source, null, "", Replacer.ReplaceValue, RefCol),
+        ChangedType = Table.TransformColumnTypes(Replaced, List.Zip({RefCol, {type text, type text}})),
+        Written_Tenor = Table.AddColumn(
+            Table.RemoveColumns(ChangedType, NewCol, MissingField.Ignore),
+            "期限",
+            each
+                if [年期] = "0.5" then "6个月" else if Text.Contains([期限备注], "天") then
+                    [期限备注]
+                else if Text.Contains([年期], "P") then
+                    "永续(前" & Text.AfterDelimiter([年期], "NC") & "年不可赎回)"
+                else if Text.Contains([年期], "NC") then
+                    Text.BeforeDelimiter([年期], "NC") & "年" & "(前" & Text.AfterDelimiter([年期], "NC") & "年不可赎回)"
+                else if [年期] <> "" then
+                    [年期] & "年"
+                else
+                    ""
+        ),
+        Output = if Table.HasColumns(Source, RefCol) then Written_Tenor else Source
+    in
+        Output

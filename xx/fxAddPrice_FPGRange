@@ -1,5 +1,0 @@
-(TableName as table) =>
-
-let
-Source = fx("CrossCheck")(TableName, "PRICE")
-in   Source
