@@ -1,0 +1,18 @@
+
+// NC
+let
+    Source = CWB("deal_master"),
+    #"Sorted Rows" = Table.Distinct(Table.Buffer(Table.Sort(Source,{{"定价日", Order.Ascending}})),{"ISIN"}),
+    #"Merged Queries" = Table.NestedJoin(#"Sorted Rows",{"ISIN"}, DMI, {"ISIN"}, "DMI", JoinKind.LeftOuter),
+    #"Expanded DMI" = Table.ExpandTableColumn(#"Merged Queries", "DMI", {"行权兑付日"}, {"行权兑付日"}),
+    #"Removed Other Columns" = Table.SelectColumns(#"Expanded DMI",{"Index", "定价日", "ISIN", "信用主体", "发行评级", "货币", "发行规模(亿)", "年期", "票息","品种主题",  "起息日期", "行权兑付日",  "兑付日","期限备注" }),
+    Custom2 = fx("AddDuration")( #"Removed Other Columns", {"行权兑付日","起息日期","年期.不可赎回"},{"Abs","Year",1}),
+    #"Replaced Value" = Table.ReplaceValue(Custom2,0,null,Replacer.ReplaceValue,{"年期.不可赎回"}),
+    #"Added Custom" = Table.AddColumn(#"Replaced Value", "年期.Num", each try Number.From([年期]) otherwise null,type number),
+    #"Inserted Subtraction" = Table.AddColumn(#"Added Custom", "年期.不可赎回至到期", each if [年期.Num]<>[年期.不可赎回] then Number.Round([年期.Num] - [年期.不可赎回],1) else null, type number),
+    #"Added notes" = Table.AddColumn(#"Inserted Subtraction", "不可赎回备注", each if  ([年期.不可赎回至到期]??0) >= 2 then "(前" & Number.ToText([年期.不可赎回]) & "年不可赎回)" else "", type text),
+    #"Replaced Value1" = Table.ReplaceValue(#"Added notes",each [期限备注], each if [不可赎回备注] <> "" then [期限备注] & [不可赎回备注] else [期限备注] ,Replacer.ReplaceValue,{"期限备注"}),
+    #"Renamed Columns" = if Table.HasColumns( #"Added notes", "期限备注") then #"Replaced Value1"    else Table.RenameColumns( #"Added notes" ,{{"不可赎回备注", "期限备注2"}})
+in
+    #"Renamed Columns"
+

@@ -28,7 +28,9 @@ let
         wFilter_PreviousMon.Date = if fx("Parameter")("WeeklyFilter") <> "" then
             Date.StartOfWeek(Date.AddDays(M1, -3), Day.Monday)
         else
-            #date(1991, 2, 20)
+            #date(1991, 2, 20),
+            FOMC.Date = let Source = Table.SelectColumns( Table.AddColumn(Load("FOMCCal","CSVDATE"), "FOMC.Date", each Date.AddDays([Date_End],1), type date)  ,{"FOMC.Date"}),
+           merged =  fx("DateRange")({"PreviousMon.Date","Sunday.Date"},{Source,"FOMC.Date"})[FOMC.Date], output = if List.IsEmpty(merged) then null else merged{0} in output
     ]
 in
     Record

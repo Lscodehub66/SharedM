@@ -68,11 +68,15 @@
             else
                 Fn,
         Replaced2 =
-            if Table.HasColumns(Fn, {"mChart"}) then
+            if Table.HasColumns(Fn, {"mChart", "IS_FIMTN", "货币"}) then
                 Table.ReplaceValue(
                     Replaced1,
                     "",
-                    each if List.Contains({"【Y】", "Y"}, [IS_FIMTN]) then "新增" else "n/a",
+                    each
+                        if List.Contains({"【Y】", "Y"}, [IS_FIMTN]) and List.Contains({"USD", "CNH"}, [货币]) then
+                            "新增"
+                        else
+                            "n/a",
                     Replacer.ReplaceValue,
                     {"mChart"}
                 )

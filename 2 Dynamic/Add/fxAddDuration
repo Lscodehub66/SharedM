@@ -1,0 +1,30 @@
+(TableName as table, _input3Items as list, _inputkeylist as list) =>
+    // fx("AddDuration")(Source, {"行权兑付日","起息日期","年期.不可赎回"},{"Abs","Year",1})
+    let
+        Source = TableName,
+        datecol0 = _input3Items{0},
+        datecol1 = _input3Items{1},
+        newcol = _input3Items{2},
+        Is_Abs = List.Contains(_inputkeylist, "Abs"),
+        Is_Year = List.Contains(_inputkeylist, "Year"),
+        Rounding = List.Intersect({{0..9}, _inputkeylist}){0},
+        #"Changed Type" = Table.TransformColumnTypes(Source, {{datecol0, type date}, {datecol1, type date}}),
+        Custom1 = Table.AddColumn(
+            #"Changed Type",
+            newcol,
+            each Duration.Days(Record.Field(_, datecol1) -Record.Field(_, datecol0)),
+            type number
+        ),
+        TF =
+            if Is_Abs = true then
+                Table.TransformColumns(Custom1, {{newcol, each Number.Abs(_), type number}})
+            else
+                Custom1,
+        Yr = if Is_Year = true then Table.TransformColumns(TF, {{newcol, each _ / 365, type number}}) else TF,
+        Rounded =
+            if Rounding <> null then
+                Table.TransformColumns(Yr, {{newcol, each Number.Round(_, Rounding), type number}})
+            else
+                Yr
+    in
+        Rounded

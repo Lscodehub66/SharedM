@@ -92,7 +92,7 @@
                 or Text.Contains(_, "债券余额")
         )
             & {"排行榜份额(%)"},
-        Num2 = {"投资级", "高收益级", "iTraxx Asia", "VIX", "BOCOM下单量", "BOCOM分配量"}
+        Num2 = {"投资级", "高收益级", "iTraxx Asia", "VIX", "BISL下单量", "BISL分配量","交银下单量.除BISL外"}
             & List.Select(
                 CN_RNSource, each Text.StartsWith(_, "S_") or Text.StartsWith(_, "Spd_") or Text.StartsWith(_, "I_")
             ),
@@ -394,7 +394,7 @@
             "SA支付时限",
             "Settlement",
             "项目来源",
-            "交行及独家订单",
+            "BISL独家订单",
             "定价会拨入",
             "BBG_Page",
             "路演形式",

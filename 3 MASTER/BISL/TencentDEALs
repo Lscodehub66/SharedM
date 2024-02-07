@@ -16,7 +16,7 @@ let
             Table.ReplaceValue(x, y, "", Replacer.ReplaceValue, Table.ColumnNames(#"Extracted Last Characters"))
     ),
     ReplaceText = List.Accumulate(
-        {{"交行", "", "交行及独家订单"}, {",", "；" & "#(lf)", "项目亮点"}},
+        {{"交行", "", "BISL独家订单"}, {",", "；" & "#(lf)", "项目亮点"}},
         RepalceValue,
         (x, y) =>
             if Table.HasColumns(x, y{2}) then
@@ -49,8 +49,8 @@ let
             "EXE",
             "Settlement",
             "BOCOM下单量",
-            "BOCOM分配量",
-            "交行及独家订单",
+            "BISL分配量",
+            "BISL独家订单",
             "项目亮点",
             "Date_Onboarded",
             "定价会时间"

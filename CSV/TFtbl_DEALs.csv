@@ -24,13 +24,13 @@ CP_FL,CP,Y,CP
 SA支付时限,10d,Y,10d after closing
 Settlement,Gross,,Gross
 项目来源,带单入团,,带单入团
-BOCOM下单量,66,,66
-BOCOM分配量,6,,6
+BISL下单量,66,,66
+BISL分配量,6,,6
 IS_LEAD,Sole,W,Sole
 是否合名,角色不分层,W,角色不分层
 创建人,Tong,Y,Tong
 最后编辑人,Tong,Y,Tong
-交行及独家订单,Sample【交行】(6),,Sample【交行】(6)
+BISL独家订单,Sample【交行】(6),,Sample【交行】(6)
 委任函法审,⚠️未法审,Y,⚠️未法审
 发售评估,【发售评估】,Y,【发售评估】
 定价会日期时间,11/1/1991,,11/1/1991 12:00:00 AM

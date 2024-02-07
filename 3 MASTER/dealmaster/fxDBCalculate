@@ -57,8 +57,6 @@
                     "--",
             type text
         ),
-
-
         Slicer_Listing =
             if Table.HasColumns(Source, "上市") then
                 Table.AddColumn(
@@ -87,6 +85,8 @@
                     ""
                 else if Text.Contains([期限备注], "天") or Text.Contains([期限备注], "月") then
                     [期限备注]
+                else if Text.Contains([期限备注], "(") then
+                    [年期] & "年" & [期限备注]
                 else if not Text.Contains([年期], "P") then
                     [年期] & "年"
                 else if Text.Contains([年期], "P") then
@@ -96,9 +96,9 @@
         ),
         Written_CCYSize = Load("fxWriteCCYSize")(Written_Tenor, "发行规模(亿)", "货币", "增发判定"),
         Written_Theme = Load("fxWriteTheme")(Written_CCYSize),
- Written_Role = fx("WriteRole")(  Written_Theme),
+        Written_Role = fx("WriteRole")(Written_Theme),
         //
-        CombinedName = Load("fxNameCombiner")( Written_Role),
+        CombinedName = Load("fxNameCombiner")(Written_Role),
         // Add Comparer
         AddedComp = Table.AddColumn(
             CombinedName,
