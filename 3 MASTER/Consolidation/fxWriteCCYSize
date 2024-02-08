@@ -1,7 +1,9 @@
-(TableName as table, SizeColumn as text, CCYColumn as text, optional IsTapColumn as text) =>
+(TableName as table, optional _inputSizeCCYtapHD as list) =>
     let
+        sizehd = try _inputSizeCCYtapHD{0} otherwise "发行规模(亿)",
+        ccyhd = try _inputSizeCCYtapHD{1} otherwise "货币",
+        taphd = try _inputSizeCCYtapHD{2} otherwise "增发判定",
         Source = TableName,
-
         ColumnsToAdd = {"Dummy" & "CN规模", "币种单位", "币种规模"},
         Prep1 = Table.RemoveColumns(Source, ColumnsToAdd, MissingField.Ignore),
         //
@@ -9,45 +11,51 @@
             Prep1,
             "Dummy" & "CN规模",
             each
-                if Record.Field(_, SizeColumn) < 1 then
-                    Number.Round(Record.Field(_, SizeColumn) * 10000, 3)
+                if Record.Field(_, sizehd) < 1 then
+                    Number.Round(Record.Field(_, sizehd) * 10000, 3)
                 else
-                    Number.Round(Record.Field(_, SizeColumn), 3),
+                    Number.Round(Record.Field(_, sizehd), 3),
             type number
         ),
-        CrcyCN = fx("Replace")(Table.AddColumn(
-            SizeCN,
-            "币种单位",
-            each
-                if Record.Field(_, CCYColumn) = null then
-                    ""
-                else if Record.Field(_, SizeColumn) < 1 then
-                    "万" & Record.Field(_, CCYColumn)
-                else
-                    "亿" & Record.Field(_, CCYColumn),
-            type text
-        ),{"币种单位"},"货币"),
+        CrcyCN = fx(
+            "Replace"
+        )(
+            Table.AddColumn(
+                SizeCN,
+                "币种单位",
+                each
+                    if Record.Field(_, ccyhd) = null then
+                        ""
+                    else if Record.Field(_, sizehd) < 1 then
+                        "万" & Record.Field(_, ccyhd)
+                    else
+                        "亿" & Record.Field(_, ccyhd),
+                type text
+            ),
+            {"币种单位"},
+            "货币"
+        ),
         CrcySizeCN = Table.AddColumn(
             CrcyCN,
             "币种规模",
             each
-                if Record.Field(_, CCYColumn) = "CNH" then
+                if Record.Field(_, ccyhd) = "CNH" then
                     "人民币" & Number.ToText(Record.Field(_, "Dummy" & "CN规模")) & [币种单位]
                 else
                     Number.ToText(Record.Field(_, "Dummy" & "CN规模")) & [币种单位],
             type text
         ),
         TapCN =
-            if IsTapColumn = null then
+            if taphd = null then
                 CrcySizeCN
             else
                 Table.ReplaceValue(
                     CrcySizeCN,
                     each [币种规模],
-                    each if Text.Contains((Record.Field(_, IsTapColumn)??""),"增发") then "增发" & [币种规模] else [币种规模],
+                    each if Text.Contains((Record.Field(_, taphd) ?? ""), "增发") then "增发" & [币种规模] else [币种规模],
                     Replacer.ReplaceValue,
                     {"币种规模"}
                 ),
-             Output =    if not Table.HasColumns(Source,{ SizeColumn,CCYColumn,IsTapColumn}) then Source else TapCN
+        Output = if not Table.HasColumns(Source, {sizehd, ccyhd, taphd}) then Source else TapCN
     in
-                Output 
+        Output

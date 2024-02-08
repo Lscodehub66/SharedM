@@ -1,0 +1,27 @@
+(TableName as table) =>
+    let
+        Source = TableName,
+        #"Added 评级分类" = fx("GpRtg")(Source, {"发行评级", "评级分类"}),
+        #"Added 主体评级分类" = fx("GpRtg")(#"Added 评级分类", {"主体评级", "主体评级分类", "EN"}),
+        #"Added 是否IG" =
+            if Table.HasColumns(#"Added 主体评级分类", {"结构", "主体评级分类", "评级分类"}) then
+                Table.AddColumn(
+                    Table.RemoveColumns(#"Added 主体评级分类", {"是否IG"}, MissingField.Ignore),
+                    "是否IG",
+                    each
+                        if [评级分类] = "投资级" and [主体评级分类] = "IG" then
+                            "主体及债项"
+                        else if [主体评级分类] = "IG" and [评级分类] = "无评级" then
+                            "仅主体"
+                        else if [主体评级分类] = "IG" and [评级分类] = "高收益" then
+                            "CrossOver"
+                        else if [主体评级分类] = "--" and [评级分类] = "IG" and Text.Contains([结构], "备证") then
+                            "仅债项(备证)"
+                        else
+                            "--",
+                    type text
+                )
+            else
+                #"Added 主体评级分类"
+    in
+        #"Added 是否IG"

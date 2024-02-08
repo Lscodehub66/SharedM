@@ -1,0 +1,27 @@
+(TableName as table) =>
+    let
+        Source = TableName,
+        RefCol = {"BISL_ROLE", "港分_ROLE", "澳分_ROLE"},
+        NewDummyCol = List.Transform(RefCol, each Text.BeforeDelimiter(_, "_"))
+        // {"BISL","港分","澳分"}
+        ,
+        Accumulator = List.Zip({NewDummyCol, RefCol}),
+        NewCol = {"BOCOM_DEAL?"},
+        Prep = Table.RemoveColumns(Source, NewCol & NewDummyCol, MissingField.Ignore),
+        Added = List.Accumulate(
+            Accumulator,
+            Prep,
+            (x, y) =>
+                Table.AddColumn(
+                    x,
+                    y{0},
+                    each if not List.Contains({null, "--", "", "【】"}, Record.Field(_, y{1})) then y{0} else null,
+                    type text
+                )
+        ),
+        #"Added NewCol" = Table.AddColumn(
+            Added, "BOCOM_DEAL?", each Text.Combine(List.RemoveNulls({[BISL], [港分], [澳分]}), ","), type text
+        ),
+        #"Removed Columns" = Table.RemoveColumns(#"Added NewCol", NewDummyCol, MissingField.Ignore)
+    in
+        #"Removed Columns"

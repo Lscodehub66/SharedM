@@ -2,8 +2,19 @@
     let
         Source = TableName,
         RefCol = {"最终账簿(亿)", "账户数", "地区分布", "类型分布", "发行规模(亿)", "货币"},
+        NewCol = {
+            "超额认购倍数",
+            "账户描述",
+            "认购额描述",
+            "Dummy认购描述",
+            "Dummy地区分布",
+            "Dummy类型分布",
+            "Dummy.Stats",
+            "Stats"
+        },
+        Prep = Table.RemoveColumns(Source, NewCol, MissingField.Ignore),
         Division = Table.AddColumn(
-            Source, "超额认购倍数", each if [#"最终账簿(亿)"] <> null then ([#"最终账簿(亿)"] / [#"发行规模(亿)"]) else null, type number
+            Prep, "超额认购倍数", each if [#"最终账簿(亿)"] <> null then ([#"最终账簿(亿)"] / [#"发行规模(亿)"]) else null, type number
         ),
         RoundedOff = Table.TransformColumns(
             Division,

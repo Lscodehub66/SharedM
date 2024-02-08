@@ -1,0 +1,26 @@
+(TableName as table, optional _inpuDateSizeUnpaidAmt as list) =>
+    //fx("ReplaceNullOutstanding")(Source, {"兑付日", "发行规模(亿)", "债券余额"})
+    let
+        Source = TableName,
+        datehd = try _inpuDateSizeUnpaidAmt{0} otherwise "兑付日",
+        issuesizehd = try _inpuDateSizeUnpaidAmt{0} otherwise "发行规模(亿)",
+        unpaidhd = try _inpuDateSizeUnpaidAmt{0} otherwise "债券余额",
+        output =
+            if Table.HasColumns(Source, {datehd, issuesizehd, unpaidhd}) then
+                Table.ReplaceValue(
+                    Source,
+                    null,
+                    each
+                        if Record.Field(_, datehd) >= Date.From(DateTime.FixedLocalNow()) then
+                            Number.From(Record.Field(_, issuesizehd))
+                        else if Record.Field(_, datehd) < Date.From(DateTime.FixedLocalNow()) then
+                            0
+                        else
+                            null,
+                    Replacer.ReplaceValue,
+                    {unpaidhd}
+                )
+            else
+                Source
+    in
+        output

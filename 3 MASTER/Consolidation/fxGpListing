@@ -1,0 +1,24 @@
+(TableName as table) =>
+    let
+        Source = TableName,
+         NewCol = {"上市分类"},
+           Prep = Table.RemoveColumns(Source, NewCol, MissingField.Ignore),
+        output =
+            if Table.HasColumns(  Source, "上市") then
+                Table.AddColumn(
+                     Prep,
+                    "上市分类",
+                    each
+                        if List.Contains({null, "", "--"}, [上市]) then
+                            "--"
+                        else if Text.Contains([上市], ";") then
+                            "多地上市"
+                        else if not List.Contains({"港交所", "新交所", "澳交所", "未上市"}, [上市]) then
+                            "其他"
+                        else
+                            [上市]
+                )
+            else
+                Source
+    in
+        output

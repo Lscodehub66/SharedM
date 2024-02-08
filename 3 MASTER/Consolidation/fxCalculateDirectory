@@ -3,7 +3,16 @@
         Key = Text.Upper(Text.Trim(_inputkey ?? "")),
         Source = TableName,
         ReplacedCCY = Table.ReplaceValue(Source, "美元债", "", Replacer.ReplaceValue, {"货币细分"}),
-        NthMandate = fx("NthMandated")(ReplacedCCY, {"YYMMDD", "信用主体简称"}),
+        AddedComp = Table.AddColumn(
+             ReplacedCCY,
+            "COMPARER",
+            each
+        
+                    Text.From([YYMMDD]) & Text.Upper(Text.Remove([PROJECT_NAME], " "))
+               ,
+            type text
+        ),
+        NthMandate = fx("NthMandated")(  AddedComp, {"YYMMDD", "信用主体简称"}),
         #"Count Multi-Tranche" = fx("AddMultiCount")(NthMandate),
         #"Merged Queries1" = Table.NestedJoin(
             #"Count Multi-Tranche", {"定价会时间"}, Load("DimTime"), {"Time"}, "Data", JoinKind.LeftOuter
