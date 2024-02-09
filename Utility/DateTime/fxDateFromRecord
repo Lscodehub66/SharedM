@@ -1,9 +1,10 @@
 (_input as list, optional SCollist as list) =>
     //  fx("DateFromRecord")(fx("DateRange")({"近5年", "当前"}),{"每周第一天"}),
     let
-        DateList = _input,
+        IsMerge = Value.Type(_input{0}) <> type date,
+        DateList = if IsMerge = true then List.Buffer(Table.Column(_input{0}, _input{1})) else _input,
         //
-        Output = #table(
+        datetbl = #table(
             type table [
                 A_Date = date,
                 Year.Num = Int64.Type,
@@ -62,7 +63,15 @@
                     }
             )
         ),
-        SCol = if SCollist = null then Output else Table.SelectColumns(Output, SCollist, MissingField.UseNull)
+        Output = Table.ReplaceValue(datetbl , "星期","周",Replacer.ReplaceText,{"DayName.CN"}),
+        ExpHD = if SCollist = null or SCollist = {null} then {""} else SCollist,
+        Final =
+            if IsMerge = true then
+                fx("Merge")(_input{0}, Output, _input{1}, "A_Date", ExpHD)
+            else if ExpHD <> {""} then
+                Table.SelectColumns(Output, ExpHD, MissingField.UseNull)
+            else
+                Output
         // Keys =  if Table.HasColumns(SCol, "A_Date") then Table.AddKey(SCol, {"A_Date"},true) else SCol
     in
-        SCol
+        Final

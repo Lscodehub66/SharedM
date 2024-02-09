@@ -1,0 +1,56 @@
+// CWB
+let FileName = "CWB",Path  = if (try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Global") = "Remote" then "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM\" else "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\SharedM\",  EVA = Expression.Evaluate ( Text.FromBinary ( Binary.Buffer ( File.Contents ( Path&FileName ) ) ) ,#shared )in    EVA//
+
+// Entity_Append
+let
+    Source = CWB("Entity_Input"),
+    #"Renamed Columns" = Table.RenameColumns(Source,{{"发行人名称", "信用主体"}},MissingField.Ignore),
+    #"Removed Duplicates" = Table.Distinct(#"Renamed Columns"),
+    Custom2 = Table.SelectRows(#"Removed Duplicates", each not List.Contains(CWB("mCredit")[信用主体],[信用主体])),
+    AddedCustom = Table.AddColumn(Custom2, "信用主体简称", each Load("fxSNBankCorp")([信用主体])),
+    Custom1 = List.Intersect({Table.ColumnNames(CWB("mCredit")),Get("DMI_Credit")}),
+    Custom3 = fxMerge(AddedCustom,CWB("DMI_Credit"),"信用主体","信用主体",{""}),
+    Custom4 = Table.AddColumn(Custom3,"地区", each fxCleaner([省份],"地区")),
+    Custom5 = Table.SelectColumns(Custom4,Table.ColumnNames(CWB("mCredit")), MissingField.Ignore),
+    #"Added Index" = Table.AddIndexColumn(Custom5, "Index", 0, 1, Int64.Type),
+    Custom6 = try fx("DBManager") ( #"Added Index", "w", "LIFO" ) otherwise CWB("Entity_Append")
+in
+    Custom6
+
+// Load
+let Name = "Load",Path  = if (try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Global") = "Remote" then "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM\" else "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\SharedM\",  EVA = Expression.Evaluate ( Text.FromBinary ( Binary.Buffer ( File.Contents ( Path&Name ) ) ) ,#shared )in    EVA//
+
+// Get
+let Name = "Get",Path  = if (try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Global") = "Remote" then "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM\" else "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\SharedM\",  EVA = Expression.Evaluate ( Text.FromBinary ( Binary.Buffer ( File.Contents ( Path&Name ) ) ) ,#shared )in    EVA//
+
+// fxMerge
+let 
+Source = Load("fxMerge","Code"),
+    EVA = Expression.Evaluate(Source, #shared)    
+in
+    EVA
+
+// fxCleaner
+let 
+FileName = "fxCleaner",
+Source =  Load(FileName,"Code"), 
+EVA = Expression.Evaluate(Source, #shared)    
+in
+    EVA
+
+// fx
+let Name = "fx",Path  = if (try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Global") = "Remote" then "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM\" else "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\SharedM\",  EVA = Expression.Evaluate ( Text.FromBinary ( Binary.Buffer ( File.Contents ( Path&Name ) ) ) ,#shared )in    EVA//
+
+// Entity_AddPQ
+let
+Updator =CWB("UpdatorWeekly") ,
+Source = CWB("Entity_Append"),
+HD_TBC = {"中资属性","板块"},
+SCol = Table.SelectColumns( Source, List.Distinct(Table.ColumnNames(Source)&HD_TBC), MissingField.UseNull),
+    Filtered = Table.SelectRows(SCol, each [信用主体简称] <> null and [信用主体简称] <> ""),
+    UpdatorNTime = Load("fxUpdatorTS")(Filtered),
+    BlankToInput = Table.ReplaceValue( UpdatorNTime, null, "【】", Replacer.ReplaceValue, HD_TBC)
+
+
+in
+     BlankToInput

@@ -1,0 +1,27 @@
+(TableName as table) =>
+    let
+        Source = TableName,
+        NewCol = {"新发总结板块"},
+        RefCol = {"投标资历分类", "主体评级分类", "板块", "中资属性"},
+        Prep = Table.RemoveColumns(Source, NewCol, MissingField.Ignore),
+        Added = Table.AddColumn(
+            Prep,
+            "新发总结板块",
+            each
+                if [投标资历分类] = "SOE Creds" then
+                    "城投板块"
+                else if [主体评级分类] = "IG" then
+                    "投资级板块"
+                else if [板块] = "金融机构" or Text.Contains([中资属性], "央企") then
+                    "【投资级板块】"
+                else if ([中资属性] = "民企" and [板块] = "房地产") or [主体评级分类] = "HY" then
+                    "高收益板块"
+                else if [板块] = "主权/政府" then
+                    "其他板块"
+                else
+                    "【其他板块】",
+            type text
+        ),
+        Output = if Table.HasColumns(Source, RefCol) then Added else Source
+    in
+        Output

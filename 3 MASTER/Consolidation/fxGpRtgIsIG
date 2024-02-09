@@ -4,7 +4,7 @@
         #"Added 评级分类" = fx("GpRtg")(Source, {"发行评级", "评级分类"}),
         #"Added 主体评级分类" = fx("GpRtg")(#"Added 评级分类", {"主体评级", "主体评级分类", "EN"}),
         #"Added 是否IG" =
-            if Table.HasColumns(#"Added 主体评级分类", {"结构", "主体评级分类", "评级分类"}) then
+            if Table.HasColumns(#"Added 主体评级分类", {"结构"}) then
                 Table.AddColumn(
                     Table.RemoveColumns(#"Added 主体评级分类", {"是否IG"}, MissingField.Ignore),
                     "是否IG",
@@ -22,6 +22,16 @@
                     type text
                 )
             else
-                #"Added 主体评级分类"
+                #"Added 主体评级分类",
+        #"Added 信用主体及评级" =
+            if Table.HasColumns(#"Added 是否IG", {"信用主体简称"}) then
+                Table.AddColumn(
+                    #"Added 是否IG",
+                    "信用主体及评级",
+                    each if List.Contains({"HY", "IG"}, [主体评级分类]) then [信用主体简称] & "(" & [主体评级] & ")" else [信用主体简称],
+                    type text
+                )
+            else
+                #"Added 是否IG"
     in
-        #"Added 是否IG"
+        #"Added 信用主体及评级"

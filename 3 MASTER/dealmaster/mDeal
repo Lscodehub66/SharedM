@@ -5,7 +5,7 @@ let
     Filtered_null = Table.SelectRows(RemovedCol, each not List.Contains({"", null, "--", "ISIN"}, [ISIN])),
     KeysTagged = Table.AddKey(Filtered_null, {"Check"}, true),
     //
-    #"DimDate Joined" = fx("MDate")({KeysTagged}, {"定价日"}),
+    #"DimDate Joined" = fx("DateFromRecord")({KeysTagged,"定价日"}),
     //
     mStats = CWB("mStats"),
     mBond = Load("mISIN+Coverage+SBLC"),
@@ -44,6 +44,6 @@ let
         Merged,
         (x, y) => y(x)
     ),
-    Reordered = Table.ReorderColumns(Fn, Get("Header_deal_master"), MissingField.Ignore)
+    Reordered = Table.ReorderColumns(Fn, CWB("CNdealmaster"), MissingField.Ignore)
 in
     Reordered

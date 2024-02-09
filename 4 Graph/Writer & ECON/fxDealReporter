@@ -1,37 +1,14 @@
 (TableName as table, optional _input as text) =>
     let
         Source = TableName,
-        NewCols = {"新发总结板块", "多笔", "信用主体及评级", "多笔主体", "描述", "描述2", "总述"} & {"1周", "2主体", "3详情", "4品种", "5价格", "6担任"},
+        NewCols = {"新发总结板块", "多笔", "多笔主体", "描述", "描述2", "总述"} & { "2主体", "3详情", "4品种", "5价格", "6担任"},
         Prep = Table.RemoveColumns(Source, NewCols, MissingField.Ignore),
         //
-       Added = Table.AddColumn(
-            Prep,
-            "新发总结板块",
-            each
-                if [投标资历分类] = "SOE Creds" then
-                    "城投板块"
-                else if [主体评级分类] = "IG" then
-                    "投资级板块"
-                else if [板块] = "金融机构" or Text.Contains([中资属性], "央企") then
-                    "【投资级板块】"
-                else if ([中资属性] = "民企" and [板块] = "房地产") or [主体评级分类] = "HY" then
-                    "高收益板块"
-                else if [板块] = "主权/政府" then
-                    "其他板块"
-                else
-                    "【其他板块】",
-            type text
-        ),
-        ddd = Table.AddColumn(Added, "1周", each Text.Replace([DayName.CN], "星期", "周"), type text),
-        FnDupeCount = Table.RenameColumns(fx("DupeCount")(ddd, "信用主体简称"), {"Dupe.Count", "多笔"}, MissingField.UseNull),
-        EntityWRtg = Table.AddColumn(
-            FnDupeCount,
-            "信用主体及评级",
-            each if Text.Length(Text.Select([主体评级], {"A".."Z"})) > 0 then [信用主体简称] & "(" & [主体评级] & ")" else [信用主体简称],
-            type text
-        ),
+       Added = fx("AddNIMSector")( Prep),
+
+        FnDupeCount = Table.RenameColumns(fx("DupeCount")(Added, "信用主体简称"), {"Dupe.Count", "多笔"}, MissingField.UseNull),
         EntityForMulti = Table.AddColumn(
-            EntityWRtg, "多笔主体", each if [多笔] > 1 and [通过分行] <> "" then "通过" & [通过分行] else [信用主体简称], type text
+             FnDupeCount , "多笔主体", each if [多笔] > 1 and [通过分行] <> "" then "通过" & [通过分行] else [信用主体简称], type text
         ),
         EntityForBranch = Table.AddColumn(
             EntityForMulti, "分行主体", each if [通过分行] <> "" then "通过" & [通过分行] else "", type text
@@ -112,24 +89,8 @@
         Bocom = Table.AddColumn(
             Price,
             "6担任",
-            each
-                if [是否合名] <> "--" then
-                    "，交通银行担任" & [港分_ROLE]
-                else if
-                    Text.Contains([BISL_ROLE], "GC")
-                    or Text.Contains([IS_LEAD], "Sole")
-                    and not Text.Contains([港分_ROLE], "GC")
-                    and not Text.Contains([澳分_ROLE], "GC")
-                then
-                    "，交银国际担任" & [角色]
-                else if [BISL_ROLE] <> "--" and [港分_ROLE] = "--" and [澳分_ROLE] = "--" then
-                    "，交银国际担任" & [角色]
-                else if [澳分_ROLE] = "JGC" or [港分_ROLE] = "JGC" then
-                    "，交通银行担任全球协调人"
-                else if [澳分_ROLE] = "JBR" or [港分_ROLE] = "JBR" then
-                    "，交通银行担任账簿管理人"
-                else
-                    ""
+            each if not List.Contains({"--","",null},[BOCOM担任]) then "，"& [BOCOM担任] else "",type text
+
         ),
         #"Translated BOCOM" = fx("Replace")(Bocom, {"6担任"}, "角色"),
         AddedStats = Table.AddColumn(
@@ -146,7 +107,7 @@
             AddedStats,
             "描述",
             each
-                Record.Field(_, "1周")
+                Record.Field(_, "DayName.CN")
                     & "，"
                     & Record.Field(_, "2主体")
                     & Record.Field(_, "3详情")
@@ -161,7 +122,7 @@
             Merged,
             "描述.分行",
             each
-                Record.Field(_, "1周")
+                Record.Field(_, "DayName.CN")
                     & Record.Field(_, "分行主体")
                     & Record.Field(_, "3详情")
                     & Record.Field(_, "4品种")
@@ -174,7 +135,7 @@
             Merged1,
             "描述.分行.担任",
             each
-                Record.Field(_, "1周")
+                Record.Field(_, "DayName.CN")
                     & Record.Field(_, "分行主体")
                     & Record.Field(_, "3详情")
                     & Record.Field(_, "4品种")
@@ -187,13 +148,13 @@
         //  Stats = Table.AddColumn(Merged, "描述2", each if [Stats] <> "" then [描述] & "#(lf)" & [Stats] else [描述], type text),
         Grouped = Table.Group(
             Merged2,
-            {"每周第一天", "信用主体及评级", "板块"},
+            {"每周第一天", "信用主体及评级", "板块","中资属性"},
             {
                 {"新发总结板块", each Text.Combine(List.Distinct([新发总结板块]), ";"), type text},
                 {"定价日", each List.Max([定价日]), type date},
                 {"货币细分", each Text.Combine(List.Distinct([货币细分]), ";"), type text},
                 {"增发判定", each Text.Combine(List.Distinct([增发判定]), ""), type text},
-                {"周几", each Text.Combine(List.Distinct([1周]), ";"), type text},
+                {"DayName.CN", each Text.Combine(List.Distinct([DayName.CN]), ";"), type text},
                 {"担任", each Text.Combine(List.RemoveItems(List.Distinct([6担任]), {"", null}), ";"), type text},
                 {"多笔", each if List.Count([ISIN]) > 1 then Number.Round(List.Count([ISIN]), 0) else 0, type number},
                 {"多担任", each List.Count(List.RemoveItems(List.Distinct([6担任]), {"", null})), type number},
@@ -234,10 +195,10 @@
             "一二三"
         ),
         #"Added Suffix0" = Table.AddColumn(
-            MultiTrancheCN, "总述周几", each if not Text.Contains([周几], ";") then [周几] else "", type text
+            MultiTrancheCN, "周几", each if not Text.Contains([DayName.CN], ";") then [DayName.CN] else "", type text
         ),
         #"Added Suffix" = Table.AddColumn(
-            #"Added Suffix0", "总述周几1", each if [总述周几] <> "" then [总述周几] & "，" else "", type text
+            #"Added Suffix0", "周几描述", each if [周几] <> "" then [周几] & "，" else "", type text
         ),
         #"Added Suffix1" = Table.AddColumn(
             #"Added Suffix",
@@ -255,11 +216,11 @@
             type text
         ),
         #"Added Suffix3" = Table.AddColumn(#"Added Suffix2", "总述连接", each if [多笔] > 1 then "，其中：" else "", type text),
-        replaced1 =      Table.ReplaceValue(#"Added Suffix3", each [总述周几], "", Replacer.ReplaceText, {"描述.分行","描述.分行.担任"}),
+        replaced1 =      Table.ReplaceValue(#"Added Suffix3", each [周几], "", Replacer.ReplaceText, {"描述.分行","描述.分行.担任"}),
        replaced2 = Table.ReplaceValue(replaced1,
        
             each [增发判定],
-            each if ([多笔] > 1 and not Text.Contains([描述.分行], "分行")) and [总述周几] <> "" then "" else [增发判定],
+            each if ([多笔] > 1 and not Text.Contains([描述.分行], "分行")) and [周几] <> "" then "" else [增发判定],
             Replacer.ReplaceText,
             {"描述.分行","描述.分行.担任"}
         ),
@@ -268,9 +229,9 @@
             "Writer",
             each
                 if [多笔] > 1 and [多担任] < 2 then
-                    [总述周几1] & [总述详情] & [总述担任] & [总述连接] & [描述.分行]
+                    [周几描述] & [总述详情] & [总述担任] & [总述连接] & [描述.分行]
                 else
-                    [总述周几1] & [总述详情] & [总述连接] & [描述.分行.担任],
+                    [周几描述] & [总述详情] & [总述连接] & [描述.分行.担任],
             type text
         ),
         Replaced = Table.ReplaceValue(#"Merged Columns", "，，", "，", Replacer.ReplaceText, {"Writer"}),
