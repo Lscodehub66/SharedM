@@ -1,0 +1,12 @@
+// Transform File
+(Parameter1 as binary) =>
+    let
+        Source = Table.FromColumns({Lines.FromBinary(Parameter1, null, null, 1252)}),
+        #"Trimmed Text" = Table.TransformColumns(Source, {{"Column1", Text.Trim, type text}}),
+        #"Removed Blank Rows" = Table.SelectRows(
+            #"Trimmed Text", each not List.IsEmpty(List.RemoveMatchingItems(Record.FieldValues(_), {"", null}))
+        ),
+        #"Renamed Columns" = Table.RenameColumns(#"Removed Blank Rows", {{"Column1", "Description"}}),
+        Indexed = Table.AddIndexColumn(#"Renamed Columns", "Index", 3, 1, Int64.Type)
+    in
+        Indexed

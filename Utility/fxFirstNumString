@@ -1,0 +1,21 @@
+(TableName as table, NewHD as text, hd as text, _delimiter as text) as table =>
+    // fx("FirstNumString")(Source, "yyyyMMdd.Text", "DummyName", "_")
+    let
+        Source = TableName,
+        Added = Table.AddColumn(
+            Source,
+            NewHD,
+            each
+                Text.Combine(
+                    List.FirstN(
+                        List.Select(
+                            Text.Split(Text.Select(Record.Field(_, hd), {"0".."9", _delimiter}), _delimiter),
+                            (x) => x <> ""
+                        ),
+                        1
+                    )
+                ),
+            type text
+        )
+    in
+        Added

@@ -1,10 +1,10 @@
 let
-    InputFirstMonday = #date(2024, 1, 8),
+    InputFirstMonday = #date(2023, 1, 2),
     NoWeeklyDueDate = {#date(2024, 2, 19)},
-    HKHolidaytbl = Table.Buffer(fx("Data")(Load("HKHolidays", "CSV"))),
+    HKHolidaytbl = Table.Buffer(Load("HKHolidays", "CSVDATE")),
     Source = List.Generate(
         () => InputFirstMonday,
-        each Date.DayOfWeek(InputFirstMonday) = 1 and Date.Year(_) = 2024,
+        each Date.DayOfWeek(InputFirstMonday) = 1 and Date.Year(_) <= 2024,
         each Date.AddDays(_, 7)
     ),
     #"Converted to Table" = Table.FromColumns({Source}, {"Monday_date"}),
@@ -54,6 +54,22 @@ let
     #"Added Custom" = Table.AddColumn(
         #"Transformed", "Description", each "Weekly Folder Name: " & Date.ToText([Monday_date], "yyyyMMdd"), type text
     ),
-    #"Removed Columns" = Table.RemoveColumns(#"Added Custom", {"Sunday_date", "Monday_date", "Start_DayName"})
+    #"Removed Columns" = Table.RemoveColumns(#"Added Custom", {"Sunday_date", "Monday_date", "Start_DayName"}),
+    fomctbl =
+        let
+            Source = Table.SelectColumns(
+                Table.AddColumn(Load("FOMCCal", "CSVDATE"), "FOMC.Date", each Date.AddDays([Date_End], 1), type date),
+                {"FOMC.Date"}
+            ),
+            #"Inserted Day" = Table.AddColumn(
+                Source,
+                "MondayText",
+                each Date.ToText(Date.StartOfWeek(Date.AddDays([FOMC.Date], 7), Day.Monday), "yyyyMMdd"),
+                type text
+            )
+        in
+            #"Inserted Day",
+    Merged = fx("Merge")(#"Removed Columns", fomctbl, "MondayText", "MondayText", {"FOMC.Date"}, {"FOMC.Date"}),
+    Sorted = Table.Sort(  Merged,{{"Due_date", Order.Ascending}})
 in
-    #"Removed Columns"
+  Sorted

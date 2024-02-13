@@ -1,18 +1,22 @@
 let
-
     M1 = Date.From(fx("Parameter")("Monday")) ?? Date.StartOfWeek(Date.From(DateTime.FixedLocalNow()), Day.Monday),
     Record = [
-        Monday.Text = Date.From(fx("Parameter")("Monday")) ?? Date.StartOfWeek(Date.From(DateTime.FixedLocalNow()), Day.Monday),
+        Monday.Text = fx("Parameter")("Monday") ?? Date.ToText(
+            Date.StartOfWeek(Date.From(DateTime.FixedLocalNow()), Day.Monday), "yyyyMMdd"
+        ),
         wNIMStart.Date = #date(2013, 1, 1),
         StartOfRecent.Date = #date(2022, 1, 1),
-        23年初 = #date(2023, 1, 1),
+        23年初 = #date(2023, 1, 2),
         Now.Date = Date.From(DateTime.FixedLocalNow()),
-        Monday.Date = Date.StartOfWeek(Date.From(fx("Parameter")("Monday")) ?? Date.StartOfWeek(Date.From(DateTime.FixedLocalNow()), Day.Monday), Day.Monday),
+        Monday.Date = Date.StartOfWeek(
+            Date.From(fx("Parameter")("Monday")) ?? Date.StartOfWeek(Date.From(DateTime.FixedLocalNow()), Day.Monday),
+            Day.Monday
+        ),
         PreviousMon.Date = Date.StartOfWeek(Date.AddDays(M1, -7), Day.Monday),
-                PreviousMon = Date.ToText(Date.StartOfWeek(Date.AddDays(M1, -7), Day.Monday),"yyyyMMdd"),
+        PreviousMon = Date.ToText(Date.StartOfWeek(Date.AddDays(M1, -7), Day.Monday), "yyyyMMdd"),
         Sunday.Date = Date.AddDays(Date.StartOfWeek(M1, Day.Monday), -1),
         ThisSunday.Date = Date.EndOfWeek(M1, Day.Monday),
-        NextMon.Date =Date.StartOfWeek(Date.AddDays(M1, 7), Day.Monday),
+        NextMon.Date = Date.StartOfWeek(Date.AddDays(M1, 7), Day.Monday),
         NextSunday.Date = Date.EndOfWeek(Date.AddDays(M1, 7), Day.Monday),
         NextTwoYearEnd.Date = Date.EndOfYear(Date.AddYears(M1, 2)),
         当前 = Date.AddDays(M1, -3),
@@ -30,9 +34,15 @@ let
             Date.StartOfWeek(Date.AddDays(M1, -3), Day.Monday)
         else
             #date(1991, 2, 20),
-            FOMC.Date = let Source = Table.SelectColumns( Table.AddColumn(Load("FOMCCal","CSVDATE"), "FOMC.Date", each Date.AddDays([Date_End],1), type date)  ,{"FOMC.Date"}),
-           merged =  fx("DateRange")({"PreviousMon.Date","Sunday.Date"},{Source,"FOMC.Date"})[FOMC.Date], output = if List.IsEmpty(merged) then null else merged{0} in output
+        FOMC.Date = let
+            Source = Table.SelectColumns(
+                Table.AddColumn(Load("FOMCCal", "CSVDATE"), "FOMC.Date", each Date.AddDays([Date_End], 1), type date),
+                {"FOMC.Date"}
+            ),
+            merged = fx("DateRange")({"PreviousMon.Date", "Sunday.Date"}, {Source, "FOMC.Date"})[FOMC.Date],
+            output = if List.IsEmpty(merged) then null else merged{0}
+        in
+            output
     ]
 in
     Record
-

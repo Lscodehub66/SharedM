@@ -1,0 +1,34 @@
+(Parameter2 as binary) =>
+    let
+        Source = Table.FromColumns({Lines.FromBinary(Parameter2, null, null, 1252)}),
+        #"Trimmed Text" = Table.TransformColumns(Source, {{"Column1", Text.Trim, type text}}),
+        #"Removed Blank Rows" = Table.SelectRows(
+            #"Trimmed Text", each not List.IsEmpty(List.RemoveMatchingItems(Record.FieldValues(_), {"", null}))
+        ),
+        #"Added Custom" = Table.AddColumn(
+            #"Removed Blank Rows",
+            "DummySection",
+            each
+                if Text.StartsWith([Column1], "本周潜在交易") or Text.StartsWith([Column1], "美国国债收益率") then
+                    [Column1]
+                else
+                    null,
+            type text
+        ),
+        #"Filled Down" = Table.FillDown(#"Added Custom", {"DummySection"}),
+        #"Filtered Rows" = Table.SelectRows(
+            #"Filled Down",
+            each
+                not Text.StartsWith([Column1], "本周潜在交易")
+                and not Text.StartsWith([Column1], "美国国债收益率")
+                and not Text.Contains([Column1], "[RG龚")
+        ),
+        Custom2 = fx("RemoveStartEnd")(#"Filtered Rows", "Column1", {{"Start", "-"}, {"End", "。"}}),
+        Custom3 = Table.ReplaceValue(Custom2, "• ", "", Replacer.ReplaceText, {"Column1"}),
+        #"Grouped Rows" = Table.Group(
+            Custom3, {"DummySection"}, {{"Description", each Text.Combine([Column1], "#(lf)"), type text}}
+        ),
+        SCol = Table.SelectColumns(#"Grouped Rows", {"Description"}),
+        Indexed = Table.AddIndexColumn(SCol, "Index", 7, 1, Int64.Type)
+    in
+        Indexed

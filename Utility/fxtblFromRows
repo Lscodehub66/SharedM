@@ -1,0 +1,10 @@
+(input1 as list, input2 as list, optional _inputHD as list) =>
+    let
+        Source = Table.FromRows(input1, input2),
+        _hdindex = List.Select(Table.ColumnNames(Source), each Text.Contains(_, "Index")),
+        Accumulator = if _inputHD = null or _inputHD = {null} then _hdindex else _hdindex & _inputHD,
+        output = List.Accumulate(
+            Accumulator, Source, (x, y) => try Table.TransformColumnTypes(x, {{y, Int64.Type}}) otherwise x
+        )
+    in
+        output

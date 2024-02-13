@@ -1,0 +1,50 @@
+(_HD as list) =>
+    //= fx("Indicetbl")(let  PreviousYr = Record.Field(Load("Control_Date"), "去年初"), ThisYr = fx("Parameter")("年初"),  _HD = {"当前", "上周", if PreviousYr = null then "年初" else "去年初"} in _HD)
+    let
+        DateTP = fx("DateTP")(_HD),
+        mIndice = Table.Buffer(CWB("mIndice")),
+        Dimtbl_Indice = Table.Buffer(Load("Dimtbl_Indice")),
+        //
+        Source = fx("Merge")(DateTP, mIndice, "Value", "Date", {""}, {""}),
+        #"Removed Columns" = Table.RemoveColumns(Source, {"Date"}, MissingField.Ignore),
+        #"Demoted Headers" = Table.DemoteHeaders(#"Removed Columns"),
+        #"Transposed Table" = Table.Transpose(#"Demoted Headers"),
+        #"Promoted Headers" = Table.PromoteHeaders(#"Transposed Table", [PromoteAllScalars = true]),
+        MDimIndice = fx("Merge")(Dimtbl_Indice, #"Promoted Headers", "PK", "Name", {""}, {""}),
+        #"Changed Type" = Table.TransformColumnTypes(
+            MDimIndice, List.Zip({_HD, List.Repeat({type number}, List.Count(_HD))})
+        ),
+        Trend_CN_TF = Table.TransformColumns(#"Changed Type", {{"Trend_CN", each Text.Split(_, "/"), type text}}),
+        Fn1 = Load("fxAddDAX")(Trend_CN_TF, _HD{0}, _HD{1}, {"Text", "Trend", "Trend_CN"}, "Text_Suffix", "市场指数"),
+        Fn2 = Load("fxAddDAX")(Fn1, _HD{0}, _HD{2}, {"Text", "Trend", "Trend_CN"}),
+        #"Reordered Columns" = Table.ReorderColumns(
+            Fn2,
+            {
+                "Index",
+                "Column1",
+                "KEY_INDICE",
+                "Index_GM",
+                "Index_UST",
+                "Index_RMBRATES",
+                "市场指数",
+                _HD{0},
+                _HD{1},
+                _HD{2},
+                "Δ" & _HD{1},
+                "Δ" & _HD{2} & "至今",
+                "Index_Coded",
+                "Index_CURVE",
+                "Index_CNYCNHSPD",
+                "IS_1Y",
+                "IS_5Y",
+                "Prefix",
+                "Text",
+                "Text_Trend",
+                "Rounding",
+                "PK"
+            },
+            MissingField.Ignore
+        ),
+        #"Sorted Rows" = Table.Sort(#"Reordered Columns", {{"Index", Order.Ascending}})
+    in
+        #"Sorted Rows"

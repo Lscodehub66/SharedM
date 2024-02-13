@@ -9,7 +9,7 @@
                 excelkey
             else
                 Text.Remove(_inputsheet ?? "", "="),
-        yyyyMMdd = Text.Replace(fx("Parameter")("Monday"), "/", ""),
+        yyyyMMdd = Text.Replace((fx("Parameter")("Monday")??""), "/", ""),
         gps = fx("Parameter")("GPS"),
         RecordOfRecord = [
             DEALSMASTER = "Team Folder\Execution Team\DataHub\DEALs MASTER.xlsm",

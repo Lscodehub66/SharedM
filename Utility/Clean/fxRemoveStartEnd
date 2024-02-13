@@ -1,0 +1,45 @@
+(TableName as table, _inputhd as text, _inputstringlist as list) => // fx("RemoveStartEnd")(#"Filtered Rows", "Column1",    {{"Start","-"},{"End","。"}}),
+    let
+        Source = TableName,
+        TF = List.Accumulate(
+           _inputstringlist ,
+            Source,
+            (x, y) =>
+                try
+                  if y{0} = "End"  then   Table.TransformColumns(
+                        x,
+                        {
+                            {
+                               _inputhd,
+                                each
+                              if    Text.EndsWith(_,y{1}) then
+                                        Text.BeforeDelimiter(_, y{1}, {0, RelativePosition.FromEnd})
+                                    else
+                                        _,
+                                type text
+                            }
+                        }
+                    ) else 
+                    
+                    
+          Table.TransformColumns(
+                        x,
+                        {
+                            {
+                                _inputhd,
+                                each
+                              if    Text.StartsWith(_, y{1}) then
+                                        Text.AfterDelimiter(_, y{1})
+                                    else
+                                        _,
+                                type text
+                            }
+                        }
+                    )           
+                    
+                    
+                    
+                    otherwise x
+        )
+    in
+        TF

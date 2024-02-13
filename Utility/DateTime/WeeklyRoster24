@@ -60,7 +60,23 @@ let
         #"Transformed", "Description", each "Weekly Folder Name: " & Date.ToText([Monday_date], "yyyyMMdd"), type text
     ),
     #"Removed Columns" = Table.RemoveColumns(#"Added Custom", {"Sunday_date", "Monday_date", "Start_DayName"}),
-    Merged = fx("Merge")(#"Removed Columns", Makertbl, "Index", "Index", {""}),
-    Custom1 = fx("PreviousRow")(Merged, "Maker_DD", "Checker_DD")
+        fomctbl =
+        let
+            Source = Table.SelectColumns(
+                Table.AddColumn(Load("FOMCCal", "CSVDATE"), "FOMC.Date", each Date.AddDays([Date_End], 1), type date),
+                {"FOMC.Date"}
+            ),
+            #"Inserted Day" = Table.AddColumn(
+                Source,
+                "MondayText",
+                each Date.ToText(Date.StartOfWeek(Date.AddDays([FOMC.Date], 7), Day.Monday), "yyyyMMdd"),
+                type text
+            )
+        in
+            #"Inserted Day",
+    Merged = fx("Merge")(#"Removed Columns", fomctbl, "MondayText", "MondayText", {"FOMC.Date"}, {"FOMC.Date"}),
+    Merged1 = fx("Merge")(    Merged, Makertbl, "Index", "Index", {""}),
+    Custom1 = fx("PreviousRow")(Merged1, "Maker_DD", "Checker_DD"),
+    Sorted = Table.Sort(  Custom1 ,{{"Due_date", Order.Ascending}})
 in
-    Custom1
+    Sorted

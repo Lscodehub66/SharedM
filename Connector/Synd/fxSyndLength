@@ -1,0 +1,19 @@
+(TableName as table) =>
+    let
+        Buffered = Table.Buffer(TableName),
+        Filtered = Table.SelectRows(Buffered, each [Index] <> 8),
+        TF = Table.TransformColumns(
+            Filtered,
+            {
+                {"Description", Text.Length, Int64.Type},
+                {"Index", each if List.Contains({3..6}, _) then 1 else if _ = 7 then 2 else 0, Int64.Type}
+            }
+        ),
+        Grouped = Table.Group(
+            TF,
+            {"Monday.Text", "Source.Files", "Index"},
+            {{"Description", each Text.From(List.Sum([Description])), type text}}
+        ),
+        Combined = Table.Combine({Grouped, Buffered})
+    in
+        Combined

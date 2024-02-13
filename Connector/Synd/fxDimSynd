@@ -1,0 +1,33 @@
+(optional TableName as table) =>
+    let
+        tbl =
+            let
+                Source = fx(
+                    "tblFromRows"
+                )(
+                    {
+                        {"1", "Commentary字数", "n/a", ""},
+                        {"2", "UST字数", "n/a", ""},
+                        {"3", "Commentary_Sum", "【Syndicate】", "syndboxmarketcolorsum"},
+                        {"4", "Commentary_IG", "【Syndicate】", "syndboxmarketcolorig"},
+                        {"5", "Commentary_LGFV", "【Syndicate】", "syndboxmarketcolorlgfv"},
+                        {"6", "Commentary_HY", "【Syndicate】", "syndboxmarketcolorhy"},
+                        {"7", "UST", "【Syndicate】", "syndboxustcurve"},
+                        {"8", "Pipeline", "【Syndicate】", "syndboxpipeline"}
+                    },
+                    {"Index", "Synd.Input", "Description", "ObjectName"}
+                ),
+                Added = Table.AddColumn(
+                    Source, "DB.ColumnName", each Text.Combine({"Synd", [Synd.Input]}, "."), type text
+                ),
+                Added2 = List.Accumulate(
+                    {{"Source.Files", "【Synd Input File Not Found】"}, {"Monday.Text", fx("Control.Monday.Text")}},
+                    Source,
+                    (x, y) => Table.AddColumn(x, y{0}, each y{1}, type text)
+                )
+            in
+                Added2,
+        Merged = if TableName <> null then fx("Merge")(TableName, tbl, "Index", "Index", {""}, {""}) else tbl,
+        #"Sorted Rows" = Table.Sort(Merged, {{"Monday.Text", Order.Descending}, {"Index", Order.Ascending}})
+    in
+        #"Sorted Rows"

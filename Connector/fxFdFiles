@@ -1,0 +1,10 @@
+(_globalpath as text, optional _remotepath as nullable text) =>
+    let
+        global = if not Text.StartsWith(_globalpath, "\\") then "\\itd-m09-fs02\dcm$\" & _globalpath else _globalpath,
+        path = if fx("Parameter")("GPS") = "Remote" then _remotepath else global,
+        Source = if _remotepath = null then Folder.Files(_globalpath) else Folder.Files(path),
+        #"Filtered Hidden Files1" = Table.SelectRows(
+            Source, each[Attributes]?[Hidden]? <> true and not Text.StartsWith([Name], "~")
+        )
+    in
+        #"Filtered Hidden Files1"

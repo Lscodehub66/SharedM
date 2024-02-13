@@ -1,0 +1,20 @@
+let
+    Source = fx(
+        "FdFiles"
+    )(
+        "Team Folder\Execution Team\DataHub\Weekly\Syndicate",
+        "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\Weekly\Syndicate"
+    ),
+    Fn = fx("TransformSyndFiles")(Source),
+    Fn2 = fx("Synd_Length")(Fn),
+    Joined = fx("DimSynd")(Fn2),
+    SCol = Table.SelectColumns(Joined, {"Monday.Text", "Synd.Input", "Description", "Source.Files"}),
+    #"Pivoted Column" =
+        let
+            Source = Table.TransformColumns(SCol, {{"Synd.Input", each "Synd." & _, type text}}),
+            Pivoted = Table.Pivot(Source, List.Distinct(Source[Synd.Input]), "Synd.Input", "Description"),
+            Sorted = fx("Sort")(Pivoted, {"Monday.Text"})
+        in
+            Sorted
+in
+    #"Pivoted Column"

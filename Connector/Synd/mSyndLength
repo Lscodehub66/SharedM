@@ -1,0 +1,24 @@
+let
+    Source = CWB("mSynd"),
+    #"Removed Columns" = Table.RemoveColumns(Source, {"Index", "Source.Files", "Synd.Pipeline"}),
+    #"Filtered Rows" = Table.SelectRows(#"Removed Columns", each ([Synd.Commentary_Sum] <> "")),
+    Accumulator = List.Buffer(List.RemoveItems(Table.ColumnNames(#"Filtered Rows"), {"Monday.Text"})),
+    Fn = List.Accumulate(
+        Accumulator, #"Filtered Rows", (x, y) => Table.TransformColumns(x, {{y, Text.Length, Int64.Type}})
+    ),
+    #"Unpivoted Other Columns" = Table.UnpivotOtherColumns(Fn, {"Monday.Text"}, "Attribute", "Value"),
+    #"Extracted Text Before Delimiter" = Table.TransformColumns(
+        #"Unpivoted Other Columns", {{"Attribute", each Text.BeforeDelimiter(_, "_"), type text}}
+    ),
+    #"Grouped Rows" = Table.Group(
+        #"Extracted Text Before Delimiter",
+        {"Monday.Text", "Attribute"},
+        {{"Character.Count", each List.Sum([Value]), type number}}
+    ),
+    #"Added Suffix" = Table.TransformColumns(#"Grouped Rows", {{"Attribute", each _ & "字数", type text}}),
+    #"Pivoted Column" = Table.Pivot(
+        #"Added Suffix", List.Distinct(#"Added Suffix"[Attribute]), "Attribute", "Character.Count"
+    ),
+    #"Sorted Rows" = Table.Sort(#"Pivoted Column", {{"Monday.Text", Order.Descending}})
+in
+    #"Sorted Rows"

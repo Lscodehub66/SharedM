@@ -59,6 +59,8 @@
         //
         Int64 = {
             "曾作为JGC",
+            "UST字数",
+            "Commentary字数",
             "曾作为JBR",
             "曾作为承销商",
             "账户数",
@@ -159,7 +161,27 @@
             "RangeEnd"
         }
             & List.Select(CN_RNSource, each Text.StartsWith(_, "Index_") or Text.EndsWith(_, ".num")),
-        Text_Trim = {"PROJECT_CODE", "期数", "外部评审机构", "外部评审方式", "FolderPath", "地区分布", "类型分布", "投资者分布", "投资者类型", "新闻"},
+        Text_Trim = {
+            "PROJECT_CODE",
+            "期数",
+            "外部评审机构",
+            "外部评审方式",
+            "FolderPath",
+            "地区分布",
+            "类型分布",
+            "投资者分布",
+            "投资者类型",
+            "新闻",
+            "Synd.Commentary_Sum",
+            "Synd.Commentary_IG",
+            "Synd.Commentary_LGFV",
+            "Synd.Commentary_HY",
+            "Synd.UST",
+            "Synd.Pipeline",
+            "Synd.Input",
+            "Monday.Text",
+            "Source.Files"
+        },
         Text_Upper = {
             "CCY",
             "信用主体",
@@ -195,6 +217,7 @@
         Text_NoNA = {"增发判定", "修改.增发判定", "主题债券", "品种主题", "备证行全称", "期数"},
         Text1 = {
             "地区覆盖",
+            "DB.ColumnName",
             "OTHER_ROLE",
             "角色资历分类",
             "上周主要经济数据",
@@ -205,7 +228,8 @@
             "DayName.CN",
             "MonthName.CN",
             "年M月",
-            "每周第一天","备证行曾用名",
+            "每周第一天",
+            "备证行曾用名",
             "DayName",
             "DayShortName",
             "信用主体及评级",

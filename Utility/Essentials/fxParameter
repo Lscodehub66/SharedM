@@ -1,27 +1,43 @@
 (_input as nullable text) =>
-let
- Parameters = {"GPS", "Monday", "WeeklyFilter", "UpdatorWeekly", "ShowAll","MultiSource", "Prefix", "RemoveFrom_DB","Sync_mEXE"},
-    Source =
-        if _input = null then
-            Parameters
-        else
-            List.Select(Parameters, each Text.Contains(_, _input, Comparer.OrdinalIgnoreCase)),
-    Output = #table(
-        type table [Name = text, OVRD = text, CWB = text, Value = text],
-        List.Transform(
-            Source,
-            each
-                {
-                    _,
-                    try Load("OVRD" & _) otherwise null,
-                    try CWB(_) otherwise null,
-                    if (try Load("OVRD" & _) otherwise null) = null then
-                        try CWB(_) otherwise null
-                    else
-                        (try Load("OVRD" & _) otherwise null)
-                }
-        )
-    ),
-    Textoutput = if _input = null then Output else Output{0}[Value]
-in
-   Textoutput
+    let
+        Parameters = {
+            "GPS",
+            "Monday",
+            "WeeklyFilter",
+            "UpdatorWeekly",
+            "ShowAll",
+            "MultiSource",
+            "Prefix",
+            "RemoveFrom_DB",
+            "Sync_mEXE"
+        },
+        Source =
+            if _input = null then
+                Parameters
+            else
+                List.Select(Parameters, each Text.Contains(_, _input, Comparer.OrdinalIgnoreCase)),
+        Output = #table(
+            type table [Name = text, OVRD = text, CWB = text, Value = text],
+            List.Transform(
+                Source,
+                each
+                    {
+                        _,
+                        try Load("OVRD" & _) otherwise null,
+                        try CWB(_) otherwise null,
+                        if (try Load("OVRD" & _) otherwise null) = null then
+                            try CWB(_) otherwise null
+                        else
+                            (try Load("OVRD" & _) otherwise null)
+                    }
+            )
+        ),
+        Textoutput =
+            if _input = null then
+                Output
+            else if _input = "Monday" and Output{0}[Value] = null then
+               Date.ToText(Date.StartOfWeek(Date.From(DateTime.FixedLocalNow()), Day.Monday),"yyyyMMdd")
+            else
+                Output{0}[Value]
+    in
+        Textoutput

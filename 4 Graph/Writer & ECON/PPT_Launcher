@@ -101,7 +101,7 @@ let
             ]
         }
     ),
-    Mergedsynd = fx("Merge")(Inserted, CWB("tbl_syndinput", "1"), "ObjectName", "ObjectName", {"Input"}, {"Input"}),
+    Mergedsynd = fx("Merge")(Inserted, CWB("wSynd", "1"), "ObjectName", "ObjectName", {"Description"}, {"Input"}),
     Replaced = Table.ReplaceValue(
         Mergedsynd,
         each [Description],
@@ -121,7 +121,12 @@ let
     ),
     objlist = List.Buffer(#"Appended Query"[ObjectName]),
     Inserted2 = List.Accumulate(
-        {{"nimigsumbox", "上周，投资级板块无新发。"}, {"nimlgfvsumbox", "上周，城投板块无新发。"}, {"nimigbox", "n/a"}, {"nimlgfvbox", "n/a"}},
+        {
+            {"nimigsumbox", "上周，投资级板块无新发。"},
+            {"nimlgfvsumbox", "上周，城投板块无新发。"},
+            {"nimigbox", "n/a"},
+            {"nimlgfvbox", "n/a"}
+        },
         #"Appended Query",
         (x, y) =>
             if not List.Contains(objlist, y{0}) then
