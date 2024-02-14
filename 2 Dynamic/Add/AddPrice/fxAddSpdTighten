@@ -4,15 +4,17 @@
         // InitialCol = null, PricedCol = null,
         ColToAdd = {"InitialNumText", "PricedNumText", "Tighten_BMK"},
         PrepRemoval = Table.RemoveColumns(Source, ColToAdd, MissingField.Ignore),
-         #"Remove FilledTBC" = Table.TransformColumns(PrepRemoval, {{PricedCol??"定价", each if _ <> "【】" then Text.Remove(Text.Remove(_,"】"),"【") else _, type text}}),
-       
+        #"Remove FilledTBC" = Table.TransformColumns(
+            PrepRemoval,
+            {{PricedCol ?? "定价", each if _ <> "【】" then Text.Remove(Text.Remove(_, "】"), "【") else _, type text}}
+        ),
         #"Inserted Text Between Delimiters" = Table.AddColumn(
-                #"Remove FilledTBC",
+            #"Remove FilledTBC",
             "InitialNumText",
             each
                 if
                     not Text.Contains(Record.Field(_, (InitialCol ?? "IPG")), "【")
-                           and not Text.Contains(Record.Field(_, (PricedCol ?? "定价")), "【")
+                    and not Text.Contains(Record.Field(_, (PricedCol ?? "定价")), "【")
                     and Text.Contains(Record.Field(_, (InitialCol ?? "IPG")), "+")
                     and Text.Contains(Record.Field(_, (PricedCol ?? "定价")), "+")
                 then
@@ -27,7 +29,7 @@
             each
                 if
                     not Text.Contains(Record.Field(_, (InitialCol ?? "IPG")), "【")
-                            and not Text.Contains(Record.Field(_, (PricedCol ?? "定价")), "【")
+                    and not Text.Contains(Record.Field(_, (PricedCol ?? "定价")), "【")
                     and Text.Contains(Record.Field(_, (InitialCol ?? "IPG")), "+")
                     and Text.Contains(Record.Field(_, (PricedCol ?? "定价")), "+")
                 then

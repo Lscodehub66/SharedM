@@ -1,7 +1,8 @@
-
 let
-    Source = fx("Ws")("DEALSMASTER","=DIRECTORY"),
-    #"Filtered Rows" = Table.SelectRows(Source, each ([板块] = "金融机构") and ([年] = "23年")),
-    #"Removed Other Columns" = Table.SelectColumns(#"Filtered Rows",{ "年月","信用主体(备证行)",  "发行品种","币种规模","票息","期限","角色"})
+    Source = fx("Ws")("DEALSMASTER", "=DIRECTORY"),
+    #"Filtered Rows" = Table.SelectRows(Source, each ([板块] = "金融机构") and ([Year.Num] >= 2023)),
+    #"Removed Other Columns" = Table.SelectColumns(
+        #"Filtered Rows", {"年月", "信用主体(备证行)", "发行品种", "币种规模", "票息", "期限", "角色"}
+    )
 in
     #"Removed Other Columns"

@@ -1,4 +1,3 @@
-
 let
     Text = "(_input as text) => let ",
     Old = Text.AfterDelimiter(Load("1823HKHoliday", "Code"), "//**"),

@@ -11,7 +11,7 @@
         ReplaceList = {"%", "%", "%", "%", "%", "bps)", ""},
         //
         Source = ValueReplaced,
-        EndZero = if Text.End(  Source, 2) = ".0" then Text.Replace(  Source, ".0", "") else   Source,
+        EndZero = if Text.End(Source, 2) = ".0" then Text.Replace(Source, ".0", "") else Source,
         ReplacerTable = Table.Buffer(Table.FromColumns({FindList, ReplaceList}, {"Find", "Replace"})),
         FindReplaceList = Table.ToRows(ReplacerTable),
         Counter = Table.RowCount(ReplacerTable),
@@ -50,7 +50,9 @@
                 and Text.End(Output, 4) <> ".08%"
                 and Text.End(Output, 4) <> ".09%"
             then
-                Text.Replace(Output, ".0", "") else if Output = "%" then "/"
+                Text.Replace(Output, ".0", "")
+            else if Output = "%" then
+                "/"
             else
                 Output
     in

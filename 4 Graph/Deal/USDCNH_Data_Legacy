@@ -1,14 +1,13 @@
 // let  LoadCode = Load("USDCNH_Data","Code"), EVAOutput= Expression.Evaluate(LoadCode ,#shared) in EVAOutput
 let
-   
     Source = Table.Buffer(CWB("mChart")),
     SourceB = Table.Buffer(Load("deal_master")),
     Header_USDCNH = List.Buffer(Get("Header_USDCNH")),
     MergedDB = Load("fxDBMerger")(Source),
     FinalizedDB = Load("fxDBFinalization")(MergedDB),
-    Twotbl = fx("Combine")({FinalizedDB,  SourceB}, {"Check"}, Header_USDCNH),
-    Fn =fx("DBNewIssue")(Twotbl, "USDCNH_Data"),
-    Fn2 =fx("DBNewIssue")(CWB("deal_master"), "USDCNH_Data")
+    Twotbl = fx("Combine")({FinalizedDB, SourceB}, {"Check"}, Header_USDCNH),
+    Fn = fx("DBNewIssue")(Twotbl, "USDCNH_Data"),
+    Fn2 = fx("DBNewIssue")(CWB("deal_master"), "USDCNH_Data")
     //{"Index","ISIN","定价日", "信用主体", "亿美元", "评级分类", "年期分类","货币",  "货币细分", "板块", "删除及隐藏","Check" }
 in
     Fn2

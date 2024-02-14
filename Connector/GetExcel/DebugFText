@@ -1,2 +1,37 @@
 // FText2
-null meta [IsParameterQuery=true, List={"DEALSMASTER", "DIRECTORY", "DOWNLOAD", "DOWNLOAD_美元债", "DOWNLOAD_美元债一级", "DOWNLOAD_文档DEALs", "DOWNLOAD_ECON", "DYNAMIC", "GRAPH", "Download_Graphs_value", "BBGFX_value", "DMI", "YY", "YY_城投", "YY_金融", "YY_产业", "违约", "银行", "ESG", "ESG_External_Review", "KYC", "台账21", "台账22", "台账23", "台账23_合规", "台账23_收入情况2023", "DEALSMASTER_mBISL", "DEALSMASTER_deal_master"}, DefaultValue=..., Type="Text", IsParameterQueryRequired=false]
+null meta [
+    IsParameterQuery = true,
+    List = {
+        "DEALSMASTER",
+        "DIRECTORY",
+        "DOWNLOAD",
+        "DOWNLOAD_美元债",
+        "DOWNLOAD_美元债一级",
+        "DOWNLOAD_文档DEALs",
+        "DOWNLOAD_ECON",
+        "DYNAMIC",
+        "GRAPH",
+        "Download_Graphs_value",
+        "BBGFX_value",
+        "DMI",
+        "YY",
+        "YY_城投",
+        "YY_金融",
+        "YY_产业",
+        "违约",
+        "银行",
+        "ESG",
+        "ESG_External_Review",
+        "KYC",
+        "台账21",
+        "台账22",
+        "台账23",
+        "台账23_合规",
+        "台账23_收入情况2023",
+        "DEALSMASTER_mBISL",
+        "DEALSMASTER_deal_master"
+    },
+    DefaultValue = ...,
+    Type = "Text",
+    IsParameterQueryRequired = false
+]

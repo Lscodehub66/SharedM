@@ -36,9 +36,9 @@
                 ),
         PivotedValues = List.Sort(Table.ToList(Table.Distinct(Table.SelectColumns(Grouped, PivotCol))), OneOrZero),
         Pivoted = Table.Pivot(Grouped, PivotedValues, PivotCol, MeasureCol, List.Sum),
-        Renamed = Table.RenameColumns(Pivoted, {{  GroupCol,"Column2"}}),
+        Renamed = Table.RenameColumns(Pivoted, {{GroupCol, "Column2"}}),
         ACol = Table.AddColumn(
-            Renamed ,
+            Renamed,
             "Column1",
             each if Text.Contains(MeasureCol, "笔数") then GroupCol & "（按笔数）" else GroupCol & "（按规模）",
             type text

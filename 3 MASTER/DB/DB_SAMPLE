@@ -1,12 +1,14 @@
-let AddCode = Load("fxAddToDB","Code"), ManagerCode = Load("fxDBManager","Code"),
-DB = "mCurated",
-DB_Source = CWB(DB),
-Parameter = Load("Controller")[RemoveFrom_DB]{0}??"",
-Added = fx("AddToDB")(DB,wDynamicPQ, Parameter ),
-    Managed =
-        if  Text.Contains(Parameter,"Stop")  then
-            fx("DBManager")(DB_Source, "m")
-        else
-            fx("DBManager")(Added, "m")
+let
+    AddCode = Load("fxAddToDB", "Code"),
+    ManagerCode = Load("fxDBManager", "Code"),
+    DB = "mCurated",
+    DB_Source = CWB(DB),
+    Parameter = Load("Controller")[RemoveFrom_DB]{0} ?? "",
+    Added = fx("AddToDB")(DB, wDynamicPQ, Parameter),
+    Managed = if Text.Contains(Parameter, "Stop") then fx("DBManager")(DB_Source, "m") else fx(
+        "DBManager"
+    )(
+        Added, "m"
+    )
 in
     Managed

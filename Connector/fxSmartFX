@@ -1,20 +1,26 @@
 // SampleFunction   =   Table.AddColumn ( Source, "亿美元", each if [货币] = "USD" then 1 * [#"发行规模(亿)"] else fxSmartFX ( "USD", [货币], [定价日] ) * [#"发行规模(亿)"] )
 //fxSmartFX
 let
- Source = ( ToCurrency as text, FromCurrency as text, Valuedate as date ) =>
-  let
-  FromCurrency1 = if Valuedate < Date.From("2018/1/1") and FromCurrency = "CNH" then "CNY" else FromCurrency,
-   FXWeb       = "https://www.xe.com/currencytables/?from=" & ToCurrency & "&date=" & Date.ToText ( Valuedate, "yyyy-MM-dd" ), 
-   Source      = Web.Page ( Web.Contents ( FXWeb & "#table-section" ) ), 
-   Data        = Source{0}[Data], 
-   Demoted     = Table.DemoteHeaders ( Data ), 
-   Filtered    = Table.SelectRows ( Demoted, each [Column1] = FromCurrency1 ), 
-   SelectedCol = Table.SelectColumns ( Filtered, { "Column3" } ), 
-   ChangedType = Table.TransformColumnTypes ( SelectedCol, { { "Column3", type number } } ), 
-   Divided     = Table.TransformColumns ( ChangedType, { { "Column3", each 1 / _, type number } } ), 
-   RoundedOff  = Table.TransformColumns ( Divided, { { "Column3", each if FromCurrency = "JPY" then Number.Round ( _, 4 ) else Number.Round ( _, 3 ), type number } } ), 
-   Column3     = RoundedOff{0}[Column3]
-  in
-   Column3
+    Source = (ToCurrency as text, FromCurrency as text, Valuedate as date) =>
+        let
+            FromCurrency1 = if Valuedate < Date.From("2018/1/1") and FromCurrency = "CNH" then "CNY" else FromCurrency,
+            FXWeb = "https://www.xe.com/currencytables/?from="
+                & ToCurrency
+                & "&date="
+                & Date.ToText(Valuedate, "yyyy-MM-dd"),
+            Source = Web.Page(Web.Contents(FXWeb & "#table-section")),
+            Data = Source{0}[Data],
+            Demoted = Table.DemoteHeaders(Data),
+            Filtered = Table.SelectRows(Demoted, each [Column1] = FromCurrency1),
+            SelectedCol = Table.SelectColumns(Filtered, {"Column3"}),
+            ChangedType = Table.TransformColumnTypes(SelectedCol, {{"Column3", type number}}),
+            Divided = Table.TransformColumns(ChangedType, {{"Column3", each 1 / _, type number}}),
+            RoundedOff = Table.TransformColumns(
+                Divided,
+                {{"Column3", each if FromCurrency = "JPY" then Number.Round(_, 4) else Number.Round(_, 3), type number}}
+            ),
+            Column3 = RoundedOff{0}[Column3]
+        in
+            Column3
 in
- Source
+    Source

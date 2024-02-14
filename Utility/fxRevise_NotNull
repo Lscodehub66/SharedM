@@ -1,11 +1,10 @@
-
 (TableName as table) =>
     let
         Source = TableName,
         修改HD = List.Buffer(List.Select(Table.ColumnNames(Source), each Text.StartsWith(_, "修改"))),
         Replaced = List.Accumulate(
             修改HD,
-              Source,
+            Source,
             (x, y) =>
                 Table.ReplaceValue(
                     x,

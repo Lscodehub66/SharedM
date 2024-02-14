@@ -1,20 +1,36 @@
 let
- Source = ( TableName as table, DistinctColName as text, ColToBeGrouped as text,StartIndexAt0or1 as number , InstanceColName as text ) =>
-  let
-   Source     = TableName, 
-   Distinct   = Table.Distinct ( Source, { DistinctColName } ), 
-   SelectedCol = Table.SelectColumns(Distinct, {DistinctColName,ColToBeGrouped}),
-   InstanceGp = Table.Group (  SelectedCol, { ColToBeGrouped }, { { "Data", each _, type table [ YYMMDD = text, COMPARER = text ] } } ), 
-   IGCustom   = Table.AddColumn ( InstanceGp, "Custom", each Table.AddIndexColumn ( [Data], InstanceColName, StartIndexAt0or1 ) ), 
-   IGRemoved  = Table.SelectColumns ( IGCustom, { "Custom" } ), 
-   IGExpanded = Table.ExpandTableColumn ( IGRemoved, "Custom", Table.ColumnNames ( IGRemoved[Custom]{0} ) ),
-   SelectedCol1 = Table.SelectColumns(IGExpanded, {DistinctColName,InstanceColName})
-  in
-  SelectedCol1 , 
- //Defining a metadata-record for documentation purpose
- fnType = type function ( TableName as table, DistinctColName as text, ColToBeGrouped as text, InstanceColName as text ,StartIndexAt0or1 as ( type number meta [ Documentation.AllowedValues = { 0, 1 } ] ) ) as list
-  meta [ Documentation.Name = "fxAssignNumber", Documentation.Description = " (Source, COMPARER,YYMMDD,1,每日第N个项目)" ]
+    Source = (
+        TableName as table,
+        DistinctColName as text,
+        ColToBeGrouped as text,
+        StartIndexAt0or1 as number,
+        InstanceColName as text
+    ) =>
+        let
+            Source = TableName,
+            Distinct = Table.Distinct(Source, {DistinctColName}),
+            SelectedCol = Table.SelectColumns(Distinct, {DistinctColName, ColToBeGrouped}),
+            InstanceGp = Table.Group(
+                SelectedCol, {ColToBeGrouped}, {{"Data", each _, type table [YYMMDD = text, COMPARER = text]}}
+            ),
+            IGCustom = Table.AddColumn(
+                InstanceGp, "Custom", each Table.AddIndexColumn([Data], InstanceColName, StartIndexAt0or1)
+            ),
+            IGRemoved = Table.SelectColumns(IGCustom, {"Custom"}),
+            IGExpanded = Table.ExpandTableColumn(IGRemoved, "Custom", Table.ColumnNames(IGRemoved[Custom]{0})),
+            SelectedCol1 = Table.SelectColumns(IGExpanded, {DistinctColName, InstanceColName})
+        in
+            SelectedCol1,
+    //Defining a metadata-record for documentation purpose
+    fnType = type function (
+        TableName as table,
+        DistinctColName as text,
+        ColToBeGrouped as text,
+        InstanceColName as text,
+        StartIndexAt0or1 as (type number meta [Documentation.AllowedValues = {0, 1}])
+    ) as list meta [
+        Documentation.Name = "fxAssignNumber",
+        Documentation.Description = " (Source, COMPARER,YYMMDD,1,每日第N个项目)"
+    ]
 in
- Value.ReplaceType ( Source, fnType )
-
-
+    Value.ReplaceType(Source, fnType)

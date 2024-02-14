@@ -165,7 +165,8 @@
                 "STANDARDCHARTERED",
                 "WESTPAC",
                 "DBSBANK",
-                "UBSAG","JPMORGAN"
+                "UBSAG",
+                "JPMORGAN"
             },
             UpperNSelected,
             (x, y) =>

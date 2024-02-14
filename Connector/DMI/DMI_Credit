@@ -8,11 +8,9 @@ let
     Sorted = Table.Buffer(Table.Sort(SCol, {{"定价日", Order.Ascending}})),
     RemovedDupe = Table.Distinct(Sorted, {"信用主体"}),
     BDelimiter = Table.TransformColumns(RemovedDupe, {{"债券简称", each Text.BeforeDelimiter(_, " "), type text}}),
- Custom1 = Table.RenameColumns(BDelimiter, {{"定价日", "DEBUT_DATE"}})
+    Custom1 = Table.RenameColumns(BDelimiter, {{"定价日", "DEBUT_DATE"}})
     //**
     ,
-    SIndexed = fx("SortNIndex")( Custom1 , "DEBUT_DATE", "信用主体", "", "", "Y")
+    SIndexed = fx("SortNIndex")(Custom1, "DEBUT_DATE", "信用主体", "", "", "Y")
 in
     SIndexed
-
-

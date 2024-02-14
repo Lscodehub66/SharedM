@@ -10,6 +10,6 @@ let
     #"Added Index" = Table.AddIndexColumn(#"Removed Columns1", "Index", 1, 1, Int64.Type),
     #"Reordered Columns" = Table.ReorderColumns(#"Added Index", {"Index", "企业(集团)名称"}),
     Replaced = fx("Replace")(#"Reordered Columns", {"企业(集团)名称"}, "主体"),
-    Filtered = Table.SelectRows(Replaced, each [#"企业(集团)名称"]<>null)
+    Filtered = Table.SelectRows(Replaced, each [#"企业(集团)名称"] <> null)
 in
     Filtered

@@ -1,8 +1,8 @@
 //let LoadCode = Load("Maturity2024","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
     MonitorName = "MATURITY2024",
-   Fn = fx("DBMonitor")(MonitorName),
-    #"Added OutstandingUSD" = fx("OutstandingUSD")(  Fn ),
+    Fn = fx("DBMonitor")(MonitorName),
+    #"Added OutstandingUSD" = fx("OutstandingUSD")(Fn),
     #"Sorted" = Table.Buffer(
         Table.Sort(#"Added OutstandingUSD", {{"ISIN", Order.Ascending}, {"定价日", Order.Ascending}})
     ),

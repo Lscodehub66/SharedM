@@ -6,7 +6,7 @@
         List = if TwoItemColumnNameList = null or TwoItemColumnNameList = {null} then default else TwoItemColumnNameList,
         仅替换更小分类 = Table.HasColumns(Source, List) and SmallerSlicer <> null,
         Prep = Table.RemoveColumns(Source, List{1}, MissingField.Ignore),
-        #"Conditional BBGFX" = if not Table.HasColumns(Source, List{0}) then fx("AddBBGFX")(Prep,"USD") else Prep,
+        #"Conditional BBGFX" = if not Table.HasColumns(Source, List{0}) then fx("AddBBGFX")(Prep, "USD") else Prep,
         Slicer_Size0 = fx("GroupRange")(#"Conditional BBGFX", List, {"--", 2, 3, 5}, "亿"),
         Slicer_Size =
             if SmallerSlicer <> null then

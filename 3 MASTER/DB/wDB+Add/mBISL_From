@@ -1,7 +1,23 @@
 let
     Source = CWB("mBISL_Legacy"),
-    HD = {"Index","台账序号","定价日", "ISIN", "信用主体", "PROJECT_CN", "PROJECT_CODE", "期数", "BISL_ROLE", "IS_B&D", "IS_LEAD", "是否合名", "Check","PRJ对账号","Timestamp"},
-    #"Removed Other Columns" = Table.SelectColumns(Source,HD),
-    Custom4 = fx("DBManager")(  #"Removed Other Columns","mBISL")
+    HD = {
+        "Index",
+        "台账序号",
+        "定价日",
+        "ISIN",
+        "信用主体",
+        "PROJECT_CN",
+        "PROJECT_CODE",
+        "期数",
+        "BISL_ROLE",
+        "IS_B&D",
+        "IS_LEAD",
+        "是否合名",
+        "Check",
+        "PRJ对账号",
+        "Timestamp"
+    },
+    #"Removed Other Columns" = Table.SelectColumns(Source, HD),
+    Custom4 = fx("DBManager")(#"Removed Other Columns", "mBISL")
 in
     Custom4

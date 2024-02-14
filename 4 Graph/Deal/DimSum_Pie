@@ -6,15 +6,20 @@ let
     Pie4 = fx("Pie")(Source, "年", Order.Ascending, "清算地", "笔数"),
     Pie5 = fx("Pie")(Source, "年", Order.Ascending, "上市分类", "笔数"),
     Combined = fx("Combine")({Pie2, Pie3, Pie4, Pie5}),
-    Substracted = Table.AddColumn(Combined, "变动", each Number.Round([23年笔数占比] - [22年笔数占比], 4),Percentage.Type),
+    Substracted = Table.AddColumn(Combined, "变动", each Number.Round([23年笔数占比] - [22年笔数占比], 4), Percentage.Type),
     #"Merged Queries" = Table.NestedJoin(
-        Substracted, {"Column1", "Column2"}, Get("SortTable_Graph_DimSumPie"), {"Column1", "Column2"}, "Data", JoinKind.LeftOuter
+        Substracted,
+        {"Column1", "Column2"},
+        Get("SortTable_Graph_DimSumPie"),
+        {"Column1", "Column2"},
+        "Data",
+        JoinKind.LeftOuter
     ),
     #"Expanded Data" = Table.ExpandTableColumn(#"Merged Queries", "Data", {"Index"}, {"Index"}),
     Sorted = Table.Sort(#"Expanded Data", {{"Index", 0}}),
     List_NullToZero = List.RemoveItems(Table.ColumnNames(#"Expanded Data"), {"Column1", "Column2"}),
     #"Replaced Value" = Table.ReplaceValue(Sorted, null, 0, Replacer.ReplaceValue, List_NullToZero),
-  Reordered = Table.SelectColumns(
+    Reordered = Table.SelectColumns(
         Sorted, {"Index", "Column1", "Column2", "22年笔数", "23年笔数", "24年笔数", "变动"}, MissingField.UseNull
     )
 in

@@ -1,5 +1,1 @@
-let
-    Source = Date.ToText(Load("MondayDate"),"yyyyMMdd")
-
-    in
-    Source
+let Source = Date.ToText(Load("MondayDate"), "yyyyMMdd") in Source

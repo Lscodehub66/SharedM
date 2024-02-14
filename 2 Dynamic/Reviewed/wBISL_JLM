@@ -1,9 +1,9 @@
 let
     Source = CWB("DLD_Add"),
-    #"Filtered Rows" = Table.SelectRows(Source, each not List.Contains({"",null,"--"}, [BISL_ROLE] )),
-    #"Removed Other Columns" = Table.SelectColumns(#"Filtered Rows",{"联席全球协调人", "牵头经办人", "Check"}),
-    Custom1 = fx("AddJLMCN")( #"Removed Other Columns"   ),
-    #"Removed Other Columns1" = Table.SelectColumns(Custom1,{"Check", "JGC", "JBR"}),
-    #"Renamed Columns" = Table.RenameColumns(#"Removed Other Columns1",{{"Check", "DummyCheck"}})
+    #"Filtered Rows" = Table.SelectRows(Source, each not List.Contains({"", null, "--"}, [BISL_ROLE])),
+    #"Removed Other Columns" = Table.SelectColumns(#"Filtered Rows", {"联席全球协调人", "牵头经办人", "Check"}),
+    Custom1 = fx("AddJLMCN")(#"Removed Other Columns"),
+    #"Removed Other Columns1" = Table.SelectColumns(Custom1, {"Check", "JGC", "JBR"}),
+    #"Renamed Columns" = Table.RenameColumns(#"Removed Other Columns1", {{"Check", "DummyCheck"}})
 in
     #"Renamed Columns"

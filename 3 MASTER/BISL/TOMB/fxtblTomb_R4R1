@@ -1,7 +1,8 @@
 let
-  
-     EVA =  Expression.Evaluate("(TableName as table, TableToMerge as table) =>let Source = TableName, MergeSource = TableToMerge," & Text.AfterDelimiter(Load("Tomb_R4R1","Code"),"//**"),#shared)
-    
-    
+    EVA = Expression.Evaluate(
+        "(TableName as table, TableToMerge as table) =>let Source = TableName, MergeSource = TableToMerge,"
+            & Text.AfterDelimiter(Load("Tomb_R4R1", "Code"), "//**"),
+        #shared
+    )
 in
-       EVA
+    EVA

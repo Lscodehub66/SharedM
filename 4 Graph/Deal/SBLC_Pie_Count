@@ -1,30 +1,39 @@
 //let LoadCode = Load("SBLC_Pie_Count","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
 let
     Source = Table.Buffer(Load("SBLC_Data")),
-        Pie1 =fx("Addpt")(
+    Pie1 = fx(
+        "Addpt"
+    )(
         Table.AddColumn(
             Table.RenameColumns(
-                Table.Group(Load("deal_master"), {"结构分类"}, {{"笔数",  each Table.RowCount(_), Int64.Type}}), {{"结构分类", "Column2"}}
+                Table.Group(Load("deal_master"), {"结构分类"}, {{"笔数", each Table.RowCount(_), Int64.Type}}),
+                {{"结构分类", "Column2"}}
             ),
             "Column1",
             each "结构分类"
         ),
         "笔数"
     ),
-      Pie2 =fx("Addpt")(
+    Pie2 = fx(
+        "Addpt"
+    )(
         Table.AddColumn(
             Table.RenameColumns(
-                Table.Group(Source, {"结构"}, {{"笔数",  each Table.RowCount(_), Int64.Type}}), {{"结构", "Column2"}}
+                Table.Group(Source, {"结构"}, {{"笔数", each Table.RowCount(_), Int64.Type}}), {{"结构", "Column2"}}
             ),
             "Column1",
             each "结构"
         ),
         "笔数"
     ),
-      Pie3 =fx("Addpt")(
+    Pie3 = fx(
+        "Addpt"
+    )(
         Table.AddColumn(
             Table.RenameColumns(
-                Table.Group(Source, {"备证年期分类"}, {{"笔数",  each Table.RowCount(_), Int64.Type}}), {{"备证年期分类", "Column2"}}
+                Table.Group(Source, {"备证年期分类"}, {{"笔数", each Table.RowCount(_), Int64.Type}}), {
+                    {"备证年期分类", "Column2"}
+                }
             ),
             "Column1",
             each "备证年期分类"
@@ -32,7 +41,6 @@ let
         "笔数"
     ),
     Combined = fx("Combine")({Pie1, Pie2, Pie3}, {null}, {"Column1", "Column2", "笔数", "笔数占比"}),
-  
     #"Merged Queries" = Table.NestedJoin(
         Combined,
         {"Column1", "Column2"},

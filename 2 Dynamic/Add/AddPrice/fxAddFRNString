@@ -13,7 +13,7 @@
         #"Inserted NoTBC" = fx(
             "Replacer"
         )(
-            Table.DuplicateColumn(Prep, ColName ?? "计息基准", "NoTBC"), {"NoTBC"},  {"【", "】","--"}, {"", "",""}
+            Table.DuplicateColumn(Prep, ColName ?? "计息基准", "NoTBC"), {"NoTBC"}, {"【", "】", "--"}, {"", "", ""}
         ),
         #"Duplicated Column" = Table.DuplicateColumn(#"Inserted NoTBC", "NoTBC", "DupeCol3"),
         #"Extracted Text Before Delimiter" = Table.TransformColumns(
@@ -28,7 +28,10 @@
         ),
         Custom1 = fx("ExtractBMK")(#"Extracted Text Before Delimiter", "DupeCol3", "BMK"),
         #"Inserted Text After Delimiter" = Table.AddColumn(
-            Custom1, "NumText", each Text.Select(Text.AfterDelimiter(Record.Field(_,(ColName??"计息基准")), "+"), {"0".."9", "."}), type text
+            Custom1,
+            "NumText",
+            each Text.Select(Text.AfterDelimiter(Record.Field(_, (ColName ?? "计息基准")), "+"), {"0".."9", "."}),
+            type text
         ),
         Custom3 = fx("BMKandNumText")(#"Inserted Text After Delimiter", "BMK", "NumText"),
         #"Renamed Columns" = Table.RenameColumns(Custom3, {{"BMKandNum", "浮息定价"}}),

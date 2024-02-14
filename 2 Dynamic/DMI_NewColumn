@@ -1,9 +1,13 @@
-
-//let LoadCode = Load("DMI_NewColumn","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA 
+//let LoadCode = Load("DMI_NewColumn","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
- Headers= Get("Header_R_DMI_NotInUse"),
-    CheckNew = Table.SelectColumns(Table.SelectRows(Load("DMIHeaders"), each [状态] = null or [状态] = "" ),{"DMI字段"},MissingField.UseNull),
-    DMI字段 = if  List.Count( CheckNew[DMI字段]) = 0 
-    then {DateTime.ToText(DateTime.LocalNow(),"yy/M/d h:00"),"未检测到DMI有新增列"} else  CheckNew[DMI字段]
-    in
+    Headers = Get("Header_R_DMI_NotInUse"),
+    CheckNew = Table.SelectColumns(
+        Table.SelectRows(Load("DMIHeaders"), each [状态] = null or [状态] = ""), {"DMI字段"}, MissingField.UseNull
+    ),
+    DMI字段 =
+        if List.Count(CheckNew[DMI字段]) = 0 then
+            {DateTime.ToText(DateTime.LocalNow(), "yy/M/d h:00"), "未检测到DMI有新增列"}
+        else
+            CheckNew[DMI字段]
+in
     DMI字段

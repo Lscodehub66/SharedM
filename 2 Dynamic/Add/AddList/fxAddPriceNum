@@ -34,33 +34,38 @@
             Prep1,
             (x, y) => if not Table.HasColumns(x, y) then Table.AddColumn(x, y, each "【Missing】" & y, type text) else x
         ),
-        //        
+        //
         FRN_Spd = Table.AddColumn(
             Prep2, "浮息_SPD", each Text.AfterDelimiter(Text.Select([计息基准], {"0".."9", "+", "."}), "+"), type text
         ),
-        FRN_Bmk = fx("Replace")(Table.AddColumn(
-            FRN_Spd, "浮息_BMK", each Text.BeforeDelimiter([计息基准], "+"), type text
-        ),{ "浮息_BMK"}, "价格"),
-        AIPT_Clean = fx("Replace")(Table.AddColumn(
-            Table.TransformColumns(
-                FRN_Bmk,
-                {
+        FRN_Bmk = fx(
+            "Replace"
+        )(
+            Table.AddColumn(FRN_Spd, "浮息_BMK", each Text.BeforeDelimiter([计息基准], "+"), type text), {"浮息_BMK"}, "价格"
+        ),
+        AIPT_Clean = fx(
+            "Replace"
+        )(
+            Table.AddColumn(
+                Table.TransformColumns(
+                    FRN_Bmk,
                     {
-                        "IPT_DMI",
-                        each
-                            if Text.EndsWith(_, "a", Comparer.OrdinalIgnoreCase) then
-                                Text.BeforeDelimiter(_, "A", {0, RelativePosition.FromEnd}) & "区域"
-                            else
-                                _
+                        {
+                            "IPT_DMI",
+                            each
+                                if Text.EndsWith(_, "a", Comparer.OrdinalIgnoreCase) then
+                                    Text.BeforeDelimiter(_, "A", {0, RelativePosition.FromEnd}) & "区域"
+                                else
+                                    _
+                        }
                     }
-                }
+                ),
+                "IPT",
+                each Text.BeforeDelimiter(Text.BeforeDelimiter(Text.BeforeDelimiter([IPT_DMI], "，"), "区域+"), "（")
             ),
-            "IPT",
-            each
-              
-                    Text.BeforeDelimiter(Text.BeforeDelimiter(Text.BeforeDelimiter([IPT_DMI], "，"), "区域+"), "（")
-                
-        ),{"IPT"}, "价格"),
+            {"IPT"},
+            "价格"
+        ),
         TF_IPT = Table.TransformColumns(
             AIPT_Clean,
             {
@@ -90,23 +95,40 @@
             each if Text.Contains([IPT], "%") then Text.BeforeDelimiter([IPT], "%") else "",
             type text
         ),
-//Transform manual input fpg number to Text
-      FPTText  = Table.TransformColumns( AIPT_Yield, {{"FPG_DMI", each if Text.StartsWith(_??"","0.") 
-       and not Text.Contains(_??"","%") then Number.ToText(Number.From(_),"0.000%") else _,type text}}),
+        //Transform manual input fpg number to Text
+        FPTText = Table.TransformColumns(
+            AIPT_Yield,
+            {
+                {
+                    "FPG_DMI",
+                    each
+                        if Text.StartsWith(_ ?? "", "0.") and not Text.Contains(_ ?? "", "%") then
+                            Number.ToText(Number.From(_), "0.000%")
+                        else
+                            _,
+                    type text
+                }
+            }
+        ),
         RFPTMissing = Table.ReplaceValue(
             FPTText, "", each if [IPT_DMI] <> "" then "【】" else "", Replacer.ReplaceValue, {"FPG_DMI"}
         ),
-
-        AFPT_Clean = fx("Replace")(Table.AddColumn(
-            RFPTMissing,
-            "FPT1",
-            each
-                if Text.Contains([FPG_DMI], "%/") or Text.Contains([FPG_DMI], "|") then
-                    "【" & Text.BeforeDelimiter([FPG_DMI], "，") & "】"
-                else
-                    Text.BeforeDelimiter([FPG_DMI], "，"),
-            type text
-        ),{"FPT1"},"价格"),
+        AFPT_Clean = fx(
+            "Replace"
+        )(
+            Table.AddColumn(
+                RFPTMissing,
+                "FPT1",
+                each
+                    if Text.Contains([FPG_DMI], "%/") or Text.Contains([FPG_DMI], "|") then
+                        "【" & Text.BeforeDelimiter([FPG_DMI], "，") & "】"
+                    else
+                        Text.BeforeDelimiter([FPG_DMI], "，"),
+                type text
+            ),
+            {"FPT1"},
+            "价格"
+        ),
         AWPIR = Table.AddColumn(
             AFPT_Clean, "WPIR", each Text.Select(Text.AfterDelimiter([FPT1], "+/-"), {"0".."9", "-", "."}), type text
         ),

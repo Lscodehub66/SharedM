@@ -5,26 +5,31 @@
         NumText = Text.Select(Key, {"0".."9"}),
         Source = fx("DateRange")({"Now.Date", "NextTwoYearEnd.Date"}, {CWB("deal_master"), "兑付日", {""}, "兑付日"}),
         //= Table.SelectColumns(Source,{"ISIN", "信用主体(备证行)", "定价日"} & {"投标资历分类","兑付日","兑付日.YYYY","IS_DEFAULT", "是否债券违约", "债券余额"})
-        C0 = {{"债券余额", ">", 0}, {"是否债券违约", "<>", "Y"}, {"IS_DEFAULT", "<>", "Y"}, {"信用主体(备证行)", "not", "*"}},
+        C0 = {{"债券余额", ">", 0}, {"是否债券违约", "<>", "Y"}, {"IS_DEFAULT", "<>", "Y"}},
         C1 = if not Text.Contains(Key, "MOF") then {{"信用主体", "<>", "中华人民共和国财政部"}} else {{null}},
         C2 = if NumText <> "" then {{"兑付日.YearNum", "=", Number.From(NumText)}} else {{null}},
         C3 = if Text.Contains(Key, "SOE") then {{"投标资历分类", "=", "SOE Creds"}} else {{null}},
-        #"Filtered Output" = fx("Filter")( Source, List.RemoveItems((C0 & C1 & C2 & C3), {{null}}), null),
+        #"Filtered Output" = fx("Filter")(Source, List.RemoveItems((C0 & C1 & C2 & C3), {{null}}), null),
         #"Grouped IssueSizeNRole" = fx("GroupISIN2")(#"Filtered Output"),
-        #"Grouped Outstanding" = fx("OutstandingUSD")(#"Grouped IssueSizeNRole"),
+        #"FX and Slicered" = fx("OutstandingUSD")(#"Grouped IssueSizeNRole"),
         List1 = {{"合计亿美元", "合计美元规模分类"}, {"余额亿美元", "余额美元规模分类"}},
-        #"Conditional Replace" = List.Accumulate(List1, #"Grouped Outstanding", (x, y) => fx("GroupSize")(x, y, 1)),
+        #"Conditional Replace" = List.Accumulate(List1, #"FX and Slicered", (x, y) => fx("GroupSize")(x, y, 1)),
         List1a = List.Transform(List1, each _{1}),
         List1b = List.Transform(List1a, each _ & "SOE"),
         Renamed =
             if Text.Contains(Key, "SOE") then
                 Table.RenameColumns(#"Conditional Replace", List.Zip({List1a, List1b}))
             else
-                #"Grouped Outstanding",
-        List3 = if  Text.Contains(Key, "SOE") then Get("Maturity2024_SOE") else if NumText = "" then {""} else Get("Maturity2024") ,
+                #"FX and Slicered",
+        List3 =
+            if Text.Contains(Key, "SOE") then
+                Get("Maturity2024_SOE")
+            else if NumText = "" then
+                {""}
+            else
+                Get("Maturity2024"),
         SCol = if List3 <> {""} then Table.SelectColumns(Renamed, List3, MissingField.UseNull) else Renamed,
-        OuputRenamed = Table.RenameColumns(SCol, fx("Rename.MATURE2024"),MissingField.Ignore),
-        FnSort = fx("SortNIndex")( OuputRenamed)
+        OuputRenamed = Table.RenameColumns(SCol, fx("Rename.MATURE2024"), MissingField.Ignore),
+        FnSort = fx("SortNIndex")(OuputRenamed)
     in
-      
-  FnSort 
+        FnSort

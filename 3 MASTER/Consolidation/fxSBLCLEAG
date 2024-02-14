@@ -1,10 +1,10 @@
 //let Source = SBLC, LoadCode = Load("fxSBLCLEAG","Code"), EVAOutput= Expression.Evaluate(LoadCode ,#shared)(Source) in EVAOutput
-(TableName as table, optional RangeStartNum as nullable number , optional RangeEndNum as nullable number) =>
+(TableName as table, optional RangeStartNum as nullable number, optional RangeEndNum as nullable number) =>
     let
         Source = TableName,
-      Filered_Dates = Load("fxRangeDate")(RangeStartNum, RangeEndNum, Source, "定价日"),
+        Filered_Dates = Load("fxRangeDate")(RangeStartNum, RangeEndNum, Source, "定价日"),
         Grouped = Table.Group(
-           Filered_Dates,
+            Filered_Dates,
             {"备证行"},
             {{"亿美元", each List.Sum([亿美元]), type number}, {"笔数", each Table.RowCount(_), Int64.Type}}
         ),
@@ -13,5 +13,5 @@
         Filtered = Table.SelectRows(AddedIndex, each [金额排名] <= 10),
         Reordered = Table.ReorderColumns(Filtered, List.Distinct({"金额排名"} & Table.ColumnNames(Filtered))),
         CalculatedPt = Load("fxAddpt")(Reordered, "亿美元")
-in
-    CalculatedPt
+    in
+        CalculatedPt

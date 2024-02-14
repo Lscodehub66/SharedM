@@ -2,8 +2,10 @@
     let
         Source = TableName,
         Exp = Table.ExpandTableColumn(
-            Source, Expcolname, List.RemoveItems(Table.ColumnNames(Table.Column(Source,Expcolname){0}), Table.ColumnNames(Source))
+            Source,
+            Expcolname,
+            List.RemoveItems(Table.ColumnNames(Table.Column(Source, Expcolname){0}), Table.ColumnNames(Source))
         ),
         Data = fx("Data")(Exp)
     in
-         Data
+        Data

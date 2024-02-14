@@ -1,10 +1,9 @@
-
 let
-   DEALSMASTER = fx("Ws")("DEALSMASTER"),
-   mIsse = fx("Ws")("DEALSMASTER","mIssue"),
-    mBond = fx("Ws")("DEALSMASTER","mBond"),
-    mStats = fx("Ws")("DEALSMASTER","mStats"),
-    mBISL = fx("Ws")("DEALSMASTER","=mBISL"),
-    mEXE = fx("Ws")("DEALSMASTER","mEXE")
+    DEALSMASTER = fx("Ws")("DEALSMASTER"),
+    mIsse = fx("Ws")("DEALSMASTER", "mIssue"),
+    mBond = fx("Ws")("DEALSMASTER", "mBond"),
+    mStats = fx("Ws")("DEALSMASTER", "mStats"),
+    mBISL = fx("Ws")("DEALSMASTER", "=mBISL"),
+    mEXE = fx("Ws")("DEALSMASTER", "mEXE")
 in
     mEXE

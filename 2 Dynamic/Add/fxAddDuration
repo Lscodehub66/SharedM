@@ -12,7 +12,7 @@
         Custom1 = Table.AddColumn(
             #"Changed Type",
             newcol,
-            each Duration.Days(Record.Field(_, datecol1) -Record.Field(_, datecol0)),
+            each Duration.Days(Record.Field(_, datecol1) - Record.Field(_, datecol0)),
             type number
         ),
         TF =

@@ -1,2 +1,8 @@
 // Prefix
-"Dummy" meta [IsParameterQuery=true, List={"Dummy"}, DefaultValue="Dummy", Type="Text", IsParameterQueryRequired=false]
+"Dummy" meta [
+    IsParameterQuery = true,
+    List = {"Dummy"},
+    DefaultValue = "Dummy",
+    Type = "Text",
+    IsParameterQueryRequired = false
+]

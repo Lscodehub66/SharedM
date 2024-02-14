@@ -2,7 +2,10 @@
 let
     Source1 = CWB("DLD_Conso"),
     //
-   Filtered= Table.SelectRows(Source1, each List.Contains({null,"","--"},[Filter_Bond]) and  List.Contains({null,"","--"},[Filter_Exch])),
+    Filtered = Table.SelectRows(
+        Source1,
+        each List.Contains({null, "", "--"}, [Filter_Bond]) and List.Contains({null, "", "--"}, [Filter_Exch])
+    ),
     //
     Custom1 = Table.AddColumn(Filtered, "删除及隐藏", each if [IS_FIMTN] = "Y" or [IS_FIMTN] = "【Y】" then "FIMTN" else ""),
     Replaced = Table.ReplaceValue(

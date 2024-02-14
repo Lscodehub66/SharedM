@@ -5,7 +5,7 @@
         Prep = Table.RemoveColumns(Source, NewCol, MissingField.Ignore),
         Slicer_Tenor = fx("GroupRange")(Prep, {"年期", "年期分类"}, {"永续", 1, 3, 5}, "年"),
         Slicer_Structure = Table.AddColumn(
-                  Slicer_Tenor ,
+            Slicer_Tenor,
             "结构分类",
             each
                 if List.Contains({null, "", "--"}, [结构]) then
@@ -21,7 +21,7 @@
             "Replace"
         )(
             Table.AddColumn(
-                   Slicer_Structure,
+                Slicer_Structure,
                 "货币细分",
                 each
                     if [ISIN] = null then

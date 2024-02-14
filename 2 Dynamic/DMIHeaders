@@ -2,11 +2,7 @@
 let
     Custom1 = try CWB("DMIHeaders") otherwise fx("Ws")("DYNAMIC", "DMIHeaders"),
     Custom2 = CWB("DMIHeaders_Check", "1"),
-    Custom3 = fx(
-        "Combine"
-    )(
-        {Table.FromRows(fx("Rename.DMI"), {"DMI字段", "状态"}), Custom2, Custom1}, {"DMI字段"},{2}
-    ),
+    Custom3 = fx("Combine")({Table.FromRows(fx("Rename.DMI"), {"DMI字段", "状态"}), Custom2, Custom1}, {"DMI字段"}, {2}),
     #"Filtered Rows" = Table.SelectRows(
         Custom3, each not List.Contains({"Renamed", "OK"}, [状态], Comparer.OrdinalIgnoreCase)
     )

@@ -1,13 +1,26 @@
 //let LoadCode = Load("BankUniverse","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-Source = CWB("BankUniverse"),
- Filtered = Table.Sort(Table.Distinct ( Table.SelectRows ( Source, each [信用主体简称] <> null and [信用主体简称] <> "" ) ),{"SortValue",Order.Ascending}), 
- NewSBLCtbl0= Table.SelectColumns (Table.ReplaceValue ( CWB ("deal_master"), each [信用主体简称], each [备证行], Replacer.ReplaceValue, { "信用主体简称" } ),{"信用主体简称"}),
- NewSBLCtbl1 = Table.SelectRows (NewSBLCtbl0,
-  each [信用主体简称] <> "--" and [信用主体简称] <> "" and [信用主体简称] <> null and not List.Contains ( Filtered[信用主体简称], [信用主体简称] )
- ), 
- NewSBLCtbl = Table.Distinct ( Table.SelectColumns ( NewSBLCtbl1, Table.ColumnNames ( Filtered ), MissingField.UseNull ), { "信用主体简称" } ), 
- Replaced = Table.ReplaceValue ( NewSBLCtbl, null, "Y", Replacer.ReplaceValue, { "IS_SBLC" } ), 
- Combined = fx("Combine")( { Replaced, Filtered } )
+    Source = CWB("BankUniverse"),
+    Filtered = Table.Sort(
+        Table.Distinct(Table.SelectRows(Source, each [信用主体简称] <> null and [信用主体简称] <> "")),
+        {"SortValue", Order.Ascending}
+    ),
+    NewSBLCtbl0 = Table.SelectColumns(
+        Table.ReplaceValue(CWB("deal_master"), each [信用主体简称], each [备证行], Replacer.ReplaceValue, {"信用主体简称"}),
+        {"信用主体简称"}
+    ),
+    NewSBLCtbl1 = Table.SelectRows(
+        NewSBLCtbl0,
+        each
+            [信用主体简称] <> "--"
+            and [信用主体简称] <> ""
+            and [信用主体简称] <> null
+            and not List.Contains(Filtered[信用主体简称], [信用主体简称])
+    ),
+    NewSBLCtbl = Table.Distinct(
+        Table.SelectColumns(NewSBLCtbl1, Table.ColumnNames(Filtered), MissingField.UseNull), {"信用主体简称"}
+    ),
+    Replaced = Table.ReplaceValue(NewSBLCtbl, null, "Y", Replacer.ReplaceValue, {"IS_SBLC"}),
+    Combined = fx("Combine")({Replaced, Filtered})
 in
- Combined
+    Combined

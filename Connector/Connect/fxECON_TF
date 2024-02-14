@@ -2,9 +2,9 @@
     let
         Source = TableName,
         RlvLvl = Load("RlvLvl"),
-        US_addon=Load("US_addon"),
+        US_addon = Load("US_addon"),
         Sheet = Source{[Item = "ECON", Kind = "Sheet"]}[Data],
-     Found = fx("SheetTotbl")(Sheet, {"Column1", "Date Time"}),
+        Found = fx("SheetTotbl")(Sheet, {"Column1", "Date Time"}),
         Monday = List.Buffer(Load("Controller")[Monday]){0},
         RCol = Table.RemoveColumns(Found, {"Column3", "Column4"}, MissingField.Ignore),
         #"Inserted Text After Delimiter" = Table.AddColumn(

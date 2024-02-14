@@ -8,7 +8,7 @@ let
         当前 = Date.AddDays(M1, -3),
         上周 = Date.AddDays(M1, -10),
         年初 = fx("NextWeekDay")(Date.StartOfYear(M1)),
-        去年初 = if Date.QuarterOfYear(M1) =1 then fx("NextWeekDay")(Date.StartOfYear(Date.AddYears(M1,-1))) else null,
+        去年初 = if Date.QuarterOfYear(M1) = 1 then fx("NextWeekDay")(Date.StartOfYear(Date.AddYears(M1, -1))) else null,
         近1年 = fx("NextWeekDay")(Date.AddYears(M1, -1)),
         近5年 = fx("NextWeekDay")(Date.AddYears(M1, -5)),
         近3月 = fx("NextWeekDay")(Date.AddMonths(M1, -3)),
@@ -19,7 +19,7 @@ let
             Date.StartOfWeek(Date.AddDays(M1, -3), Day.Monday)
         else
             #date(1991, 2, 20),
-             Path_YYYYMMDD = Text.Replace( fx("Parameter")("Monday") , "/", "")
+        Path_YYYYMMDD = Text.Replace(fx("Parameter")("Monday"), "/", "")
     ]
 in
     Record

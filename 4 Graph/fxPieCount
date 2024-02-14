@@ -15,15 +15,15 @@
                     SCol,
                     {PivotCol, GroupCol},
                     {
-                        {MeasureCol, each Number.Round(List.Sum(Record.Field(_, MeasureCol)),2), type number},
+                        {MeasureCol, each Number.Round(List.Sum(Record.Field(_, MeasureCol)), 2), type number},
                         {CountCol, each List.Count(Record.Field(_, GroupCol)), type number}
                     }
                 )
             else
                 Table.Group(
-                    SCol, {PivotCol, GroupCol}, {
-                        {MeasureCol, each Number.Round(List.Sum(Record.Field(_, MeasureCol)),2), type number}
-                    }
+                    SCol,
+                    {PivotCol, GroupCol},
+                    {{MeasureCol, each Number.Round(List.Sum(Record.Field(_, MeasureCol)), 2), type number}}
                 ),
         #"Unpivoted Columns" = Table.UnpivotOtherColumns(Grouped, {PivotCol, GroupCol}, "Attribute", "Value"),
         #"Merged Columns" = Table.CombineColumns(

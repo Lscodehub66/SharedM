@@ -4,9 +4,8 @@ let
     _PK = "Check",
     Name = "m" & Text.AfterDelimiter(_input, "w"),
     HD = fx("ForReviewHD")(_input),
-
-    Source = CWB("Filtered_Add"), 
-    Filtered = Table.SelectRows(Source, each not List.Contains({"n/a","已收录"}, Record.Field(_, Name))),
+    Source = CWB("Filtered_Add"),
+    Filtered = fx("ForReviewSelect")(Source, Name),
     SelfJoined = fx("SelfJoin_R")(Filtered, CWB("ForReview_" & _input), {_PK}),
     Custom2 = fx("SelfJoin_IPG")(SelfJoined),
     SCol = Table.SelectColumns(Custom2, HD, MissingField.UseNull),

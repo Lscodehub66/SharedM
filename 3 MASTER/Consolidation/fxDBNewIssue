@@ -3,15 +3,20 @@
     let
         Key = Text.Upper(Text.Trim(TableNameText)),
         //
-
-      Source11 = fx("DBFilter")({{"YYYY",">=",2022}},{ {"删除及隐藏","not",{"删除","隐藏"}} ,{"货币",null,{"USD","CNH"}}   }),
-      Source_Weekly = fx("DBFilter")({{"YYYY",">=",2022}},{ {"删除及隐藏",null,{"",null}}   }),
-      Source6 = fx("DBFilter")({{"货币细分","=","自贸债"}}),
-      Source9 = fx("DBFilter")({{"兑付日.YearNum","=",2024},{"债券余额",">",0},{"是否债券违约","<>","Y"},{"IS_DEFAULT","<>","Y"}},{{"信用主体","not",{"中华人民共和国财政部"}}    }),
-      Source10= fx("DBFilter")(null,{ {"BISL_ROLE","not",{"",null,"--"}}   }),
-
-
-
+        Source11 = fx(
+            "DBFilter"
+        )(
+            {{"YYYY", ">=", 2022}}, {{"删除及隐藏", "not", {"删除", "隐藏"}}, {"货币", null, {"USD", "CNH"}}}
+        ),
+        Source_Weekly = fx("DBFilter")({{"YYYY", ">=", 2022}}, {{"删除及隐藏", null, {"", null}}}),
+        Source6 = fx("DBFilter")({{"货币细分", "=", "自贸债"}}),
+        Source9 = fx(
+            "DBFilter"
+        )(
+            {{"兑付日.YearNum", "=", 2024}, {"债券余额", ">", 0}, {"是否债券违约", "<>", "Y"}, {"IS_DEFAULT", "<>", "Y"}},
+            {{"信用主体", "not", {"中华人民共和国财政部"}}}
+        ),
+        Source10 = fx("DBFilter")(null, {{"BISL_ROLE", "not", {"", null, "--"}}}),
         // ORecent
         Header0 = Get("Header_Graph_Deal_Weekly"),
         // {"Index","ISIN","定价日","信用主体(备证行)","发行评级","货币","发行规模(亿)","年期","票息","IPG","收窄基点","结构","主题","板块","地区","BOCOM_DEAL?","亿美元"  },
@@ -62,17 +67,12 @@
         Filtered8 = Table.SelectRows(Source11, each not List.Contains({null, "", "--"}, [收窄基点])),
         SCol8 = Table.SelectColumns(Filtered8, Header8, MissingField.UseNull),
         //9Mature2024
-       
-
-         Header9 = Get("Header_Maturity2024"),
+        Header9 = Get("Header_Maturity2024"),
         //  {"Index", "ISIN", "信用主体(备证行)","发行评级","货币", "发行规模(亿)","债券余额","兑付日","期限","票息", "发行品种", "中资属性","板块", "地区","城市","IS_CLIENT", "IS_BISLDeal", "信用主体","亿美元","定价日" ,"Check"},
-        
         SCol9 = Table.SelectColumns(Source9, Header9, MissingField.UseNull),
-  
         //11 USDCNH_Data
         Header11 = Get("Header_USDCNH"),
         //{"Index","ISIN","定价日", "信用主体", "亿美元", "评级分类", "年期分类","货币",  "货币细分", "板块", "删除及隐藏","Check" }
-      
         SCol11 = Table.SelectColumns(Source11, Header11, MissingField.UseNull),
         //******
         Output =

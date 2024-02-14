@@ -1,7 +1,7 @@
 (TableName as table, ColName as text, NewColName as text) =>
     let
         Source = TableName,
-        #"Duplicated Column" = Table.DuplicateColumn( Source , ColName, ColName & "COPY"),
+        #"Duplicated Column" = Table.DuplicateColumn(Source, ColName, ColName & "COPY"),
         #"Changed Type" = Table.TransformColumnTypes(#"Duplicated Column", {{ColName & "COPY", type text}}),
         #"Added SuffixDummy" = Table.AddColumn(
             #"Changed Type",

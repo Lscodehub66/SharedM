@@ -3,7 +3,7 @@
         tblCount = List.Count(tbllist),
         prefix = if List.Count(KeyNPrefix) = 2 then KeyNPrefix{1} else "",
         DateKeyCol = KeyNPrefix{0},
-        Source =  Table.TransformColumnTypes(tbllist{0},{{ DateKeyCol, type date}})   ,
+        Source = Table.TransformColumnTypes(tbllist{0}, {{DateKeyCol, type date}}),
         DimtblSource = if tblCount = 1 then Load("DimDate") else tbllist{1},
         Dimtbl = if prefix = "" then DimtblSource else Table.PrefixColumns(DimtblSource, prefix),
         text = List.Select(Table.ColumnNames(Dimtbl), each Text.Contains(_, "A_Date")){0},

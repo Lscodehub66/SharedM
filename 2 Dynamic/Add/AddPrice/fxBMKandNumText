@@ -6,16 +6,20 @@
             #"Changed TypeText", {{BMKCol, Text.Trim, type text}, {NumTextCol, Text.Trim, type text}}
         ),
         #"Replaced Value" = Table.ReplaceValue(#"Trimmed Text1", " ", "", Replacer.ReplaceText, {BMKCol, NumTextCol}),
-        // ** skipped ** 
+        // ** skipped **
         #"Duplicated Column1" = Table.DuplicateColumn(#"Trimmed Text1", NumTextCol, "Lower_Num"),
         #"Changed Type" = Table.TransformColumnTypes(#"Duplicated Column1", {{"Lower_Num", type number}}),
         #"Replaced Errors" = Table.ReplaceErrorValues(#"Changed Type", {{"Lower_Num", null}}),
         NumToText = Table.AddColumn(
             #"Replaced Errors",
             "Lower_Text",
-            each if [Lower_Num] = null then "" else if [Lower_Num] > 1000 then "【】" else Number.ToText(
-                Number.Round([Lower_Num] , 4)
-            ),
+            each
+                if [Lower_Num] = null then
+                    ""
+                else if [Lower_Num] > 1000 then
+                    "【】"
+                else
+                    Number.ToText(Number.Round([Lower_Num], 4)),
             type text
         ),
         #"Added Custom" = Table.AddColumn(

@@ -1,5 +1,1 @@
-let 
-
-Source = {"",null,"--"}
-in
-    Source
+let Source = {"", null, "--"} in Source

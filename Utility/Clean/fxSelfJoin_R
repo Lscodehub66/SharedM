@@ -94,8 +94,9 @@
                 )
         ),
         Custom1 =
-            if Table.HasColumns(tbl_nonull, "Index")  and List.IsEmpty(tbl_nonull[Index]) then tblname else if 
-            Table.RowCount(tbl_nonull) = 0 or Table.RowCount(tblname) = 0 then
+            if Table.HasColumns(tbl_nonull, "Index") and List.IsEmpty(tbl_nonull[Index]) then
+                tblname
+            else if Table.RowCount(tbl_nonull) = 0 or Table.RowCount(tblname) = 0 then
                 tblname
             else
                 Table.SelectColumns(#"Replaced both Non-blank", CN_Source)

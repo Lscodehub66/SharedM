@@ -24,15 +24,23 @@
             in
                 List.Buffer(ToList),
         Source = TableName,
-        ChangedType = List.Accumulate(Table.ColumnNames(Source), Source, (x,y) => Table.TransformColumnTypes(x, {{y, type text}})),
+        ChangedType = List.Accumulate(
+            Table.ColumnNames(Source), Source, (x, y) => Table.TransformColumnTypes(x, {{y, type text}})
+        ),
         vba1 = Table.AddColumn(
-            ChangedType ,
+            ChangedType,
             "BeforePasteValue",
             each
-                Text.Combine({if List.Contains(_boldobject, [ObjectName]) then 
-                    "oPPShape.TextFrame.DeleteText" & "#(lf)" & "oPPShape.TextFrame.TextRange.Font.Bold = True" 
-                else
-                    "oPPShape.TextFrame.DeleteText", "oPPShape.TextFrame.TextRange.Text = _ "},"#(lf)"),
+                Text.Combine(
+                    {
+                        if List.Contains(_boldobject, [ObjectName]) then
+                            "oPPShape.TextFrame.DeleteText" & "#(lf)" & "oPPShape.TextFrame.TextRange.Font.Bold = True"
+                        else
+                            "oPPShape.TextFrame.DeleteText",
+                        "oPPShape.TextFrame.TextRange.Text = _ "
+                    },
+                    "#(lf)"
+                ),
             type text
         ),
         VBA2 = Table.AddColumn(

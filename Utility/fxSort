@@ -5,14 +5,14 @@
     let
         Source1 = fx("Data")(TableName),
         // *Remove DummyCol*
-        Source= Table.RemoveColumns(
+        Source = Table.RemoveColumns(
             Source1, List.Select(Table.ColumnNames(Source1), each Text.Contains(_, "Dummy")), MissingField.Ignore
         ),
         //
         CN_Source = List.Buffer(Table.ColumnNames(Source)),
-        IndexColname = if List.Contains({null, "N", "NoIndex"}, _inputkey ) then "Index" else _inputkey,
+        IndexColname = if List.Contains({null, "N", "NoIndex", "Ascending"}, _inputkey) then "Index" else _inputkey,
         GNG = if List.Contains({"N", "NoIndex"}, _inputkey) or _inputHD = {""} then "" else "Reversed",
-        FirstOrder = if GNG = "Reversed" then Order.Ascending else Order.Descending,
+        FirstOrder = if GNG = "Reversed" and _inputkey <> "Ascending" then Order.Ascending else Order.Descending,
         //  Order.Ascending=0
         HD_Entity = List.Select(CN_Source, each Text.Contains(_, "信用主体") or _ = "债券简称"),
         //Default sort
@@ -40,9 +40,9 @@
             else
                 Table.Sort(Source, Zipped),
         AddedIndex = Table.AddIndexColumn(
-            Table.RemoveColumns(#"First Sorted", {     IndexColname}, MissingField.Ignore),      IndexColname, 1, 1, Int64.Type
+            Table.RemoveColumns(#"First Sorted", {IndexColname}, MissingField.Ignore), IndexColname, 1, 1, Int64.Type
         ),
-        Reversed = if GNG = "Reversed" then Table.Sort(AddedIndex, {     IndexColname, Order.Descending}) else AddedIndex,
-        Reordered = if _inputkey <> "NoIndex" then fx("1st")(Reversed, {     IndexColname}) else #"First Sorted"
+        Reversed = if GNG = "Reversed" then Table.Sort(AddedIndex, {IndexColname, Order.Descending}) else AddedIndex,
+        Reordered = if _inputkey <> "NoIndex" then fx("1st")(Reversed, {IndexColname}) else #"First Sorted"
     in
         Reordered

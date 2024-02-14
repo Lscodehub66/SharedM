@@ -1,13 +1,25 @@
 //let LoadCode = Load("wSynd","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
 let
-    Source = fx("FdFiles")(fx("ControlWB.PPT_Folder") & "ss & Input"),
-    #"Filtered Rows" = Table.SelectRows(Source, each [Extension] = ".txt"),
-    IsZero = Table.RowCount(#"Filtered Rows") = 0,
-    Fn = fx("TransformSyndFiles")(Source),
+    Mondaytext = fx("Parameter")("Monday"),
+    Dim = Table.Buffer(Load("DimSynd")),
+    FDPath = fx("ControlWB.Syndtxt_Folder"),
+    Source = fx("FdFiles")(FDPath),
+    Extracted = fx("ExtractSyndFileName")(Source),
+    #"Filtered Rows" = Table.SelectRows(Extracted, each [Monday.Text] = Mondaytext),
+    Fn = fx("TransformSyndFiles")(#"Filtered Rows"),
     Fn2 = fx("Synd_Length")(Fn),
-    Output = if IsZero = true then Load("DimSynd") else fx("DimSynd")(Fn2),
+    Output =
+        let
+            DimSyndLeftAnti = Table.RemoveColumns(
+                Table.NestedJoin(Dim, {"Index"}, Fn2, {"Index"}, "Data", JoinKind.LeftAnti), {"Data"}
+            ),
+            Merged = fx("DimSynd")(Fn2),
+            Appended = Table.Combine({Merged, DimSyndLeftAnti})
+        in
+            Appended,
     #"Removed Other Columns" = Table.SelectColumns(
         Output, {"Index", "Synd.Input", "Description", "ObjectName", "Monday.Text", "Source.Files"}
-    )
+    ),
+    #"Sorted Rows" = Table.Sort(#"Removed Other Columns", {{"Index", Order.Ascending}})
 in
-    #"Removed Other Columns"
+    #"Sorted Rows"

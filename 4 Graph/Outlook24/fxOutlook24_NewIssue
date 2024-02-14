@@ -8,9 +8,7 @@
         #"Extracted Year" = Table.AddColumn(#"Filtered Rows", "YearNum", each Date.Year([定价日]), type number),
         #"Filtered Rows1" = Table.SelectRows(#"Extracted Year", each [YearNum] > Numtext),
         Custom1 = fx("ShowFilter")(#"Filtered Rows1", "NOT"),
-        LeftAnti = Table.NestedJoin(
-            Custom1, {"ISIN"}, CWB("DMI_TempISIN"), {"ISIN_TEMP"}, "Data", JoinKind.LeftAnti
-        ),
+        LeftAnti = Table.NestedJoin(Custom1, {"ISIN"}, CWB("DMI_TempISIN"), {"ISIN_TEMP"}, "Data", JoinKind.LeftAnti),
         Fn1 = fx("CheckNDupe")(LeftAnti),
         Fn = fx("OriginalSize")(Fn1),
         Custom4 = fx("AddBBGFX")(Fn, "USD", {"原始规模(亿)", "原始"}),

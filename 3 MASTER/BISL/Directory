@@ -23,12 +23,11 @@ let
             )
         else
             #"Expanded DimTime",
-  
     ReplacedCCY = Table.ReplaceValue(ExeTime, "美元债", "", Replacer.ReplaceValue, {"货币细分"}),
-      Sorted = fx("SortNIndex")(  ReplacedCCY),
+    Sorted = fx("SortNIndex")(ReplacedCCY),
     //Reorder
     CN_Base = List.Buffer(CWB("BaseDirectory_CN")),
     CN_CWB = List.Buffer(Table.ColumnNames(CWB("Directory"))),
-    Reordered = Table.ReorderColumns( Sorted , CN_Base & List.RemoveItems(CN_CWB, CN_Base), MissingField.Ignore)
+    Reordered = Table.ReorderColumns(Sorted, CN_Base & List.RemoveItems(CN_CWB, CN_Base), MissingField.Ignore)
 in
     Reordered

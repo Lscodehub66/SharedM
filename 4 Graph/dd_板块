@@ -1,6 +1,2 @@
-
 // dd_板块
-let
-    Source = fx("Ws")("DEALSMASTER","dd_板块")
-in
-    Source
+let Source = fx("Ws")("DEALSMASTER", "dd_板块") in Source

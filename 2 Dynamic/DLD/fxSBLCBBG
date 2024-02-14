@@ -2,7 +2,7 @@
     let
         NewCol = {"SBLC提供者", "SBLC.Branch"},
         Source = TableName,
-        Prep = Table.RenameColumns(Source,{"SBLC提供者", "SBLC_Provider_Name"}, MissingField.Ignore),
+        Prep = Table.RenameColumns(Source, {"SBLC提供者", "SBLC_Provider_Name"}, MissingField.Ignore),
         #"Inserted Text Between Delimiters" = Table.AddColumn(
             Prep,
             "SBLC.Branch",
@@ -32,12 +32,18 @@
             "SBLC提供者",
             each
                 List.Accumulate(
-                    {   {" C", ""}, {" Co", ""},{" o",""},{" Ba"," Bank"}},
+                    {{" C", ""}, {" Co", ""}, {" o", ""}, {" Ba", " Bank"}},
                     [Dummy.SBLC1],
-                    (x, y) => if Text.EndsWith(x, y{0}) then Text.Start(x, Text.Length(x) - Text.Length(y{0}))&y{1} else x
+                    (x, y) =>
+                        if Text.EndsWith(x, y{0}) then
+                            Text.Start(x, Text.Length(x) - Text.Length(y{0})) & y{1}
+                        else
+                            x
                 ),
             type text
         ),
-        SelectedCol = Table.SelectColumns(#"Inserted Text Before Delimiter1", List.Distinct(Table.ColumnNames(Source) & NewCol))
+        SelectedCol = Table.SelectColumns(
+            #"Inserted Text Before Delimiter1", List.Distinct(Table.ColumnNames(Source) & NewCol)
+        )
     in
         SelectedCol

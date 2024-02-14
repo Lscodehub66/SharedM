@@ -49,14 +49,14 @@
             Replacer.ReplaceText,
             {"Column5"}
         ),
-         #"Replaced Value4" = Table.ReplaceValue(
-           #"Replaced Value3", "(USD)", ".USD", Replacer.ReplaceText, {"Column5"}
+        #"Replaced Value4" = Table.ReplaceValue(
+            #"Replaced Value3", "(USD)", ".USD", Replacer.ReplaceText, {"Column5"}
         ),
-              #"Replaced Value5" = Table.ReplaceValue(
-           #"Replaced Value4", "(其他币种)", ".其他", Replacer.ReplaceText, {"Column5"}
+        #"Replaced Value5" = Table.ReplaceValue(
+            #"Replaced Value4", "(其他币种)", ".其他", Replacer.ReplaceText, {"Column5"}
         ),
-                      #"Replaced Value6" = Table.ReplaceValue(
-           #"Replaced Value5", "ISIN Code", "ISIN", Replacer.ReplaceValue, {"Column5"}
+        #"Replaced Value6" = Table.ReplaceValue(
+            #"Replaced Value5", "ISIN Code", "ISIN", Replacer.ReplaceValue, {"Column5"}
         ),
         #"Grouped Rows" = Table.Group(#"Replaced Value6", {"Column5"}, {{"Custom", each _, type table}}),
         #"Added Index" = Table.TransformColumns(

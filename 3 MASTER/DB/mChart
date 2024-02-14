@@ -1,19 +1,19 @@
 // let LoadCode = Load("mChart","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
- DB = "mChart",
+    DB = "mChart",
     DB_Source = CWB(DB),
-    Parameter = fx("Parameter")("RemoveFrom_DB")??"",
+    Parameter = fx("Parameter")("RemoveFrom_DB") ?? "",
     Added = fx("AddToDB")(DB, Load("wDynamicPQ"), Parameter),
     Crossroad = if Text.Contains(Parameter, "Stop") then DB_Source else Added,
     Synced = if SyncSwitch_mChart = "ON" then fx("Sync_mChart")(Crossroad) else Crossroad,
     #"Filtered Rows" = Table.SelectRows(
         Synced, each not Text.StartsWith([ISIN], "BBG01") and ([货币] = "USD" or [货币] = "CNH")
     ),
- 
-    Managed =  fx(
-        "DBManager"
-    )(
-           #"Filtered Rows" , "m"
-    )
+    Managed = fx("DBManager")(#"Filtered Rows", "m"),
+    Merged =
+        if not Table.HasColumns(Managed, "TICKER") then
+            fx("Merge")(Managed, Load("DMI_all"), "ISIN", "ISIN", {"TICKER"}, {"TICKER"})
+        else
+            Managed
 in
-   Managed
+    Merged

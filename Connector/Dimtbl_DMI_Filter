@@ -1,7 +1,17 @@
 // Dimtbl_DMI_Filter
 let
     Source = Get("Dimtbl_DMI_Filter"),
-    Custom1 = Table.ReplaceValue(Source,each [Column2], each if [Index] = 8 then 香港Filter
-else if [Index] = 7 then 澳门Filter else if [Index] = 9 then IS_EXCH_Filter else [Column2], Replacer.ReplaceValue, {"Column2"})
+    Custom1 = Table.ReplaceValue(
+        Source,
+        each [Column2],
+        each if [Index] = 8 then 香港Filter else if [Index] = 7 then
+            澳门Filter
+        else if [Index] = 9 then
+            IS_EXCH_Filter
+        else
+            [Column2],
+        Replacer.ReplaceValue,
+        {"Column2"}
+    )
 in
     Custom1

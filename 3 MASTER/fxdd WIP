@@ -1,14 +1,98 @@
 let
-    Source = Table.FromRows ( { {"备证行全称", "", ""}, {"发行品种", "", ""}, {"上市", "", ""}, {"通过分行", "", ""}, {"品种主题", "", ""}, {"货币细分", "", ""}, {"货币", "", ""}, {"结构", "", ""}, {"BISL_ROLE", "", ""}, {"新规角色", "", ""}, {"上市分类", "", ""}, {"IS_B&D", "", ""}, {"ESG", "", ""}, {"港分_ROLE", "", ""}, {"项目来源", "", ""}, {"EXE", "", ""}, {"COVERAGE", "", ""}, {"评级分类", "", ""}, {"IS_LEAD", "", ""}, {"增发判定", "", ""}, {"是否合名", "", ""}, {"中资属性", "", ""}, {"板块", "", ""}, {"年期分类", "", ""}, {"金融机构", "板块", "板块二级"}, {"地方国企", "中资属性", "级别"}, {"地方平台", "板块", "板块二级"}, {"银行", "板块二级", "板块三级"}, {"非银", "板块二级", "板块三级"} } ,   { "Column1", "SelectRow", "SelectCol"} ),
-   buffered = Table.Buffer(CWB("deal_master")),
-    Custom2 = Table.AddColumn(Source, "Custom", each   if [SelectRow] = "" then Table.Column(Table.SelectColumns(buffered, {[Column1]}), [Column1] )
- else
-Table.Column(Table.SelectColumns(Table.SelectRows(buffered, each Record.Field(_, [SelectRow])= [Column1]),{[SelectCol]}),[SelectCol])
-  ,type list),
-    Custom3 = Table.TransformColumns(Custom2, {{"Custom", each  List.Buffer(List.RemoveItems( List.Distinct(_) ,{"","--","【】",null}))  ,type list  }}),
-    #"Added Custom" = Table.AddColumn(Source, "Custom", each   if [SelectRow] = "" then List.Buffer(List.RemoveItems(Table.Column(Table.Distinct(Table.SelectColumns(buffered, {[Column1]})), [Column1] ),{"","--","【】",null})) else null  ,type list),
-    Custom1 = Table.AddColumn(#"Added Custom", "Custom1", each  if [SelectRow] <> "" then List.Buffer(List.RemoveItems(Table.Column(Table.Distinct(Table.SelectColumns(Table.SelectRows(buffered, each Record.Field(buffered, [SelectRow] ) = [Column1]),{[SelectCol]})),[SelectCol]),{"","--","【】",null}))  else null,type list),
+    Source = Table.FromRows(
+        {
+            {"备证行全称", "", ""},
+            {"发行品种", "", ""},
+            {"上市", "", ""},
+            {"通过分行", "", ""},
+            {"品种主题", "", ""},
+            {"货币细分", "", ""},
+            {"货币", "", ""},
+            {"结构", "", ""},
+            {"BISL_ROLE", "", ""},
+            {"新规角色", "", ""},
+            {"上市分类", "", ""},
+            {"IS_B&D", "", ""},
+            {"ESG", "", ""},
+            {"港分_ROLE", "", ""},
+            {"项目来源", "", ""},
+            {"EXE", "", ""},
+            {"COVERAGE", "", ""},
+            {"评级分类", "", ""},
+            {"IS_LEAD", "", ""},
+            {"增发判定", "", ""},
+            {"是否合名", "", ""},
+            {"中资属性", "", ""},
+            {"板块", "", ""},
+            {"年期分类", "", ""},
+            {"金融机构", "板块", "板块二级"},
+            {"地方国企", "中资属性", "级别"},
+            {"地方平台", "板块", "板块二级"},
+            {"银行", "板块二级", "板块三级"},
+            {"非银", "板块二级", "板块三级"}
+        },
+        {"Column1", "SelectRow", "SelectCol"}
+    ),
+    buffered = Table.Buffer(CWB("deal_master")),
+    Custom2 = Table.AddColumn(
+        Source,
+        "Custom",
+        each
+            if [SelectRow] = "" then
+                Table.Column(Table.SelectColumns(buffered, {[Column1]}), [Column1])
+            else
+                Table.Column(
+                    Table.SelectColumns(
+                        Table.SelectRows(buffered, each Record.Field(_, [SelectRow]) = [Column1]), {[SelectCol]}
+                    ),
+                    [SelectCol]
+                ),
+        type list
+    ),
+    Custom3 = Table.TransformColumns(
+        Custom2, {
+            {"Custom", each List.Buffer(List.RemoveItems(List.Distinct(_), {"", "--", "【】", null})), type list}
+        }
+    ),
+    #"Added Custom" = Table.AddColumn(
+        Source,
+        "Custom",
+        each
+            if [SelectRow] = "" then
+                List.Buffer(
+                    List.RemoveItems(
+                        Table.Column(Table.Distinct(Table.SelectColumns(buffered, {[Column1]})), [Column1]),
+                        {"", "--", "【】", null}
+                    )
+                )
+            else
+                null,
+        type list
+    ),
+    Custom1 = Table.AddColumn(
+        #"Added Custom",
+        "Custom1",
+        each
+            if [SelectRow] <> "" then
+                List.Buffer(
+                    List.RemoveItems(
+                        Table.Column(
+                            Table.Distinct(
+                                Table.SelectColumns(
+                                    Table.SelectRows(buffered, each Record.Field(buffered, [SelectRow]) = [Column1]),
+                                    {[SelectCol]}
+                                )
+                            ),
+                            [SelectCol]
+                        ),
+                        {"", "--", "【】", null}
+                    )
+                )
+            else
+                null,
+        type list
+    ),
     #"Added Custom1" = Table.AddColumn(Custom1, "Count", each List.Count([Custom]), Int64.Type),
-    #"Sorted Rows" = Table.Sort(#"Added Custom1",{{"Count", Order.Descending}})
+    #"Sorted Rows" = Table.Sort(#"Added Custom1", {{"Count", Order.Descending}})
 in
     #"Sorted Rows"

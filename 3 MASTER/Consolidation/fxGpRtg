@@ -101,11 +101,12 @@
             type text
         ),
         Replaced = if Is_EN = true then fx("Replace")(Custom3, {New1}, "评级分类") else Custom3,
-        RCol = if Is_allCol = true then Replaced else if Table.HasColumns(Source, ref1) then fx("RCol")(Replaced) else Source
-        
-            in
-             RCol 
-       // #"Merged Queries" = Table.NestedJoin( RCol, {"ISIN", "主体评级"}, Query7, {"ISIN", "主体评级"}, "Query7", JoinKind.LeftOuter        ),
-       // #"Expanded Query7" = Table.ExpandTableColumn(            #"Merged Queries", "Query7", {"主体评级", "主体评级分类"}, {"Query7.主体评级", "Query7.主体评级分类"}        ),
-     //   #"Filtered Rows" = Table.SelectRows(#"Expanded Query7", each [主体评级分类] <> [Query7.主体评级分类])
-
+        RCol = if Is_allCol = true then Replaced else if Table.HasColumns(Source, ref1) then
+            fx("RCol")(Replaced)
+        else
+            Source
+    in
+        RCol
+// #"Merged Queries" = Table.NestedJoin( RCol, {"ISIN", "主体评级"}, Query7, {"ISIN", "主体评级"}, "Query7", JoinKind.LeftOuter        ),
+// #"Expanded Query7" = Table.ExpandTableColumn(            #"Merged Queries", "Query7", {"主体评级", "主体评级分类"}, {"Query7.主体评级", "Query7.主体评级分类"}        ),
+//   #"Filtered Rows" = Table.SelectRows(#"Expanded Query7", each [主体评级分类] <> [Query7.主体评级分类])

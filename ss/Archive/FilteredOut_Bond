@@ -1,6 +1,6 @@
 let
     Source = Table.SelectRows(
-        CWB("DLD_Filter_Bond", "1"), each not List.Contains({"","*","**"},[Filter_Bond]) or [Filter_Exch] <> "" 
+        CWB("DLD_Filter_Bond", "1"), each not List.Contains({"", "*", "**"}, [Filter_Bond]) or [Filter_Exch] <> ""
     )
 in
     Source

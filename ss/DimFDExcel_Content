@@ -1,14 +1,26 @@
 // folderfiles
 let
-  
     Source = Load("DimFDExcel"),
-    Source_FD =     Table.FromList( List.Select(List.Distinct(  Source[FDPath]), each if Text.StartsWith(_,"C:\Users\ktkt2\OneDrive\EXE Team\DataHub\") then _ = "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\" else true)),
-    #"Invoked Custom Function" = Table.AddColumn(Source_FD, "Data", each Table.SelectRows(Folder.Files([Column1]), each Text.Contains([Extension], ".xls", 
-    Comparer.OrdinalIgnoreCase))),
-    #"Expanded Data" = Table.ExpandTableColumn(
-        #"Invoked Custom Function",
+    Source_FD = Table.FromList(
+        List.Select(
+            List.Distinct(Source[FDPath]),
+            each
+                if Text.StartsWith(_, "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\") then
+                    _ = "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\"
+                else
+                    true
+        )
+    ),
+    #"Invoked Custom Function" = Table.AddColumn(
+        Source_FD,
         "Data",
-       {"Content", "Name", "Folder Path"}
+        each
+            Table.SelectRows(
+                Folder.Files([Column1]), each Text.Contains([Extension], ".xls", Comparer.OrdinalIgnoreCase)
+            )
+    ),
+    #"Expanded Data" = Table.ExpandTableColumn(
+        #"Invoked Custom Function", "Data", {"Content", "Name", "Folder Path"}
     ),
     #"Inserted Text Before Delimiter" = Table.AddColumn(
         #"Expanded Data",
@@ -19,8 +31,8 @@ let
             ),
         type text
     ),
-   // **Skipped**
-   #"Merged Columns" = Table.Buffer(
+    // **Skipped**
+    #"Merged Columns" = Table.Buffer(
         Table.CombineColumns(
             #"Inserted Text Before Delimiter",
             {"Folder Path", "Name"},
@@ -28,7 +40,11 @@ let
             "File Path"
         )
     ),
-    #"Inserted Merged Column" = Table.AddColumn(  #"Inserted Text Before Delimiter", "File Path", each Text.Combine({[Folder Path], [Name]}, ""), type text),
-    #"Removed Other Columns" = Table.SelectColumns(#"Inserted Merged Column",{"Content", "File Path", "FileName.Extracted", "Folder Path"})
+    #"Inserted Merged Column" = Table.AddColumn(
+        #"Inserted Text Before Delimiter", "File Path", each Text.Combine({[Folder Path], [Name]}, ""), type text
+    ),
+    #"Removed Other Columns" = Table.SelectColumns(
+        #"Inserted Merged Column", {"Content", "File Path", "FileName.Extracted", "Folder Path"}
+    )
 in
     #"Removed Other Columns"

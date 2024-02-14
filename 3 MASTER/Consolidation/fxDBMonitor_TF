@@ -2,11 +2,9 @@
     let
         Key = Text.Upper(Text.Trim(_inputkey ?? "")),
         Source = TableName,
-
-        
         主题字段 = List.Accumulate(
             {{"FTZ", "自贸"}, {"DIMSUM", "点心"}},
-              Source ,
+            Source,
             (x, y) =>
                 if Text.Contains(Key, y{0}) then
                     Table.ReplaceValue(
@@ -59,7 +57,7 @@
                         try
                             CWB("chart_master")
                         otherwise
-                            try Load("chart_master") otherwise fx("Ws")("DEALSMASTER","CHART_MASTER"),
+                            try Load("chart_master") otherwise fx("Ws")("DEALSMASTER", "CHART_MASTER"),
                         Regrouped
                     },
                     {"Check"},

@@ -22,7 +22,7 @@
         RCol = Table.RemoveColumns(Prep, List.Select(CN_Source, each Text.Contains(_, "Dummy")), MissingField.Ignore),
         //
         DefaultSort =
-          if List.ContainsAll(CN_Source, {"余额美元规模分类"}) then
+            if List.ContainsAll(CN_Source, {"余额美元规模分类"}) then
                 Table.Sort(
                     RCol,
                     List.Zip(
@@ -31,9 +31,7 @@
                             {Order, Order.Descending, Order.Descending, Order, Order.Descending}
                         }
                     )
-                )  
-                
-        
+                )
             else if List.ContainsAll(CN_Source, {"定价日", "货币", "年期"}) and Entity_CN_Count > 0 then
                 Table.Sort(RCol, {{"定价日", Order}, {Entity_CN1, Order}, {"货币", Order}, {"年期", Order}})
             else if List.Contains(CN_Source, "定价日") and Entity_CN_Count > 0 then

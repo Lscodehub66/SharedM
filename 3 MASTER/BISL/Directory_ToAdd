@@ -1,4 +1,18 @@
 let
-    Source = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("fZe7biY3DEbfxfUCP2+6sIyzRRYB0jhBFlhsESApNwnS7OvnG2k0ljyUbRfGHJ9fGoqk6C9fnj6/sCfPiYr404cnfdSHEB+/zoSUKh79+te3fz+9fPrl6euHbnrKWSUbWHqwz+pAlNqjN6qQsFf3LGD5IflVfUWUJUeqecHW+GD+4DKrA5FzCVTGZyfGDxg/WKEKdfVCxKyRKslEEAowgTerA5G0R29VyUmxIzs2zPLgSb0Q4yUCVbUi/iIHsx6m9vuMyMIwaTWxWtqG/bGYg5BTYLKrSc1FqUcpzcc6EKKU8Ojjf398//Of73+vqpPtVKCdmvEnXry0NGSb1YFI2e4qjt1qRbIeH4v89SUjTkS1JfhddUOCJ4/UE+3UTKm6aXtXmgvnFTG1wrmpVUopqI2eETqrAyEjNFJRGQV1OUV4JNOF4ggjTxVVidLoKWxLCp8IKRxFuHFEUTbqgXZqyaXgXY5Vy6PM5iBUqGxNaVGKTJCNiXBWYa7azKXOL0SFo/h2rkY7FWir1prNuDZ1aREXQslS9Kpu7IJWcFcvtFFbxqSarKuyrtrR0ShC1VWJcz8aqYt6IqhRBh8vZJpII/VE76lmvlMPtFMF7V2pvas/lrMZBD0tPJvGcfAbE2RnOqEH1Ny74dKCL0TcWvBdRXqisqm1NFvMkyBKUdGoUCnO2k2Z1QuR3uvtt5da8fzz8w+tn9jZIA51RmT3BnHxZ+edCvSu+mOxnQr0jvr788ed2lCktjsQLQ/XmPYBpCzX44nQSaMWoRgV1HEPtgFEZ3MQdPFbQvz0M+GrqNS2ocmcSWS2T0a21J6Eb9c8ydY0XNqp9DXrYp4EZlQymhgZozk3k2lWByKUeajiwrWS+qK9s1zqiTCj3TrLGQmz7L11y5sYNYL835u1sfI6tswEZlRtmhwXduG0mjPZmbmm7JJkaqFDHWjTQjXj5HAf5K4uGTgQ1PCSytmPnWkbPZjn9jAQ1ZYst1WLW83olX1qWdrDQOj9YWc5eOHqG/VAO7XiuBO+Ww/1ZaI8CXpoNCopZjAMF7V3X1kyfyDCJReqODMkam/5sqT+QFCj1McQZXiX1Do3L/V2IVRcuGqbU1MLw3EyS5gGYw7DZIpp3vrYMlQ5lx2IArWneGVUc21jVi9WubK/I+wjKlZLCbNJOu8aXlYdaDM+47+PknNtG7Zz5BnqQGjAUZxQyGjRud1TUGVRTwQ1qhxDi05uyYNVB7qt+vV/", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [ISIN = _t, 定价日 = _t, Check = _t, ToAdd = _t])
+    Source = Table.FromRows(
+        Json.Document(
+            Binary.Decompress(
+                Binary.FromText(
+                    "fZe7biY3DEbfxfUCP2+6sIyzRRYB0jhBFlhsESApNwnS7OvnG2k0ljyUbRfGHJ9fGoqk6C9fnj6/sCfPiYr404cnfdSHEB+/zoSUKh79+te3fz+9fPrl6euHbnrKWSUbWHqwz+pAlNqjN6qQsFf3LGD5IflVfUWUJUeqecHW+GD+4DKrA5FzCVTGZyfGDxg/WKEKdfVCxKyRKslEEAowgTerA5G0R29VyUmxIzs2zPLgSb0Q4yUCVbUi/iIHsx6m9vuMyMIwaTWxWtqG/bGYg5BTYLKrSc1FqUcpzcc6EKKU8Ojjf398//Of73+vqpPtVKCdmvEnXry0NGSb1YFI2e4qjt1qRbIeH4v89SUjTkS1JfhddUOCJ4/UE+3UTKm6aXtXmgvnFTG1wrmpVUopqI2eETqrAyEjNFJRGQV1OUV4JNOF4ggjTxVVidLoKWxLCp8IKRxFuHFEUTbqgXZqyaXgXY5Vy6PM5iBUqGxNaVGKTJCNiXBWYa7azKXOL0SFo/h2rkY7FWir1prNuDZ1aREXQslS9Kpu7IJWcFcvtFFbxqSarKuyrtrR0ShC1VWJcz8aqYt6IqhRBh8vZJpII/VE76lmvlMPtFMF7V2pvas/lrMZBD0tPJvGcfAbE2RnOqEH1Ny74dKCL0TcWvBdRXqisqm1NFvMkyBKUdGoUCnO2k2Z1QuR3uvtt5da8fzz8w+tn9jZIA51RmT3BnHxZ+edCvSu+mOxnQr0jvr788ed2lCktjsQLQ/XmPYBpCzX44nQSaMWoRgV1HEPtgFEZ3MQdPFbQvz0M+GrqNS2ocmcSWS2T0a21J6Eb9c8ydY0XNqp9DXrYp4EZlQymhgZozk3k2lWByKUeajiwrWS+qK9s1zqiTCj3TrLGQmz7L11y5sYNYL835u1sfI6tswEZlRtmhwXduG0mjPZmbmm7JJkaqFDHWjTQjXj5HAf5K4uGTgQ1PCSytmPnWkbPZjn9jAQ1ZYst1WLW83olX1qWdrDQOj9YWc5eOHqG/VAO7XiuBO+Ww/1ZaI8CXpoNCopZjAMF7V3X1kyfyDCJReqODMkam/5sqT+QFCj1McQZXiX1Do3L/V2IVRcuGqbU1MLw3EyS5gGYw7DZIpp3vrYMlQ5lx2IArWneGVUc21jVi9WubK/I+wjKlZLCbNJOu8aXlYdaDM+47+PknNtG7Zz5BnqQGjAUZxQyGjRud1TUGVRTwQ1qhxDi05uyYNVB7qt+vV/",
+                    BinaryEncoding.Base64
+                ),
+                Compression.Deflate
+            )
+        ),
+        let
+            _t = ((type nullable text) meta [Serialized.Text = true])
+        in
+            type table [ISIN = _t, 定价日 = _t, Check = _t, ToAdd = _t]
+    )
 in
     Source

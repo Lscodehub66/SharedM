@@ -1,6 +1,6 @@
 let
-    Source = fx("DateRange")({"wNIMStart.Date","Now.Date"}),
+    Source = fx("DateRange")({"wNIMStart.Date", "Now.Date"}),
     Custom1 = fx("DateFromRecord")(Source),
-    Custom2 = Table.AddKey(Custom1,{"A_Date"},true)
+    Custom2 = Table.AddKey(Custom1, {"A_Date"}, true)
 in
     Custom2

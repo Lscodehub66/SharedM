@@ -1,25 +1,25 @@
 let
- Source = ( TextName as text ) =>
-  let
-   RtgValue = if TextName = null or TextName = "--" or TextName = "n/a" then "" else TextName, 
-   TextSelectRtgValue = Text.Select ( RtgValue, { "A", "B", "C", "D", "a", "/" } ), 
-   RtgValueR1 = Text.Replace ( TextSelectRtgValue, "Baa", "A" ), 
-   RtgValueR2 = Text.Replace ( RtgValueR1, "BBB", "A" ), 
-   RtgValueR3 = Text.Replace ( RtgValueR2, "Ba", "BB" ), 
-   ClassifyResult = 
-    if RtgValueR3 = "" then
-     "--"
-    else if RtgValueR3 = "//" or RtgValueR3 = "/" then
-     "无评级"
-    else if Text.Contains ( RtgValueR3, "D" ) then
-     "违约"
-    else if Text.Contains ( RtgValueR3, "C" ) then
-     "高收益"
-    else if Text.Contains ( RtgValueR3, "A" ) and not Text.Contains ( RtgValueR3, "B" ) then
-     "投资级"
-    else
-     "高收益"
-  in
-   ClassifyResult
+    Source = (TextName as text) =>
+        let
+            RtgValue = if TextName = null or TextName = "--" or TextName = "n/a" then "" else TextName,
+            TextSelectRtgValue = Text.Select(RtgValue, {"A", "B", "C", "D", "a", "/"}),
+            RtgValueR1 = Text.Replace(TextSelectRtgValue, "Baa", "A"),
+            RtgValueR2 = Text.Replace(RtgValueR1, "BBB", "A"),
+            RtgValueR3 = Text.Replace(RtgValueR2, "Ba", "BB"),
+            ClassifyResult =
+                if RtgValueR3 = "" then
+                    "--"
+                else if RtgValueR3 = "//" or RtgValueR3 = "/" then
+                    "无评级"
+                else if Text.Contains(RtgValueR3, "D") then
+                    "违约"
+                else if Text.Contains(RtgValueR3, "C") then
+                    "高收益"
+                else if Text.Contains(RtgValueR3, "A") and not Text.Contains(RtgValueR3, "B") then
+                    "投资级"
+                else
+                    "高收益"
+        in
+            ClassifyResult
 in
- Source
+    Source

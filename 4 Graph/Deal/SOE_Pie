@@ -1,20 +1,16 @@
 let
-    tbl = Table.SelectRows(fx("DBMonitor")("Recent_SOE"),each [Year.Num] < 2024),
-S1 = Table.Buffer( tbl),
-    Pie1 = fx("Pie3")(S1, "年", Order.Ascending, "美元规模分类SOE", "亿美元" ,false),
-    Pie2 = fx("Pie3")(S1,  "年", Order.Ascending, "评级分类", "亿美元",false),
-    Pie3 = fx("Pie3")(S1,  "年", Order.Ascending, "年期分类", "笔数", false),
-    Pie4 = fx("Pie3")(S1,  "年", Order.Ascending, "结构分类", "笔数",false),
-      
-
- Combined = fx("Combine")({Pie1, Pie2,Pie3,Pie4}),
-   MergedQ = fx("Merge")( Combined , Get("SortTable_Graph_SOEPIE"), "Column2", "Column2", {"Index"}, {"Index"}),
+    tbl = Table.SelectRows(fx("DBMonitor")("Recent_SOE"), each [Year.Num] < 2024),
+    S1 = Table.Buffer(tbl),
+    Pie1 = fx("Pie3")(S1, "年", Order.Ascending, "美元规模分类SOE", "亿美元", false),
+    Pie2 = fx("Pie3")(S1, "年", Order.Ascending, "评级分类", "亿美元", false),
+    Pie3 = fx("Pie3")(S1, "年", Order.Ascending, "年期分类", "笔数", false),
+    Pie4 = fx("Pie3")(S1, "年", Order.Ascending, "结构分类", "笔数", false),
+    Combined = fx("Combine")({Pie1, Pie2, Pie3, Pie4}),
+    MergedQ = fx("Merge")(Combined, Get("SortTable_Graph_SOEPIE"), "Column2", "Column2", {"Index"}, {"Index"}),
     Sorted = Table.Sort(MergedQ, {{"Index", 0}}),
-    Reordered = Table.SelectColumns(
-        Sorted, {"Index", "Column1", "Column2", "22年", "23年"}, MissingField.UseNull
-    ),
+    Reordered = Table.SelectColumns(Sorted, {"Index", "Column1", "Column2", "22年", "23年"}, MissingField.UseNull),
     #"Demoted Headers" = Table.DemoteHeaders(Reordered),
     #"Transposed Table" = Table.Transpose(#"Demoted Headers"),
-    #"Promoted Headers" = Table.PromoteHeaders(#"Transposed Table", [PromoteAllScalars=true])
+    #"Promoted Headers" = Table.PromoteHeaders(#"Transposed Table", [PromoteAllScalars = true])
 in
     #"Promoted Headers"

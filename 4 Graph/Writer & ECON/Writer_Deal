@@ -1,7 +1,7 @@
 // let LoadCode = Load("Writer_Deal","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
 let
-  
-    Source2 = CWB("Writer_Dealtbl"),   //Source = Load("Recent_Data"),Custom1 = fx("DateRange")({"PreviousMon.Date", "Sunday.Date"}, {Source, "定价日"}),
+    Source2 = CWB("Writer_Dealtbl"),
+    //Source = Load("Recent_Data"),Custom1 = fx("DateRange")({"PreviousMon.Date", "Sunday.Date"}, {Source, "定价日"}),
     Buffered = Table.Buffer(Source2),
     WriteNewIssue = fx("WeeklyDealWriter")(Buffered),
     Replaced = Table.ReplaceValue(

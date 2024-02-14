@@ -5,11 +5,10 @@ let
     #"Grouped Rows1" = Table.Group(
         Source,
         {"ISIN"},
-        {   {"Count_BISLDeal", each List.Sum([Count_BISLDeal]), type number},
+        {
+            {"Count_BISLDeal", each List.Sum([Count_BISLDeal]), type number},
             {"Count_JGC", each List.Sum([Check_JGC]), type number},
             {"Count_JBR", each List.Sum([Count_JBR]), type number},
-            
-           
             {"Data", each _, type table}
         }
     ),

@@ -103,7 +103,14 @@
         Adjustment = Table.ReplaceValue(
             Custom5,
             "【发行规模(亿)为空值】",
-            each if List.Contains({"AddTap", "BBG"}, [DataSource]) then "" else "【发行规模(亿)为空值】",
+            each
+                if
+                    List.Contains({"AddTap", "BBG"}, [DataSource])
+                    or (Table.HasColumns(Source, "IS_FIMTN") and List.Contains({"(DMI)"}, [IS_FIMTN]))
+                then
+                    ""
+                else
+                    "【发行规模(亿)为空值】",
             Replacer.ReplaceValue,
             {"Filter_Bond"}
         ),

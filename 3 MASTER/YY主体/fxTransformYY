@@ -4,7 +4,7 @@
         Source = TableName,
         Filtered = Table.SelectRows(Source, each [主体] <> "" and not Text.Contains([主体], "数据来源")),
         SelectedCol = Table.SelectColumns(
-            Filtered, {"主体", "行业", "行业.Dummy", "区域", "行政级别", "平台重要性", "主营业务","企业性质"}, MissingField.UseNull
+            Filtered, {"主体", "行业", "行业.Dummy", "区域", "行政级别", "平台重要性", "主营业务", "企业性质"}, MissingField.UseNull
         ),
         #">>ShowedDupe" = fx("ShowDupe")(SelectedCol, {"主体"}),
         ABDelimiter = Table.AddColumn(SelectedCol, "行业二级", each Text.BeforeDelimiter([行业.Dummy], "-"), type text),
@@ -40,7 +40,7 @@
         RemovedCol = Table.RemoveColumns(ACol1, {"行业.Dummy", "区域"}, MissingField.Ignore),
         Reordered = Table.ReorderColumns(
             RemovedCol,
-            {"主体", "行业", "行业二级", "细分行业", "主营业务", "平台重要性", "级别", "Count区域", "省份", "城市", "区县","企业性质"},
+            {"主体", "行业", "行业二级", "细分行业", "主营业务", "平台重要性", "级别", "Count区域", "省份", "城市", "区县", "企业性质"},
             MissingField.Ignore
         ),
         Cleaned2 =
@@ -50,7 +50,7 @@
                 fx("Replace")(fx("Replace")(ADelimiter1, {"省份"}, "地区"), {"城市", "区县"}, "区县")
             else
                 Reordered,
-    Renamed = Table.RenameColumns(Cleaned2, {{"主体", "信用主体"},{"企业性质", "公司类型"}}, MissingField.Ignore),
+        Renamed = Table.RenameColumns(Cleaned2, {{"主体", "信用主体"}, {"企业性质", "公司类型"}}, MissingField.Ignore),
         Prexied =
             if _input = null then
                 Renamed
@@ -59,4 +59,4 @@
             else
                 Renamed
     in
-      Prexied
+        Prexied

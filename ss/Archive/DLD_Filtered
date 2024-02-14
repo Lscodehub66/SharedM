@@ -1,6 +1,6 @@
 // let LoadCode = Load("DLD_Filtered","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
     Source = Load("Filtered_Add"),
-    #"Filtered Rows" = Table.SelectRows(Source, each [IS_FIMTN] <> "Y" and  [IS_FIMTN] <> "【Y】" )
+    #"Filtered Rows" = Table.SelectRows(Source, each [IS_FIMTN] <> "Y" and [IS_FIMTN] <> "【Y】")
 in
     #"Filtered Rows"

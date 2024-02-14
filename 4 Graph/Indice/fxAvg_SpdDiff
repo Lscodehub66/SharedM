@@ -7,23 +7,22 @@
         //被减数
         Minuend = _FirstItemMinusBySecondItem{1},
         //减数
-        Prefix = if List.Count(_FirstItemMinusBySecondItem) =3 then _FirstItemMinusBySecondItem{2} else "",
-        _SpdCol = Prefix& "SPD",
-        _spdDiff =_SpdCol & "_AVG",   
-       NewCol = { "TREND","Dummy" & "_NextRow"},
-       Prep = Table.RemoveColumns(Source, {_SpdCol ,_spdDiff}& NewCol , MissingField.Ignore),
-       
+        Prefix = if List.Count(_FirstItemMinusBySecondItem) = 3 then _FirstItemMinusBySecondItem{2} else "",
+        _SpdCol = Prefix & "SPD",
+        _spdDiff = _SpdCol & "_AVG",
+        NewCol = {"TREND", "Dummy" & "_NextRow"},
+        Prep = Table.RemoveColumns(Source, {_SpdCol, _spdDiff} & NewCol, MissingField.Ignore),
         #"Inserted Substraction" = Table.AddColumn(
-               Prep,
+            Prep,
             _SpdCol,
             each Number.Round((Record.Field(_, Subtrahend) - Record.Field(_, Minuend)) * 10000, 0),
             type number
         ),
-          #"Inserted Abs" = Table.AddColumn(
-        #"Inserted Substraction", _SpdCol & "_ABS", each Number.Abs(Record.Field(_,   _SpdCol)), type number
-    ),
+        #"Inserted Abs" = Table.AddColumn(
+            #"Inserted Substraction", _SpdCol & "_ABS", each Number.Abs(Record.Field(_, _SpdCol)), type number
+        ),
         #"Inserted Trend" = Table.AddColumn(
-                   #"Inserted Abs" , "TREND", each if Record.Field(_, _SpdCol) < 0 then "倒挂" else "正值", type text
+            #"Inserted Abs", "TREND", each if Record.Field(_, _SpdCol) < 0 then "倒挂" else "正值", type text
         ),
         #"Invoked NextRow" = Load("fxNextRow")(#"Inserted Trend", "TREND", "Dummy" & "_NextRow"),
         #"Inserted Compare" = Table.AddColumn(
@@ -65,6 +64,6 @@
         Avg_Spd = Table.AddColumn(
             Replaced, _spdDiff, each if Record.Field(_, _SpdCol) <= 0 then Avg1_Value else Avg2_Value, Int64.Type
         ),
-        RCol = fx("RCol")(Table.ReorderColumns(Avg_Spd,{  _SpdCol,   _spdDiff , "TREND"},MissingField.Ignore))
+        RCol = fx("RCol")(Table.ReorderColumns(Avg_Spd, {_SpdCol, _spdDiff, "TREND"}, MissingField.Ignore))
     in
         RCol

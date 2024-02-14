@@ -1,17 +1,19 @@
 // let Folder_Path ="File_Dimtbl[Folder_Path]{0}",Name_FText_InputCSV = null, PathName_InputFNum = "path",_extkey ="xls",
 (FolderPath as text, optional _extkey as nullable text) =>
     let
-     
         FolderPathAddSlash = FolderPath & "\",
         //
         SourceFD = Folder.Files(FolderPath),
         #"Inserted Text Before Delimiter" = Table.AddColumn(
             SourceFD, "Dummy", each Text.BeforeDelimiter([Folder Path], "Data\"), type text
         ),
-        
         Filtered2 = Table.SelectRows(
-         #"Inserted Text Before Delimiter" ,
-            each if (_extkey??"") = "" then true else Text.Contains([Extension], (_extkey??"") , Comparer.OrdinalIgnoreCase)
+            #"Inserted Text Before Delimiter",
+            each
+                if (_extkey ?? "") = "" then
+                    true
+                else
+                    Text.Contains([Extension], (_extkey ?? ""), Comparer.OrdinalIgnoreCase)
         ),
         SCol = Table.SelectColumns(Filtered2, {"Content", "Name", "Folder Path"})
     in

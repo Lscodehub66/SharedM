@@ -1,17 +1,27 @@
 //let LoadCode = Load("DLD_收入_23","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
-
 let
- Source           = fx("Source")("台账23_收入情况2023"), 
- CWB_tbl = CWB( "DLD_QRC_23") ,
- wRangeStart  = List.Buffer(Load("Controller")[wFilter_PreviousMon_Date]){0},
- Filtered         = Table.SelectRows ( Source, each [项目定价日] >= wRangeStart ), 
- SCol      = Table.SelectColumns ( Filtered, { "Project Name", "ISIN Code", "项目名称（集团全称）", "序号", "担任角色", "新规角色", "团队", "项目定价日" }, MissingField.UseNull ), 
- Replaced         = Table.ReplaceValue (SCol , "NON-JGC", "JBR", Replacer.ReplaceText, { "担任角色" } ), 
- Replaced2        = Table.ReplaceValue ( Replaced, each [团队], each if [团队] <> null then [团队] & "组" else "--", Replacer.ReplaceText, { "团队" } ), 
- Renamed = Table.RenameColumns ( Replaced2, { { "序号", "台账序号" }, { "团队", "COVERAGE" }, { "ISIN Code", "ISIN" } },MissingField.Ignore ),
-Sorted = Table.Sort(Renamed, {{"项目定价日", Order.Descending }}),
-#"//GNG_Multi" = if Text.Contains(Load("Controller")[Multi]{0},"QRC") or Load("Controller")[Multi]{0} = "ON" then "GO" else "NO-GO",
-        
-Crossroad     = if    #"//GNG_Multi" <> "GO" then try CWB_tbl otherwise Sorted  else Sorted 
+    Source = fx("Source")("台账23_收入情况2023"),
+    CWB_tbl = CWB("DLD_QRC_23"),
+    wRangeStart = List.Buffer(Load("Controller")[wFilter_PreviousMon_Date]){0},
+    Filtered = Table.SelectRows(Source, each [项目定价日] >= wRangeStart),
+    SCol = Table.SelectColumns(
+        Filtered,
+        {"Project Name", "ISIN Code", "项目名称（集团全称）", "序号", "担任角色", "新规角色", "团队", "项目定价日"},
+        MissingField.UseNull
+    ),
+    Replaced = Table.ReplaceValue(SCol, "NON-JGC", "JBR", Replacer.ReplaceText, {"担任角色"}),
+    Replaced2 = Table.ReplaceValue(
+        Replaced, each [团队], each if [团队] <> null then [团队] & "组" else "--", Replacer.ReplaceText, {"团队"}
+    ),
+    Renamed = Table.RenameColumns(
+        Replaced2, {{"序号", "台账序号"}, {"团队", "COVERAGE"}, {"ISIN Code", "ISIN"}}, MissingField.Ignore
+    ),
+    Sorted = Table.Sort(Renamed, {{"项目定价日", Order.Descending}}),
+    #"//GNG_Multi" =
+        if Text.Contains(Load("Controller")[Multi]{0}, "QRC") or Load("Controller")[Multi]{0} = "ON" then
+            "GO"
+        else
+            "NO-GO",
+    Crossroad = if #"//GNG_Multi" <> "GO" then try CWB_tbl otherwise Sorted else Sorted
 in
-Crossroad   
+    Crossroad

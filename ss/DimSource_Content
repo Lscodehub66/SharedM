@@ -1,8 +1,16 @@
 // folderfiles
 let
-  
     Source = Load("DimSource"),
-    Source_FD =     Table.FromList( List.Select(List.Distinct(  Source[FolderInput]), each if Text.StartsWith(_,"C:\Users\ktkt2\OneDrive\EXE Team\DataHub\") then _ = "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\" else true)),
+    Source_FD = Table.FromList(
+        List.Select(
+            List.Distinct(Source[FolderInput]),
+            each
+                if Text.StartsWith(_, "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\") then
+                    _ = "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\"
+                else
+                    true
+        )
+    ),
     #"Invoked Custom Function" = Table.AddColumn(Source_FD, "Data", each fx("Folder2")([Column1], ".xls")),
     #"Expanded Data" = Table.ExpandTableColumn(
         #"Invoked Custom Function",
@@ -20,8 +28,8 @@ let
             ),
         type text
     ),
-   // **Skipped**
-   #"Merged Columns" = Table.Buffer(
+    // **Skipped**
+    #"Merged Columns" = Table.Buffer(
         Table.CombineColumns(
             #"Inserted Text Before Delimiter",
             {"Folder Path", "Name"},
@@ -29,7 +37,11 @@ let
             "File Path"
         )
     ),
-    #"Inserted Merged Column" = Table.AddColumn(  #"Inserted Text Before Delimiter", "File Path", each Text.Combine({[Folder Path], [Name]}, ""), type text),
-    #"Removed Other Columns" = Table.SelectColumns(#"Inserted Merged Column",{"Content", "File Path", "PK_Excel2", "Folder Path"})
+    #"Inserted Merged Column" = Table.AddColumn(
+        #"Inserted Text Before Delimiter", "File Path", each Text.Combine({[Folder Path], [Name]}, ""), type text
+    ),
+    #"Removed Other Columns" = Table.SelectColumns(
+        #"Inserted Merged Column", {"Content", "File Path", "PK_Excel2", "Folder Path"}
+    )
 in
     #"Removed Other Columns"

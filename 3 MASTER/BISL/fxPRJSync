@@ -6,7 +6,15 @@
         DuplicatedCol1 = Table.DuplicateColumn(DupliatedCol, DateColName, "TARGET日期"),
         ChangedType = Table.TransformColumnTypes(DuplicatedCol1, {{"TARGET序号", type text}, {"TARGET日期", type date}}),
         AddSummand = Table.AddColumn(
-            ChangedType, "Summand", each if [TARGET序号] = null then "" else if [TARGET序号]  =  "nil" then Date.ToText([TARGET日期], "MMdd") else Text.BeforeDelimiter([TARGET序号], "-")
+            ChangedType,
+            "Summand",
+            each
+                if [TARGET序号] = null then
+                    ""
+                else if [TARGET序号] = "nil" then
+                    Date.ToText([TARGET日期], "MMdd")
+                else
+                    Text.BeforeDelimiter([TARGET序号], "-")
         ),
         ChangedToNum = Table.TransformColumnTypes(AddSummand, {{"Summand", Int64.Type}}),
         Operation =

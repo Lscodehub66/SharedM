@@ -6,14 +6,7 @@ let
     //
     ESG_Joined = fx("Merge")(KeysTagged_ISIN, CWB("ESG_ExternalReview"), "ISIN", "ISIN", {""}, {""}),
     //
-    DMIExpList = {"TICKER", "首次付息日", "付息频率", "债券余额", "评级类型", "利率类型", "筹款用途"},
-    mDMI = fx("Wstbl")("DMI"),
-    DMI_Joined = fx(
-        "Merge"
-    )(
-        ESG_Joined, mDMI, "ISIN", "ISIN", DMIExpList, List.ReplaceMatchingItems(DMIExpList, {{"评级类型", "是否债券违约"}})
-    ),
-    TF = Table.TransformColumns(DMI_Joined, {{"是否债券违约", each if _ <> "违约" then "" else "Y"}})
-
+    mDMI = fx("Combine")({CWB("wDMI_Exp"), CWB("DMI_Exp")}, {null}, {1}),
+    DMI_Joined = fx("Merge")(ESG_Joined, mDMI, "ISIN", "ISIN", {""}, {""})
 in
- TF
+    DMI_Joined

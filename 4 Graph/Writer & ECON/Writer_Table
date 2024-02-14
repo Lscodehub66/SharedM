@@ -10,10 +10,11 @@ let
         }
     ),
     Custom1 = Table.TransformColumns(
-        #"Grouped Rows", {{"CN_描述",each Text.Replace(Text.Replace(_,"上周，3个月","年期方面，3个月"), "美国国债利率",""), type text}}
+        #"Grouped Rows",
+        {{"CN_描述", each Text.Replace(Text.Replace(_, "上周，3个月", "年期方面，3个月"), "美国国债利率", ""), type text}}
     ),
     #"Merged Queries" = Table.NestedJoin(
-        Custom1, {"Index_Writer"},Load("Spd_TrendPQ"), {"Index_Writer"}, "Data", JoinKind.LeftOuter
+        Custom1, {"Index_Writer"}, Load("Spd_TrendPQ"), {"Index_Writer"}, "Data", JoinKind.LeftOuter
     ),
     #"Expanded Data" = Table.ExpandTableColumn(#"Merged Queries", "Data", {"描述"}, {"描述"}),
     Replaced = Table.ReplaceValue(

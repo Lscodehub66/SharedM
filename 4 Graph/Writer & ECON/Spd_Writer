@@ -1,15 +1,27 @@
 let
     Source = mIndice,
-  #"Removed Columns" = Table.RemoveColumns(Source,{"R_UST_3Y", "R_CGB_3Y","Index"}),
+    #"Removed Columns" = Table.RemoveColumns(Source, {"R_UST_3Y", "R_CGB_3Y", "Index"}),
     #"Added Index" = Table.AddIndexColumn(#"Removed Columns", "Index", 1, 1, Int64.Type),
-    #"RowNum Filtred" = Table.SelectRows(    #"Added Index" , each Text.Contains([TREND], "转向")),
-    Index =   #"RowNum Filtred" {0}[Index],
-    KeptRows = Table.FirstN(#"Added Index",Index),
-    Peak_Value = List.Max(Table.Column(KeptRows,"S_DAX_CGBUSTSPD")),
-    Filtered_three = Table.SelectRows(KeptRows, each Record.Field(_, "S_DAX_CGBUSTSPD") = Peak_Value or [Index] = 1 or Text.Contains(Record.Field(_, "TREND"), "转向")),
-    #"Replaced Value" = Table.ReplaceValue(Filtered_three,"倒挂", each if   Record.Field(_, "S_DAX_CGBUSTSPD") = Peak_Value then "Peak" else "",Replacer.ReplaceValue,{"TREND"}),
-    #"Removed Columns1" = Table.RemoveColumns(#"Replaced Value",{"Index"}),
-    #"Unpivoted Other Columns" = Table.UnpivotOtherColumns(    #"Removed Columns1" , {"TREND"}, "Attribute", "Value"),
+    #"RowNum Filtred" = Table.SelectRows(#"Added Index", each Text.Contains([TREND], "转向")),
+    Index = #"RowNum Filtred"{0}[Index],
+    KeptRows = Table.FirstN(#"Added Index", Index),
+    Peak_Value = List.Max(Table.Column(KeptRows, "S_DAX_CGBUSTSPD")),
+    Filtered_three = Table.SelectRows(
+        KeptRows,
+        each
+            Record.Field(_, "S_DAX_CGBUSTSPD") = Peak_Value
+            or [Index] = 1
+            or Text.Contains(Record.Field(_, "TREND"), "转向")
+    ),
+    #"Replaced Value" = Table.ReplaceValue(
+        Filtered_three,
+        "倒挂",
+        each if Record.Field(_, "S_DAX_CGBUSTSPD") = Peak_Value then "Peak" else "",
+        Replacer.ReplaceValue,
+        {"TREND"}
+    ),
+    #"Removed Columns1" = Table.RemoveColumns(#"Replaced Value", {"Index"}),
+    #"Unpivoted Other Columns" = Table.UnpivotOtherColumns(#"Removed Columns1", {"TREND"}, "Attribute", "Value"),
     #"Merged Columns" = Table.CombineColumns(
         #"Unpivoted Other Columns",
         {"TREND", "Attribute"},
@@ -44,6 +56,8 @@ let
     Custom4 = Table.AddColumn(
         Custom3, "Column4", each "自转向以来，中美利差平均约为" & Number.ToText(Record.Field(_, "Spd_Avg"), "0bps")
     ),
-    #"Inserted Merged Column" = Table.AddColumn(Custom4, "描述", each Text.Combine({[Column1], [Column2], [Column3], [Column4]}, ""), type text)
+    #"Inserted Merged Column" = Table.AddColumn(
+        Custom4, "描述", each Text.Combine({[Column1], [Column2], [Column3], [Column4]}, ""), type text
+    )
 in
     #"Inserted Merged Column"

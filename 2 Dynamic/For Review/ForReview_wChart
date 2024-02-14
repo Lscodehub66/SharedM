@@ -8,7 +8,7 @@ let
     Source = CWB("Filtered_Add"),
     SelfJoined = fx("SelfJoin_R")(Source, CWB("ForReview_" & _input), {_PK}),
     Fn2 = fx("NewOrInDB")(SelfJoined),
-    Filtered = Table.SelectRows(Fn2, each List.Contains({"新增"}, Record.Field(_, Name))),
+    Filtered = fx("ForReviewSelect")(Fn2, Name),
     SCol = Table.SelectColumns(Filtered, HD, MissingField.UseNull),
     Sorted = fx("SortNIndex")(SCol)
 in

@@ -31,7 +31,7 @@
 30,10,,,,7Y,7年期,USGG7YR,Index,USGG7YR Index,,,,美国国债利率,,3,5,,,,
 31,9,,,,10Y,10年期,USGG10YR,Index,USGG10YR Index,14,4,ustbox,美国国债利率,5,4,6,,,,USTGP
 32,11,,,,30Y,30年期,USGG30YR,Index,USGG30YR Index,15,4,ustbox,美国国债利率,6,5,7,,,,
-60,,,BMK,基准利率,,,,,,16,,,环球市场概览,,,,,,,
+60,,,BMK,基准利率(SOFR),,,,,,16,,,环球市场概览,,,,,,,
 61,46,,,,SOFR,有抵押隔夜融资,SOFRRATE,Index,SOFRRATE Index,17,,,环球市场概览,,,,,,,
 33,,,CGB,中国国债利率,,,,," ",,,,美国国债利率,,,,,,,
 34,33,,,,1Y,1年期,GCNY1YR,Index,GCNY1YR Index,,,,点心债,,,,,1,,

@@ -35,7 +35,7 @@
             Table.CombineColumns(
                 ReplacedCrcy, {"账户描述", "认购额描述"}, Combiner.CombineTextByDelimiter("", QuoteStyle.None), "认购描述"
             ),
-            {{"认购描述", each Text.Replace(Text.Replace(_, ".0倍","倍"), "0倍","倍")}}
+            {{"认购描述", each Text.Replace(Text.Replace(_, ".0倍", "倍"), "0倍", "倍")}}
         ),
         DupeCol = Table.DuplicateColumn(Table.DuplicateColumn(Merged1, "投资者分布", "地区分布描述"), "投资者类型", "类型分布描述"),
         Cleaned = fx("Replace")(DupeCol, {"地区分布描述", "类型分布描述"}, "投资者"),

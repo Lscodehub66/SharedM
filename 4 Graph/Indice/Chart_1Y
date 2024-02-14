@@ -1,5 +1,4 @@
 //  let LoadCode = Load("Chart_1Y","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
-
 let
     _input = "1",
     Source = fx("DateRange")({"近" & Text.From(_input) & "年", "当前"}, {CWB("mIndice"), "Date"}),

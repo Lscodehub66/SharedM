@@ -1,16 +1,15 @@
 let
-   Source = Table.Buffer(Table.LastN(CWB("USDCNH_Tighten"), 1)),
+    Source = Table.Buffer(Table.LastN(CWB("USDCNH_Tighten"), 1)),
     #"Added Custom" = Table.AddColumn(
-        Source ,
+        Source,
         "描述",
-        each Text.Replace([YYQQ],"Q","年") & "季度，中资美元债券新发平均IPG收窄幅度约为" & Number.ToText([USD], "0bps") & "，离岸人民币债券平均幅度约为" & Number.ToText(
-            [CNH], "0bps"
-        ),
+        each
+            Text.Replace([YYQQ], "Q", "年")
+                & "季度，中资美元债券新发平均IPG收窄幅度约为"
+                & Number.ToText([USD], "0bps")
+                & "，离岸人民币债券平均幅度约为"
+                & Number.ToText([CNH], "0bps"),
         type text
     )
 in
     #"Added Custom"
-
-
-
-

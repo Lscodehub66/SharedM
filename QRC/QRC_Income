@@ -1,7 +1,7 @@
 let
-Source1 = fx("Sort")(fx("Combine")({Load("QRC_Income2024"),CWB("QRC_Income")}, {"PRJ对账号"},{10}),{"PRJ对账号"}),
-MonthlySource = Load("QRC_IncomeAll"),
-Is = fx("ControlDM.IS_MONTHLY"),
-Output = if Is = "Y" then MonthlySource else Source1
+    Source1 = fx("Sort")(fx("Combine")({Load("QRC_Income2024"), CWB("QRC_Income")}, {"PRJ对账号"}, {10}), {"PRJ对账号"}),
+    MonthlySource = Load("QRC_IncomeAll"),
+    Is = fx("ControlDM.IS_MONTHLY"),
+    Output = if Is = "Y" then MonthlySource else Source1
 in
- Output
+    Output

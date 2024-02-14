@@ -1,6 +1,6 @@
-(TextInput as  nullable text) =>
-let
-Source = TextInput,
-Output= if Source= null then "" else Text.Replace(Text.Replace(Text.Upper(Source),"/","")," ","")
-in
-Output
+(TextInput as nullable text) =>
+    let
+        Source = TextInput,
+        Output = if Source = null then "" else Text.Replace(Text.Replace(Text.Upper(Source), "/", ""), " ", "")
+    in
+        Output

@@ -3,7 +3,7 @@
         Source = TableName,
         DupedCol = Table.DuplicateColumn(Source, (ColName ?? "SBLC提供者"), "Dummy.Dupe"),
         #"Inserted Text Between Delimiters" = Table.AddColumn(
-              DupedCol ,
+            DupedCol,
             "备证行分行",
             each
                 if
@@ -15,7 +15,9 @@
                     Text.BetweenDelimiters([Dummy.Dupe], "公司", "支行") & "支行"
                 else if Text.Contains([Dummy.Dupe] ?? "", "银行") and Text.Contains([Dummy.Dupe] ?? "", "分行") then
                     Text.BetweenDelimiters([Dummy.Dupe], "银行", "分行") & "分行"
-                else if Text.Contains([Dummy.Dupe]?? "", "/") then Text.AfterDelimiter([Dummy.Dupe]?? "","/") else
+                else if Text.Contains([Dummy.Dupe] ?? "", "/") then
+                    Text.AfterDelimiter([Dummy.Dupe] ?? "", "/")
+                else
                     "",
             type text
         ),
@@ -25,7 +27,9 @@
             each
                 if Text.Contains([Dummy.Dupe] ?? "", "分行") or Text.Contains([Dummy.Dupe] ?? "", "支行") then
                     Text.BeforeDelimiter([Dummy.Dupe] ?? "", [备证行分行])
-              else if Text.Contains([Dummy.Dupe]?? "", "/") then Text.BeforeDelimiter([Dummy.Dupe]?? "","/") else
+                else if Text.Contains([Dummy.Dupe] ?? "", "/") then
+                    Text.BeforeDelimiter([Dummy.Dupe] ?? "", "/")
+                else
                     [Dummy.Dupe],
             type text
         ),
@@ -39,7 +43,9 @@
                             _ & "股份有限公司"
                         else if Text.StartsWith(_, "工商银行") then
                             "中国" & _
-                        else if  Text.StartsWith(_, "BANK",Comparer.OrdinalIgnoreCase) then "【"&_&"】" else
+                        else if Text.StartsWith(_, "BANK", Comparer.OrdinalIgnoreCase) then
+                            "【" & _ & "】"
+                        else
                             _,
                     type text
                 }

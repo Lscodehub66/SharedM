@@ -8,13 +8,15 @@ let
         _SpdTenor = try Load("_SpdTenor") otherwise "3",
         Remote = "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\",
         Global = "\\itd-m09-fs02\dcm$\",
-        GPS = try if
-            Text.Contains(Record.Field(ThisWB, "FullPath"), "ktkt2", Comparer.OrdinalIgnoreCase)
-            or Text.StartsWith(ThisWB, "http", Comparer.OrdinalIgnoreCase)
-        then
-            "Remote"
-        else
-            "Global" otherwise fx("Parameter")("GPS")
+        GPS = try
+            if
+                Text.Contains(Record.Field(ThisWB, "FullPath"), "ktkt2", Comparer.OrdinalIgnoreCase)
+                or Text.StartsWith(ThisWB, "http", Comparer.OrdinalIgnoreCase)
+            then
+                "Remote"
+            else
+                "Global"
+            otherwise fx("Parameter")("GPS")
     ]
 in
     Record

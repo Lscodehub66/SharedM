@@ -1,24 +1,72 @@
-( TableName as table ) =>
- let
-  Source = TableName, 
-  PrepNumCol = List.Accumulate({"认购额(亿)","发行规模(亿)","投资者账户数"},  Source,(x,y) => if not Table.HasColumns(x,y) then Table.AddColumn(x, y, each null, type number) else x)  ,
-  Replaced = Table.ReplaceValue (  PrepNumCol , null, "", Replacer.ReplaceValue, { "投资者类型", "投资者分布" } ), 
-  Division = Table.AddColumn ( Replaced, "超额认购倍数", each if [#"认购额(亿)"] <> null then ( [#"认购额(亿)"] / [#"发行规模(亿)"] ) else null, type number ), 
-  RoundedOff = Table.TransformColumns (
-   Division, 
-   { { "认购额(亿)", each Number.Round ( _, 1 ), type number }, { "超额认购倍数", each Number.Round ( _, 1 ), type number }, { "投资者账户数", each Number.Round ( _, 0 ), type number } }
-  ), 
-  AddCol0 = Table.AddColumn ( RoundedOff, "账户描述", each if [投资者账户数] <> null then "超" & Number.ToText ( [投资者账户数] ) & "个账户参与，" else "" ), 
-  AddCol = fx("Replace")(Table.AddColumn (
-   AddCol0, 
-   "认购额描述", 
-   each if [#"认购额(亿)"] <> null then "认购额超" & Number.ToText ( [#"认购额(亿)"] ) & "亿" &  [货币] & "，超额认购约" & Number.ToText ( [超额认购倍数] ) & "倍；" else ""
-  ), {"认购额描述"},"CrcySuffix"),
-  Merged1 = Table.TransformColumns ( Table.CombineColumns ( AddCol, { "账户描述", "认购额描述" }, Combiner.CombineTextByDelimiter ( "", QuoteStyle.None ), "认购描述" ), {{"认购描述", each Text.Replace(Text.Replace(_, ".0倍", "倍"),"0倍" ,  "倍") }}), 
-  AddCol1 = Table.AddColumn ( Merged1, "地区分布描述", each if [投资者分布] <> "" then "地区分布：" & [投资者分布] & "；" else "" ), 
-  AddCol2 =  fx("Replace")(Table.AddColumn ( AddCol1, "类型分布描述", each if [投资者类型] <> "" then "类型分布：" &  [投资者类型] else "" ), {"地区分布描述","类型分布描述"},"Stats" ),
-  Merged = Table.AddColumn ( AddCol2, "Stats", each fx("PowerTrim") ( Text.Combine ( { [认购描述], [地区分布描述], [类型分布描述] }, "#(lf)" ), "#(lf)" ), type text ), 
-  RemovedEnd = Table.TransformColumns ( Merged, { { "Stats", each if Text.EndsWith ( _, "；" ) then Text.BeforeDelimiter ( _, "；", { 0, RelativePosition.FromEnd } ) else _, type text } } ), 
-  SelectedCol = Table.SelectColumns ( RemovedEnd, List.Distinct ( Table.ColumnNames ( Source ) & { "Stats" } ) )
- in
-  SelectedCol
+(TableName as table) =>
+    let
+        Source = TableName,
+        PrepNumCol = List.Accumulate(
+            {"认购额(亿)", "发行规模(亿)", "投资者账户数"},
+            Source,
+            (x, y) => if not Table.HasColumns(x, y) then Table.AddColumn(x, y, each null, type number) else x
+        ),
+        Replaced = Table.ReplaceValue(PrepNumCol, null, "", Replacer.ReplaceValue, {"投资者类型", "投资者分布"}),
+        Division = Table.AddColumn(
+            Replaced, "超额认购倍数", each if [#"认购额(亿)"] <> null then ([#"认购额(亿)"] / [#"发行规模(亿)"]) else null, type number
+        ),
+        RoundedOff = Table.TransformColumns(
+            Division,
+            {
+                {"认购额(亿)", each Number.Round(_, 1), type number},
+                {"超额认购倍数", each Number.Round(_, 1), type number},
+                {"投资者账户数", each Number.Round(_, 0), type number}
+            }
+        ),
+        AddCol0 = Table.AddColumn(
+            RoundedOff, "账户描述", each if [投资者账户数] <> null then "超" & Number.ToText([投资者账户数]) & "个账户参与，" else ""
+        ),
+        AddCol = fx(
+            "Replace"
+        )(
+            Table.AddColumn(
+                AddCol0,
+                "认购额描述",
+                each
+                    if [#"认购额(亿)"] <> null then
+                        "认购额超" & Number.ToText([#"认购额(亿)"]) & "亿" & [货币] & "，超额认购约" & Number.ToText([超额认购倍数]) & "倍；"
+                    else
+                        ""
+            ),
+            {"认购额描述"},
+            "CrcySuffix"
+        ),
+        Merged1 = Table.TransformColumns(
+            Table.CombineColumns(
+                AddCol, {"账户描述", "认购额描述"}, Combiner.CombineTextByDelimiter("", QuoteStyle.None), "认购描述"
+            ),
+            {{"认购描述", each Text.Replace(Text.Replace(_, ".0倍", "倍"), "0倍", "倍")}}
+        ),
+        AddCol1 = Table.AddColumn(Merged1, "地区分布描述", each if [投资者分布] <> "" then "地区分布：" & [投资者分布] & "；" else ""),
+        AddCol2 = fx(
+            "Replace"
+        )(
+            Table.AddColumn(AddCol1, "类型分布描述", each if [投资者类型] <> "" then "类型分布：" & [投资者类型] else ""),
+            {"地区分布描述", "类型分布描述"},
+            "Stats"
+        ),
+        Merged = Table.AddColumn(
+            AddCol2,
+            "Stats",
+            each fx("PowerTrim")(Text.Combine({[认购描述], [地区分布描述], [类型分布描述]}, "#(lf)"), "#(lf)"),
+            type text
+        ),
+        RemovedEnd = Table.TransformColumns(
+            Merged,
+            {
+                {
+                    "Stats",
+                    each if Text.EndsWith(_, "；") then Text.BeforeDelimiter(_, "；", {0, RelativePosition.FromEnd}) else
+                        _,
+                    type text
+                }
+            }
+        ),
+        SelectedCol = Table.SelectColumns(RemovedEnd, List.Distinct(Table.ColumnNames(Source) & {"Stats"}))
+    in
+        SelectedCol

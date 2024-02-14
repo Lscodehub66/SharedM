@@ -63,7 +63,7 @@
                     }
             )
         ),
-        Output = Table.ReplaceValue(datetbl , "星期","周",Replacer.ReplaceText,{"DayName.CN"}),
+        Output = Table.ReplaceValue(datetbl, "星期", "周", Replacer.ReplaceText, {"DayName.CN"}),
         ExpHD = if SCollist = null or SCollist = {null} then {""} else SCollist,
         Final =
             if IsMerge = true then

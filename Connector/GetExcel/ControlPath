@@ -1,0 +1,60 @@
+(_input as text) =>
+    let
+        _rootremote = "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\",
+        _folderone = "DataLake\",
+        _rootglobal = "\\itd-m09-fs02\dcm$\",
+        filekey = if _input = "DMI" then "美元债一级" else Text.Upper(_input ?? ""),
+        gps = fx("Parameter")("GPS"),
+        //Weekly
+        WeeklyRecord = [
+            yyyyMMdd = Text.Replace((fx("Parameter")("Monday") ?? ""), "/", ""),
+            yyyyMMdd0 = fx("Control.PreviousMon"),
+            OLDPPT = "Team Folder\Execution Team\Weekly\"
+                & yyyyMMdd0
+                & "\"
+                & "Markets - Weekly Update - "
+                & yyyyMMdd0
+                & ".pptx",
+            NEWPPT = "Team Folder\Execution Team\Weekly\"
+                & yyyyMMdd
+                & "\"
+                & "Markets - Weekly Update - "
+                & yyyyMMdd
+                & ".pptx",
+            Syndtxt_Folder = "Team Folder\Execution Team\Weekly\Ad Hoc\Syndicate"
+        ],
+        //Lake
+        LakeRecord = [
+            BASEPPT = "0 DCM Base\4 Markets\Markets - Weekly Update.pptx",
+            WeeklyList_Path = "0 DCM Base\4 Markets\Data\5. Weekly List.xlsx",
+            GRAPH = "0 DCM Base\4 Markets\Data\Graph.xlsm",
+            DIRECTORY = "0 DCM Base\4 Markets\DEAL DIRECTORY.xlsm",
+            美元债一级 = "Team Folder\Execution Team\DataHub\DataLake\美元债一级.xlsx",
+            违约 = "Team Folder\Execution Team\DataHub\DataLake\境外债券违约.xlsx",
+            银行 = "Team Folder\Execution Team\DataHub\DataLake\银行指标数据.xlsx",
+            YY = "Team Folder\Execution Team\DataHub\DataLake\YY.xlsx",
+            BBGFX = "Team Folder\Execution Team\DataHub\DataLake\BBGFX.xlsx",
+            ESG = "Team Folder\Execution Team\Rating & Advisory\7. ESG\Pitch book\ESG Deal List.xlsx"
+        ],
+        //Global
+        GlobalOnlyRecord = [
+            台账21 = "【QRC】DCM项目情况表\DCM2021年台账.xlsx",
+            台账22 = "【QRC】DCM项目情况表\DCM2022年台账.xlsx",
+            KYC = "【QRC】DCM项目情况表\DCM Existing KYC Master List_19 Oct 2023.xlsx",
+            台账23 = "【QRC】DCM项目情况表\DCM台账2023.xlsx",
+            台账24 = "【QRC】DCM项目情况表\DCM台账2024.xlsx"
+        ],
+        LakeField = try Record.Field(LakeRecord, filekey) otherwise _rootglobal & _input,
+        #"Global File Path" =
+            if Record.HasFields(WeeklyRecord, filekey) then
+                _rootglobal & Record.Field(WeeklyRecord, filekey)
+            else
+                LakeField,
+        RemoteFile = Text.AfterDelimiter(LakeField, "\", {0, RelativePosition.FromEnd}),
+        #"Remote File Path" =
+            if Record.HasFields(WeeklyRecord, filekey) then
+                _rootremote & Text.AfterDelimiter(Record.Field(WeeklyRecord, filekey), "Team Folder\Execution Team\")
+            else
+                Table.SelectRows(Folder.Files(_rootremote & _folderone), each [Name] = RemoteFile)
+    in
+        #"Remote File Path"

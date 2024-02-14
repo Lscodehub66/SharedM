@@ -30,7 +30,7 @@ let
     },
     FindList = List.RemoveItems(CWB("BOCOMJLM")[Find], {null}),
     ReplaceList = List.RemoveItems(CWB("BOCOMJLM")[Replace], {null}),
-    ColNow_mCurated = Table.ColumnNames(fx("Ws")("DEALSMASTER","=mCurated")),
+    ColNow_mCurated = Table.ColumnNames(fx("Ws")("DEALSMASTER", "=mCurated")),
     Source = CWB("AddTapInput"),
     Custom2 = fx(
         "Merge"

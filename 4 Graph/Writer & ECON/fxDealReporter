@@ -1,14 +1,15 @@
 (TableName as table, optional _input as text) =>
     let
         Source = TableName,
-        NewCols = {"新发总结板块", "多笔", "多笔主体", "描述", "描述2", "总述"} & { "2主体", "3详情", "4品种", "5价格", "6担任"},
+        NewCols = {"新发总结板块", "多笔", "多笔主体", "描述", "描述2", "总述"} & {"2主体", "3详情", "4品种", "5价格", "6担任"},
         Prep = Table.RemoveColumns(Source, NewCols, MissingField.Ignore),
         //
-       Added = fx("AddNIMSector")( Prep),
-
-        FnDupeCount = Table.RenameColumns(fx("DupeCount")(Added, "信用主体简称"), {"Dupe.Count", "多笔"}, MissingField.UseNull),
+        Added = fx("AddNIMSector")(Prep),
+        FnDupeCount = Table.RenameColumns(
+            fx("DupeCount")(Added, "信用主体简称"), {"Dupe.Count", "多笔"}, MissingField.UseNull
+        ),
         EntityForMulti = Table.AddColumn(
-             FnDupeCount , "多笔主体", each if [多笔] > 1 and [通过分行] <> "" then "通过" & [通过分行] else [信用主体简称], type text
+            FnDupeCount, "多笔主体", each if [多笔] > 1 and [通过分行] <> "" then "通过" & [通过分行] else [信用主体简称], type text
         ),
         EntityForBranch = Table.AddColumn(
             EntityForMulti, "分行主体", each if [通过分行] <> "" then "通过" & [通过分行] else "", type text
@@ -87,10 +88,7 @@
             type text
         ),
         Bocom = Table.AddColumn(
-            Price,
-            "6担任",
-            each if not List.Contains({"--","",null},[BOCOM担任]) then "，"& [BOCOM担任] else "",type text
-
+            Price, "6担任", each if not List.Contains({"--", "", null}, [BOCOM担任]) then "，" & [BOCOM担任] else "", type text
         ),
         #"Translated BOCOM" = fx("Replace")(Bocom, {"6担任"}, "角色"),
         AddedStats = Table.AddColumn(
@@ -148,7 +146,7 @@
         //  Stats = Table.AddColumn(Merged, "描述2", each if [Stats] <> "" then [描述] & "#(lf)" & [Stats] else [描述], type text),
         Grouped = Table.Group(
             Merged2,
-            {"每周第一天", "信用主体及评级", "板块","中资属性"},
+            {"每周第一天", "信用主体及评级", "板块", "中资属性"},
             {
                 {"新发总结板块", each Text.Combine(List.Distinct([新发总结板块]), ";"), type text},
                 {"定价日", each List.Max([定价日]), type date},
@@ -197,16 +195,11 @@
         #"Added Suffix0" = Table.AddColumn(
             MultiTrancheCN, "周几", each if not Text.Contains([DayName.CN], ";") then [DayName.CN] else "", type text
         ),
-        #"Added Suffix" = Table.AddColumn(
-            #"Added Suffix0", "周几描述", each if [周几] <> "" then [周几] & "，" else "", type text
-        ),
+        #"Added Suffix" = Table.AddColumn(#"Added Suffix0", "周几描述", each if [周几] <> "" then [周几] & "，" else "", type text),
         #"Added Suffix1" = Table.AddColumn(
             #"Added Suffix",
             "总述担任",
-            each if [多笔] > 1 and [多担任] = 1 then
-                Text.Replace([担任] & "，", "担任", "担任所有批次的")
-            else
-                "",
+            each if [多笔] > 1 and [多担任] = 1 then Text.Replace([担任] & "，", "担任", "担任所有批次的") else "",
             type text
         ),
         #"Added Suffix2" = Table.AddColumn(
@@ -216,16 +209,16 @@
             type text
         ),
         #"Added Suffix3" = Table.AddColumn(#"Added Suffix2", "总述连接", each if [多笔] > 1 then "，其中：" else "", type text),
-        replaced1 =      Table.ReplaceValue(#"Added Suffix3", each [周几], "", Replacer.ReplaceText, {"描述.分行","描述.分行.担任"}),
-       replaced2 = Table.ReplaceValue(replaced1,
-       
+        replaced1 = Table.ReplaceValue(#"Added Suffix3", each [周几], "", Replacer.ReplaceText, {"描述.分行", "描述.分行.担任"}),
+        replaced2 = Table.ReplaceValue(
+            replaced1,
             each [增发判定],
             each if ([多笔] > 1 and not Text.Contains([描述.分行], "分行")) and [周几] <> "" then "" else [增发判定],
             Replacer.ReplaceText,
-            {"描述.分行","描述.分行.担任"}
+            {"描述.分行", "描述.分行.担任"}
         ),
         #"Merged Columns" = Table.AddColumn(
-             replaced2,
+            replaced2,
             "Writer",
             each
                 if [多笔] > 1 and [多担任] < 2 then
@@ -235,7 +228,7 @@
             type text
         ),
         Replaced = Table.ReplaceValue(#"Merged Columns", "，，", "，", Replacer.ReplaceText, {"Writer"}),
-        List = {"新发总结板块", "信用主体及评级", "定价日", "中资属性","板块", "货币细分", "Writer"},
+        List = {"新发总结板块", "信用主体及评级", "定价日", "中资属性", "板块", "货币细分", "Writer"},
         SCol = Table.SelectColumns(Replaced, if _input = null then List else List & {"Custom"}, MissingField.UseNull)
     in
         SCol

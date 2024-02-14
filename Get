@@ -67,7 +67,7 @@ let
                         {"10", "板块", "房地产"},
                         {"11", "清算地", "CMU"},
                         {"12", "清算地", "欧清/明讯"},
-                        {"13", "清算地", "澳交所"},
+                        {"13", "清算地", "MCSD"},
                         {"14", "清算地", "上清所"},
                         {"15", "点心债年期分类", "3年"},
                         {"16", "点心债年期分类", "2年"},
@@ -282,9 +282,8 @@ let
                 "ESG_Indicator",
                 "SBLC_Provider_Name"
             },
-
-
-                HD_RO_AUTOECON =     { "IS_ECON",
+            HD_RO_AUTOECON = {
+                "IS_ECON",
                 "未来一周主要经济数据",
                 "上周主要经济数据",
                 "日期",
@@ -296,7 +295,9 @@ let
                 "范围",
                 "时间",
                 "TICKER",
-                "YYYYMMDD","Monday.Date"},
+                "YYYYMMDD",
+                "Monday.Date"
+            },
             HD_RO_NEWECON = {
                 "Index",
                 "未来一周主要经济数据",
@@ -677,6 +678,7 @@ let
                 "亿美元",
                 "Check"
             },
+            Header_PPTIGLGFV = {"定价日", "信用主体(备证行)", "发行评级", "币种规模", "期限", "票息", "IPG", "收窄基点", "结构", "主题", "地区"},
             Header_Graph_Deal_Weekly = {
                 "Index",
                 "ISIN",
@@ -1044,8 +1046,8 @@ let
                     HD_RO_ECON
                 else if Text.Contains(Key, "RONEWECON") then
                     HD_RO_NEWECON
-    else if Text.Contains(Key, "ROAUTOECON") then
-                     HD_RO_AUTOECON 
+                else if Text.Contains(Key, "ROAUTOECON") then
+                    HD_RO_AUTOECON
                 else if Text.Contains(Key, "WCURATED") then
                     Header_S_Dynamic_wCurated
                 else if Text.Contains(Key, "USDCNH") then
@@ -1072,6 +1074,8 @@ let
                     Header_SBLC
                 else if Text.Contains(Key, "DIMSUM") then
                     Header_DimSum
+                else if Text.Contains(Key, "PPTIGLGFV") then
+                    Header_PPTIGLGFV
                 else if Text.Contains(Key, "IGLGFV") then
                     Header_IGLGFV
                 else if Text.Contains(Key, "FTZ") then

@@ -6,6 +6,7 @@ let
                 & List.RemoveItems(fx("Ws")("DEALSMASTER", "=MISSUE")[ISIN_TEMP], {""})
         )
     },
+    FIMTNTicker = {List.Buffer(List.Distinct(Table.SelectRows(CWB("mChart"), each ([删除及隐藏] = "FIMTN"))[TICKER]))},
     File = Table.Buffer(fx("Ws")("DEALSMASTER")),
     DBPKList = {
         {"Bond", "ISIN"},
@@ -19,7 +20,7 @@ let
         DBPKList, {{1..2000}}, (x, y) => x & {Table.Column(File{[Item = "m" & y{0}, Kind = "Table"]}[Data], y{1})}
     ),
     List2 = List.Accumulate(DBPKList, {"Index"}, (x, y) => x & {y{1} & "_" & y{0}}),
-    tbl = Table.FromColumns(List1 & TempISIN, List2 & {"ISIN_TempDMI"}),
+    tbl = Table.FromColumns(List1 & TempISIN & FIMTNTicker, List2 & {"ISIN_TempDMI", "TICKER_FIMTN"}),
     #"Filtered Rows" = Table.SelectRows(tbl, each not List.Contains({null, ""}, [Check_Issue]))
 in
     #"Filtered Rows"

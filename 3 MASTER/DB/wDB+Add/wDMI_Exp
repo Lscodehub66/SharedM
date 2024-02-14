@@ -1,0 +1,26 @@
+// let LoadCode = Load("wDMI_Exp","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    DB = "wDMI_Exp",
+    DB_Source = CWB(DB),
+    Added = fx("Combine")({DB_Source, Load("wDMI_ExpPQ")}, {"ISIN"}, {0}),
+    LeftAnti = Table.NestedJoin(Added, {"ISIN"}, CWB("DMI_Exp"), {"ISIN"}, "DummyData", JoinKind.LeftAnti),
+    Filtered = Table.SelectRows(
+        LeftAnti,
+        each [筹款用途] <> "" or [付息频率] <> "" or [利率类型] <> "" or [TICKER] <> "" or [首次付息日] <> null or [债券余额] <> null
+    ),
+    // FX
+    HD_S = {"Base Currency", "USD_Mature"},
+    USDFXtbl =
+        let
+            FXSource = Table.Buffer(CWB("FXtbl")),
+            Renamed = Table.RenameColumns(FXSource, {{"USD", "USD_Mature"}}, MissingField.Ignore),
+            #"Filtered Rows" = Table.SelectRows(Renamed, each ([YYQQ] = "24Q1")),
+            #"Removed Other Columns" = Table.SelectColumns(#"Filtered Rows", HD_S)
+        in
+            Table.Buffer(#"Removed Other Columns"),
+    // FX
+    Prep = Table.RemoveColumns(Filtered, HD_S, MissingField.Ignore),
+    #"Joined FX" = Table.Join(Prep, "货币", USDFXtbl, "Base Currency", JoinKind.LeftOuter),
+    Sorted = fx("RCol")(fx("Sort")(#"Joined FX"), null, {"Base Currency"})
+in
+    Sorted

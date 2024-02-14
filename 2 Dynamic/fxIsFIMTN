@@ -10,39 +10,56 @@
             Removed,
             "IS_FIMTN",
             each
-                if [主题债券] <> "" and [主题债券] <> "点心债" and [主题债券] <> null then
+                if
+                    Table.HasColumns(Source, {"DBIndex_FIMTN", "发行场所"})
+                    and [DBIndex_FIMTN] <> null
+                    and [发行场所] = "未上市"
+                then
+                    "Y"
+                else if not List.Contains({"", null, "--", "点心债"}, [主题债券]) then
                     [主题债券]
                 else if Text.Contains([联席全球协调人], "BOCOM") or Text.Contains([牵头经办人], "BOCOM") then
-                    "IsBOCOM"
+                    "IsBISL"
                 else if Text.Length(Record.Field(_, CN_IPT)) > 4 then
                     "有IPG"
                 else if Text.Length(Record.Field(_, CN_FPG)) > 4 then
                     "有FPG"
                 else if List.Count(Text.Split([联席全球协调人], ";")) > 2 then
                     "JGC至少3家"
-                else if List.Count(Text.Split([牵头经办人], ";")) > 3 then
-                    "JBR至少4家"
                 else if [DMI行业] <> "金融" then
                     [DMI行业] & "(DMI)"
+                else if List.Count(Text.Split([牵头经办人], ";")) > 3 then
+                    "JBR至少4家"
                 else
                     "Y"
         ),
+        Fn1_R =
+            if Table.HasColumns(Source, {"Filter_Bond", "Filter_Exch"}) then
+                Table.ReplaceValue(
+                    Output,
+                    "Y",
+                    each if [Filter_Bond] <> "" or [Filter_Exch] <> "" then "" else "【Y】",
+                    Replacer.ReplaceValue,
+                    {"IS_FIMTN"}
+                )
+            else
+                Output,
         List1 = List.Intersect({CN_Source, {"债券备注", "DataSource"}}),
         Replaced =
             if not List.IsEmpty(List1) then
                 Table.ReplaceValue(
-                    Output,
+                    Fn1_R,
                     each [IS_FIMTN],
                     each
                         if Text.Contains(Record.Field(_, List1{0}), "BBG", Comparer.OrdinalIgnoreCase) then
-                            "--"
+                            "(DMI)Missing"
                         else
                             [IS_FIMTN],
                     Replacer.ReplaceValue,
                     {"IS_FIMTN"}
                 )
             else
-                Output,
+                Fn1_R,
         Filtered = Table.SelectRows(
             Replaced,
             each

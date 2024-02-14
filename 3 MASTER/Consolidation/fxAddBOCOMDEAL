@@ -8,11 +8,17 @@
         Accumulator = List.Zip({NewDummyCol, RefCol}),
         NewCol = {"BOCOM_DEAL?"},
         Prep = Table.RemoveColumns(Source, NewCol & NewDummyCol, MissingField.Ignore),
-        Replaced = if Table.HasColumns(Source, "是否合名") then Table.ReplaceValue(
-            Prep, each [港分_ROLE], each if [是否合名] = "合名" then [BISL_ROLE] else [港分_ROLE], Replacer.ReplaceValue, {
-                "港分_ROLE"
-            }
-        ) else Prep,
+        Replaced =
+            if Table.HasColumns(Source, "是否合名") then
+                Table.ReplaceValue(
+                    Prep,
+                    each [港分_ROLE],
+                    each if [是否合名] = "合名" then [BISL_ROLE] else [港分_ROLE],
+                    Replacer.ReplaceValue,
+                    {"港分_ROLE"}
+                )
+            else
+                Prep,
         Added = List.Accumulate(
             Accumulator,
             Replaced,

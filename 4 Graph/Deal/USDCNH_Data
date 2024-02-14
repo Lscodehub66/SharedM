@@ -1,4 +1,1 @@
-let
-MonitorName = "USDCNH_Data",
- Fn =fx("DBMonitor")( MonitorName )
- in     Fn
+let MonitorName = "USDCNH_Data", Fn = fx("DBMonitor")(MonitorName) in Fn

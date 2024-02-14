@@ -10,11 +10,18 @@
             NewCol,
             each
                 List.Accumulate(
-                    {{"GB", "--"}, {"G", "中债登"}, {"MO", "澳交所"}, {"HK", "CMU"}, {"CND", "上清所"}, {"XS", "欧清/明讯"}},
+                    {{"GB", "--"}, {"G", "中债登"}, {"MO", "MCSD"}, {"HK", "CMU"}, {"CND", "上清所"}, {"XS", "欧清/明讯"}},
                     "--",
                     (x, y) => if Text.StartsWith(Record.Field(_, RefCol), y{0}) then y{1} else x
                 )
         ),
-        Output = if not Table.HasColumns(Source, RefCol) then Source else #"Added Col"
+        Replaced = Table.ReplaceValue(
+            #"Added Col", "MCSD", each if [定价日] < #date(2021, 12, 15) then "澳交所" else "MCSD", Replacer.ReplaceValue,
+            {
+                NewCol
+            }
+        ),
+        ChangedType = Table.TransformColumnTypes(Replaced, {{NewCol, type text}}),
+        Output = if not Table.HasColumns(Source, RefCol) then Source else ChangedType
     in
         Output

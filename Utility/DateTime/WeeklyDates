@@ -70,6 +70,6 @@ let
         in
             #"Inserted Day",
     Merged = fx("Merge")(#"Removed Columns", fomctbl, "MondayText", "MondayText", {"FOMC.Date"}, {"FOMC.Date"}),
-    Sorted = Table.Sort(  Merged,{{"Due_date", Order.Ascending}})
+    Sorted = Table.Sort(Merged, {{"Due_date", Order.Ascending}})
 in
-  Sorted
+    Sorted

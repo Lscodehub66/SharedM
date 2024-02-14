@@ -1,16 +1,19 @@
 //fxAddFX
-
- (TableName as table) =>
-  let
-       Source = fx("Data")(TableName),
-       fxSmartFX = Load("fxSmartFX"),
-      
-        FX_0 = List.Accumulate( {{"USD","亿美元"},{"CNH","亿元"},{"HKD","亿港币"}}, Source, (x,y) => Table.ReplaceValue(
-         x,
-        null,
-        each if [货币] = y{0} then 1 * [#"发行规模(亿)"] else fxSmartFX(y{0}, [货币], [定价日]) * [#"发行规模(亿)"],
-        Replacer.ReplaceValue,{y{1}}
-    )) 
-   
-in
-    FX_0 
+(TableName as table) =>
+    let
+        Source = fx("Data")(TableName),
+        fxSmartFX = Load("fxSmartFX"),
+        FX_0 = List.Accumulate(
+            {{"USD", "亿美元"}, {"CNH", "亿元"}, {"HKD", "亿港币"}},
+            Source,
+            (x, y) =>
+                Table.ReplaceValue(
+                    x,
+                    null,
+                    each if [货币] = y{0} then 1 * [#"发行规模(亿)"] else fxSmartFX(y{0}, [货币], [定价日]) * [#"发行规模(亿)"],
+                    Replacer.ReplaceValue,
+                    {y{1}}
+                )
+        )
+    in
+        FX_0

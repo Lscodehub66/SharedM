@@ -1,6 +1,6 @@
 let
     Source = CWB("QRC_Income"),
-    #"Renamed Columns1" = Table.RenameColumns(Source,{{"项目定价日", "定价日"}},MissingField.Ignore),
+    #"Renamed Columns1" = Table.RenameColumns(Source, {{"项目定价日", "定价日"}}, MissingField.Ignore),
     #"Added Custom" = fx("CheckNDupe")(#"Renamed Columns1"),
     #"Renamed Columns" = Table.RenameColumns(#"Added Custom", {{"序号", "补齐.台账序号"}}),
     SCol = Table.SelectColumns(#"Renamed Columns", {"Check", "补齐.台账序号"}, MissingField.UseNull)

@@ -1,5 +1,9 @@
 let
-   EVA =  Expression.Evaluate("(TableName as table) =>let Source = TableName," & Text.AfterDelimiter(Load("Tomb_Transpose","Code"),"//**"),#shared)
-    
+    EVA = Expression.Evaluate(
+        "(TableName as table) =>let Source = TableName," & Text.AfterDelimiter(
+            Load("Tomb_Transpose", "Code"), "//**"
+        ),
+        #shared
+    )
 in
-       EVA
+    EVA

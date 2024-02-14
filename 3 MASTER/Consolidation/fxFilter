@@ -1,6 +1,6 @@
 // fx("Filter")({{"YYYY",">=",2022}},{{"删除及隐藏","not",{"删除","隐藏"}})
 //  {"","删除","隐藏","FIMTN","22_IsExch","22_PBOC"}
-(TableName as table , optional ThreeTextItemsList_ofList as list, optional TwoText_1List_ofList as list) =>
+(TableName as table, optional ThreeTextItemsList_ofList as list, optional TwoText_1List_ofList as list) =>
     let
         Source = TableName,
         Filtered =

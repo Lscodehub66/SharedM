@@ -17,7 +17,7 @@
         },
         PrepRemoval = Table.RemoveColumns(Source, ColToAdd, MissingField.Ignore),
         Prep = Table.ReplaceValue(
-            Table.TransformColumnTypes(      PrepRemoval , {{(ColName ?? "FPG_DMI"), type text}}),
+            Table.TransformColumnTypes(PrepRemoval, {{(ColName ?? "FPG_DMI"), type text}}),
             null,
             "",
             Replacer.ReplaceValue,
@@ -26,7 +26,7 @@
         #"Inserted NoTBC" = fx(
             "Replacer"
         )(
-            Table.DuplicateColumn(Prep, ColName ?? "FPG_DMI", "NoTBC"), {"NoTBC"}, {"【", "】","--"}, {"", "",""}
+            Table.DuplicateColumn(Prep, ColName ?? "FPG_DMI", "NoTBC"), {"NoTBC"}, {"【", "】", "--"}, {"", "", ""}
         ),
         #"Inserted DupeColumn" = Table.AddColumn(
             #"Inserted NoTBC",
@@ -144,7 +144,9 @@
         ),
         #"Removed Columns3" = Table.RemoveColumns(#"Inserted Lower_NumText", {"String_BeforeMinus"}),
         #"Reordered Columns" = Table.ReorderColumns(
-            #"Removed Columns3", {ColName??"FPG_DMI", "BMK", "Lower_NumText", "Upper_NumText", "WPIR_NumText"},MissingField.Ignore
+            #"Removed Columns3",
+            {ColName ?? "FPG_DMI", "BMK", "Lower_NumText", "Upper_NumText", "WPIR_NumText"},
+            MissingField.Ignore
         ),
         Fn1 = fx("fxBMKandNumText")(#"Reordered Columns", "BMK", "Lower_NumText"),
         Fn2 = fx("UpperString")(Fn1, "BMK", "Upper_NumText"),

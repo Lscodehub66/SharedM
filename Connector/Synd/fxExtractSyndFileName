@@ -1,0 +1,56 @@
+(TableName as table) =>
+    let
+        Source = TableName,
+        #"Filtered Rows" = Table.SelectRows(Source, each [Extension] = ".txt"),
+        #"Added Custom" = Table.AddColumn(
+            #"Filtered Rows",
+            "DummyName",
+            each Text.BeforeDelimiter(Text.Replace([Name], " ", "_"), [Extension]),
+            type text
+        ),
+        #"Added numtext" = fx("FirstNumString")(#"Added Custom", "yyyyMMdd.Text", "DummyName", "_"),
+        #"Added Before" = Table.AddColumn(
+            #"Added numtext", "File.Subject", each Text.BeforeDelimiter([DummyName], [yyyyMMdd.Text]), type text
+        ),
+        #"Added After" = Table.AddColumn(
+            #"Added Before", "File.Version", each Text.AfterDelimiter([DummyName], [yyyyMMdd.Text]), type text
+        ),
+        #"Added Custom1" = Table.AddColumn(#"Added After", "yyyyMMdd", each Date.From([yyyyMMdd.Text]), type date),
+        #"Removed Errors" = Table.RemoveRowsWithErrors(#"Added Custom1", {"yyyyMMdd"}),
+        #"Inserted Day Name" = Table.AddColumn(
+            #"Removed Errors", "DayOfWeek", each Date.DayOfWeek([yyyyMMdd], Day.Monday), Int64.Type
+        ),
+        #"Added Custom2" = Table.AddColumn(
+            #"Inserted Day Name",
+            "Monday.Text",
+            each
+                Date.ToText(
+                    Date.StartOfWeek(
+                        Date.AddDays([yyyyMMdd], if [DayOfWeek] = 5 then 2 else if [DayOfWeek] = 6 then 1 else 0),
+                        Day.Monday
+                    ),
+                    "yyyyMMdd"
+                )
+        ),
+        #"Grouped Rows" = Table.Group(
+            #"Added Custom2",
+            {"Monday.Text", "File.Subject"},
+            {{"Count", each Table.RowCount(_), Int64.Type}, {"Custom", each _, type table}}
+        ),
+        #"Added Filtered" = Table.AddColumn(
+            #"Grouped Rows",
+            "Custom1",
+            each
+                if [Count] > 1 then
+                    Table.SelectRows([Custom], each [File.Version] <> "" and not Text.Contains([File.Version], "1"))
+                else
+                    [Custom],
+            type table
+        ),
+        Exped = fx("Exp")(Table.SelectColumns(#"Added Filtered", {"Custom1"}), "Custom1"),
+        #"Merged Queries" = Table.NestedJoin(
+            Exped, {"Monday.Text"}, Load("WeeklyDates"), {"MondayText"}, "Query1", JoinKind.LeftOuter
+        ),
+        #"Expanded Query1" = Table.ExpandTableColumn(#"Merged Queries", "Query1", {"Due_date"}, {"Due_date"})
+    in
+        #"Expanded Query1"

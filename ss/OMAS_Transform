@@ -1,5 +1,4 @@
 //let LoadCode = Load("OMAS_Transform","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
-
 let
     Source = fx("Source")("OMAS")[Content]{0},
     //**
@@ -48,6 +47,10 @@ let
                 & Text.End([Bond Details], 4)
                 & Number.ToText([票息NUM])
     ),
-    FnMerger = fx("Merge")(AddedCustom,  fxOMAS_Check(CWB("deal_master")),  "CheckOMAS", "CheckOMAS", {"Check"}, {"Check"})
+    FnMerger = fx(
+        "Merge"
+    )(
+        AddedCustom, fxOMAS_Check(CWB("deal_master")), "CheckOMAS", "CheckOMAS", {"Check"}, {"Check"}
+    )
 in
     FnMerger

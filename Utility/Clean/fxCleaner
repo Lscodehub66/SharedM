@@ -12,7 +12,8 @@ let
             TextName =
                 if InputText = null then
                     ""
-                else if FTextInput = "主体" and not List.ContainsAny(Text.ToList(InputText), {"A".."Z","+"}, Comparer.OrdinalIgnoreCase) then
+                else if FTextInput = "主体" and not List.ContainsAny(Text.ToList(InputText), {"A".."Z", "+"}, Comparer.OrdinalIgnoreCase)
+                then
                     Text.Replace(InputText, " ", "")
                 else
                     InputText,
@@ -127,7 +128,8 @@ let
                 {"AT1", "额外一级资本债"},
                 {"FTZ", "明珠债"},
                 {"T2", "二级资本债"},
-                {"MOX", "澳交所"},
+                {"MOX", "莲花债"},
+                {"Lotus", "莲花债"},
                 {"PP", "私募配售"},
                 {"LPN", "贷款支持票据"},
                 {"JuniorPerp", "次级永续债"},
@@ -217,7 +219,6 @@ let
                 {"欧洲中东非洲", "欧洲、中东和非洲"},
                 {"银行财务部门", "司库"}
             },
-           
             一二三 = {
                 {"0", "零"},
                 {"1", "一"},
@@ -243,7 +244,6 @@ let
                 {"9", "I"},
                 {"10", "J"}
             },
-
             国家城市 = {
                 {"ABUDHABI", "^AUH^", "AUH", "阿布达比"},
                 {"ASTANA", "^NQZ^", "NQZ", "阿斯塔纳"},

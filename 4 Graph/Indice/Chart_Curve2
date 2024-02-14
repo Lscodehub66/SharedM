@@ -7,15 +7,15 @@ let
     #"Removed Other Columns" = Table.SelectColumns(EVA, {"当前"}),
     Demoted = Table.DemoteHeaders(#"Removed Other Columns"),
     Transposed = Table.TransformColumns(
-        Table.Transpose(Demoted), {{"Column1", each if _ = "当前" then Date.ToText(Load("Controller")[当前]{0}, "yyyy年M月d日") else _}}
+        Table.Transpose(Demoted),
+        {{"Column1", each if _ = "当前" then Date.ToText(Load("Controller")[当前]{0}, "yyyy年M月d日") else _}}
     ),
     Source = CWB("Chart_Curve2"),
     RemovedRows = Table.RemoveLastN(Source, 1),
-    #"Removed Columns" = Table.RemoveColumns(RemovedRows,{"Index"},MissingField.Ignore),
+    #"Removed Columns" = Table.RemoveColumns(RemovedRows, {"Index"}, MissingField.Ignore),
     Demote = Table.DemoteHeaders(#"Removed Columns"),
     Combined = fx("Combine")({Demote, Transposed}),
     #"Promoted Headers" = Table.PromoteHeaders(Combined, [PromoteAllScalars = true]),
-    Fn = fx("Sort")(   #"Promoted Headers",{""},"N")
+    Fn = fx("Sort")(#"Promoted Headers", {""}, "N")
 in
-  Fn
-   
+    Fn

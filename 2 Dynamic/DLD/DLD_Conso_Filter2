@@ -16,14 +16,8 @@ let
         {"tbldmistupid"}
     ),
     Fn = fx("ShowFilter")(RemoveStupid),
-    Fn1 = Load("fxIsFIMTN")(Fn),
-    Fn1_R = Table.ReplaceValue(
-        Fn1, "Y", each if [Filter_Bond] <> "" or [Filter_Exch] <> "" then "" else "【Y】", Replacer.ReplaceValue, {
-            "IS_FIMTN"
-        }
-    ),
     Fn1_R1 = Table.ReplaceValue(
-        Fn1_R,
+        Fn,
         each [Filter_Bond],
         each if [DataSource] = "BBG" then "" else [Filter_Bond],
         Replacer.ReplaceValue,
@@ -38,7 +32,8 @@ let
             {"Issue", "Check", {"Index"}},
             {"Stats", "Check", {"Index"}},
             {"BISL", "Check", {"Index"}},
-            {"TempDMI", "ISIN", {"Index"}}
+            {"TempDMI", "ISIN", {"Index"}},
+            {"FIMTN", "TICKER", {"Index"}}
         },
         Fn1_R1,
         (x, y) =>
@@ -59,17 +54,18 @@ let
             in
                 Output
     ),
+    Fn3 = fx("IsFIMTN")(Fn2),
     Repalced1 =
-        if Table.HasColumns(Fn2, {"mTempDMI", "Filter_Bond"}) then
+        if Table.HasColumns(Fn3, {"mTempDMI", "Filter_Bond"}) then
             Table.ReplaceValue(
-                Fn2,
+                Fn3,
                 each [Filter_Bond],
                 each if [mTempDMI] <> "" then "【临时isin】" else [Filter_Bond],
                 Replacer.ReplaceValue,
                 {"Filter_Bond"}
             )
         else
-            Fn2,
+            Fn3,
     credit = fx(
         "Merge"
     )(

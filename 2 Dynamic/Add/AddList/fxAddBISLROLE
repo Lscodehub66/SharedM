@@ -1,0 +1,25 @@
+(TableName as table) =>
+    let
+        Source = TableName,
+        NewCol = {"BISL_ROLE"},
+        RefCol = {"联席全球协调人", "牵头经办人"},
+        Prep = Table.RemoveColumns(Source, NewCol, MissingField.Ignore),
+        Added = Table.AddColumn(
+            Prep,
+            "BISL_ROLE",
+            each
+                if Text.Contains([联席全球协调人], "BOCOM") then
+                    "JGC"
+                else if Text.Contains([牵头经办人], "BOCOM") then
+                    "JBR"
+                else if Text.Contains([联席全球协调人], "【") then
+                    "【】"
+                else if Table.HasColumns(Source, "DataSource") and [DataSource] = "BBG" then
+                    "【】"
+                else
+                    "--",
+            type text
+        ),
+        Output = if Table.HasColumns(Source, RefCol) then Added else Source
+    in
+        Output

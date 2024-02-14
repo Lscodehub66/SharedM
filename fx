@@ -6,7 +6,9 @@
         GPS = try Table.Buffer(Excel.CurrentWorkbook(){[Name = "GPS"]}[Content])[Column1]{0} otherwise "Remote",
         _RFinput = if Text.Contains(NameInput, ".") then Text.AfterDelimiter(NameInput, ".") else "",
         Name_File =
-            if NameInput = "Source" then "fxExcel" else if Text.Contains(NameInput, ".") then
+            if NameInput = "Source" then
+                "fxExcel"
+            else if Text.Contains(NameInput, ".") then
                 Text.BeforeDelimiter(NameInput, ".")
             else if not Text.StartsWith(NameInput, "fx") then
                 "fx" & NameInput

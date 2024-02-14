@@ -1,9 +1,14 @@
-    (TableName as table, optional KeyInput as  nullable text)  =>   
-         // *Remove DummyCol*
-         let
-         Source = TableName,
-         Key = if KeyInput = null then "Dummy" else KeyInput,
-         CN_Source = List.Buffer(Table.ColumnNames(Source)),
-         RCol = Table.RemoveColumns(    Source   , List.Select(CN_Source, each Text.Contains(_,  Key )),MissingField.Ignore)
-         in
-         RCol
+(TableName as table, optional KeyInput as nullable text, optional removedhd as list) =>
+    // *Remove DummyCol*
+    let
+        Source = TableName,
+        Key = if KeyInput = null then "Dummy" else KeyInput,
+        CN_Source = List.Buffer(Table.ColumnNames(Source)),
+        RCol = Table.RemoveColumns(Source, List.Select(CN_Source, each Text.Contains(_, Key)), MissingField.Ignore),
+        Output =
+            if removedhd <> null and removedhd <> {null} then
+                Table.RemoveColumns(RCol, removedhd, MissingField.Ignore)
+            else
+                RCol
+    in
+        Output

@@ -5,7 +5,7 @@ let
     Filtered_null = Table.SelectRows(RemovedCol, each not List.Contains({"", null, "--", "ISIN"}, [ISIN])),
     KeysTagged = Table.AddKey(Filtered_null, {"Check"}, true),
     //
-    #"DimDate Joined" = fx("DateFromRecord")({KeysTagged,"定价日"}),
+    #"DimDate Joined" = fx("DateFromRecord")({KeysTagged, "定价日"}),
     //
     mStats = CWB("mStats"),
     mBond = Load("mISIN+Coverage+SBLC"),

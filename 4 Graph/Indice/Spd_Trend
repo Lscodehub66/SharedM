@@ -52,12 +52,12 @@ let
         each
             "当前，中美利差为"
                 & Number.ToText(Record.Field(_, _DAX), "0bps")
-                & "，"&"相较"
+                & "，"
+                & "相较"
                 & Date.ToText([Date_Peak], "yyyy年M月")
                 & "的最高点"
                 & Number.ToText(Record.Field(_, _DAX & "_Peak"), "0bps")
                 & Record.Field(_, _TrendCol & "_Is_Peak")
-                
                 & "#(lf)"
                 & "自转向以来，中美利差平均约为"
                 & Number.ToText(Record.Field(_, _DAX & "_Avg"), "0bps"),

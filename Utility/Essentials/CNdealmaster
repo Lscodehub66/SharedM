@@ -1,7 +1,7 @@
 let
     Source = List.Distinct(
         List.Accumulate(
-            {"mIssue", "mBond", "mBISL", "mEXE","mCredit", "deal_master","Directory"},
+            {"mIssue", "mBond", "mBISL", "mEXE", "mCredit", "deal_master", "Directory"},
             Get("Header_Graph_Deal_Weekly"),
             (x, y) => x & CWB(y, "CN")
         )

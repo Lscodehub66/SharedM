@@ -34,6 +34,10 @@ let
             Date.StartOfWeek(Date.AddDays(M1, -3), Day.Monday)
         else
             #date(1991, 2, 20),
+        EconDue.Date = Date.AddDays(
+            fx("NextWorkDay")(fx("Control.Sunday.Date"), Load("HKHolidays", "CSVDATE"), "Date"), -1
+        ),
+        Due.Date = fx("NextWorkDay")(fx("Control.Sunday.Date"), Load("HKHolidays", "CSVDATE"), "Date"),
         FOMC.Date = let
             Source = Table.SelectColumns(
                 Table.AddColumn(Load("FOMCCal", "CSVDATE"), "FOMC.Date", each Date.AddDays([Date_End], 1), type date),

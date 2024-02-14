@@ -1,6 +1,18 @@
 let
-    
-    Source = Table.FromRows(Json.Document(Binary.Decompress(Binary.FromText("nVjRVuJADP0Xn/ePPP7LooJUKRSEQpWC6Iq6R6ClRQbYlp9ppp2/2Ezb4yNNfOnhoWmSOzc3dzg/P4PdEbYTaIyl24VBIxEP6v4rm7Wyy1lyiOTYUI4F9U/oiLOLX/nriRir2R7iLTlIugvMkdX6YDXpQYu59A16YX8+ZPhK/7o/ze46IETamNKDNo6Os97A95mIgTmUGzpiYBlyMkx2LnQ8ennDJ9WfMbspziaJHP2Did6/J1h+SbEix6nBUa4dZhp8qlHIbCs9mFAP0+4kEQwAMdPwnX5I7Tnr9aUBcaQ+PtXE5BCoaAhWLTUKuIeLlFvWuNDNY5i2ueXFWynq3PLEB6zprEvnHTjscZI0kkyqWis9hMygeggtmwvEyAD7mhuEDVmMnvIgHCZdITPopgtmWzYtGTDmYmfrHWGF/HywC3Q0fUZqMniG1jA5dOlBvq930tU9i7aFtiAKnJ6wFaxNGBDQdbYsL3ag8/IjFZO1XnJk6zpizxGZvLPMbHDMgFwHGCQXL7B8YB6xGtxw9mG5eWfPWJ6crvj6pNxe2qczXo3GqLbq2ZQBdywTEUkvzNprdRVxef9qsASnpPDwB4vB9uSoRQ7Kwo02cLe+3P/lAh87UgjmkoS9pflLLg8jljUcMo4XKRgvozEnE45U9nrUmy62GJlGMmKYq+KEtgFrzZX7fs7qJgc7HbTUnMG6HDdYuPKa4ZyRqoib7ekFTrf0b1qcsUiGSfgWMo41K3vqCb5bgrXPug3knhkhZ9v0mDPl5TUtdlgofA8sR/QK6MwaPNHltZQ7fDJ2AE65XDcpWAWevqCSbeXjY7L/PF3vfRO8vjy8E1SyYg4MdAGk+2IbuX+67v4ou7w6/a33HGFxSTlI5w7fIpC3qoFs81IJQ2SCe0sw+7r6YFZhQt6q0iU7S88oDQbkflX1gah6pTQ5vx+qIC2s9Wkv4vYQhtNfsb3UrkhUqJX+G6JPG42L/w==", BinaryEncoding.Base64), Compression.Deflate)), let _t = ((type nullable text) meta [Serialized.Text = true]) in type table [信用主体 = _t])
-
+    Source = Table.FromRows(
+        Json.Document(
+            Binary.Decompress(
+                Binary.FromText(
+                    "nVjRVuJADP0Xn/ePPP7LooJUKRSEQpWC6Iq6R6ClRQbYlp9ppp2/2Ezb4yNNfOnhoWmSOzc3dzg/P4PdEbYTaIyl24VBIxEP6v4rm7Wyy1lyiOTYUI4F9U/oiLOLX/nriRir2R7iLTlIugvMkdX6YDXpQYu59A16YX8+ZPhK/7o/ze46IETamNKDNo6Os97A95mIgTmUGzpiYBlyMkx2LnQ8ennDJ9WfMbspziaJHP2Did6/J1h+SbEix6nBUa4dZhp8qlHIbCs9mFAP0+4kEQwAMdPwnX5I7Tnr9aUBcaQ+PtXE5BCoaAhWLTUKuIeLlFvWuNDNY5i2ueXFWynq3PLEB6zprEvnHTjscZI0kkyqWis9hMygeggtmwvEyAD7mhuEDVmMnvIgHCZdITPopgtmWzYtGTDmYmfrHWGF/HywC3Q0fUZqMniG1jA5dOlBvq930tU9i7aFtiAKnJ6wFaxNGBDQdbYsL3ag8/IjFZO1XnJk6zpizxGZvLPMbHDMgFwHGCQXL7B8YB6xGtxw9mG5eWfPWJ6crvj6pNxe2qczXo3GqLbq2ZQBdywTEUkvzNprdRVxef9qsASnpPDwB4vB9uSoRQ7Kwo02cLe+3P/lAh87UgjmkoS9pflLLg8jljUcMo4XKRgvozEnE45U9nrUmy62GJlGMmKYq+KEtgFrzZX7fs7qJgc7HbTUnMG6HDdYuPKa4ZyRqoib7ekFTrf0b1qcsUiGSfgWMo41K3vqCb5bgrXPug3knhkhZ9v0mDPl5TUtdlgofA8sR/QK6MwaPNHltZQ7fDJ2AE65XDcpWAWevqCSbeXjY7L/PF3vfRO8vjy8E1SyYg4MdAGk+2IbuX+67v4ou7w6/a33HGFxSTlI5w7fIpC3qoFs81IJQ2SCe0sw+7r6YFZhQt6q0iU7S88oDQbkflX1gah6pTQ5vx+qIC2s9Wkv4vYQhtNfsb3UrkhUqJX+G6JPG42L/w==",
+                    BinaryEncoding.Base64
+                ),
+                Compression.Deflate
+            )
+        ),
+        let
+            _t = ((type nullable text) meta [Serialized.Text = true])
+        in
+            type table [信用主体 = _t]
+    )
 in
     Source

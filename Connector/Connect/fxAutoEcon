@@ -1,9 +1,6 @@
 (optional _inputkey as nullable text) =>
     let
-        datepair = if _inputkey = null then {"PreviousMon.Date", "Sunday.Date"} else {
-            "Monday.Date",
-            "ThisSunday.Date"
-        },
+        datepair = if _inputkey = null then {"PreviousMon.Date", "当前"} else {"Due.Date", "ThisSunday.Date"},
         tblkey = if _inputkey = null then "wEcon" else "wFuture",
         key = if _inputkey = null then "上周主要经济数据" else "未来一周主要经济数据",
         RlvLvl = Load("RlvLvl"),
@@ -62,8 +59,10 @@
         ),
         Renamed = Table.RenameColumns(TextNum, {{"事件", key}, {"Ticker", "TICKER"}}, MissingField.Ignore),
         #"Added inputcolumn" = Table.AddColumn(Renamed, "IS_ECON", each "", type text),
-            #"Added Monday" = Table.AddColumn(   #"Added inputcolumn" , "Monday.Date", each fx("Control.Monday.Date"), type date),
-        #"Removed Columns" = Table.SelectColumns(      #"Added Monday" , Get("ROAUTOECON"), MissingField.Ignore),
+        #"Added Monday" = Table.AddColumn(
+            #"Added inputcolumn", "Monday.Date", each fx("Control.Monday.Date"), type date
+        ),
+        #"Removed Columns" = Table.SelectColumns(#"Added Monday", Get("ROAUTOECON"), MissingField.Ignore),
         Sorted0 = Table.Sort(#"Removed Columns", {{"Relevance", Order.Descending}, {"日期", Order.Ascending}}),
         DateTexted = fx("Data")(Table.TransformColumns(Sorted0, {{"日期", each Date.ToText(_, "M月d日"), type text}})),
         Self =

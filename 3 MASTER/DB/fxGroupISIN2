@@ -6,19 +6,12 @@
         Role = {"Count_BISLDeal", "Count_JBR", "Count_JGC"},
         default = Size0 & Size1 & Role,
         Source = fx("Data")(TableName),
-        Prep =
-            if not Table.HasColumns(Source, Size1) then
-                fx("AddBBGFX")(Source)
-            else
-                Source,
+        Prep = if not Table.HasColumns(Source, Size1) then fx("AddBBGFX")(Source) else Source,
         CN_Prep = List.Buffer(Table.ColumnNames(Prep)),
         Gpdefault = List.Transform(
             default, each if Text.StartsWith(_, "Count") then Text.Replace(_, "Count", "ISIN") else "合计" & _
         ),
-        Zipped =
-           
-                List.Zip({Gpdefault, default}),
-           
+        Zipped = List.Zip({Gpdefault, default}),
         List = List.Select(Zipped, each List.Contains(CN_Prep, _{1})),
         Custom1 = Table.Group(
             Prep,

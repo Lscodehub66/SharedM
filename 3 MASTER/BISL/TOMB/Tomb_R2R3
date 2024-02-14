@@ -18,7 +18,8 @@ let
         Merged,
         {"COMPARER"},
         {
-            {"信用主体", each Text.Combine(List.Distinct([信用主体]), ","), type text},   {"通过分行", each Text.Combine(List.Distinct([通过分行]), "/"), type text},
+            {"信用主体", each Text.Combine(List.Distinct([信用主体]), ","), type text},
+            {"通过分行", each Text.Combine(List.Distinct([通过分行]), "/"), type text},
             {"多笔", each List.Sum([多笔]) / List.Count([多笔]), type number},
             {"多币种", each List.Sum([多币种]) / List.Count([多币种]), type number},
             {"多品种", each List.Sum([多品种]) / List.Count([多品种]), type number},
@@ -77,7 +78,7 @@ let
             }
         }
     ),
-    #"Replaced Value" = Table.ReplaceValue(Grouped,"分行/","/",Replacer.ReplaceText,{"通过分行"}),
+    #"Replaced Value" = Table.ReplaceValue(Grouped, "分行/", "/", Replacer.ReplaceText, {"通过分行"}),
     TransformSum = Table.AddColumn(
         #"Replaced Value",
         "单币种",
@@ -96,8 +97,7 @@ let
     MultiTrancheCN = fx(
         "Replace"
     )(
-        Table.AddColumn(BDelimiter, "多笔中文", each if [多笔] > 1 then Number.ToText([多笔]) else "", type text),
-        {"多笔中文"},
+        Table.AddColumn(BDelimiter, "多笔中文", each if [多笔] > 1 then Number.ToText([多笔]) else "", type text), {"多笔中文"},
         "一二三"
     ),
     Added2 = Table.AddColumn(
@@ -126,6 +126,6 @@ let
     BDelimiter3 = Table.TransformColumns(BDelimiter2, {{"R3", each Text.BeforeDelimiter(_, ","), type text}}),
     Replaced1 = Table.ReplaceValue(BDelimiter3, "", each [R3A], Replacer.ReplaceValue, {"R2"}),
     Replaced2 = Table.ReplaceValue(Replaced1, ",", "#(lf)", Replacer.ReplaceText, {"R2"}),
-    SelectedCol2 = Table.SelectColumns(Replaced2, {"COMPARER", "R2", "R3","多笔","通过分行"})
+    SelectedCol2 = Table.SelectColumns(Replaced2, {"COMPARER", "R2", "R3", "多笔", "通过分行"})
 in
     SelectedCol2
