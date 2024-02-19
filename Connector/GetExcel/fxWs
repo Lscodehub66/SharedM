@@ -9,7 +9,7 @@
                 excelkey
             else
                 Text.Remove(_inputsheet ?? "", "="),
-        yyyyMMdd = Text.Replace((fx("Parameter")("Monday")??""), "/", ""),
+        yyyyMMdd = Text.Replace((fx("Parameter")("Monday") ?? ""), "/", ""),
         gps = fx("Parameter")("GPS"),
         RecordOfRecord = [
             DEALSMASTER = "Team Folder\Execution Team\DataHub\DEALs MASTER.xlsm",
@@ -30,8 +30,9 @@
             台账24 = "【QRC】DCM项目情况表\DCM台账2024.xlsx"
         ],
         Record = try Record.Field(RecordOfRecord, excelkey) otherwise _rootglobal & _input,
-        //Global
-        #"Global File Contents" = File.Contents(_rootglobal & Record),
+        #"Global File Path" = _rootglobal & Record,
+        //Global Content
+        #"Global File Contents" = File.Contents(#"Global File Path"),
         //remote
         RemoteFile = Text.AfterDelimiter(Record, "\", {0, RelativePosition.FromEnd}),
         RemoteFolder = _rootremote & _folderone,

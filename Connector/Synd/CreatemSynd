@@ -2,8 +2,8 @@ let
     Source = fx(
         "FdFiles"
     )(
-        "Team Folder\Execution Team\DataHub\Weekly\Syndicate",
-        "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\Weekly\Syndicate"
+        "Team Folder\Execution Team\Weekly\Ad Hoc\Syndicate",
+        "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\Weekly\Ad Hoc\Syndicate"
     ),
     Fn = fx("TransformSyndFiles")(Source),
     Fn2 = fx("Synd_Length")(Fn),

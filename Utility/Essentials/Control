@@ -19,7 +19,7 @@ let
         NextMon.Date = Date.StartOfWeek(Date.AddDays(M1, 7), Day.Monday),
         NextSunday.Date = Date.EndOfWeek(Date.AddDays(M1, 7), Day.Monday),
         NextTwoYearEnd.Date = Date.EndOfYear(Date.AddYears(M1, 2)),
-        当前 = Date.AddDays(fx("NextWorkDay")(fx("Control.Sunday.Date"), Load("HKHolidays", "CSVDATE"), "Date"), -1),
+        当前 = Date.AddDays(M1, -3),
         上周 = Date.AddDays(M1, -10),
         近1季度 = Date.AddQuarters(M1, -1),
         近半年 = Date.AddQuarters(M1, -2),
