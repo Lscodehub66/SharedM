@@ -9,6 +9,8 @@
         WeeklyRecord = [
             yyyyMMdd = Text.Replace((fx("Parameter")("Monday") ?? ""), "/", ""),
             yyyyMMdd0 = fx("Control.PreviousMon"),
+            DOWNLOAD = "Team Folder\Execution Team\Weekly\" & yyyyMMdd & "\Data\1.Weekly Download.xlsm",
+            DYNAMIC = "Team Folder\Execution Team\Weekly\" & yyyyMMdd & "\Data\2.Dynamic List Generator.xlsm",
             OLDPPT = "Team Folder\Execution Team\Weekly\"
                 & yyyyMMdd0
                 & "\"
@@ -21,10 +23,11 @@
                 & "Markets - Weekly Update - "
                 & yyyyMMdd
                 & ".pptx",
-            Syndtxt_Folder = "Team Folder\Execution Team\Weekly\Ad Hoc\Syndicate"
+            FOLDER.SYNDTXT = "Team Folder\Execution Team\Weekly\Ad Hoc\Syndicate"
         ],
         //Lake
         LakeRecord = [
+            DEALSMASTER = "Team Folder\Execution Team\DataHub\DEALs MASTER.xlsm",
             BASEPPT = "0 DCM Base\4 Markets\Markets - Weekly Update.pptx",
             WeeklyList_Path = "0 DCM Base\4 Markets\Data\5. Weekly List.xlsx",
             GRAPH = "0 DCM Base\4 Markets\Data\Graph.xlsm",

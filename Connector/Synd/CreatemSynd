@@ -1,11 +1,8 @@
 let
-    Source = fx(
-        "FdFiles"
-    )(
-        "Team Folder\Execution Team\Weekly\Ad Hoc\Syndicate",
-        "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\Weekly\Ad Hoc\Syndicate"
-    ),
-    Fn = fx("TransformSyndFiles")(Source),
+    FDPath = fx("ControlWB.Syndtxt_Folder"),
+    Source = fx("FdFiles")(FDPath),
+    Extracted = fx("ExtractSyndFileName")(Source),
+    Fn = fx("TransformSyndFiles")(Extracted),
     Fn2 = fx("Synd_Length")(Fn),
     Joined = fx("DimSynd")(Fn2),
     SCol = Table.SelectColumns(Joined, {"Monday.Text", "Synd.Input", "Description", "Source.Files"}),
