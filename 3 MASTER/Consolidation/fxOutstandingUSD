@@ -1,17 +1,27 @@
 (TableName as table, optional inputNewCol as list, optional smallerslicer as nullable number) =>
     let
-        // FX
-        FXSource = Table.Buffer(CWB("FXtbl")),
-        HD_S = {"Base Currency", "USD"},
+        HD_S = {"Base Currency", "USD_Mature"},
         NewCol = if inputNewCol = null or inputNewCol = {null} then {"余额亿美元", "余额美元规模分类"} else inputNewCol,
         Count = List.Count(NewCol),
-        #"Filtered Rows" = Table.SelectRows(FXSource, each ([YYQQ] = "24Q1")),
-        #"Removed Other Columns" = Table.SelectColumns(#"Filtered Rows", HD_S),
-        FXOutput = Table.TransformColumnTypes(#"Removed Other Columns", {{"USD", type number}}),
-        // FX
-        Source = Table.RemoveColumns(TableName, HD_S & NewCol, MissingField.Ignore),
-        #"Joined FX" = Table.Join(Source, "货币", FXOutput, "Base Currency", JoinKind.LeftOuter),
-        #"Inserted Multiplication" = Table.AddColumn(#"Joined FX", NewCol{0}, each [USD] * [债券余额], type number),
+        //FX
+        USDFXtbl =
+            let
+                FXSource = Table.Buffer(CWB("FXtbl")),
+                Renamed = Table.RenameColumns(FXSource, {{"USD", "USD_Mature"}}, MissingField.Ignore),
+                #"Filtered Rows" = Table.SelectRows(Renamed, each ([YYQQ] = "24Q1")),
+                #"Removed Other Columns" = Table.SelectColumns(#"Filtered Rows", HD_S)
+            in
+                Table.Buffer(#"Removed Other Columns"),
+        //FX
+        Source = TableName,
+        Prep = Table.RemoveColumns(Source, NewCol, MissingField.Ignore),
+        #"Joined FX" =
+            if Table.HasColumns(Source, "USD_Mature") then
+                Prep
+            else
+                Table.Join(Prep, {"货币"}, USDFXtbl, {"Base Currency"}, JoinKind.LeftOuter),
+        Replaced = fx("ReplaceNullOutstanding")(#"Joined FX"),
+        #"Inserted Multiplication" = Table.AddColumn(Replaced, NewCol{0}, each [USD_Mature] * [债券余额], type number),
         #"Rounded Off" = Table.TransformColumns(
             #"Inserted Multiplication", {{NewCol{0}, each Number.Round(_, 3), type number}}
         ),
@@ -23,13 +33,8 @@
             Replacer.ReplaceValue,
             {NewCol{1}}
         ),
-        Crossroad =
-            if  Count =1 then #"Rounded Off" else if smallerslicer <> null then
-                Slicer_Size
-            else 
-                Slicer_Size0
-         ,
-        #"Removed Columns" = Table.RemoveColumns(Crossroad, HD_S & {"Dummy" & NewCol{0}}, MissingField.Ignore),
+        Crossroad = if Count = 1 then #"Rounded Off" else if smallerslicer <> null then Slicer_Size else Slicer_Size0,
+        #"Removed Columns" = fx("RCol")(Crossroad, null, HD_S & {"Dummy" & NewCol{0}}),
         Output = if Table.HasColumns(Source, "债券余额") then #"Removed Columns" else Source
     in
         Output

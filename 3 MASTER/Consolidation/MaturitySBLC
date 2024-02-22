@@ -1,0 +1,24 @@
+//let LoadCode = Load("MaturitySBLC","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    Source = fx("DBMature")("Mature"),
+    #"Filtered Rows" = Table.SelectRows(Source, each ([结构分类] = "备证")),
+    HD = {
+        "BOCOM_DEAL?",
+        "Index",
+        "兑付日",
+        "信用主体简称",
+        "主体评级",
+        "备证行",
+        "发行评级",
+        "货币",
+        "合计发行规模(亿)",
+        "年期",
+        "票息",
+        "结构",
+        "地区",
+        "发行人"
+    },
+    Custom1 = fx("Sort")(#"Filtered Rows", {"兑付日"}),
+    SCol = Table.SelectColumns(Custom1, HD, MissingField.UseNull)
+in
+    SCol

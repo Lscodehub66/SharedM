@@ -1,10 +1,11 @@
 //let LoadCode = Load("Pipe_Folder","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
     Source = Load("fxConnect")("PipeF"),
+    #"Filtered Rows" = Table.SelectRows(Source, each[Attributes][Size] > 1000),
     fxPipe_Transform = Load("fxPipe_Transform"),
     CWB_tbl = CWB("Pipe_Folder"),
     //
-    BDelimiter = Table.TransformColumns(Source, {{"Name", each Text.BeforeDelimiter(_, " "), type text}}),
+    BDelimiter = Table.TransformColumns(#"Filtered Rows", {{"Name", each Text.BeforeDelimiter(_, " "), type text}}),
     Fn = Table.AddColumn(BDelimiter, "Data", each fxPipe_Transform([Content])),
     Replaced = Table.ReplaceValue(
         Fn, each [Name], each [Name] & DateTime.ToText([#"Date modified"], " MM/dd"), Replacer.ReplaceValue, {"Name"}
@@ -17,6 +18,11 @@ let
             name = "Pipe_Folder",
             Try = if fx("Parameter")("GPS") = "Remote" then CWB_tbl else try CWB_combined otherwise Expanded
         in
-            Try
+            Try,
+    #"Sorted Rows" = Table.Sort(Output, {{"Name", Order.Descending}}),
+    #"Added Index" = Table.AddIndexColumn(
+        Table.RemoveColumns(#"Sorted Rows", {"Index"}, MissingField.Ignore), "Index", 1, 1, Int64.Type
+    ),
+    #"Sorted Rows1" = Table.Sort(fx("1st")(#"Added Index", {"Index"}), {{"Index", Order.Descending}})
 in
-    Output
+    #"Sorted Rows1"

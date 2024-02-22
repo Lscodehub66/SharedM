@@ -1,0 +1,22 @@
+// let LoadCode = Load("wDMI_Exp","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    DB = "wDMI_Exp",
+    DB_Source = CWB(DB),
+    Added = fx("Combine")({DB_Source, Load("wDMI_ExpPQ")}, {"ISIN"}, {0}),
+    LeftAnti = Table.NestedJoin(Added, {"ISIN"}, CWB("DMI_Exp"), {"ISIN"}, "DummyData", JoinKind.LeftAnti),
+    // FX
+    HD_S = {"Base Currency", "USD_Mature"},
+    USDFXtbl =
+        let
+            FXSource = Table.Buffer(CWB("FXtbl")),
+            Renamed = Table.RenameColumns(FXSource, {{"USD", "USD_Mature"}}, MissingField.Ignore),
+            #"Filtered Rows" = Table.SelectRows(Renamed, each ([YYQQ] = "24Q1")),
+            #"Removed Other Columns" = Table.SelectColumns(#"Filtered Rows", HD_S)
+        in
+            Table.Buffer(#"Removed Other Columns"),
+    // FX
+    Prep = Table.RemoveColumns(LeftAnti, HD_S, MissingField.Ignore),
+    #"Joined FX" = Table.Join(Prep, "货币", USDFXtbl, "Base Currency", JoinKind.LeftOuter),
+    Sorted = fx("RCol")(fx("Sort")(#"Joined FX"), null, {"Base Currency"})
+in
+    Sorted

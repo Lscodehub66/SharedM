@@ -36,66 +36,7 @@ let
     SCol = Table.SelectColumns(
         Renamed, {"项目状态", "公司名称", "担任角色", "币种", "发行规模", "年期", "承销团成员", "预计完成日期", "项目进展", "分行"}, MissingField.UseNull
     ),
-    TFCleaned = Table.TransformColumns(
-        SCol,
-        List.Transform(
-            {"分行", "预计完成日期", "发行规模", "币种", "年期"},
-            each
-                {
-                    _,
-                    each
-                        fx(
-                            "Clean"
-                        )(
-                            _,
-                            {
-                                "省",
-                                "市",
-                                "区",
-                                "2022",
-                                "2023",
-                                "2024",
-                                "预计",
-                                "一季度",
-                                "二季度",
-                                "三季度",
-                                "四季度",
-                                "不超过",
-                                "发行",
-                                "美元",
-                                "人民币",
-                                "欧元",
-                                "年期",
-                                "上半年",
-                                "下半年",
-                                "分行"
-                            },
-                            {
-                                "",
-                                "",
-                                "",
-                                "22",
-                                "23",
-                                "24",
-                                "",
-                                "Q1",
-                                "Q2",
-                                "Q3",
-                                "Q4",
-                                "",
-                                "",
-                                "USD",
-                                "CNH",
-                                "EUR",
-                                "y",
-                                "H1",
-                                "H2",
-                                ""
-                            }
-                        )
-                }
-        )
-    ),
+    TFCleaned = fx("Replace")(SCol, {"分行", "预计完成日期", "发行规模", "币种", "年期"}, "PIPELINE"),
     ASuffix = Table.TransformColumns(TFCleaned, {{"分行", each if Text.Length(_) = 2 then _ & "分行" else "" & _, type text}}),
     CleanedName = fx("Replace")(ASuffix, {"公司名称"}, "主体"),
     ASN = Table.AddColumn(CleanedName, "简称", each fxSNBankCorp([公司名称])),

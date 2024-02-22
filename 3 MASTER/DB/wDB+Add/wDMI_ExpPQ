@@ -1,0 +1,13 @@
+let
+    Source = fx("Ws")("DYNAMIC", "wConso"),
+    #"Filtered Rows" = Table.SelectRows(Source, each ([mBond] = "Y")),
+    #"Removed Duplicates" = Table.Distinct(#"Filtered Rows", {"ISIN"}),
+    DMIExpList = {"TICKER", "首次付息日", "付息频率", "债券余额", "评级类型", "利率类型", "筹款用途"},
+    DMIRenamed = List.ReplaceMatchingItems(DMIExpList, {{"评级类型", "是否债券违约"}}),
+    mISIN = Table.SelectColumns(#"Removed Duplicates", {"ISIN", "定价日", "货币"}),
+    DMISource = fx("Ws")("DYNAMIC", "DLD_DMIBBG"),
+    DMI_Joined = Table.NestedJoin(mISIN, {"ISIN", "定价日"}, DMISource, {"ISIN", "定价日"}, "Data", JoinKind.Inner),
+    #"Expanded Data" = Table.ExpandTableColumn(DMI_Joined, "Data", DMIExpList, DMIRenamed),
+    TF = Table.TransformColumns(#"Expanded Data", {{"是否债券违约", each if _ <> "违约" then "" else "Y"}})
+in
+    TF
