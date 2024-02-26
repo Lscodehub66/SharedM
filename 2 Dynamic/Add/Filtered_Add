@@ -1,33 +1,15 @@
 // let LoadCode = Load("Filtered_Add","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-   Source1 = CWB("DLD_Conso_Filter"),
+    Source1 = CWB("DLD_Conso_Filter"),
     Filtered = Table.SelectRows(
         Source1,
-        each  List.Contains({null, "", "--"}, [Filter_Bond]) and List.Contains({null, "", "--"}, [Filter_Exch])
+        each List.Contains({null, "", "--"}, [Filter_Bond]) and List.Contains({null, "", "--"}, [Filter_Exch])
     ),
     Custom1 = Table.AddColumn(Filtered, "删除及隐藏", each if [IS_FIMTN] = "Y" or [IS_FIMTN] = "【Y】" then "FIMTN" else ""),
-    #"Added BISL_ROLE" =
-        if not Table.HasColumns(Custom1, "BISL_ROLE") then
-            Table.AddColumn(
-                Custom1,
-                "BISL_ROLE",
-                each
-                    if Text.Contains([联席全球协调人], "BOCOM") then
-                        "JGC"
-                    else if Text.Contains([牵头经办人], "BOCOM") then
-                        "JBR"
-                    else if Text.Contains([联席全球协调人], "【") then
-                        "【】"
-                    else if Table.HasColumns(Custom1, "DataSource") and [DataSource] = "BBG" then
-                        "【】"
-                    else
-                        "--"
-            )
-        else
-            Custom1,
-    Clean_Structure = fx("Replace")(Table.DuplicateColumn(#"Added BISL_ROLE", "发行架构", "结构"), {"结构"}, "结构"),
+    Clean_Structure = fx("Replace")(Table.DuplicateColumn(Custom1, "发行架构", "结构"), {"结构"}, "结构"),
     Added = List.Accumulate(
         {
+            "BISLROLE",
             "Reopen",
             "BnD",
             "SBLC",
@@ -62,13 +44,16 @@ let
     ),
     // DM = {"mIssue", "mStats", "mBISL", "mEXE", "mCredit","债券备注"},
     #"Operational Columns" = fx("NewOrInDB")(Replaced2),
-  
     HD2 = {"Index", "债券简称", "删除及隐藏", "mIssue", "mBond", "mStats", "mBISL", "mEXE", "mCredit"},
     //  & {"Filter_Credit", "Filter_Bond", "Filter_Exch", "IS_FIMTN"}
     Reordered = fx(
         "1st"
     )(
-        try Table.ReorderColumns(    #"Operational Columns", CWB("Filtered_Add", "CN"), MissingField.Ignore) otherwise     #"Operational Columns", HD2
+        try
+            Table.ReorderColumns(#"Operational Columns", CWB("Filtered_Add", "CN"), MissingField.Ignore)
+        otherwise
+            #"Operational Columns",
+        HD2
     ),
     Checked = fx("CheckNDupe")(Reordered),
     Stamped = Table.AddColumn(
