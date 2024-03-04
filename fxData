@@ -78,13 +78,28 @@
             "多笔",
             "Tranches",
             "Nth_ISIN",
-            "WEEKNUM"
+            "WEEKNUM",
+            "WeekNum"
         },
         //Number ValueTyp
         Num0ToNull = {"Δ1周", "Δ年初至今", "PRJ对账号"},
         Num5 = List.Select(CN_RNSource, each Text.StartsWith(_, "R_") or Text.StartsWith(_, "C_"))
             & Num0ToNull
-            & {"FX_Rate", "QRC汇率因子", "USD", "CNH", "HKD", "EUR", "SGD", "MOP", "GBP", "AUD", "NZD", "CAD"},
+            & {
+                "FX_Rate",
+                "QRC汇率因子",
+                "USD",
+                "CNH",
+                "HKD",
+                "EUR",
+                "SGD",
+                "MOP",
+                "GBP",
+                "AUD",
+                "NZD",
+                "CAD",
+                "USD_Mature"
+            },
         Num3 = List.Select(
             CN_RNSource,
             each
@@ -99,7 +114,7 @@
             & List.Select(
                 CN_RNSource, each Text.StartsWith(_, "S_") or Text.StartsWith(_, "Spd_") or Text.StartsWith(_, "I_")
             ),
-        Num1 = {"最终账簿(亿)", "建账峰值(亿)", "收窄Num"} & List.Select(CN_RNSource, each Text.StartsWith(_, "V_")),
+        Num1 = {"最终账簿(亿)", "建账峰值(亿)", "收窄Num", "超额认购倍数"} & List.Select(CN_RNSource, each Text.StartsWith(_, "V_")),
         Num0 = {"FEE", "Relevance", "Year.Num", "兑付日.YearNum", "金额 (MM USD)"}
             & List.Select(CN_RNSource, each Text.StartsWith(_, "CT_") or Text.StartsWith(_, "承销费")),
         Num = {
@@ -162,6 +177,7 @@
         }
             & List.Select(CN_RNSource, each Text.StartsWith(_, "Index_") or Text.EndsWith(_, ".num")),
         Text_Trim = {
+            "BOCOM担任",
             "PROJECT_CODE",
             "期数",
             "外部评审机构",

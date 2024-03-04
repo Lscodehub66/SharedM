@@ -27,7 +27,15 @@ let
                             {"DIMSUM", {{{"货币细分", "=", "点心债"}}, null}},
                             {
                                 "IGLGFV",
-                                {{{"货币", "<>", "CNH"},{"结构分类", "<>", "备证"}, {"是否IG", "<>", "--"}, {"投标资历分类", "=", "SOE Creds"}}, null}
+                                {
+                                    {
+                                        {"货币", "<>", "CNH"},
+                                        {"结构分类", "<>", "备证"},
+                                        {"是否IG", "<>", "--"},
+                                        {"投标资历分类", "=", "SOE Creds"}
+                                    },
+                                    null
+                                }
                             },
                             {"SBLC", {{{"结构", null, "备证"}}, null}},
                             {"FI", {{{"板块", null, "金"}}, null}},
@@ -47,7 +55,18 @@ let
                     "Graph_Deal_Weekly"
                 else
                     List.Accumulate(
-                        {"RMB", "ESG", "DIMSUM", "IGLGFV", "SBLC", "FI", "FTZ", "USDCNH_DATA", "USDCNH_TIGHTEN"},
+                        {
+                            "RMB",
+                            "ESG",
+                            "DIMSUM",
+                            "IGLGFV",
+                            "PPTIGLGFV",
+                            "SBLC",
+                            "FI",
+                            "FTZ",
+                            "USDCNH_DATA",
+                            "USDCNH_TIGHTEN"
+                        },
                         "",
                         (x, y) => if Text.Contains(Key, y) and not Text.Contains(Key, "PIVOT") then y else x
                     ),

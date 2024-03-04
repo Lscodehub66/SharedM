@@ -44,7 +44,7 @@ let
             ],
             [
                 ObjectName = "ustcgbspdbox",
-                Description = "中美利差自2022年3月起持续深度倒挂，11月开始倒挂幅度明显缓和"
+                Description = "中美利差自2022年3月起持续深度倒挂，11月开始倒挂幅度明显缓和，至近期倒挂再次加深"
             ],
             [
                 ObjectName = "ustcgbspdbox",
@@ -134,7 +134,8 @@ let
             else
                 x
     ),
-    Merged = fx("Merge")(Inserted2, CWB("PPT_Launcher"), "ObjectName", "ObjectName", {"PPTSlide"}, {"PPTSlide"}),
+    Replaced2 = Table.ReplaceValue(Inserted2, "。。", "。", Replacer.ReplaceText, {"Description"}),
+    Merged = fx("Merge")(Replaced2, CWB("PPT_Launcher"), "ObjectName", "ObjectName", {"PPTSlide"}, {"PPTSlide"}),
     AddedCode = fx("PPTCode_Writer")(Merged),
     SCol = Table.SelectColumns(AddedCode, {"PPTSlide", "ObjectName", "Description", "VBACode"}),
     #"Sorted Rows" = Table.Sort(SCol, {{"PPTSlide", Order.Ascending}, {"ObjectName", Order.Ascending}})

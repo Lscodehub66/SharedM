@@ -1,8 +1,19 @@
 // let LoadCode = Load("Filtered_Add","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
     Source1 = CWB("DLD_Conso_Filter"),
-    Filtered = Table.SelectRows(
+    Adjustment = Table.ReplaceValue(
         Source1,
+        "【发行规模(亿)为空值】",
+        each
+            if List.Contains({"AddTap", "BBG"}, [DataSource]) or List.Contains({"(DMI)"}, [IS_FIMTN]) then
+                ""
+            else
+                "【发行规模(亿)为空值】",
+        Replacer.ReplaceValue,
+        {"Filter_Bond"}
+    ),
+    Filtered = Table.SelectRows(
+        Adjustment,
         each List.Contains({null, "", "--"}, [Filter_Bond]) and List.Contains({null, "", "--"}, [Filter_Exch])
     ),
     Custom1 = Table.AddColumn(Filtered, "删除及隐藏", each if [IS_FIMTN] = "Y" or [IS_FIMTN] = "【Y】" then "FIMTN" else ""),

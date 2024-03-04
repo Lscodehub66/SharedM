@@ -5,7 +5,7 @@ let
     HD = {
         "BOCOM_DEAL?",
         "Index",
-        "兑付日",
+        "定价日",
         "信用主体简称",
         "主体评级",
         "备证行",
@@ -16,9 +16,12 @@ let
         "票息",
         "结构",
         "地区",
+        "兑付日",
         "发行人"
     },
-    Custom1 = fx("Sort")(#"Filtered Rows", {"兑付日"}),
-    SCol = Table.SelectColumns(Custom1, HD, MissingField.UseNull)
+    Custom1 = fx("Sort")(#"Filtered Rows"),
+    SCol = Table.SelectColumns(Custom1, HD, MissingField.UseNull),
+    Renamed = Table.RenameColumns(SCol, {{"合计发行规模(亿)", "规模(亿)"}}, MissingField.Ignore),
+    TF = Table.TransformColumns(Renamed, {{"发行人", Text.Proper, type text}})
 in
-    SCol
+    TF
