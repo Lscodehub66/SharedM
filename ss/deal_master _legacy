@@ -1,5 +1,1 @@
-  let
-  Source = fx("Ws")("DEALSMASTER","DEAL_MASTER")
-  in
-  Source
-  
+let Source = fx("Ws")("DEALSMASTER", "DEAL_MASTER") in Source

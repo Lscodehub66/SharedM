@@ -1,9 +1,9 @@
 // let LoadCode = Load("QRC_IncomeAll","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-_numtext = "20",
-  //**
+    _numtext = "20",
+    //**
     Source = Table.Buffer(fx("Ws")("台账24")),
-    Sheetlist = Table.SelectRows(Source, each Text.StartsWith([Item], "项目收入情况") and Text.Contains([Item], _numtext )),
+    Sheetlist = Table.SelectRows(Source, each Text.StartsWith([Item], "项目收入情况") and Text.Contains([Item], _numtext)),
     #"Split Column by Character Transition" = Table.SplitColumn(
         Sheetlist,
         "Item",
@@ -39,7 +39,9 @@ _numtext = "20",
     #"Removed Columns" = Table.Buffer(Table.SelectColumns(#"Sorted Rows", {"Filtered"})),
     Expanded = Table.ExpandTableColumn(#"Removed Columns", "Filtered", #">>ExpHD"),
     #">>>>>>>>Filtered 0 fee" = Table.SelectRows(Expanded, each ([承销费.USD] = 0) and [项目状态] <> "5.不适用"),
-    #"Removed Columns2" = fx("Data")(Table.RemoveColumns(Expanded, {"费用Due Date", "费用overdue"}, MissingField.Ignore)),
+    #"Removed Columns2" = fx("Data")(
+        Table.RemoveColumns(Expanded, {"费用Due Date", "费用overdue"}, MissingField.Ignore)
+    ),
     #"Combined CCY" = Table.TransformColumns(
         Table.CombineColumns(
             #"Removed Columns2", #">>CCYHD", Combiner.CombineTextByDelimiter(";", QuoteStyle.None), "币种"
@@ -80,9 +82,11 @@ _numtext = "20",
         Replacer.ReplaceValue,
         {"融资规模.其他"}
     ),
-    #"Changed Type" = List.Accumulate( {"融资规模.USD", "融资规模.其他", "融资规模.其他2" , "承销费.USD" ,  "承销费.其他"  }, 其他2Replaced其他, (x,y)=> try Table.TransformColumnTypes(x, {{y, Int64.Type}}
-       
-    ) otherwise x),
+    #"Changed Type" = List.Accumulate(
+        {"融资规模.USD", "融资规模.其他", "融资规模.其他2", "承销费.USD", "承销费.其他"},
+        其他2Replaced其他,
+        (x, y) => try Table.TransformColumnTypes(x, {{y, Int64.Type}}) otherwise x
+    ),
     #"Replaced Errors" = Table.ReplaceErrorValues(#"Changed Type", {{"融资规模.其他", null}}),
     #"Inserted Division" = Table.AddColumn(
         #"Replaced Errors",
@@ -148,6 +152,5 @@ _numtext = "20",
         },
         MissingField.Ignore
     )
-   
 in
-SCol
+    SCol

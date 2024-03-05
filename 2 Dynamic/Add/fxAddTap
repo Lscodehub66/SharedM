@@ -1,28 +1,28 @@
 (TableName as table) =>
-let
- Source          = TableName, 
-NewCol = {"增发判定","交割日","交割T+n"},
- Prep = Table.RemoveColumns(Source  , NewCol, MissingField.Ignore        ),
- ValidateTap     = Table.AddColumn (
-  Prep, 
-  "增发判定", 
-  each if  [起息日期] = null then "" else if [定价日] > [起息日期] then "[增发]" else ""
- ), 
- SelectCol       = Table.SelectColumns ( ValidateTap, { "信用主体", "ISIN", "定价日", "Check", "增发判定" } ), 
- Sorted          = Table.Buffer ( Table.Sort ( SelectCol, { { "定价日", Order.Descending } } ) ), 
- Grouped         = Table.Group (
-  Sorted, 
-  { "ISIN" }, 
-  {
-   { "COUNT_ISIN", each Table.RowCount ( _ ), Int64.Type }, 
-   { "Check", each Text.Combine ( [Check], ";" ), type text }, 
-   { "增发判定", each Text.Combine ( [增发判定], ";" ), type text }
-  }
- ), 
- Filtered        = Table.SelectRows ( Grouped, each [COUNT_ISIN] <> 1 or [增发判定] <> "" ), 
- BeforeDelimiter = Table.TransformColumns ( Filtered, { { "Check", each Text.BeforeDelimiter ( _, ";" ), type text } } ), 
- SelectCol2      = Table.SelectColumns ( BeforeDelimiter, { "Check" } ), 
- AddedCustom     = Table.AddColumn ( SelectCol2, "增发判定", each "增发" ),
-  PQMerged = fx("Merge")( Source  , AddedCustom, "Check", "Check", {""}, {""})
-in
-  PQMerged 
+    let
+        Source = TableName,
+        NewCol = {"增发判定", "交割日", "交割T+n"},
+        Prep = Table.RemoveColumns(Source, NewCol, MissingField.Ignore),
+        ValidateTap = Table.AddColumn(Prep, "增发判定", each if [起息日期] = null then "" else if [定价日] > [起息日期] then
+            "[增发]"
+        else
+            ""
+        ),
+        SelectCol = Table.SelectColumns(ValidateTap, {"信用主体", "ISIN", "定价日", "Check", "增发判定"}),
+        Sorted = Table.Buffer(Table.Sort(SelectCol, {{"定价日", Order.Descending}})),
+        Grouped = Table.Group(
+            Sorted,
+            {"ISIN"},
+            {
+                {"COUNT_ISIN", each Table.RowCount(_), Int64.Type},
+                {"Check", each Text.Combine([Check], ";"), type text},
+                {"增发判定", each Text.Combine([增发判定], ";"), type text}
+            }
+        ),
+        Filtered = Table.SelectRows(Grouped, each [COUNT_ISIN] <> 1 or [增发判定] <> ""),
+        BeforeDelimiter = Table.TransformColumns(Filtered, {{"Check", each Text.BeforeDelimiter(_, ";"), type text}}),
+        SelectCol2 = Table.SelectColumns(BeforeDelimiter, {"Check"}),
+        AddedCustom = Table.AddColumn(SelectCol2, "增发判定", each "增发"),
+        PQMerged = fx("Merge")(Source, AddedCustom, "Check", "Check", {""}, {""})
+    in
+        PQMerged

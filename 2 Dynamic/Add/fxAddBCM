@@ -1,0 +1,35 @@
+(TableName as table) =>
+    let
+        Source = TableName,
+        JGCString = Table.AddColumn(
+            Source, "JGCs", each Text.Replace(Text.Select(Text.Upper([联席全球协调人]), {"A".."Z", ";"}), "COLTD", "")
+        ),
+        JLMString = Table.AddColumn(
+            JGCString, "JLMs", each Text.Replace(Text.Select(Text.Upper([牵头经办人]), {"A".."Z", ";"}), "COLTD", "")
+        ),
+        澳分 = Table.AddColumn(
+            JLMString,
+            "澳分_ROLE",
+            each
+                if Text.Contains([JGCs], "COMMUNICATIONSMACAU") then
+                    "JGC"
+                else if Text.Contains([JLMs], "COMMUNICATIONSMACAU") then
+                    "JBR"
+                else
+                    "--"
+        ),
+        澳分Out = Table.ReplaceValue(澳分, "COMMUNICATIONSMACAU", "", Replacer.ReplaceText, {"JGCs", "JLMs"}),
+        港分 = Table.AddColumn(
+            澳分Out,
+            "港分_ROLE",
+            each
+                if Text.Contains([JGCs], "COMMUNICATIONS") then
+                    "JGC"
+                else if Text.Contains([JLMs], "COMMUNICATIONS") then
+                    "JBR"
+                else
+                    "--"
+        ),
+        Removed = Table.RemoveColumns(港分, {"JGCs", "JLMs"})
+    in
+        Removed

@@ -10,7 +10,7 @@ let
     Custom5 = Table.AddColumn(Custom1, "年初", each Load("fxNextWeekDay")(Date.StartOfYear([Monday])), type date),
     Custom2 = Table.AddColumn(Custom5, "近1年", each Load("fxNextWeekDay")(Date.AddYears([Monday], -1)), type date),
     Custom3 = Table.AddColumn(#"Custom2", "近5年", each Load("fxNextWeekDay")(Date.AddYears([Monday], -5)), type date),
-   Custom4 = Table.AddColumn( Custom3, "当前_Monday", each Date.StartOfWeek([当前], Day.Monday), type date),
+    Custom4 = Table.AddColumn(Custom3, "当前_Monday", each Date.StartOfWeek([当前], Day.Monday), type date),
     #"Merged Queries" = Table.NestedJoin(Custom4, {"当前"}, Load("DimDate"), {"A_Date"}, "Data", JoinKind.LeftOuter),
     #"Expanded DimDate" = Table.ExpandTableColumn(#"Merged Queries", "Data", {"YYW"}, {"当前_YYW"}),
     #"Merged Queries1" = Table.NestedJoin(

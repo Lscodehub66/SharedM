@@ -3,16 +3,12 @@
     let
         //NameInput = "", PathInput = null,
         GPS = try Table.Buffer(Excel.CurrentWorkbook(){[Name = "GPS"]}[Content])[Column1]{0} otherwise "Remote",
-          _csvkey = { "CSV","CSVDATE"},
-        _pathkey ={null, "1", "Code","Content"} &   _csvkey,
-     
-        
-        
-        
+        _csvkey = {"CSV", "CSVDATE"},
+        _pathkey = {null, "1", "Code", "Content"} & _csvkey,
         Name_File =
             if NameInput = "Control_Date" then
                 "Control"
-            else if List.Contains(_csvkey,PathInput ) then
+            else if List.Contains(_csvkey, PathInput) then
                 NameInput & ".csv"
             else
                 Text.Replace(NameInput, ".", "_"),
@@ -37,12 +33,21 @@
         EVA_Code = Expression.Evaluate(File_Code, #shared),
         EVA = try EVA_Existing otherwise EVA_Code,
         //
-        Output = if PathInput = "Content" then File_Content else if PathInput = "Code" or PathInput = "1" then File_Code else if PathInput = "CSV" then AddedKey 
-      else  if PathInput = "CSVDATE" then fx("Data")(AddedKey) else EVA,
-        SCol_Output =
-            if Value.Type( PathInput ) = type list and not List.Contains({null,{null}},PathInput) then
-                 Table.SelectColumns(Output, PathInput , MissingField.UseNull)
+        Output =
+            if PathInput = "Content" then
+                File_Content
+            else if PathInput = "Code" or PathInput = "1" then
+                File_Code
+            else if PathInput = "CSV" then
+                AddedKey
+            else if PathInput = "CSVDATE" then
+                fx("Data")(AddedKey)
             else
-               Output
+                EVA,
+        SCol_Output =
+            if Value.Type(PathInput) = type list and not List.Contains({null, {null}}, PathInput) then
+                Table.SelectColumns(Output, PathInput, MissingField.UseNull)
+            else
+                Output
     in
         SCol_Output

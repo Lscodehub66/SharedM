@@ -68,7 +68,7 @@ let
     Output =
         let
             name = "DLD_QRC_Income24",
-            Crossroad = if fx("Parameter")("GPS") = "Remote" then CWB(name) else Renamed ,
+            Crossroad = if fx("Parameter")("GPS") = "Remote" then CWB(name) else Renamed,
             Filtered = Table.SelectRows(Crossroad, each Date.ToText([定价日], "yyyy") = _numtext)
         in
             Filtered

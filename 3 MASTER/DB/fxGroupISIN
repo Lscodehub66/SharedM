@@ -1,25 +1,19 @@
 (optional TableName as table, optional AllRowsColName as text) =>
     let
-               Source = if TableName = null then CWB("mIssue") else fx("Data")(TableName),
+        Source = if TableName = null then CWB("mIssue") else fx("Data")(TableName),
         X0 = {"发行规模(亿)"},
-        X1 = X0&{ "亿美元", "亿元", "亿港币"},
+        X1 = X0 & {"亿美元", "亿元", "亿港币"},
         X2 = {"Count_BISLDeal", "Count_JBR", "Count_JGC"},
-       X = if Table.HasColumns(Source, X2) then X2 else X1,
+        X = if Table.HasColumns(Source, X2) then X2 else X1,
         Y =
             if Table.HasColumns(Source, X2) then
                 List.Transform(X2, each Text.Replace(_, "Count", "ISIN"))
             else
                 List.Transform(X1, each "合计" & _),
         // TableName = null,        AllRowsColName = null,
-
-    
-            #"Conditional BBGFX"= if not  Table.HasColumns(  Source, X1 & X2)  then fx("AddBBGFX")(    Source ) else  Source,
-        
-        
-        
-        
+        #"Conditional BBGFX" = if not Table.HasColumns(Source, X1 & X2) then fx("AddBBGFX")(Source) else Source,
         #"Grouped Rows1" = Table.Group(
-           #"Conditional BBGFX",
+            #"Conditional BBGFX",
             {"ISIN"},
             {
                 {Y{0}, each List.Sum(Record.Field(_, X{0})), type number},
@@ -29,17 +23,13 @@
                     {Y{3}, each List.Sum(Record.Field(_, X{3})), type number}
                 else
                     {"DummyRows", each _, type table},
-               
-                    { if AllRowsColName = "Data" then "Data" else "DummyRows1", each _, type table}
-                
+                {if AllRowsColName = "Data" then "Data" else "DummyRows1", each _, type table}
             }
         ),
-        RCol = Table.RemoveColumns(#"Grouped Rows1",{"DummyRows1","DummyRows"},MissingField.Ignore),
+        RCol = Table.RemoveColumns(#"Grouped Rows1", {"DummyRows1", "DummyRows"}, MissingField.Ignore),
         #"Expanded Data" = Table.ExpandTableColumn(
-            RCol ,
-            "Data",
-            List.RemoveItems(Table.ColumnNames(  RCol [Data]{0}), Table.ColumnNames(  RCol ))
+            RCol, "Data", List.RemoveItems(Table.ColumnNames(RCol[Data]{0}), Table.ColumnNames(RCol))
         ),
-        Output = if AllRowsColName = "Data" then #"Expanded Data" else       RCol 
+        Output = if AllRowsColName = "Data" then #"Expanded Data" else RCol
     in
         Output

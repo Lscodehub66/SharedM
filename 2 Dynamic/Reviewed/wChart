@@ -1,11 +1,9 @@
 // let LoadCode = Load("wChart","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-Source = Load("DLD_Add"),
-ACol1 = Table.AddColumn(Source, "删除及隐藏",each if [IS_FIMTN] = "Y" or [IS_FIMTN] = "【Y】" then  "FIMTN" else ""),
-Filtered = Table.SelectRows(ACol1, each [删除及隐藏] = "FIMTN" ),
-SCol = Table.SelectColumns(Filtered, Get("CN_mChart"),MissingField.Ignore),
+    Source = Load("DLD_Add"),
+    ACol1 = Table.AddColumn(Source, "删除及隐藏", each if [IS_FIMTN] = "Y" or [IS_FIMTN] = "【Y】" then "FIMTN" else ""),
+    Filtered = Table.SelectRows(ACol1, each [删除及隐藏] = "FIMTN"),
+    SCol = Table.SelectColumns(Filtered, Get("CN_mChart"), MissingField.Ignore),
     ACol = Table.AddColumn(SCol, "mChart", each "Y")
 in
- ACol
-
-       
+    ACol

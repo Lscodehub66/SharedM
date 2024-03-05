@@ -1,0 +1,28 @@
+//let Code = Load("BISL_JLMPeers","Code"), EVA = Expression.Evaluate(Code ,#shared) in EVA
+(TableName as table) =>
+    let
+        Source = TableName,
+        ColToAdd = {"JGC", "JBR"},
+        Prep = Table.RemoveColumns(Source, ColToAdd, MissingField.Ignore),
+        // JGC Conversion
+        #"JGC Splitted" = Table.AddColumn(Prep, "JGC1", each List.Buffer(Text.Split([联席全球协调人], ";")), type text),
+        #"JGC EachTransformed" = Table.AddColumn(
+            #"JGC Splitted", "JGC", each List.Buffer(List.Transform([JGC1], each fx("JLMCN")(_))), type text
+        ),
+        #"JGC Recombined" = Table.TransformColumns(
+            #"JGC EachTransformed", {{"JGC", each Text.Combine(_, "、"), type text}}
+        ),
+        // JBR Conversion
+        #"JBR Splitted" = Table.AddColumn(
+            #"JGC Recombined", "JBR1", each List.Buffer(Text.Split([牵头经办人], ";")), type text
+        ),
+        #"JBR EachTransformed" = Table.AddColumn(
+            #"JBR Splitted", "JBR", each List.Buffer(List.Transform([JBR1], each fx("JLMCN")(_))), type text
+        ),
+        #"JBR Recombined" = Table.TransformColumns(
+            #"JBR EachTransformed", {{"JBR", each Text.Combine(_, "、"), type text}}
+        ),
+        // Output
+        #"Removed Columns" = Table.RemoveColumns(#"JBR Recombined", {"JGC1", "JBR1"}, MissingField.Ignore)
+    in
+        #"Removed Columns"

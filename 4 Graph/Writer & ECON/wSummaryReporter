@@ -1,6 +1,6 @@
 let
     Source2 = CWB("Writer_Dealtbl"),
-    WriteNewIssue = Table.Buffer( fx("DealReporter")(Source2, "Custom")),
+    WriteNewIssue = Table.Buffer(fx("DealReporter")(Source2, "Custom")),
     #"Grouped Rows" = Table.Group(
         WriteNewIssue,
         {"新发总结板块", "货币细分"},
@@ -30,11 +30,15 @@ let
     Custom1 = Table.AddColumn(
         #"Added Col",
         "ObjectName",
-        each if [新发总结板块] = "城投板块" then "nimlgfvsumbox" else if [新发总结板块] = "投资级板块" then "nimigsumbox" else "nimotherssumbox",
+        each if [新发总结板块] = "城投板块" then "nimlgfvsumbox" else if [新发总结板块] = "投资级板块" then
+            "nimigsumbox"
+        else
+            "nimotherssumbox",
         type text
     ),
     #"Merged Columns" = Table.CombineColumns(
         Custom1, {"新发总结板块", "描述4"}, Combiner.CombineTextByDelimiter("共发行", QuoteStyle.None), "Description"
     ),
-    Custom2 = Table.TransformColumns(#"Merged Columns", {{"Description", each "上周，" & _ & "。", type text}}) in Custom2
-    
+    Custom2 = Table.TransformColumns(#"Merged Columns", {{"Description", each "上周，" & _ & "。", type text}})
+in
+    Custom2

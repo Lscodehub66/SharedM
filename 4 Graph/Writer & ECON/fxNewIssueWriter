@@ -1,12 +1,12 @@
 (TableName as table, Col1 as text, Col2 as text, Col3 as text, Col4 as text, Col5 as text, Col6 as text) =>
     let
-    // TableName = Filtered, Col1 = "1周", Col2 = "2主体", Col3="3详情",  Col4 = "4品种", Col5="5价格", Col6="6担任",
+        // TableName = Filtered, Col1 = "1周", Col2 = "2主体", Col3="3详情",  Col4 = "4品种", Col5="5价格", Col6="6担任",
         Source = TableName,
         fxDebug = Load("fxDebug"),
         NewCols = {"多笔", "信用主体及评级", "多笔主体", "描述", "描述2", "总述"} & {Col1, Col2, Col3, Col4, Col5, Col6},
         RColprep = Table.RemoveColumns(Source, NewCols, MissingField.Ignore),
         //
-        FnCount = fx("AddMultiCount")(RColprep ,"信用主体简称"),
+        FnCount = fx("AddMultiCount")(RColprep, "信用主体简称"),
         ddd = Table.AddColumn(FnCount, Col1, each Date.ToText([定价日], "ddd"), type text),
         dddcn = fx("Replace")(ddd, {Col1}, "周几"),
         EntityWRtg = Table.AddColumn(
@@ -39,11 +39,13 @@
             TapNew, "SquareRtg", each if Text.Length(Text.Select([发行评级], {"A".."Z"})) > 0 then "（" & [发行评级] & "）" else
                 ""
         ),
-          SBLC = Table.AddColumn(
+        SBLC = Table.AddColumn(
             IssueRtg, Col4, each if [备证行] <> "--" then [发行品种] & [SquareRtg] & "，" & [备证行] & "提供备证，" else [发行品种]
                 & [SquareRtg]
         ),
-        TightenToNumber = Table.TransformColumnTypes(Table.ReplaceValue(SBLC,"--",null,Replacer.ReplaceValue,{"收窄基点"}),{{"收窄基点", type number}}),
+        TightenToNumber = Table.TransformColumnTypes(
+            Table.ReplaceValue(SBLC, "--", null, Replacer.ReplaceValue, {"收窄基点"}), {{"收窄基点", type number}}
+        ),
         Price = Table.AddColumn(
             TightenToNumber,
             Col5,
@@ -87,8 +89,9 @@
             Bocom,
             "描述",
             each
-                fx("PowerTrim")
-                (
+                fx(
+                    "PowerTrim"
+                )(
                     Record.Field(_, Col1)
                         & "，"
                         & Record.Field(_, Col2)
@@ -117,8 +120,7 @@
             }
         ),
         #"Replaced Value" = Table.ReplaceValue(
-            Grouped, each [增发判定], each if [增发判定] = "" and [多笔] <> null then "定价" else "增发", Replacer.ReplaceValue,
-            {
+            Grouped, each [增发判定], each if [增发判定] = "" and [多笔] <> null then "定价" else "增发", Replacer.ReplaceValue, {
                 "增发判定"
             }
         ),

@@ -47,9 +47,9 @@ let
                     RootDrive & fDH & "DEALs MASTER.xlsm"
                 else if Text.Contains(Key, "DOWNLOAD") then
                     //TextContainsAny(Key, {"DOWNLOAD",  "DYNAMIC"})
-                    RootDrive &fEXE  &"Weekly\"& DateText & "\Data\1.Weekly Download" & FileExt
+                    RootDrive & fEXE & "Weekly\" & DateText & "\Data\1.Weekly Download" & FileExt
                 else if Text.Contains(Key, "DYNAMIC") then
-                    RootDrive&fEXE  &"Weekly\"&DateText & "\Data\2.Dynamic List Generator.xlsm"
+                    RootDrive & fEXE & "Weekly\" & DateText & "\Data\2.Dynamic List Generator.xlsm"
                 else if Text.Contains(Key, "DIRECTORY") then
                     RootDrive & fBase_4 & "DEAL DIRECTORY.xlsm"
                 else if Text.Contains(Key, "GRAPH") then
@@ -96,8 +96,8 @@ let
                     ),
             Dynamic_Excel =
                 if Text.Contains(Key, "DYNAMIC") then
-                    Table.TransformColumns( 
-                        Fetcher, 
+                    Table.TransformColumns(
+                        Fetcher,
                         {
                             {
                                 "Item",
@@ -190,7 +190,9 @@ let
             //Excel ESG
             ExcelESGReview =
                 if Text.Contains(Key, "ESG") and Text.Contains(Key, "REVIEW") then
-                    Load("fxDataFormat")(
+                    Load(
+                        "fxDataFormat"
+                    )(
                         Table.SelectRows(
                             Pipe_Sheet,
                             each

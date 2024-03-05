@@ -5,25 +5,23 @@
     TargeKeyColInput as text,
     TargetList as list,
     optional OptionalOutputList as list,
-    optional DistinctHDorKeepDupeInput as list,optional DataFormatNumIndicator as nullable number
+    optional DistinctHDorKeepDupeInput as list,
+    optional DataFormatNumIndicator as nullable number
 ) =>
-    let  
+    let
         Source = TableName,
         Targettbl = TargetTableName,
         //Definitions
         DBExcList = {"Timestamp", "Updator", "Index"},
         CrExcList = {"曾用名", "主体备注", "公司类型", "上市类型", "系"},
         ExcList = DBExcList & CrExcList,
-        OutputList = if OptionalOutputList = {null} or OptionalOutputList = null then {""} else  OptionalOutputList,
+        OutputList = if OptionalOutputList = {null} or OptionalOutputList = null then {""} else OptionalOutputList,
         DistinctCriteria =
             if DistinctHDorKeepDupeInput = null or DistinctHDorKeepDupeInput = {null} then
                 {""}
             else
                 DistinctHDorKeepDupeInput,
-
-                
         TargetKeyCol = if TargeKeyColInput = "" then KeyColInput else TargeKeyColInput,
-        
         //
         ExpandList =
             if TargetList = {"Y"} then
@@ -41,17 +39,15 @@
                 ExpandList
             else
                 OutputList,
-        
-    
-        
         //Functions
-        MergedQ = Table.NestedJoin(Source, {KeyColInput}, Targettbl, {    TargetKeyCol}, "Data", JoinKind.LeftOuter),
+        MergedQ = Table.NestedJoin(Source, {KeyColInput}, Targettbl, {TargetKeyCol}, "Data", JoinKind.LeftOuter),
         ExpandedQ = Table.ExpandTableColumn(MergedQ, "Data", ExpandList, RenamedList),
         Distincted =
             if List.ContainsAll(Table.ColumnNames(ExpandedQ), DistinctCriteria) then
                 Table.Distinct(ExpandedQ, DistinctCriteria)
-            else   if DistinctCriteria = {"Keep"} then
-                ExpandedQ  else 
+            else if DistinctCriteria = {"Keep"} then
+                ExpandedQ
+            else
                 Table.Distinct(ExpandedQ),
         Sorted =
             if TargetList = {"Ascending"} then
@@ -75,6 +71,6 @@
                 Source
             else
                 Sorted,
-        FormattedData = fx("Data")(Removed,DataFormatNumIndicator)
+        FormattedData = fx("Data")(Removed, DataFormatNumIndicator)
     in
         FormattedData

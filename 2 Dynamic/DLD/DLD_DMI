@@ -27,7 +27,7 @@ let
             SCol,
     Date = fx("DateRange")({"PreviousMon.Date", "Sunday.Date"}),
     #"//GNG_Multi" = if fx("Parameter")("MultiSource") = "ON" then "GO" else "NO-GO",
-    Appended1 = if #"//GNG_Multi" <> "GO" then Source else Table.Combine({ToCombine,  ToCombine1,Source}),
+    Appended1 = if #"//GNG_Multi" <> "GO" then Source else Table.Combine({ToCombine, ToCombine1, Source}),
     Checked = fx("CheckNDupe")(Appended1),
     Stamped = fx(
         "1st"

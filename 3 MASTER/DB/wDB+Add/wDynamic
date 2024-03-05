@@ -1,6 +1,6 @@
 // let LoadCode = Load("wDynamic","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-    Source = fx("Ws")("DYNAMIC","wConso"),
+    Source = fx("Ws")("DYNAMIC", "wConso"),
     ACol =
         if not Table.HasColumns(Source, "mChart") then
             Table.AddColumn(Source, "mChart", each if [删除及隐藏] = "FIMTN" then "Y" else "", type text)

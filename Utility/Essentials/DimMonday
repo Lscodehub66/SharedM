@@ -1,7 +1,10 @@
 // DimMonday
 let
-    StartDate = Date.StartOfWeek(Date.AddMonths(Date.From(DateTime.LocalNow()),-1),Day.Monday),
-    EndDate =  Date.AddDays(Date.From(DateTime.LocalNow()),21),
-    Source = List.Transform(List.Dates(  StartDate , Duration.Days((EndDate -StartDate)/7),  #duration(7, 0, 0, 0)), each Date.ToText(_,"yyyyMMdd"))
+    StartDate = Date.StartOfWeek(Date.AddMonths(Date.From(DateTime.LocalNow()), -1), Day.Monday),
+    EndDate = Date.AddDays(Date.From(DateTime.LocalNow()), 21),
+    Source = List.Transform(
+        List.Dates(StartDate, Duration.Days((EndDate - StartDate) / 7), #duration(7, 0, 0, 0)),
+        each Date.ToText(_, "yyyyMMdd")
+    )
 in
     Source

@@ -1,24 +1,13 @@
+// let LoadCode = Load("BISLFI_Order","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
     Source = fx("Ws")("DEALSMASTER", "=DIRECTORY"),
     #"Replaced Value" = Table.ReplaceValue(Source, null, 0, Replacer.ReplaceValue, {"BISL下单量", "交银下单量.除BISL外"}),
     #"Filtered Rows" = Table.SelectRows(#"Replaced Value", each ([板块] = "金融机构") and ([BISL下单量] <> 0)),
-    #">>RCol" = Table.SelectColumns(#"Filtered Rows",  {"年月", "信用主体(备证行)", "发行品种", "币种规模", "票息", "期限", "BISL下单量", "交银下单量.除BISL外"}
+    #"Filtered Rows1" = Table.SelectRows(
+        #"Filtered Rows", each [Year.Num] >= (Date.Year(DateTime.Date(DateTime.FixedLocalNow())) - 2)
     ),
-    #"Added Custom" = Table.AddColumn(#"Filtered Rows", "交银下单量", each [BISL下单量] + [交银下单量.除BISL外], Int64.Type),
-    #"Added Custom1" = Table.AddColumn(
-        #"Added Custom",
-        "交银国际独家订单认购量",
-        each if [BISL下单量] >= 100 then Text.From([BISL下单量] / 100) & "亿" else Number.ToText([BISL下单量] * 100, "0万"),
-        type text
-    ),
-    Custom1 = Table.AddColumn(
-        #"Added Custom1",
-        "交银集团独家订单认购规模",
-        each if [交银下单量] >= 100 then Text.From([交银下单量] / 100) & "亿" else Number.ToText([交银下单量] * 100, "0万"),
-        type text
-    ),
-    #"Filtered Rows1" = Table.SelectRows(Custom1, each [Year.Num] >= (Date.Year(DateTime.Date(DateTime.FixedLocalNow())) -2 )),
     #"Removed Other Columns" = Table.SelectColumns(
-        #"Filtered Rows1", {"年月", "信用主体(备证行)", "发行品种", "币种规模", "票息", "期限", "交银国际独家订单认购量", "交银集团独家订单认购规模"})
+        #"Filtered Rows1", {"年月", "信用主体(备证行)", "发行品种", "币种规模", "票息", "期限", "交银国际独家订单认购规模", "交银集团独家订单认购规模"}
+    )
 in
     #"Removed Other Columns"

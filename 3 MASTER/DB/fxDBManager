@@ -5,7 +5,9 @@
         // Definitions fx("DBManager")(Source,"mCredit","LIFO")
         //
         CN_Source = Table.ColumnNames(SourceDB),
-        HD = List.Intersect({{"Check", "ISIN","信用主体", "信用主体(备证行)", "Date", "Timestamp", "板块二级", "BISL_ROLE"}, CN_Source}),
+        HD = List.Intersect(
+            {{"Check", "ISIN", "信用主体", "信用主体(备证行)", "Date", "Timestamp", "板块二级", "BISL_ROLE"}, CN_Source}
+        ),
         HD_Count = List.Count(HD),
         MorW = if not List.Contains(HD, "Timestamp") then "W" else "M",
         // Filter out blank rows & invoke dataformat
@@ -56,19 +58,17 @@
         // Remember to check the referenced name if you revise previous steps **Referenced Dummy Step **
         _CROSSROAD = if MorW = "W" then Load("fxUpdatorTS")(RemovedDupe) else RemovedDupe,
         // Revalidate mCurated
-
         #"Replaced WeeklyMissing" =
             if List.ContainsAll(CN_Source, {"债券备注", "DataSource"}) then
                 Table.ReplaceValue(
-                    _CROSSROAD ,
+                    _CROSSROAD,
                     each [债券备注],
                     each if [DataSource] = "BBG" then "wDMI Missing(BBG)" else [债券备注],
                     Replacer.ReplaceValue,
                     {"债券备注"}
                 )
             else
-                _CROSSROAD ,
-                
+                _CROSSROAD,
         // Revalidate mBISL BISL_Ancient
         BISL_对帐号 = Load("fxPRJSync")(#"Replaced WeeklyMissing", "台账序号", "定价日", "PRJ对账号"),
         // **Skipped
@@ -77,7 +77,7 @@
                 fx("fxDEALs_ToReplace")(BISL_对帐号)
             else
                 BISL_对帐号,
-                  // **Skipped
+        // **Skipped
         //  **Referenced Dummy Step ** This step is referenced by the conditional mCredit Manager step as Source !
         DB_Entity = if List.Contains(HD, "板块二级") and MorW = "M" then Load("fxDB_Entity")(BISL_对帐号) else BISL_对帐号,
         //  **Referenced Dummy Step ** This step is referenced by the conditional sort step - better not to change it !

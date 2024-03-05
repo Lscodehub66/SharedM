@@ -1,5 +1,1 @@
-let
-
-Source = try CWB("FTZ_Load")[Column1]{0} otherwise "ON"
-in
-Source
+let Source = try CWB("FTZ_Load")[Column1]{0} otherwise "ON" in Source

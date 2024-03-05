@@ -1,26 +1,26 @@
 let
     Source = {
-                    "Directory",
-                    "Directory(DCM Base)",
-                    "Recent",
-                    "Recent_SOE",
-                    "RMB",
-                    "DimSum",
-                    "FTZ",
-                    "ESG",
-                    "IGLGFV",
-                    "FI",
-                    "USDCNH_DATA",
-                    "USDCNH_Tighten",
-                    "Maturity2024",
-                    "Maturity2024_SOE",
-                    "DEAL_MASTER"
-                },
-ToTable = Table.FromColumns({Source},{"Name"}),
-    #"Added Custom" = Table.AddColumn(ToTable, "Table", each Table.Buffer( fx("DBMonitor")([Name]))),
-    #"Added Custom1" = Table.AddColumn(#"Added Custom", "行数", each Table.RowCount([Table]) , type number),
-    Custom1 = Table.AddColumn(#"Added Custom1", "字段数", each Table.ColumnCount([Table]) , type number),
-    Custom2 = Table.AddColumn(Custom1, "Timestamp", each DateTime.LocalNow() , type datetime),
-    #"Removed Other Columns" = Table.SelectColumns(Custom2,{"Name", "行数",  "字段数","Timestamp"  },MissingField.Ignore)
+        "Directory",
+        "Directory(DCM Base)",
+        "Recent",
+        "Recent_SOE",
+        "RMB",
+        "DimSum",
+        "FTZ",
+        "ESG",
+        "IGLGFV",
+        "FI",
+        "USDCNH_DATA",
+        "USDCNH_Tighten",
+        "Maturity2024",
+        "Maturity2024_SOE",
+        "DEAL_MASTER"
+    },
+    ToTable = Table.FromColumns({Source}, {"Name"}),
+    #"Added Custom" = Table.AddColumn(ToTable, "Table", each Table.Buffer(fx("DBMonitor")([Name]))),
+    #"Added Custom1" = Table.AddColumn(#"Added Custom", "行数", each Table.RowCount([Table]), type number),
+    Custom1 = Table.AddColumn(#"Added Custom1", "字段数", each Table.ColumnCount([Table]), type number),
+    Custom2 = Table.AddColumn(Custom1, "Timestamp", each DateTime.LocalNow(), type datetime),
+    #"Removed Other Columns" = Table.SelectColumns(Custom2, {"Name", "行数", "字段数", "Timestamp"}, MissingField.Ignore)
 in
     #"Removed Other Columns"

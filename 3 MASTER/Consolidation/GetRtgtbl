@@ -1,21 +1,25 @@
- let
-
- Source = TableName,
- 
- 
- #"Added Custom" = Table.AddColumn(Source , "Custom", each Text.Split(Text.Upper([发行评级]),"/")),
-    Custom1 = Load("Rtgtbl","CSV"),
-    #"Changed Type" = Table.TransformColumnTypes(Custom1,{{"Num", type number}}),
-    #"Sorted Rows" = Table.Sort(#"Changed Type",{{"Num", Order.Ascending}}),
+let
+    Source = TableName,
+    #"Added Custom" = Table.AddColumn(Source, "Custom", each Text.Split(Text.Upper([发行评级]), "/")),
+    Custom1 = Load("Rtgtbl", "CSV"),
+    #"Changed Type" = Table.TransformColumnTypes(Custom1, {{"Num", type number}}),
+    #"Sorted Rows" = Table.Sort(#"Changed Type", {{"Num", Order.Ascending}}),
     #"Filtered Rows" = Table.SelectRows(#"Sorted Rows", each [#"Moody's"] <> "" and [Num] <> null),
-    #"Removed Columns" = Table.RemoveColumns(#"Filtered Rows",{"Num"}),
+    #"Removed Columns" = Table.RemoveColumns(#"Filtered Rows", {"Num"}),
     #"Added Index" = Table.AddIndexColumn(#"Removed Columns", "Index", 1, 1, Int64.Type),
     #"Added Conditional Column" = Table.AddColumn(#"Added Index", "EN", each if [Index] <= 10 then "IG" else "HY"),
-    #"Removed Columns1" = Table.RemoveColumns(#"Added Conditional Column",{"Index"}),
+    #"Removed Columns1" = Table.RemoveColumns(#"Added Conditional Column", {"Index"}),
     #"Unpivoted Other Columns" = Table.UnpivotOtherColumns(#"Removed Columns1", {"EN"}, "Attribute", "Value"),
-    #"Inserted Uppercased Text" = Table.AddColumn(#"Unpivoted Other Columns", "UPPERCASE", each if [Value] = "--" then "--" else  Text.Select(Text.Upper([Value]), {"A".."Z"}),type text),
-    #"Filtered Rows1" = Table.SelectRows(#"Inserted Uppercased Text", each ([UPPERCASE] <> "" and [UPPERCASE] <> "NR")),
+    #"Inserted Uppercased Text" = Table.AddColumn(
+        #"Unpivoted Other Columns",
+        "UPPERCASE",
+        each if [Value] = "--" then "--" else Text.Select(Text.Upper([Value]), {"A".."Z"}),
+        type text
+    ),
+    #"Filtered Rows1" = Table.SelectRows(
+        #"Inserted Uppercased Text", each ([UPPERCASE] <> "" and [UPPERCASE] <> "NR")
+    ),
     #"Removed Duplicates" = Table.Distinct(#"Filtered Rows1", {"UPPERCASE"}),
-    #"Removed Other Columns1" = fx("ToM")(Table.SelectColumns(#"Removed Duplicates",{"UPPERCASE", "EN"}))
+    #"Removed Other Columns1" = fx("ToM")(Table.SelectColumns(#"Removed Duplicates", {"UPPERCASE", "EN"}))
 in
     #"Removed Other Columns1"

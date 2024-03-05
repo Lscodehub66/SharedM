@@ -2,7 +2,7 @@
     let
         Source = TableName,
         TFtbl_Entity = Table.Buffer(Get(" TransformationTable_Entity")),
-        mCreditB = Table.Buffer(try CWB("mCredit", "1") otherwise fx("Ws")("DEALSMASTER","=mCredit")),
+        mCreditB = Table.Buffer(try CWB("mCredit", "1") otherwise fx("Ws")("DEALSMASTER", "=mCredit")),
         JoinedTable = Table.Join(Source, {ColName}, TFtbl_Entity, {"Dummy.曾用名"}, JoinKind.LeftOuter),
         #"Replaced Value" = Table.ReplaceValue(
             JoinedTable, null, each Record.Field(_, ColName), Replacer.ReplaceValue, {"Dummy.信用主体"}

@@ -1,0 +1,14 @@
+// let LoadCode = Load("ForReview_wBond","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+let
+    _input = "wBond",
+    _PK = "ISIN",
+    Name = "m" & Text.AfterDelimiter(_input, "w"),
+    HD = fx("ForReviewHD")(_input),
+    Sourceold = Load("DLD_Filtered"),
+    Source = CWB("Filtered_Add"),
+    Filtered = fx("ForReviewSelect")(Source, Name),
+    SCol = Table.SelectColumns(Filtered, HD, MissingField.UseNull),
+    Custom2 = fx("SelfJoin_R")(SCol, CWB("ForReview_" & _input), {_PK}),
+    Sorted = fx("SortNIndex")(Custom2)
+in
+    Sorted

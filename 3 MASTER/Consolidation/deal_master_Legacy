@@ -1,10 +1,9 @@
 //let LoadCode = Load("deal_master","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-    SourceDB = Excel.CurrentWorkbook(){[Name ="mCurated"]}[Content],
-    TBCFormatted = fx("Data")(SourceDB,1),
-   
+    SourceDB = Excel.CurrentWorkbook(){[Name = "mCurated"]}[Content],
+    TBCFormatted = fx("Data")(SourceDB, 1),
     //
-    NullOut = Table.SelectRows( TBCFormatted , each not List.Contains({"", null, "--", "ISIN"}, [ISIN])),
+    NullOut = Table.SelectRows(TBCFormatted, each not List.Contains({"", null, "--", "ISIN"}, [ISIN])),
     RemovedCol = Table.RemoveColumns(NullOut, Get("Header_MergeRemoval"), MissingField.Ignore),
     ESG22 = fx("Merge")(RemovedCol, CWB("ESG_ExternalReview"), "Check", "Check", {""}, {""}),
     JoinDBmBISL = fx("Merge")(ESG22, CWB("mBISL"), "Check", "Check", {"Y"}, {""}),

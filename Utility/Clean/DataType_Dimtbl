@@ -1,8 +1,7 @@
-let //
-     
+let
+    //
     fxShowDupe = fx("ShowDupe"),
     fxToM = Load("fxToM"),
-
     #">>>>>>>" = Table.Combine({#"DateDupe", #"Num_Dupe", #"Text_Dupe"}),
     #"DateDupe" = fx("ShowDupe")(Table.FromColumns({Date1}), {"Column1"}),
     #">>>>>>>Date1" = fxToM(Date1),
@@ -292,5 +291,5 @@ let //
     tbl_Text = Table.FromColumns({Text1, {"text"}}),
     tbl_DateTime = Table.FromColumns({DateTime1, {"datetime"}}),
     Output = Table.Combine({tbl_Date, tbl_Num, tbl_Text, tbl_DateTime})
-in Output
-    
+in
+    Output

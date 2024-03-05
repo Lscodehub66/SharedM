@@ -1,11 +1,12 @@
 let
- Source = fx("Ws")("DOWNLOAD"),
+    Source = fx("Ws")("DOWNLOAD"),
     Data = Source{[Item = "Tables_value"]}[Data],
-    Custom2 = fx("SheetTotbl")(Data, {"Column1","Index"}),
-    #"Removed Other Columns1" = Table.SelectColumns(Custom2,{"Entity",  "Moody's", "SP", "FITCH"}, MissingField.UseNull),
-        #"Filtered Rows" = Table.SelectRows(   #"Removed Other Columns1" , each ([Entity] <> null)),
-    Cleaned = fx("Replace")(      #"Filtered Rows", {"Moody's", "SP", "FITCH"}, "评级"),
-        Indexed = fx("Sort")(      Cleaned  , {""})
-   
+    Custom2 = fx("SheetTotbl")(Data, {"Column1", "Index"}),
+    #"Removed Other Columns1" = Table.SelectColumns(
+        Custom2, {"Entity", "Moody's", "SP", "FITCH"}, MissingField.UseNull
+    ),
+    #"Filtered Rows" = Table.SelectRows(#"Removed Other Columns1", each ([Entity] <> null)),
+    Cleaned = fx("Replace")(#"Filtered Rows", {"Moody's", "SP", "FITCH"}, "评级"),
+    Indexed = fx("Sort")(Cleaned, {""})
 in
-   Indexed 
+    Indexed

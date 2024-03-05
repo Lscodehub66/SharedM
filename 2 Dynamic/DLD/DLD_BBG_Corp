@@ -14,9 +14,9 @@ let
                 Table.TransformColumns(x, {{y, each if List.Contains({"", null, "--"}, _) then "【】" else _}})
             otherwise
                 x
-    ), 
+    ),
     AddedSBLC = fx("SBLCBBG")(TF),
-    TFCols = fx("Replace")( AddedSBLC, {"发行评级", "主体评级"}, "评级"),
+    TFCols = fx("Replace")(AddedSBLC, {"发行评级", "主体评级"}, "评级"),
     ByeErrors = fx("ByeAllErrors")(TFCols),
     TBC_Replaced = Table.TransformColumns(
         ByeErrors,
@@ -31,8 +31,11 @@ let
             try CWB("DLD_BBG_Corp") otherwise fx("CheckNDupe")(TBC_Replaced)
         else
             fx("CheckNDupe")(TBC_Replaced),
-    Renamed1 = if not Table.HasColumns(Crossroad, "SBLC提供者") then Table.RenameColumns(Crossroad, {{"SBLC_Provider_Name", "SBLC提供者"}}, MissingField.Ignore)
-    else Crossroad,
+    Renamed1 =
+        if not Table.HasColumns(Crossroad, "SBLC提供者") then
+            Table.RenameColumns(Crossroad, {{"SBLC_Provider_Name", "SBLC提供者"}}, MissingField.Ignore)
+        else
+            Crossroad,
     Stamped = fx(
         "1st"
     )(

@@ -1,15 +1,13 @@
 //let LoadCode = Load("SBLC_Pie_Size","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
-
 let
-    Source = Table.Buffer(Load("SBLC_Data")) ,
-
+    Source = Table.Buffer(Load("SBLC_Data")),
     Pie2 = fx("Pie")(Source, "年", Order.Ascending, "货币", "亿美元"),
     //**Skipped**
- Pie3 = fx("Pie")(Source, "年", Order.Ascending, "板块", "亿美元"),
-    Combined = fx("Combine")({  Pie2 ,Pie3}),
+    Pie3 = fx("Pie")(Source, "年", Order.Ascending, "板块", "亿美元"),
+    Combined = fx("Combine")({Pie2, Pie3}),
     //**Skipped**
-    Substracted = Table.AddColumn(Pie2 , "变动", each Number.Round([23年占比] - [22年占比],4), Percentage.Type),
- #"Merged Queries" = Table.NestedJoin(
+    Substracted = Table.AddColumn(Pie2, "变动", each Number.Round([23年占比] - [22年占比], 4), Percentage.Type),
+    #"Merged Queries" = Table.NestedJoin(
         Substracted,
         {"Column1", "Column2"},
         Get("SortTable_Graph_SBLCPieSize"),
@@ -21,7 +19,7 @@ let
     Sorted = Table.Sort(#"Expanded Data", {{"Index", 0}}),
     List_NullToZero = List.RemoveItems(Table.ColumnNames(#"Expanded Data"), {"Column1", "Column2"}),
     #"Replaced Value" = Table.ReplaceValue(Sorted, null, 0, Replacer.ReplaceValue, List_NullToZero),
-     Reordered = Table.SelectColumns(
+    Reordered = Table.SelectColumns(
         Sorted, {"Index", "Column1", "Column2", "22年亿美元", "23年亿美元", "24年亿美元", "变动"}, MissingField.UseNull
     )
 in

@@ -3,7 +3,8 @@ let
     // Set All Parameters to be Text
     OVRDMonday = try Load("OVRDMonday") otherwise null,
     //"20231001"
-    OVRDMulti = try Load("OVRDMulti") otherwise null, //"ON","OFF"
+    OVRDMulti = try Load("OVRDMulti") otherwise null,
+    //"ON","OFF"
     OVRDwFilter = try Load("OVRDwFilter") otherwise null,
     //
     CWB_wRemove = try CWB("RemoveFrom_DB") otherwise "--",
@@ -14,7 +15,8 @@ let
     CWB_MultiSource = try CWB("MultiSource") otherwise "OFF",
     //
     Source = List.Accumulate(
-        { {"RemoveFrom_DB", null, CWB_wRemove, type text},
+        {
+            {"RemoveFrom_DB", null, CWB_wRemove, type text},
             {"Updator", null, CWB_Updator, type text},
             {"Monday", Date.StartOfWeek(Date.From(OVRDMonday), Day.Monday), CWB_Monday, type date},
             {"wFilter", OVRDwFilter, CWB_wFilter, type text},

@@ -1,14 +1,14 @@
 // let LoadCode = Load("DimRoster"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 // Status
 let
-    Source  = #table({"Updator"}, {{ CWB("UpdatorWeekly")}}),
+    Source = #table({"Updator"}, {{CWB("UpdatorWeekly")}}),
     #"Added Custom" = Table.AddColumn(Source, "Monday", each Date.From(Monday), type date),
-    Custom4 = fx("Merge")(#"Added Custom",DimDate,"Monday","A_Date", {"WeekNum"},{""}),
-    Custom6 = Table.AddColumn(Custom4, "Monday_TwoWeeksAgo", each Date.AddDays([Monday] ,-14),type date),
-    #"Added Custom1" = Table.AddColumn(Custom6, "当前", each Date.AddDays([Monday] ,-3),type date),
-    Custom1 = Table.AddColumn(#"Added Custom1", "上周", each Date.AddDays([当前] ,-7),type date),
-    Custom5 = Table.AddColumn(Custom1, "年初", each Load("fxNextWeekDay")(  Date.StartOfYear([Monday])),type date),
-    Custom2 = Table.AddColumn(Custom5, "近1年", each Load("fxNextWeekDay")(  Date.AddYears([Monday] ,-1)),type date),
-    Custom3 = Table.AddColumn(#"Custom2", "近5年", each Load("fxNextWeekDay")(  Date.AddYears([Monday] ,-5)),type date)
+    Custom4 = fx("Merge")(#"Added Custom", DimDate, "Monday", "A_Date", {"WeekNum"}, {""}),
+    Custom6 = Table.AddColumn(Custom4, "Monday_TwoWeeksAgo", each Date.AddDays([Monday], -14), type date),
+    #"Added Custom1" = Table.AddColumn(Custom6, "当前", each Date.AddDays([Monday], -3), type date),
+    Custom1 = Table.AddColumn(#"Added Custom1", "上周", each Date.AddDays([当前], -7), type date),
+    Custom5 = Table.AddColumn(Custom1, "年初", each Load("fxNextWeekDay")(Date.StartOfYear([Monday])), type date),
+    Custom2 = Table.AddColumn(Custom5, "近1年", each Load("fxNextWeekDay")(Date.AddYears([Monday], -1)), type date),
+    Custom3 = Table.AddColumn(#"Custom2", "近5年", each Load("fxNextWeekDay")(Date.AddYears([Monday], -5)), type date)
 in
     Custom3

@@ -4,7 +4,11 @@
         Source = TableName,
         BBG_HD = Get("Header_Exp_Dynamic_BBG"),
         BBG_HDExp = List.Transform(BBG_HD, each if List.Contains({"计息基准", "SBLC提供者"}, _) then "Dummy" & _ else _),
-        BBG_Merged = if BBGtbl = null then Source else  fx("Merge")(Source, BBGtbl, "Check", "Check", BBG_HD, BBG_HDExp),
+        BBG_Merged = if BBGtbl = null then Source else fx(
+            "Merge"
+        )(
+            Source, BBGtbl, "Check", "Check", BBG_HD, BBG_HDExp
+        ),
         BBGCheck_1 = List.Accumulate(
             {{"发行评级", "债项评级"}, {"主体评级", "穆迪/标普"}},
             BBG_Merged,
@@ -38,8 +42,8 @@
             Replacer.ReplaceValue,
             {"主体评级"}
         ),
-                #"IssueRtg TBC" = Table.ReplaceValue(
-                  #"EntityRtg TBC",
+        #"IssueRtg TBC" = Table.ReplaceValue(
+            #"EntityRtg TBC",
             each [发行评级],
             each if [主体评级] <> "--/--/--" and [发行评级] = "--/--/--" then "【--/--/--】" else [发行评级],
             Replacer.ReplaceValue,
@@ -47,7 +51,7 @@
         ),
         BBGCheck_2 = List.Accumulate(
             {"计息基准", "SBLC提供者"},
-          #"IssueRtg TBC" ,
+            #"IssueRtg TBC",
             (x, y) =>
                 if Table.HasColumns(Source, y) then
                     Table.ReplaceValue(
@@ -64,8 +68,6 @@
                 else
                     x
         ),
-
-        
         Custom2 = fx("RCol")(BBGCheck_2)
     in
         Custom2

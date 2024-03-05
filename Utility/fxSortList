@@ -1,9 +1,5 @@
-( List as list , SortList as list ) =>
- let
-
-  Sorted   = List.Sort ( List, ( a, b ) => Value.Compare ( List.PositionOf ( SortList, a ), List.PositionOf ( SortList, b ) ) )
-
- in
- Sorted 
-
-  
+(List as list, SortList as list) =>
+    let
+        Sorted = List.Sort(List, (a, b) => Value.Compare(List.PositionOf(SortList, a), List.PositionOf(SortList, b)))
+    in
+        Sorted

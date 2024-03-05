@@ -1,19 +1,10 @@
-
-    let
-     
-        Col = {"ISIN", "定价日", "债券简称", "信用主体", "发行规模(亿)", "货币", "发行方式", "发行规则", "ISIN_TEMP", "债券余额", "利率类型", "交易状态"},
-        Source =fx("Wstbl")("DMI"),
-        #"Removed Other Columns" = Table.SelectColumns(
-            Source,
-            {"发行方式","ISIN"},
-            MissingField.Ignore
-        ),
-        #"Filtered Rows" = Table.SelectRows(#"Removed Other Columns", each Text.Contains([发行方式],"增发")),
-        Output = Table.Distinct(#"Filtered Rows", {"ISIN"}) ,
-     Merged = Table.NestedJoin( Output, {"ISIN"},CWB("DMI_TempISIN"), {"ISIN_TEMP"}, "Data", JoinKind.LeftAnti),
-             SCol = Table.SelectColumns(
-           Merged,
-            {"ISIN"}
-        )
-    in
-        SCol
+let
+    Col = {"ISIN", "定价日", "债券简称", "信用主体", "发行规模(亿)", "货币", "发行方式", "发行规则", "ISIN_TEMP", "债券余额", "利率类型", "交易状态"},
+    Source = fx("Wstbl")("DMI"),
+    #"Removed Other Columns" = Table.SelectColumns(Source, {"发行方式", "ISIN"}, MissingField.Ignore),
+    #"Filtered Rows" = Table.SelectRows(#"Removed Other Columns", each Text.Contains([发行方式], "增发")),
+    Output = Table.Distinct(#"Filtered Rows", {"ISIN"}),
+    Merged = Table.NestedJoin(Output, {"ISIN"}, CWB("DMI_TempISIN"), {"ISIN_TEMP"}, "Data", JoinKind.LeftAnti),
+    SCol = Table.SelectColumns(Merged, {"ISIN"})
+in
+    SCol

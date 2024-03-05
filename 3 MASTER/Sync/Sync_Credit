@@ -1,7 +1,2 @@
 // let LoadCode = Load("Sync_Credit","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
-let
- 
-    Source = CWB("mCredit"),
-    SelectedCol = Table.SelectColumns(Source,{"信用主体", "信用主体简称","IS_CLIENT"})
-in
-    SelectedCol
+let Source = CWB("mCredit"), SelectedCol = Table.SelectColumns(Source, {"信用主体", "信用主体简称", "IS_CLIENT"}) in SelectedCol

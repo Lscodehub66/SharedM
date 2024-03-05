@@ -7,9 +7,8 @@
             Source,
             "品种主题",
             each
-                 if Text.Contains([计息基准], "+") or Text.Contains([票息], "+") then
+                if Text.Contains([计息基准], "+") or Text.Contains([票息], "+") then
                     "浮息"
-               
                 else if [主题债券] = "T2" then
                     "T2"
                 else if [主题债券] = "AT1" and Text.Contains([特殊条款说明], "优先股") and List.Count(Text.Split([特殊条款说明], "优先股")) >= 4 then
@@ -46,7 +45,7 @@
             MergedCol,
             "ESG",
             each
-                if Text.Contains([ESG_Source], "挂钩") or  Text.Contains([ESG_Source], "LINKED") then
+                if Text.Contains([ESG_Source], "挂钩") or Text.Contains([ESG_Source], "LINKED") then
                     "可持续发展挂钩"
                 else if Text.Contains([ESG_Source], "可持续") or Text.Contains([ESG_Source], "SUSTAIN") then
                     "可持续发展"
@@ -62,13 +61,7 @@
                 Table.ReplaceValue(
                     ESG_DMIBBG,
                     "",
-                    each
-                        if Text.Contains([筹款用途], "绿") then
-                            "【绿色】"
-                        else if Text.Contains([筹款用途], "可持续") then
-                            "【可持续发展】"
-                        else
-                            "",
+                    each if Text.Contains([筹款用途], "绿色") or Text.Contains([筹款用途], "可持续") then "【】" else "",
                     Replacer.ReplaceValue,
                     {"ESG"}
                 )

@@ -1,0 +1,29 @@
+// fx("ForReviewSelect")(Source, "mIssue")
+(TableName as table, _input as text) =>
+    let
+        _inputcol = if _input = "mBOCOM" then "mBISL" else _input,
+        wIssueCheck_Stay = List.Buffer(Table.SelectRows(CWB("ForReview_wIssue"), each [删除及隐藏] <> "【删除】")[Check]),
+        wIssueCheck_Deleted = List.Buffer(Table.SelectRows(CWB("ForReview_wIssue"), each [删除及隐藏] = "【删除】")[Check]),
+        wIssueISIN_Deleted = List.Buffer(Table.SelectRows(CWB("ForReview_wIssue"), each [删除及隐藏] = "【删除】")[ISIN]),
+        Source = TableName,
+        F1 = Table.SelectRows(Source, each not List.Contains({"n/a"}, Record.Field(_, _inputcol))),
+        F2 =
+            if List.Contains({"mBISL", "mEXE", "mStats"}, _inputcol) then
+                Table.SelectRows(F1, each not List.Contains(wIssueCheck_Deleted, [Check]))
+            else if List.Contains({"mBond"}, _inputcol) then
+                Table.SelectRows(F1, each not List.Contains(wIssueISIN_Deleted, [ISIN]))
+            else
+                F1,
+        Allowed = if fx("Parameter")("ShowAll") = "OFF" then {"新增"} else {"已收录", "新增"},
+        F3 =
+            if List.Contains({"mStats"}, _inputcol) then
+                Table.SelectRows(
+                    F2,
+                    each
+                        List.Contains(Allowed, Record.Field(_, _inputcol))
+                        or List.Contains(wIssueCheck_Stay, [Check])
+                )
+            else
+                Table.SelectRows(F2, each List.Contains(Allowed, Record.Field(_, _inputcol)))
+    in
+        F3

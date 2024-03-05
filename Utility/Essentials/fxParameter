@@ -36,7 +36,7 @@
             if _input = null then
                 Output
             else if _input = "Monday" and Output{0}[Value] = null then
-               Date.ToText(Date.StartOfWeek(Date.From(DateTime.FixedLocalNow()), Day.Monday),"yyyyMMdd")
+                Date.ToText(Date.StartOfWeek(Date.From(DateTime.FixedLocalNow()), Day.Monday), "yyyyMMdd")
             else
                 Output{0}[Value]
     in

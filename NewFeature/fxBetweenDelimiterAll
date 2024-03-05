@@ -1,32 +1,30 @@
 // fxBetweenDelimiterAll
 (InputText as text, StartDelimiter as text, EndDelimiter as text, optional Alternative_Dummy as text) =>
-
-let
-    // If the end delimiter contains the same characters than the start delimiter then that portion has to be replaced in the end parameter by a dummy. Otherwise the query fails.
-    AlternativeDummy = Alternative_Dummy,
-    Dummy = if AlternativeDummy is null then "°" else AlternativeDummy,
-    String = InputText,
-    ParaStart = StartDelimiter,
-    ParaEnd = EndDelimiter,
-    
-    // If the delimiters are identical, a different logic has to be applied.
-    IdenticalDelimiters = ParaEnd = ParaStart,
-    // Start of logic for identical delimiters
-    SplitText = Text.Split(String, ParaStart),
-    ResultIdenticalDelimiters = List.Alternate(SplitText,1,1),
-    
-    // Start of logic for different start- and end-delimiters: Create dummy end-delimiter.
-    DummyParaEnd = Text.Replace(ParaEnd, ParaStart, Dummy),
-    DummyString = Text.Replace(String, ParaEnd, DummyParaEnd),
-    SplitByParaStart = List.Skip(Text.Split(DummyString, ParaStart),1),
-    ConvertToTable = Table.FromList(SplitByParaStart, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
-    ExtractBeforeParaEnd = Table.AddColumn(ConvertToTable, "Result", each Text.BeforeDelimiter([Column1], DummyParaEnd)),
-    Cleanup = Table.RemoveColumns(ExtractBeforeParaEnd,{"Column1"})[Result],
-    
-    Result = if Text.Contains(String, ParaStart) and Text.Contains(String, ParaEnd) 
-                then (if IdenticalDelimiters 
-                        then ResultIdenticalDelimiters 
-                        else Cleanup) 
-                else error Error.Record( "At least one of the delimiters is not found in the string" )
-in
-    Result
+    let
+        // If the end delimiter contains the same characters than the start delimiter then that portion has to be replaced in the end parameter by a dummy. Otherwise the query fails.
+        AlternativeDummy = Alternative_Dummy,
+        Dummy = if AlternativeDummy is null then "°" else AlternativeDummy,
+        String = InputText,
+        ParaStart = StartDelimiter,
+        ParaEnd = EndDelimiter,
+        // If the delimiters are identical, a different logic has to be applied.
+        IdenticalDelimiters = ParaEnd = ParaStart,
+        // Start of logic for identical delimiters
+        SplitText = Text.Split(String, ParaStart),
+        ResultIdenticalDelimiters = List.Alternate(SplitText, 1, 1),
+        // Start of logic for different start- and end-delimiters: Create dummy end-delimiter.
+        DummyParaEnd = Text.Replace(ParaEnd, ParaStart, Dummy),
+        DummyString = Text.Replace(String, ParaEnd, DummyParaEnd),
+        SplitByParaStart = List.Skip(Text.Split(DummyString, ParaStart), 1),
+        ConvertToTable = Table.FromList(SplitByParaStart, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
+        ExtractBeforeParaEnd = Table.AddColumn(
+            ConvertToTable, "Result", each Text.BeforeDelimiter([Column1], DummyParaEnd)
+        ),
+        Cleanup = Table.RemoveColumns(ExtractBeforeParaEnd, {"Column1"})[Result],
+        Result =
+            if Text.Contains(String, ParaStart) and Text.Contains(String, ParaEnd) then
+                (if IdenticalDelimiters then ResultIdenticalDelimiters else Cleanup)
+            else
+                error Error.Record("At least one of the delimiters is not found in the string")
+    in
+        Result

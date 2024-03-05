@@ -1,9 +1,8 @@
 let
     _Input = "GM",
-
     //**
     Source = Load("Dimtbl_Indice"),
-    IndexCol = "Index_"& _Input,
+    IndexCol = "Index_" & _Input,
     #"Filtered Rows" = Table.SelectRows(Source, each Record.Field(_, IndexCol) <> null),
     #"Removed Other Columns" = Table.SelectColumns(#"Filtered Rows", {"PK", "市场指数"}),
     Replaced = Table.ReplaceValue(
@@ -18,9 +17,10 @@ let
     SCol = Table.SelectColumns(
         Custom1,
         List.Distinct(
-            {IndexCol,"PK","市场指数"}
+            {IndexCol, "PK", "市场指数"}
                 & List.Select(
-                    Table.ColumnNames(Custom1), each not List.ContainsAny(Text.ToList(_), {"A".."Z"}, Comparer.OrdinalIgnoreCase)
+                    Table.ColumnNames(Custom1),
+                    each not List.ContainsAny(Text.ToList(_), {"A".."Z"}, Comparer.OrdinalIgnoreCase)
                 )
         )
     ),

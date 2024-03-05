@@ -2,17 +2,9 @@
 let
     Source = (TableToClean as table, _inputHD as list, _key as nullable text) =>
         let
-          
-          MyHD = List.Intersect({Table.ColumnNames(TableToClean),_inputHD}),
-          
-          
-          Clnlist= List.Buffer(fx("ControlRP." & (_key ?? "") )),
-            #"Cln Selected" = Table.FromRows(
-             Clnlist , {
-                    "Find",
-                    "Replace"
-                }
-            ),
+            MyHD = List.Intersect({Table.ColumnNames(TableToClean), _inputHD}),
+            Clnlist = List.Buffer(fx("ControlRP." & (_key ?? ""))),
+            #"Cln Selected" = Table.FromRows(Clnlist, {"Find", "Replace"}),
             ReplacerTable = Table.Buffer(#"Cln Selected"),
             FindReplaceList = Table.ToRows(ReplacerTable),
             Counter = Table.RowCount(ReplacerTable),

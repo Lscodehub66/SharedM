@@ -38,6 +38,6 @@
             else
                 IGExpanded1,
         ChangedType = Table.TransformColumnTypes(Replaced1ToNull, {{NewColName, Int64.Type}}),
-        Output = fx("Data")(fx("1st")(( ChangedType), {NewColName, _inputcount}))
+        Output = fx("Data")(fx("1st")((ChangedType), {NewColName, _inputcount}))
     in
         Output

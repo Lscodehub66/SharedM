@@ -21,7 +21,7 @@
                     "投资级板块"
                 else if [板块] = "金融机构" or Text.Contains([中资属性], "央企") then
                     "【投资级板块】"
-                else if ([中资属性] = "民企" and [板块] = "房地产")  or [主体评级分类] = "HY" then
+                else if ([中资属性] = "民企" and [板块] = "房地产") or [主体评级分类] = "HY" then
                     "高收益板块"
                 else if [板块] = "主权/政府" then
                     "其他板块"
@@ -117,9 +117,14 @@
                     ""
         ),
         #"Translated BOCOM" = fx("Replace")(Bocom, {Col6}, "角色"),
-        AddedStats = Table.AddColumn(    #"Translated BOCOM","StatsDES", each if [Stats] <> "" then  "。最终认购统计如下：" & Text.Replace([Stats], "#(lf)","") else "",type text),
+        AddedStats = Table.AddColumn(
+            #"Translated BOCOM",
+            "StatsDES",
+            each if [Stats] <> "" then "。最终认购统计如下：" & Text.Replace([Stats], "#(lf)", "") else "",
+            type text
+        ),
         Merged = Table.AddColumn(
-            AddedStats ,
+            AddedStats,
             "描述",
             each
                 fx(
@@ -132,14 +137,14 @@
                         & Record.Field(_, Col4)
                         & "，"
                         & Record.Field(_, Col5)
-                        & Record.Field(_, Col6) & Record.Field(_, "StatsDES"),
+                        & Record.Field(_, Col6)
+                        & Record.Field(_, "StatsDES"),
                     "，"
                 )
         ),
-        
-      //  Stats = Table.AddColumn(Merged, "描述2", each if [Stats] <> "" then [描述] & "#(lf)" & [Stats] else [描述], type text),
+        //  Stats = Table.AddColumn(Merged, "描述2", each if [Stats] <> "" then [描述] & "#(lf)" & [Stats] else [描述], type text),
         Grouped = Table.Group(
-               Merged,
+            Merged,
             {"信用主体及评级", "板块"},
             {
                 {"新发总结板块", each Text.Combine(List.Distinct([新发总结板块]), ";"), type text},
@@ -159,7 +164,8 @@
                 {"描述", each Text.Combine(List.Distinct([描述]), "#(lf)"), type text},
                 {"Custom", each _, type table}
             }
-        ),    IsByCCY = List.Sum( Grouped [多币种]) = 0,
+        ),
+        IsByCCY = List.Sum(Grouped[多币种]) = 0,
         #"Replaced Value" = Table.ReplaceValue(
             Grouped,
             each [增发判定],
@@ -191,7 +197,6 @@
             type text
         ),
         AddedCol = Table.AddColumn(#"Added Suffix", "Writer", each if [总述] <> "" then [总述] & "#(lf)" & [描述] else [描述]),
-     
         List = {"新发总结板块", "信用主体及评级", "定价日", "板块", "货币细分", "Writer"},
         SCol = Table.SelectColumns(AddedCol, if _input = null then List else List & {"Custom"}, MissingField.UseNull)
     in

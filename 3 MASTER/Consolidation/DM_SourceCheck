@@ -1,4 +1,4 @@
-// let LoadCode = Load("DM_SourceCheck","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA 
+// let LoadCode = Load("DM_SourceCheck","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
     Source = {"deal_master"},
     ToTable = Table.FromColumns({Source}, {"Name"}),
@@ -7,7 +7,15 @@ let
         ToTable,
         (x, y) =>
             Table.ExpandRecordColumn(
-                Table.AddColumn(x, y{0}, each if y{0} = "CWB" then try Excel.CurrentWorkbook(){[Name = [Name]]}[Content] else try y{1}(y{2} & Record.Field(_, "Name"))),
+                Table.AddColumn(
+                    x,
+                    y{0},
+                    each
+                        if y{0} = "CWB" then
+                            try Excel.CurrentWorkbook(){[Name = [Name]]}[Content]
+                        else
+                            try y{1}(y{2} & Record.Field(_, "Name"))
+                ),
                 y{0},
                 {"HasError"},
                 {y{0} & ".HasError"}

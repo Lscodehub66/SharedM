@@ -4,15 +4,9 @@
         Source = TableName,
         ReplacedCCY = Table.ReplaceValue(Source, "美元债", "", Replacer.ReplaceValue, {"货币细分"}),
         AddedComp = Table.AddColumn(
-             ReplacedCCY,
-            "COMPARER",
-            each
-        
-                    Text.From([YYMMDD]) & Text.Upper(Text.Remove([PROJECT_NAME], " "))
-               ,
-            type text
+            ReplacedCCY, "COMPARER", each Text.From([YYMMDD]) & Text.Upper(Text.Remove([PROJECT_NAME], " ")), type text
         ),
-        NthMandate = fx("NthMandated")(  AddedComp, {"YYMMDD", "信用主体简称"}),
+        NthMandate = fx("NthMandated")(AddedComp, {"YYMMDD", "信用主体简称"}),
         #"Count Multi-Tranche" = fx("AddMultiCount")(NthMandate),
         #"Merged Queries1" = Table.NestedJoin(
             #"Count Multi-Tranche", {"定价会时间"}, Load("DimTime"), {"Time"}, "Data", JoinKind.LeftOuter
@@ -63,8 +57,7 @@
         Reordered = Table.ReorderColumns(
             #"Revised Issuer", CN_Base & List.RemoveItems(CN_CWB, CN_Base), MissingField.Ignore
         ),
-       
-        SCol = Table.SelectColumns(   Reordered , CN_Base, MissingField.Ignore),
-        Output = if Text.Contains(Key, "BASE") then SCol else    Reordered
+        SCol = Table.SelectColumns(Reordered, CN_Base, MissingField.Ignore),
+        Output = if Text.Contains(Key, "BASE") then SCol else Reordered
     in
         Output

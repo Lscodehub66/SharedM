@@ -2,7 +2,7 @@
     let
         Source = TableName,
         RefCol = {"信用主体", "通过分行", "增发判定", "货币", "结构", "票息", "年期", "兑付日", "品种主题", "PROJECT_CODE", "期数", "信用主体简称"},
-        NewCol = {"信用主体(备证行)", "PROJECT_NAME", "交易简称","债券简称"},
+        NewCol = {"信用主体(备证行)", "PROJECT_NAME", "交易简称", "债券简称"},
         GNG = "Go",
         // Prep
         NulltoBlank = Table.ReplaceValue(
@@ -40,9 +40,7 @@
             type text
         ),
         Vol_project = Table.AddColumn(
-            Code_project,
-            "PrjVol",
-            each if not List.Contains({"", null, " ", "--"}, [期数]) then " " & [期数] else "",
+            Code_project, "PrjVol", each if not List.Contains({"", null, " ", "--"}, [期数]) then " " & [期数] else "",
             type text
         ),
         Tap_project = Table.AddColumn(
@@ -54,7 +52,6 @@
             Combiner.CombineTextByDelimiter("", QuoteStyle.None),
             "PROJECT_NAME"
         ),
-        
         //信用主体(备证行) 合成
         Tap_ShortName = Table.AddColumn(
             Combined_project, "DummySNTap", each if Text.Contains(([增发判定] ?? ""), "增发") then "*" else "", type text

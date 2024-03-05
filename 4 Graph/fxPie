@@ -11,24 +11,30 @@
 ) =>
     let
         Source = wPIE_Load,
-        Filtered1 = if Text.Contains(GroupCol,"分类") then Table.SelectRows(Source, each Record.Field(_, GroupCol) <> "--") else Source,
-        MergedQ = fx("MergeDimDate")(   Filtered1 , "定价日", {PivotCol, GroupCol},{""}),
+        Filtered1 =
+            if Text.Contains(GroupCol, "分类") then
+                Table.SelectRows(Source, each Record.Field(_, GroupCol) <> "--")
+            else
+                Source,
+        MergedQ = fx("MergeDimDate")(Filtered1, "定价日", {PivotCol, GroupCol}, {""}),
         // "亿美元", "笔数"
         // NumColumns = {"yy","MM","WeekNum"}
         //TextColumns = {"年", "季", "月", "周", "年月"},
         SCol = Table.SelectColumns(MergedQ, {"定价日", PivotCol, GroupCol, MeasureCol}, MissingField.UseNull),
-        Grouped = if MeasureCol = "笔数" then Table.Group(
-            SCol,
-            {PivotCol, GroupCol},
-            {{MeasureCol, each  List.Count(Record.Field(_, GroupCol)) , type number}}
-        ) else Table.Group(
-            SCol,
-            {PivotCol, GroupCol},
-            {{MeasureCol, each Number.Round(List.Sum(Record.Field(_, MeasureCol)),2) , type number}}
-        ),
-        PivotedValues = List.Sort(
-            Table.ToList(Table.Distinct(Table.SelectColumns(Grouped, PivotCol))), OneOrZero
-        ),
+        Grouped =
+            if MeasureCol = "笔数" then
+                Table.Group(
+                    SCol, {PivotCol, GroupCol}, {
+                        {MeasureCol, each List.Count(Record.Field(_, GroupCol)), type number}
+                    }
+                )
+            else
+                Table.Group(
+                    SCol,
+                    {PivotCol, GroupCol},
+                    {{MeasureCol, each Number.Round(List.Sum(Record.Field(_, MeasureCol)), 2), type number}}
+                ),
+        PivotedValues = List.Sort(Table.ToList(Table.Distinct(Table.SelectColumns(Grouped, PivotCol))), OneOrZero),
         PivotedValues_TF = List.Transform(PivotedValues, each _ & MeasureCol),
         PivotedValues_RN = List.Zip({PivotedValues, PivotedValues_TF}),
         Pivoted = Table.Pivot(Grouped, PivotedValues, PivotCol, MeasureCol, List.Sum),
@@ -42,5 +48,3 @@
         Output = if CalculatePercentIsTrue <> false then Pt2 else Reordered
     in
         Output
-
-

@@ -1,6 +1,6 @@
-   let
-   
+let
     RecordValue = "近3月",
     Source = fx("DBMonitor")("USDCNH_Tighten_Pivot"),
-    joined = Table.Buffer(fx("DateRange")({    RecordValue ,"Monday.Date"},{Source,"定价日"}))
-    in  joined
+    joined = Table.Buffer(fx("DateRange")({RecordValue, "Monday.Date"}, {Source, "定价日"}))
+in
+    joined

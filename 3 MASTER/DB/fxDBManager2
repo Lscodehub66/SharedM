@@ -1,19 +1,20 @@
-(TableName as table)=>
-let
-
-    
- SourceDB = TableName,
- CountRow = Table.RowCount(TableName),
-    #"Removed Blank Rows" = Table.SelectRows(SourceDB, each not List.IsEmpty(List.RemoveMatchingItems(Record.FieldValues(_), {"", null}))),
+(TableName as table) =>
+    let
+        SourceDB = TableName,
+        CountRow = Table.RowCount(TableName),
+        #"Removed Blank Rows" = Table.SelectRows(
+            SourceDB, each not List.IsEmpty(List.RemoveMatchingItems(Record.FieldValues(_), {"", null}))
+        ),
         // Definitions fx("DBManager")(Source,"mCredit","LIFO")
         //
         CN_Source = Table.ColumnNames(#"Removed Blank Rows"),
-        HD = List.Intersect({{"Check", "ISIN","信用主体", "信用主体(备证行)", "Date", "Timestamp", "板块二级", "BISL_ROLE"}, CN_Source}),
+        HD = List.Intersect(
+            {{"Check", "ISIN", "信用主体", "信用主体(备证行)", "Date", "Timestamp", "板块二级", "BISL_ROLE"}, CN_Source}
+        ),
         HD_Count = List.Count(HD),
         MorW = if CountRow > 200 or List.Contains(CN_Source, "Timestamp") then "M" else "W",
         // Filter out blank rows & invoke dataformat
-        NullOut =
-            fx("Data")(#"Removed Blank Rows"),
+        NullOut = fx("Data")(#"Removed Blank Rows"),
         // Recalculate identifiers
         RIdentifier =
             if HD{0} = "Check" then
@@ -30,7 +31,7 @@ let
         Indexed = Table.AddIndexColumn(RIdentifier, "Dummy" & "Index", 1, 1),
         SortedDupe =
             if HD_Count > 0 then
-                Table.Buffer(Table.Sort(Indexed, {{HD{0},Order.Ascending}, {"Dummy" & "Index", Order.Ascending}}))
+                Table.Buffer(Table.Sort(Indexed, {{HD{0}, Order.Ascending}, {"Dummy" & "Index", Order.Ascending}}))
             else
                 Indexed,
         RemovedDupe =
@@ -43,14 +44,13 @@ let
         _CROSSROAD = if MorW = "W" then fx("UpdatorTS")(RemovedDupe) else RemovedDupe,
         // Revalidate mBISL BISL_Ancient
         BISL_对帐号 = Load("fxPRJSync")(_CROSSROAD, "台账序号", "定价日", "PRJ对账号"),
-    
         //  **Referenced Dummy Step ** This step is referenced by the conditional mCredit Manager step as Source !
         DB_Entity = if List.Contains(HD, "板块二级") and MorW = "M" then Load("fxDB_Entity")(BISL_对帐号) else BISL_对帐号,
         //  **Referenced Dummy Step ** This step is referenced by the conditional sort step - better not to change it !
         FnDBUpdated = if MorW = "M" then fx("DBUpdator")(DB_Entity) else DB_Entity,
         PresentedNull = fx("PresentNoData")(FnDBUpdated),
         //Sort as last step
-       RCol = fx("RCol")(PresentedNull),
+        RCol = fx("RCol")(PresentedNull),
         Sorted = fx("SortNIndex")(RCol)
     in
         Sorted

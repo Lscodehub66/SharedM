@@ -1,7 +1,5 @@
 // Monday
 let
-    OVRDMonday = Load("OVRDMonday"), 
-    
-    Source = if OVRDMonday = "" or OVRDMonday = null then CWB("Monday") else OVRDMonday
+    OVRDMonday = Load("OVRDMonday"), Source = if OVRDMonday = "" or OVRDMonday = null then CWB("Monday") else OVRDMonday
 in
     Source

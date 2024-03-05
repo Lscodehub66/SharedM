@@ -1,14 +1,13 @@
 // let LoadCode = Load("Spd_Avg","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
-
 let
-
     //
-    Source =CWB("mIndice"),  
+    Source = CWB("mIndice"),
     //
-     CN_Source = List.Buffer(Table.ColumnNames(Source)),
-      KeyDate = List.Buffer(Load("Controller")[Monday]){0},
-     _InputCurves = {"UST", "CGB"},    // second item minus by first item
-        CurveHD = List.Select(
+    CN_Source = List.Buffer(Table.ColumnNames(Source)),
+    KeyDate = List.Buffer(Load("Controller")[Monday]){0},
+    _InputCurves = {"UST", "CGB"},
+    // second item minus by first item
+    CurveHD = List.Select(
         CN_Source,
         each Text.Contains(_, _InputCurves{0}) and Text.Contains(_, Number.ToText(Load("Spd_Tenor"), "0Y"))
     )
@@ -17,8 +16,7 @@ let
             each Text.Contains(_, _InputCurves{1}) and Text.Contains(_, Number.ToText(Load("Spd_Tenor"), "0Y"))
         ),
     //
-    Filtered = Table.SelectRows(   Source, each [Date] <    KeyDate),
-   
+    Filtered = Table.SelectRows(Source, each [Date] < KeyDate),
     Sorted = Table.Sort(Filtered, {{"Date", Order.Descending}}),
     SCol = Table.SelectColumns(Sorted, {"Date"} & CurveHD),
     //

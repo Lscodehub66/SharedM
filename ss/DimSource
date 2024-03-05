@@ -10,12 +10,13 @@ let
             {
                 {"PK_Folder2", "FolderInput", "FolderInput"},
                 {"Base_4", Root{0} & "Backup\", Root{1} & "0 DCM Base\4 Markets\"},
-                {"Team_DH", Root{0}, Root{1} & "Team Folder\Execution Team\DataHub\"},  {"Team_DH_B", Root{0} & "Backup\", Root{1} & "Team Folder\Execution Team\DataHub\"},
+                {"Team_DH", Root{0}, Root{1} & "Team Folder\Execution Team\DataHub\"},
+                {"Team_DH_B", Root{0} & "Backup\", Root{1} & "Team Folder\Execution Team\DataHub\"},
                 {"Team_DH_DL", Root{0} & "DataLake\", Root{1} & "Team Folder\Execution Team\DataHub\DataLake\"},
                 {
                     "Team_Weekly",
-                    Root{0} & "Backup\Weekly\" & YYYYMMDD &"Data\",
-                    Root{1} & "Team Folder\Execution Team\Weekly\" & YYYYMMDD &"Data\"
+                    Root{0} & "Backup\Weekly\" & YYYYMMDD & "Data\",
+                    Root{1} & "Team Folder\Execution Team\Weekly\" & YYYYMMDD & "Data\"
                 },
                 {
                     "Team_ESG",

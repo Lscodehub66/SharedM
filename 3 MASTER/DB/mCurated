@@ -8,9 +8,9 @@ let
     Added = fx("AddToDB")(DB, Load("wDynamicPQ"), Parameter),
     Revised =
         if Text.Contains(Parameter, "Stop") then
-           try fx("DB_Revise")(DB_Source, CWB("ToRevise"), "Check") otherwise DB_Source
+            try fx("DB_Revise")(DB_Source, CWB("ToRevise"), "Check") otherwise DB_Source
         else
-          try  fx("DB_Revise")(Added, CWB("ToRevise"), "Check") otherwise Added,
+            try fx("DB_Revise")(Added, CWB("ToRevise"), "Check") otherwise Added,
     Managed = fx("DBManager")(Revised, "m")
 in
     Managed

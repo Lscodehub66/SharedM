@@ -1,7 +1,9 @@
 //let LoadCode = Load("SBLC_Pie_Size","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
 let
     Source = Table.Buffer(Load("SBLC_Data")),
-    Pie3 =fx("Addpt")(
+    Pie3 = fx(
+        "Addpt"
+    )(
         Table.AddColumn(
             Table.RenameColumns(
                 Table.Group(Source, {"板块"}, {{"亿美元", each List.Sum([亿美元]), type number}}), {{"板块", "Column2"}}
@@ -12,7 +14,9 @@ let
         "亿美元"
     ),
     //**Skipped**
-    Pie2 =fx("Addpt")(
+    Pie2 = fx(
+        "Addpt"
+    )(
         Table.AddColumn(
             Table.RenameColumns(
                 Table.Group(Source, {"货币"}, {{"亿美元", each List.Sum([亿美元]), type number}}), {{"货币", "Column2"}}

@@ -1,6 +1,7 @@
 let
     Fn = List.Accumulate(
-       {"金融", "产业", "城投"}, // 
+        {"金融", "产业", "城投"},
+        //
         #table({""}, {{""}}),
         (x, y) =>
             fx(
@@ -9,7 +10,7 @@ let
                 {
                     x,
                     let
-                        Source = fx("Wstbl")("YY" ,y),
+                        Source = fx("Wstbl")("YY", y),
                         Duplicated =
                             if Table.HasColumns(Source, "行业") then
                                 Table.RemoveColumns(Table.DuplicateColumn(Source, "行业", "行业" & ".Dummy"), {"行业"})
@@ -24,8 +25,8 @@ let
             )
     ),
     Custom1 = fx("TransformYY")(Fn)
-   //**
+    //**
     ,
-        Sorted = fx("SortNIndex")(Custom1)
+    Sorted = fx("SortNIndex")(Custom1)
 in
-   Sorted 
+    Sorted

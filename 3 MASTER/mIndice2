@@ -1,21 +1,18 @@
 let
-   DB = "mIndice",
+    DB = "mIndice",
     DB_Source = CWB(DB),
-     DB_Source_CN = Table.ColumnNames(DB_Source),
+    DB_Source_CN = Table.ColumnNames(DB_Source),
     So2 = Date.From(CWB("wIndice")[Column2]{1}),
- MaxDateCompared = if DB_Source[Date]{0} <= So2 then "Stop" else "Go"
-,   
-    Parameter = fx("Parameter")("RemoveFrom_DB")??"",
+    MaxDateCompared = if DB_Source[Date]{0} <= So2 then "Stop" else "Go",
+    Parameter = fx("Parameter")("RemoveFrom_DB") ?? "",
     Added = fx("AddToDB")(DB, wIndicePQ, Parameter),
-    Crossroad = if Text.Contains(Parameter, "Stop") or  MaxDateCompared = "Stop" then DB_Source else Added,
-      RHD =    List.Select(DB_Source_CN, each Text.StartsWith(_, "Column") or Text.Contains(_, "DAX") or Text.Contains(_,"NIM"))& {"每周第一天","TREND"},           
- RCol = Table.RemoveColumns(
-          Crossroad,              
- RHD,
-        MissingField.Ignore
-    ),
-
-    #"Sorted Rows" = Table.Sort( RCol, {{"Date", Order.Descending}}),
+    Crossroad = if Text.Contains(Parameter, "Stop") or MaxDateCompared = "Stop" then DB_Source else Added,
+    RHD = List.Select(
+        DB_Source_CN, each Text.StartsWith(_, "Column") or Text.Contains(_, "DAX") or Text.Contains(_, "NIM")
+    )
+        & {"每周第一天", "TREND"},
+    RCol = Table.RemoveColumns(Crossroad, RHD, MissingField.Ignore),
+    #"Sorted Rows" = Table.Sort(RCol, {{"Date", Order.Descending}}),
     HD_Curves =
         let
             _SpdTenor = Record.Field(Load("Controltext"), "_SpdTenor"),

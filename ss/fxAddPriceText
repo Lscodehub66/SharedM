@@ -75,8 +75,7 @@
             {"定价息差"}
         ),
         ToPercent = Table.TransformColumns(
-            fx("Data")(RP_SpdFPT),
-            {{"IPT_YIELD", each _ / 100, type number}, {"FPT_YIELD", each _ / 100, type number}}
+            fx("Data")(RP_SpdFPT), {{"IPT_YIELD", each _ / 100, type number}, {"FPT_YIELD", each _ / 100, type number}}
         ),
         ToPercent_DMI100 = Table.AddColumn(ToPercent, "票息100DMI", each [票息_DMI] / 100, type number),
         PYieldNum = Table.AddColumn(
@@ -190,7 +189,7 @@
         ),
         Renamed = Table.RenameColumns(Custom1, {{"定价_BMK", "定价基准"}}, MissingField.Ignore),
         Replaced11 = List.Accumulate(
-            {"IPG", "FPG", "票息", "定价","定价基准"},
+            {"IPG", "FPG", "票息", "定价", "定价基准"},
             Renamed,
             (x, y) =>
                 Table.ReplaceValue(

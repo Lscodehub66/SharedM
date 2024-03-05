@@ -1,10 +1,9 @@
-
- (MyTable as table, MyColumnName as text, optional NewNewColNameInput as text) =>
-let
-    Source = MyTable,
-    ShiftedList =   List.RemoveFirstN(Table.Column(Source, MyColumnName),1)&{null} ,
-    Custom1 = Table.ToColumns(Source) & {ShiftedList},
-    NewColName = if NewNewColNameInput = null then "NextRow" else NewNewColNameInput,
-    Custom2 = Table.FromColumns(Custom1, Table.ColumnNames(Source) & {NewColName})
-in
-    Custom2 
+(MyTable as table, MyColumnName as text, optional NewNewColNameInput as text) =>
+    let
+        Source = MyTable,
+        ShiftedList = List.RemoveFirstN(Table.Column(Source, MyColumnName), 1) & {null},
+        Custom1 = Table.ToColumns(Source) & {ShiftedList},
+        NewColName = if NewNewColNameInput = null then "NextRow" else NewNewColNameInput,
+        Custom2 = Table.FromColumns(Custom1, Table.ColumnNames(Source) & {NewColName})
+    in
+        Custom2

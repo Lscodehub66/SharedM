@@ -14,32 +14,33 @@
     // Result: Table.FromRecords({[A = null, B = 1],[A = null, B = 2],[A = "", B = 3]})
 
 */
-
 (
-    tab as table, // table to clean
-    optional EmptStr as nullable logical // flag to remove columns which contains nulls OR empty strings - only
+    tab as table,
+    // table to clean
+    optional EmptStr as nullable logical
+    // flag to remove columns which contains nulls OR empty strings - only
 ) as table =>
-
     let
-     
-        ToRemove = {null} & (if EmptStr = true then {""} else {}), // list of "blank" values 
-       Ftab = Table.SelectRows(  tab, each not List.IsEmpty(List.RemoveMatchingItems(Record.FieldValues(_), {"", null}))),
-    Custom2 = fx("Data")(Ftab),
+        ToRemove = {null} & (if EmptStr = true then {""} else {}),
+        // list of "blank" values
+        Ftab = Table.SelectRows(
+            tab, each not List.IsEmpty(List.RemoveMatchingItems(Record.FieldValues(_), {"", null}))
+        ),
+        Custom2 = fx("Data")(Ftab),
         tabDemoted = Table.DemoteHeaders(Custom2),
         tabTransposed = Table.Transpose(tabDemoted),
         RowsRemoved = Table.SelectRows(
-            tabTransposed, 
-            each not List.IsEmpty(
-                List.RemoveMatchingItems(
-                    Record.FieldValues(Record.RemoveFields(_, "Column1")), // after demote+transpose first column is allways with columns headers
+            tabTransposed,
+            each
+                not List.IsEmpty(
+                    List.RemoveMatchingItems(Record.FieldValues(Record.RemoveFields(_, "Column1")),
+                    // after demote+transpose first column is allways with columns headers
                     ToRemove)
                 )
-            ),
-        tabTransposedAgain =   Table.PromoteHeaders(Table.Transpose(RowsRemoved))
-        
+        ),
+        tabTransposedAgain = Table.PromoteHeaders(Table.Transpose(RowsRemoved))
     in
-      tabTransposedAgain
-
+        tabTransposedAgain
 /* 
 // Alternative version (performance didn't checked between versions):
 

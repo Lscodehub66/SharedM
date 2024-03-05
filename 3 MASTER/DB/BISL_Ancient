@@ -1,8 +1,8 @@
 // BISL_Ancient
 let
- Source    = CWB( "BISL_Ancient"), 
-ReorderList = List.Buffer(List.Distinct( CWB("mBISL","CN")&  CWB("mCurated","CN")  & CWB("BISL_Ancient","CN"))),
- ManagedDB = fx("DBManager")(Source,"m","LIFO"), 
- Reordered   = Table.ReorderColumns ( ManagedDB,  ReorderList , MissingField.Ignore )
+    Source = CWB("BISL_Ancient"),
+    ReorderList = List.Buffer(List.Distinct(CWB("mBISL", "CN") & CWB("mCurated", "CN") & CWB("BISL_Ancient", "CN"))),
+    ManagedDB = fx("DBManager")(Source, "m", "LIFO"),
+    Reordered = Table.ReorderColumns(ManagedDB, ReorderList, MissingField.Ignore)
 in
-Reordered
+    Reordered

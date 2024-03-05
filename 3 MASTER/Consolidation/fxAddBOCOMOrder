@@ -1,0 +1,48 @@
+(TableName as table) =>
+    let
+        Source = TableName,
+        NewCol = {"交银下单量", "交银国际独家订单认购规模", "交银国际分配规模", "交银集团独家订单认购规模"},
+        RefCol = {"BISL下单量", "交银下单量.除BISL外", "BISL分配量"},
+        Prep = Table.RemoveColumns(Source, NewCol, MissingField.Ignore),
+        Replaced = Table.ReplaceValue(Prep, 0, null, Replacer.ReplaceValue, {"BISL下单量"}),
+        Replaced1 = Table.ReplaceValue(
+            Replaced, 0, each if [BISL下单量] = null then null else 0, Replacer.ReplaceValue, {"BISL分配量"}
+        ),
+        #"Added Custom" = Table.AddColumn(
+            Replaced1,
+            "交银下单量",
+            each if [BISL下单量] = null and [交银下单量.除BISL外] = null then null else [BISL下单量] ?? 0 + [交银下单量.除BISL外] ?? 0,
+            Int64.Type
+        ),
+        #"Added Custom1" = List.Accumulate(
+            {{"交银国际独家订单认购规模", "BISL下单量"}, {"交银国际分配规模", "BISL分配量"}, {"交银集团独家订单认购规模", "交银下单量"}},
+            #"Added Custom",
+            (x, y) =>
+                Table.AddColumn(
+                    x,
+                    y{0},
+                    each
+                        if Record.Field(_, y{1}) = null then
+                            ""
+                        else if Record.Field(_, y{1}) = 0 then
+                            "无分配"
+                        else if Record.Field(_, y{1}) >= 100 then
+                            Text.From(Number.Round(Record.Field(_, y{1}) / 100, 2)) & "亿"
+                        else
+                            Number.ToText(Record.Field(_, y{1}) * 100, "0万"),
+                    type text
+                )
+        ),
+        #"Added Custom2" = Table.AddColumn(
+            #"Added Custom1",
+            "交银国际独家订单(分配)",
+            each
+                if not List.Contains({null, "", "--"}, [交银国际分配规模]) then
+                    [交银国际独家订单认购规模] & "(" & [交银国际分配规模] & ")"
+                else
+                    [交银国际独家订单认购规模],
+            type text
+        ),
+        Output = if not Table.HasColumns(Source, RefCol) then Source else #"Added Custom2"
+    in
+        Output

@@ -1,11 +1,10 @@
 // fxCheck
-(DateName as date, DateFormat as text, TextName as text,optional IsDateFirst as nullable text) =>
-let
-Text1 = Text.Upper(TextName),
-Text2 = Text.Trim(Text1),
-Text3 = Text.Replace(Text2," ",""),
-Date1 = Date.ToText(DateName,DateFormat),
-Merged = if IsDateFirst = "Y" then Date1&Text3 else Text3&Date1
-
-in
-Merged
+(DateName as date, DateFormat as text, TextName as text, optional IsDateFirst as nullable text) =>
+    let
+        Text1 = Text.Upper(TextName),
+        Text2 = Text.Trim(Text1),
+        Text3 = Text.Replace(Text2, " ", ""),
+        Date1 = Date.ToText(DateName, DateFormat),
+        Merged = if IsDateFirst = "Y" then Date1 & Text3 else Text3 & Date1
+    in
+        Merged

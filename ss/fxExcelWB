@@ -1,10 +1,11 @@
 // fxExcelWB
 (Input as any) =>
-let
- Source = if Value.Type(Input) = type binary then  Excel.Workbook(Input) else Excel.Workbook(File.Contents(Input)),
-    #"Filtered Rows" = Table.SelectRows(Source, each ([Kind] <> "DefinedName")),
-    #"Sorted Rows" = Table.Sort(#"Filtered Rows",{{"Kind", Order.Descending}, {"Item", Order.Ascending}}),
-    #"Removed Other Columns" = Table.SelectColumns(#"Sorted Rows",{"Item", "Kind", "Data"})
-
-in
-    #"Removed Other Columns"
+    let
+        Source = if Value.Type(Input) = type binary then Excel.Workbook(Input) else Excel.Workbook(
+            File.Contents(Input)
+        ),
+        #"Filtered Rows" = Table.SelectRows(Source, each ([Kind] <> "DefinedName")),
+        #"Sorted Rows" = Table.Sort(#"Filtered Rows", {{"Kind", Order.Descending}, {"Item", Order.Ascending}}),
+        #"Removed Other Columns" = Table.SelectColumns(#"Sorted Rows", {"Item", "Kind", "Data"})
+    in
+        #"Removed Other Columns"

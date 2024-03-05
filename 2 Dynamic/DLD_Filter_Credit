@@ -15,4 +15,3 @@ let
     Distincted = Table.Distinct(Custom2, {"信用主体"})
 in
     Distincted
- 

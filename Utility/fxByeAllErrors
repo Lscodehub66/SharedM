@@ -1,10 +1,10 @@
-( TableName as table ) =>
- let
-  ColumnsInTable = Table.ColumnNames ( TableName ), 
-  ToTable        = Table.FromList ( ColumnsInTable, Splitter.SplitByNothing(), null, null, ExtraValues.Error ), 
-  ReplaceColumn  = Table.AddColumn ( ToTable, "Replacement", each null ), 
-  Transposed     = Table.Transpose ( ReplaceColumn ), 
-  ColumnList     = Table.ToColumns ( Transposed ), 
-  ReplacedErrors = Table.ReplaceErrorValues ( TableName, ColumnList )
- in
-  ReplacedErrors
+(TableName as table) =>
+    let
+        ColumnsInTable = Table.ColumnNames(TableName),
+        ToTable = Table.FromList(ColumnsInTable, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
+        ReplaceColumn = Table.AddColumn(ToTable, "Replacement", each null),
+        Transposed = Table.Transpose(ReplaceColumn),
+        ColumnList = Table.ToColumns(Transposed),
+        ReplacedErrors = Table.ReplaceErrorValues(TableName, ColumnList)
+    in
+        ReplacedErrors

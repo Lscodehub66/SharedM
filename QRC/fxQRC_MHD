@@ -1,13 +1,18 @@
-(Sheet as table, HDtbl as table)=>
-let
-    #"Removed Top Rows" = Table.Skip(Sheet,4),
-    #"Demoted Headers" = Table.DemoteHeaders(#"Removed Top Rows"),
-    #"Transposed Table" = Table.Transpose(#"Demoted Headers"),
-    #"Merged Queries" = Table.NestedJoin(#"Transposed Table", {"Column1"}, HDtbl, {"Column1"}, "Data", JoinKind.Inner),
-    #"Removed Columns" = Table.RemoveColumns(#"Merged Queries",{"Column1"}),
-    #"Expanded Data" = fx("1st")(Table.ExpandTableColumn(#"Removed Columns", "Data", {"Name.Column"}),{"Name.Column"}),
-    #"Transposed Table1" = Table.Transpose(#"Expanded Data"),
-    #"Promoted Headers" = Table.PromoteHeaders(#"Transposed Table1", [PromoteAllScalars=true])
-in
-    #"Promoted Headers"
-
+(Sheet as table, HDtbl as table) =>
+    let
+        #"Removed Top Rows" = Table.Skip(Sheet, 4),
+        #"Demoted Headers" = Table.DemoteHeaders(#"Removed Top Rows"),
+        #"Transposed Table" = Table.Transpose(#"Demoted Headers"),
+        #"Merged Queries" = Table.NestedJoin(
+            #"Transposed Table", {"Column1"}, HDtbl, {"Column1"}, "Data", JoinKind.Inner
+        ),
+        #"Removed Columns" = Table.RemoveColumns(#"Merged Queries", {"Column1"}),
+        #"Expanded Data" = fx(
+            "1st"
+        )(
+            Table.ExpandTableColumn(#"Removed Columns", "Data", {"Name.Column"}), {"Name.Column"}
+        ),
+        #"Transposed Table1" = Table.Transpose(#"Expanded Data"),
+        #"Promoted Headers" = Table.PromoteHeaders(#"Transposed Table1", [PromoteAllScalars = true])
+    in
+        #"Promoted Headers"

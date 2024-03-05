@@ -1,6 +1,6 @@
 (optional TableName as table, optional mergekey as nullable text) =>
     let
-        tbl = fx("DateRange")({"Monday.Date", "Now.Date"},{""}),
+        tbl = fx("DateRange")({"Monday.Date", "Now.Date"}, {""}),
         Output =
             if TableName = null then
                 tbl

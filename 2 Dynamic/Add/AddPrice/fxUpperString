@@ -10,13 +10,15 @@
         #"Changed Type" = Table.TransformColumnTypes(#"Duplicated Column1", {{"Upper_Num", type number}}),
         #"Replaced Errors" = Table.ReplaceErrorValues(#"Changed Type", {{"Upper_Num", null}}),
         NumToText = Table.TransformColumns(
-            #"Replaced Errors", {{"Upper_Num", each if _ = null then "" else Number.ToText(Number.Round(_,4)), type text}}
+            #"Replaced Errors", {
+                {"Upper_Num", each if _ = null then "" else Number.ToText(Number.Round(_, 4)), type text}
+            }
         ),
         #"Added Custom" = Table.AddColumn(
             NumToText,
             "Upper_String",
             each
-                if [Upper_Num] = "" or Record.Field(_, BMKCol) ="" then
+                if [Upper_Num] = "" or Record.Field(_, BMKCol) = "" then
                     ""
                 else if Record.Field(_, BMKCol) = "%" then
                     "-" & [Upper_Num] & Record.Field(_, BMKCol)

@@ -1,12 +1,12 @@
 (TableName as table) =>
     let
         Source = TableName,
-         NewCol = {"上市分类"},
-           Prep = Table.RemoveColumns(Source, NewCol, MissingField.Ignore),
+        NewCol = {"上市分类"},
+        Prep = Table.RemoveColumns(Source, NewCol, MissingField.Ignore),
         output =
-            if Table.HasColumns(  Source, "上市") then
+            if Table.HasColumns(Source, "上市") then
                 Table.AddColumn(
-                     Prep,
+                    Prep,
                     "上市分类",
                     each
                         if List.Contains({null, "", "--"}, [上市]) then

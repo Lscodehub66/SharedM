@@ -1,10 +1,10 @@
 let
     Source2 = CWB("Writer_Dealtbl"),
-   WriteNewIssue = Table.Buffer(fx("DealReporter")(Source2, "Custom")),
-    #"Sorted Rows" = Table.Sort(WriteNewIssue,{{"定价日", Order.Descending}}),
-        Self = fx("fxReporter_SectorReviewed")( #"Sorted Rows" ),
-#"Changed Type" = Table.TransformColumnTypes(Self, {{"新发总结板块", type text}}),
-    Grouped = Table.Group( #"Changed Type", {"新发总结板块"}, {{"Description", each Text.Combine([Writer], "#(lf)")}}),
+    WriteNewIssue = Table.Buffer(fx("DealReporter")(Source2, "Custom")),
+    #"Sorted Rows" = Table.Sort(WriteNewIssue, {{"定价日", Order.Descending}}),
+    Self = fx("fxReporter_SectorReviewed")(#"Sorted Rows"),
+    #"Changed Type" = Table.TransformColumnTypes(Self, {{"新发总结板块", type text}}),
+    Grouped = Table.Group(#"Changed Type", {"新发总结板块"}, {{"Description", each Text.Combine([Writer], "#(lf)")}}),
     #"Added Col" = Table.AddColumn(
         Grouped,
         "ObjectName",
@@ -13,4 +13,3 @@ let
     )
 in
     #"Added Col"
-

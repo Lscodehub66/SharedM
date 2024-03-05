@@ -1,9 +1,11 @@
-( TableName as table, GroupbyColName as text, GroupbyColEachVaule as text, CountRowColName as text ) =>
-	let
-		Source      = TableName,
-		Filtered    = Table.SelectRows ( Source, each ( Record.Field ( _, GroupbyColName ) = GroupbyColEachVaule ) ),
-		SelectedCol = Table.SelectColumns ( Filtered, { CountRowColName } ),
-		Grouped     = Table.Group ( SelectedCol, { CountRowColName }, { { "CountRow", each Table.RowCount ( Table.Distinct ( _ ) ), Int64.Type } } ),
-		Count       = Grouped[CountRow]
-	in
-		Count
+(TableName as table, GroupbyColName as text, GroupbyColEachVaule as text, CountRowColName as text) =>
+    let
+        Source = TableName,
+        Filtered = Table.SelectRows(Source, each (Record.Field(_, GroupbyColName) = GroupbyColEachVaule)),
+        SelectedCol = Table.SelectColumns(Filtered, {CountRowColName}),
+        Grouped = Table.Group(
+            SelectedCol, {CountRowColName}, {{"CountRow", each Table.RowCount(Table.Distinct(_)), Int64.Type}}
+        ),
+        Count = Grouped[CountRow]
+    in
+        Count

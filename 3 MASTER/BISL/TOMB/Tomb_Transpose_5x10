@@ -1,22 +1,16 @@
 // Create 5 x 10
-    let
+let
     Source = Load("Tomb_Transpose"),
     //**
-        T1 = Table.DemoteHeaders(
-            Table.SelectColumns(Source, List.Transform(List.Numbers(1, 10), each Text.From(_)))
-        ),
-        T2 = Table.DemoteHeaders(
-            Table.SelectColumns(Source, List.Transform(List.Numbers(11, 10), each Text.From(_)))
-        ),
-        T3 = Table.DemoteHeaders(
-            Table.SelectColumns(Source, List.Transform(List.Numbers(21, 10), each Text.From(_)))
-        ),
-        T4 = Table.DemoteHeaders(
-            Table.SelectColumns(Source, List.Transform(List.Numbers(31, 10), each Number.ToText(_)))
-        ),
-        T5 = Table.DemoteHeaders(
-            Table.SelectColumns(Source, List.Transform(List.Numbers(41, 10), each Number.ToText(_)))
-        ),
-        Combined = Table.Combine({T1, T2, T3, T4, T5})
-    in
-        Combined
+    T1 = Table.DemoteHeaders(Table.SelectColumns(Source, List.Transform(List.Numbers(1, 10), each Text.From(_)))),
+    T2 = Table.DemoteHeaders(Table.SelectColumns(Source, List.Transform(List.Numbers(11, 10), each Text.From(_)))),
+    T3 = Table.DemoteHeaders(Table.SelectColumns(Source, List.Transform(List.Numbers(21, 10), each Text.From(_)))),
+    T4 = Table.DemoteHeaders(
+        Table.SelectColumns(Source, List.Transform(List.Numbers(31, 10), each Number.ToText(_)))
+    ),
+    T5 = Table.DemoteHeaders(
+        Table.SelectColumns(Source, List.Transform(List.Numbers(41, 10), each Number.ToText(_)))
+    ),
+    Combined = Table.Combine({T1, T2, T3, T4, T5})
+in
+    Combined

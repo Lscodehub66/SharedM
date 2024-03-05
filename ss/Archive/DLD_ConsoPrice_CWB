@@ -1,5 +1,5 @@
 let
-       Source = CWB("DLD_Conso"),
+    Source = CWB("DLD_Conso"),
     SCol = Table.SelectColumns(
         Source, {"IS_FIMTN", "IPG", "FPG", "定价", "认购额(亿)", "投资者账户数", "投资者类型", "投资者分布", "Check"}, MissingField.UseNull
     ),
@@ -15,7 +15,7 @@ let
                         y,
                         each
                             if Text.StartsWith(_ ?? "", "0.") and not Text.Contains(_ ?? "", "%") then
-                                Number.ToText(Number.From(_)*100) & "%"
+                                Number.ToText(Number.From(_) * 100) & "%"
                             else
                                 _,
                         type text

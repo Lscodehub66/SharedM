@@ -1,50 +1,49 @@
 //SampleTF = Table.TransformColumns(Source, List.Transform(Table.ColumnNames(Source),each {_, each fxCleaner(_,null, {"【", "】"}, {"", ""})})),
 //SampleSmartClean = Table.AddColumn(Source, "【】", each fxCleaner([Column],"主体")),
-
-    (
-        InputText as text,
-        CleanerText as text,
-        FullCleanerTable as table
-    )=>
-        let
-            // Input Transform
-            TextName =
-                if InputText = null then
-                    ""
-                else if Cleaner = "主体" and not List.ContainsAny(Text.ToList(InputText), {"A".."Z"}, Comparer.OrdinalIgnoreCase) then
-                    Text.Replace(InputText, " ", "")
-                else
-                    InputText,
-            Cleaner = Text.Upper(Text.Trim(CleanerText)),
-            // Load Nested Cleaner tbl
-            Source = FullCleanerTable,
-            //
-            #">>>FText_List" = Text.Combine(List.Transform(Source[Column1], each Text.BeforeDelimiter(_, ",")), "、"),
-            #">>>FText_M" = fxToM(Source[Column1]),
-            // Select Cleaner
-            Gettbl = Table.SelectRows(Source, each Text.Contains([Column1] ,Cleaner, Comparer.OrdinalIgnoreCase))[Column2]{0},
-            // Bulk replace
-            ReplacerTable = Table.Buffer(Gettbl),
-            FindReplaceList = Table.ToRows(ReplacerTable),
-            Counter = Table.RowCount(ReplacerTable),
-            BulkReplaceValues = (TextToReplaceTemp, n) =>
-                let
-                    ReplacedText = Text.Replace(
-                        TextToReplaceTemp,
-                        if FindReplaceList{n}{0} = null then
-                            ""
-                        else
-                            FindReplaceList{n}{0},
-                        if FindReplaceList{n}{1} = null then
-                            ""
-                        else
-                            FindReplaceList{n}{1}
-                    )
-                in
-                    if n = Counter - 1 then
-                        ReplacedText
+(InputText as text, CleanerText as text, FullCleanerTable as table) =>
+    let
+        // Input Transform
+        TextName =
+            if InputText = null then
+                ""
+            else if Cleaner = "主体" and not List.ContainsAny(Text.ToList(InputText), {"A".."Z"}, Comparer.OrdinalIgnoreCase) then
+                Text.Replace(InputText, " ", "")
+            else
+                InputText,
+        Cleaner = Text.Upper(Text.Trim(CleanerText)),
+        // Load Nested Cleaner tbl
+        Source = FullCleanerTable,
+        //
+        #">>>FText_List" = Text.Combine(List.Transform(Source[Column1], each Text.BeforeDelimiter(_, ",")), "、"),
+        #">>>FText_M" = fxToM(Source[Column1]),
+        // Select Cleaner
+        Gettbl = Table.SelectRows(
+            Source, each Text.Contains([Column1], Cleaner, Comparer.OrdinalIgnoreCase)
+        )[Column2]{
+            0
+        },
+        // Bulk replace
+        ReplacerTable = Table.Buffer(Gettbl),
+        FindReplaceList = Table.ToRows(ReplacerTable),
+        Counter = Table.RowCount(ReplacerTable),
+        BulkReplaceValues = (TextToReplaceTemp, n) =>
+            let
+                ReplacedText = Text.Replace(
+                    TextToReplaceTemp,
+                    if FindReplaceList{n}{0} = null then
+                        ""
                     else
-                        @BulkReplaceValues(ReplacedText, n + 1),
-            Output = BulkReplaceValues(TextName, 0)
-        in
-            Output
+                        FindReplaceList{n}{0},
+                    if FindReplaceList{n}{1} = null then
+                        ""
+                    else
+                        FindReplaceList{n}{1}
+                )
+            in
+                if n = Counter - 1 then
+                    ReplacedText
+                else
+                    @BulkReplaceValues(ReplacedText, n + 1),
+        Output = BulkReplaceValues(TextName, 0)
+    in
+        Output

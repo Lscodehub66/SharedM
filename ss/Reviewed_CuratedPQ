@@ -10,12 +10,8 @@ let
         Replacer.ReplaceValue,
         {"FPG"}
     ),
-    Replaced1 = Table.ReplaceValue(
-           Replaced ," ","", Replacer.ReplaceText,  {"IPG", "FPG","票息","定价" }),
-    Renamed = Table.RenameColumns(
-        Replaced1, {{"IPG", "IPT_DMI"}, {"FPG", "FPG_DMI"}}, MissingField.Ignore
-    ),
-   
-    #"Removed Columns" = if GNG = "GO" then   Renamed else Source
+    Replaced1 = Table.ReplaceValue(Replaced, " ", "", Replacer.ReplaceText, {"IPG", "FPG", "票息", "定价"}),
+    Renamed = Table.RenameColumns(Replaced1, {{"IPG", "IPT_DMI"}, {"FPG", "FPG_DMI"}}, MissingField.Ignore),
+    #"Removed Columns" = if GNG = "GO" then Renamed else Source
 in
     #"Removed Columns"

@@ -10,12 +10,10 @@
             {"是否IG", "是否首发", "美元规模分类", "评级分类", "主体评级分类", "结构分类", "货币细分", "上市分类", "BOCOM_DEAL?", "期限"},
             MissingField.Ignore
         ),
-    
-
         RFolderPath =
-            if List.Contains( CN_Source, "FolderPath") then
+            if List.Contains(CN_Source, "FolderPath") then
                 Table.ReplaceValue(
-                       RemovedCol ,
+                    RemovedCol,
                     each [FolderPath],
                     each
                         if [FolderPath] = "" then
@@ -29,7 +27,7 @@
                     {"FolderPath"}
                 )
             else
-                   RemovedCol ,
+                RemovedCol,
         //Add DebutIssuance
         Calculated_DEBUT =
             if List.Contains(Table.ColumnNames(RFolderPath), "DEBUT_DATE") then
@@ -151,10 +149,9 @@
                 Slicer_Structure,
         BOCOMDEAL = Load("fxBOCOMDEAL")(Slicer_Listing),
         // Add CN DES and combine shortnames
-        Written_Stats = fx("WriteStats")(  BOCOMDEAL),
-        
+        Written_Stats = fx("WriteStats")(BOCOMDEAL),
         Written_Tenor = Table.AddColumn(
-             Written_Stats,
+            Written_Stats,
             "期限",
             each
                 if [期限备注] = null then
@@ -195,7 +192,11 @@
         RCol = Table.RemoveColumns(
             Junction, List.Select(Table.ColumnNames(Junction), each Text.Contains(_, "Dummy")), MissingField.Ignore
         ),
-        #"Added DB_KPI" = if  List.ContainsAll(CN_Source, {"地区覆盖", "覆盖分类", "团队", "Count_BISLDeal", "Count_JBR", "Count_JGC"}) then  RCol else fx("DB_KPI2")(RCol),
+        #"Added DB_KPI" =
+            if List.ContainsAll(CN_Source, {"地区覆盖", "覆盖分类", "团队", "Count_BISLDeal", "Count_JBR", "Count_JGC"}) then
+                RCol
+            else
+                fx("DB_KPI2")(RCol),
         Checked = fx("CheckNDupe")(#"Added DB_KPI"),
         Sorted = fx("SortNIndex")(Checked),
         Presented = fx("PresentNoData")(Sorted)

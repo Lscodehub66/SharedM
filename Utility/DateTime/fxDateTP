@@ -1,7 +1,7 @@
-(_inputlist as list)=>
-let
-    Source = Record.ToTable(Load("Control_Date")),
-    #"Changed Type" = Table.Buffer(Table.TransformColumnTypes(Source,{{"Value", type date}})),
-    #"Filtered Rows" = Table.SelectRows(#"Changed Type", each List.Contains(_inputlist, [Name]))
-in
-    #"Filtered Rows"
+(_inputlist as list) =>
+    let
+        Source = Record.ToTable(Load("Control_Date")),
+        #"Changed Type" = Table.Buffer(Table.TransformColumnTypes(Source, {{"Value", type date}})),
+        #"Filtered Rows" = Table.SelectRows(#"Changed Type", each List.Contains(_inputlist, [Name]))
+    in
+        #"Filtered Rows"

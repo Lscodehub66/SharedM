@@ -1,4 +1,0 @@
-let
-    Source = fx("Wstbl")("DOWNLOAD", "ECON")
-in
-    Source

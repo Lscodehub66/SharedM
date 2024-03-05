@@ -24,10 +24,14 @@
         Crossroad_NoEmptyRows = Table.SelectRows(
             SkipRows, each not List.IsEmpty(List.RemoveMatchingItems(Record.FieldValues(_), {"", null}))
         ),
-        Filtered = if not List.Contains({0..9}, ColName) then Table.SelectRows(Crossroad_NoEmptyRows, each Record.Field(_, ColName) <> null) else  Crossroad_NoEmptyRows ,
+        Filtered =
+            if not List.Contains({0..9}, ColName) then
+                Table.SelectRows(Crossroad_NoEmptyRows, each Record.Field(_, ColName) <> null)
+            else
+                Crossroad_NoEmptyRows,
         // RemoveNullColumns
         BlankValueList = {null},
-        tabTransposed = Table.Transpose(    Filtered),
+        tabTransposed = Table.Transpose(Filtered),
         RowsRemoved = Table.SelectRows(
             tabTransposed,
             each

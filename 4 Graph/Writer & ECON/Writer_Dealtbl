@@ -1,5 +1,4 @@
 let
-      Source = Load("Recent_Data"),
-    Custom1 = fx("DateRange")({"PreviousMon.Date", "Sunday.Date"}, {Source, "定价日"})
+    Source = Load("Recent_Data"), Custom1 = fx("DateRange")({"PreviousMon.Date", "Sunday.Date"}, {Source, "定价日"})
 in
-       Custom1
+    Custom1

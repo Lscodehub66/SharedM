@@ -1,11 +1,17 @@
 (TableName as table) =>
-let
-    Source = TableName,
-  RefCol=  {"定价日","ISIN","增发判定"},
-  NewCol = "Nth_ISIN",
-  Prep = Table.RemoveColumns(Source,NewCol,MissingField.Ignore),
-    Custom1 = fx("Nth")(  Prep,{{ "ISIN", Order.Ascending},{"定价日", Order.Ascending}},"0"),
-    #"Replaced Value" = Table.ReplaceValue(Custom1,"",each if [Nth_ISIN] = 1 then "原始" else "",Replacer.ReplaceValue,{"增发判定"}),
-    Output = if not Table.HasColumns(Source, RefCol) then Source else  Table.ReorderColumns( #"Replaced Value", Table.ColumnNames(Source),MissingField.Ignore)
-in
-    Output 
+    let
+        Source = TableName,
+        RefCol = {"定价日", "ISIN", "增发判定"},
+        NewCol = "Nth_ISIN",
+        Prep = Table.RemoveColumns(Source, NewCol, MissingField.Ignore),
+        Custom1 = fx("Nth")(Prep, {{"ISIN", Order.Ascending}, {"定价日", Order.Ascending}}, "0"),
+        #"Replaced Value" = Table.ReplaceValue(
+            Custom1, "", each if [Nth_ISIN] = 1 then "原始" else "", Replacer.ReplaceValue, {"增发判定"}
+        ),
+        Output =
+            if not Table.HasColumns(Source, RefCol) then
+                Source
+            else
+                Table.ReorderColumns(#"Replaced Value", Table.ColumnNames(Source), MissingField.Ignore)
+    in
+        Output

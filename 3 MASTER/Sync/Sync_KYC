@@ -11,12 +11,12 @@ let
     Filtered = Table.SelectRows(
         CWB_Directory, each [定价日] < Date.From("2021/09/01") and [定价日] > Date.From("2021/01/01")
     ),
-    LeftAntiMerged = Table.NestedJoin(Filtered, {"信用主体"},  KYC_Load , {"信用主体"}, "Data", JoinKind.LeftAnti),
+    LeftAntiMerged = Table.NestedJoin(Filtered, {"信用主体"}, KYC_Load, {"信用主体"}, "Data", JoinKind.LeftAnti),
     Distincted = Table.Distinct(
         Table.Buffer(Table.Sort(Filtered, {{"信用主体", Order.Ascending}, {"定价日", Order.Ascending}})), {"信用主体"}
     ),
     Sorted = fx("SortNIndex")(Distincted, "定价日", "信用主体", "货币", "年期", "Y"),
-       // ***KYC_TBC_LEGACY***
+    // ***KYC_TBC_LEGACY***
     Replaced = Table.ReplaceValue(
         Sorted,
         each [PROJECT_NAME],
@@ -30,7 +30,16 @@ let
     Combined = fx("Combine")({KYC_SCol, TF}, {"信用主体"}),
     MergedQ = fx("Merge")(Combined, CWB_mCredit, "信用主体", "信用主体", {"信用主体简称"}, {"信用主体简称"}),
     Sorted1 = Table.Sort(MergedQ, {{"KYC对账号", Order.Descending}}),
-    Replaced1 = fx("Replacer")(Sorted1, {"KYC Status"},{"需与QRC确认Excisting","Existing KYC Entity","**Suspend**"},{"需QRC确认Existing","Existing","Suspend"}),
-    #"Reordered Columns1" = Table.ReorderColumns(  Replaced1, {"KYC对账号","发行人","信用主体简称","信用主体","KYC expiry date","KYC Status"},MissingField.Ignore)
+    Replaced1 = fx(
+        "Replacer"
+    )(
+        Sorted1,
+        {"KYC Status"},
+        {"需与QRC确认Excisting", "Existing KYC Entity", "**Suspend**"},
+        {"需QRC确认Existing", "Existing", "Suspend"}
+    ),
+    #"Reordered Columns1" = Table.ReorderColumns(
+        Replaced1, {"KYC对账号", "发行人", "信用主体简称", "信用主体", "KYC expiry date", "KYC Status"}, MissingField.Ignore
+    )
 in
-    #"Reordered Columns1" 
+    #"Reordered Columns1"

@@ -28,11 +28,7 @@
         #"Added Col" = Table.AddColumn(
             #"Added T+n",
             "交割T+n",
-            each
-              if List.Contains({1..8}, [交割天数]) then
-                    "T+" & Number.ToText([交割天数])
-                else
-                    "【】" ,
+            each if List.Contains({1..8}, [交割天数]) then "T+" & Number.ToText([交割天数]) else "【】",
             type text
         ),
         #"Added Col1" = Table.AddColumn(

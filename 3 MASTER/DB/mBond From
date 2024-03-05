@@ -30,7 +30,11 @@ let
     ),
     #"Removed Columns" = Table.RemoveColumns(
         Replaced,
-        {"删除及隐藏", "首次付息日","TICKER","发行人成立地",
+        {
+            "删除及隐藏",
+            "首次付息日",
+            "TICKER",
+            "发行人成立地",
             "增发判定",
             "Check",
             "IPG",
@@ -41,15 +45,18 @@ let
             "发行规模(亿)",
             "发行方式",
             "筹款用途",
-            "发行人主上市地","付息频率",
+            "发行人主上市地",
+            "付息频率",
             "收窄基点",
             "港分_ROLE",
             "澳分_ROLE",
             "亿美元",
             "亿元",
             "亿港币",
-            "起息日期","亮点",
-            "Stats","DataSource" 
+            "起息日期",
+            "亮点",
+            "Stats",
+            "DataSource"
         },
         MissingField.Ignore
     ),

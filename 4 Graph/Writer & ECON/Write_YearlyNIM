@@ -1,16 +1,22 @@
-
 let
-CWBSum= let
-    Source = CWB("USDCNH_Pie"),
-    #"Filtered Rows" = Table.SelectRows(Source, each ([Column1] = "月")),
-    #"Removed Other Columns" = Table.SelectColumns(#"Filtered Rows",{"Column1","23年亿美元", "24年亿美元"}),
-    #"Grouped Rows" = Table.Group(#"Removed Other Columns", {"Column1"}, {{"23年", each List.Sum([23年亿美元]), type number}, {"24年", each List.Sum([24年亿美元]), type nullable number}}),
-    #"Removed Other Columns1" = Table.SelectColumns(#"Grouped Rows",{"23年", "24年"})
+    CWBSum =
+        let
+            Source = CWB("USDCNH_Pie"),
+            #"Filtered Rows" = Table.SelectRows(Source, each ([Column1] = "月")),
+            #"Removed Other Columns" = Table.SelectColumns(#"Filtered Rows", {"Column1", "23年亿美元", "24年亿美元"}),
+            #"Grouped Rows" = Table.Group(
+                #"Removed Other Columns",
+                {"Column1"},
+                {
+                    {"23年", each List.Sum([23年亿美元]), type number},
+                    {"24年", each List.Sum([24年亿美元]), type nullable number}
+                }
+            ),
+            #"Removed Other Columns1" = Table.SelectColumns(#"Grouped Rows", {"23年", "24年"})
+        in
+            Table.Buffer(#"Removed Other Columns1"),
+    Num1 = Number.ToText(CWBSum[24年]{0}, "0"),
+    Num2 = Number.ToText(CWBSum[23年]{0}, "0"),
+    TextOutput = "2024年至今，中资美元及离岸人民币债券一级市场发行量约" & Num1 & "亿美元等值" & "#(lf)" & "2023年发行量约" & Num2 & "亿美元等值"
 in
-   Table.Buffer (#"Removed Other Columns1"),
-    Num1 = Number.ToText(CWBSum[24年]{0},"0"),
-Num2 = Number.ToText(CWBSum[23年]{0},"0"),
-
-   TextOutput =  "2024年至今，中资美元及离岸人民币债券一级市场发行量约" & Num1 &"亿美元等值" &"#(lf)"&
-"2023年发行量约" &  Num2 &"亿美元等值"
-in TextOutput
+    TextOutput

@@ -2,8 +2,7 @@ let
     Source = Table.Buffer(try CWB("DMIHeaders") otherwise fx("Ws")("DYNAMIC", "=DMIHeaders")),
     CurrentDMI =
         let
-         
-             Custom1 =fx("Ws")("DOWNLOAD", "美元债一级"),
+            Custom1 = fx("Ws")("DOWNLOAD", "美元债一级"),
             #"Promoted Headers" = Table.PromoteHeaders(Custom1, [PromoteAllScalars = true]),
             #"Promoted Headers1" = Table.FromColumns(
                 {Table.ColumnNames(Table.PromoteHeaders(#"Promoted Headers", [PromoteAllScalars = true]))}, {"DMI字段"}
@@ -11,18 +10,19 @@ let
         in
             Table.Buffer(#"Promoted Headers1"),
     OnlyInDMI = Table.NestedJoin(CurrentDMI, {"DMI字段"}, Source, {"DMI字段"}, "Data", JoinKind.LeftAnti),
-    #"Expanded Data" = Table.SelectRows(Table.ExpandTableColumn(OnlyInDMI, "Data", {"状态"}, {"状态"}), each [状态] <> "Renamed"),
+    #"Expanded Data" = Table.SelectRows(
+        Table.ExpandTableColumn(OnlyInDMI, "Data", {"状态"}, {"状态"}), each [状态] <> "Renamed"
+    ),
     OnlyInDMI_Changed = Table.NestedJoin(Source, {"DMI字段"}, CurrentDMI, {"DMI字段"}, "Data", JoinKind.LeftAnti),
     #"Removed Columns" = Table.RemoveColumns(OnlyInDMI_Changed, {"Data"}),
     Custom1 = fx("Combine")({#"Removed Columns", #"Expanded Data"}),
     TF = Table.TransformColumns(Custom1, {{"DMI字段", each if _ <> "" then "【" & _ & "】" else _}}),
-     Custom2 = if Table.RowCount(TF) = 0 then Table.InsertRows(TF,0, {[DMI字段 =  "**DMI字段检查**", 状态 = "OK"]}) else TF
-    , Stamped = Table.AddColumn(
-        Table.RemoveColumns( Custom2 , {"Timestamp"}, MissingField.Ignore),
+    Custom2 = if Table.RowCount(TF) = 0 then Table.InsertRows(TF, 0, {[DMI字段 = "**DMI字段检查**", 状态 = "OK"]}) else TF,
+    Stamped = Table.AddColumn(
+        Table.RemoveColumns(Custom2, {"Timestamp"}, MissingField.Ignore),
         "Timestamp",
         each DateTime.LocalNow(),
         type datetime
     )
-
 in
- Stamped 
+    Stamped

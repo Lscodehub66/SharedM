@@ -1,11 +1,7 @@
 let
-   LodeCode = Load("Pipe_Transform", "Code"), 
-   ToFn =    "(BinaryName as binary) =>let Source = Excel.Workbook(BinaryName, null, true),"
-            & Text.AfterDelimiter(LodeCode,"//**"),
-   
-    EVA = Expression.Evaluate(  ToFn,
-     
-        #shared
-    )
+    LodeCode = Load("Pipe_Transform", "Code"),
+    ToFn = "(BinaryName as binary) =>let Source = Excel.Workbook(BinaryName, null, true),"
+        & Text.AfterDelimiter(LodeCode, "//**"),
+    EVA = Expression.Evaluate(ToFn, #shared)
 in
     EVA

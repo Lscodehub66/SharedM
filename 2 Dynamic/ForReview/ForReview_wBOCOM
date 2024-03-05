@@ -74,10 +74,10 @@ let
         Fn2, each List.Contains({"新增"}, [mBISL]) and not List.Contains(DeleteCheck, [Check])
     ),
     Replaced2 = Table.ReplaceValue(
-        Filtered1, "新增", each if [删除及隐藏] = "【删除】" then "" else "新增", Replacer.ReplaceValue, {"mBISL","mEXE"}
+        Filtered1, "新增", each if [删除及隐藏] = "【删除】" then "" else "新增", Replacer.ReplaceValue, {"mBISL", "mEXE"}
     ),
-    WeeklyOnly = fx("DateRange")({"wFilter_PreviousMon.Date","Sunday.Date"},{   Replaced2,"定价日"}),
-    Sorted = fx("SortNIndex")(   WeeklyOnly),
+    WeeklyOnly = fx("DateRange")({"wFilter_PreviousMon.Date", "Sunday.Date"}, {Replaced2, "定价日"}),
+    Sorted = fx("SortNIndex")(WeeklyOnly),
     SCol2 = Table.SelectColumns(Sorted, HD, MissingField.UseNull)
 in
     SCol2

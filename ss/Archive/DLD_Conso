@@ -1,7 +1,7 @@
 // let LoadCode = Load("DLD_Conso","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
     DLDSource = Load("DLD_DMI"),
-    CWBSource = fx("DMI2")( CWB("DLD_DMI"),"Y"),
+    CWBSource = fx("DMI2")(CWB("DLD_DMI"), "Y"),
     Fn = fx("ShowFilter")(CWBSource),
     Fn1 = fx("IsFIMTN")(Fn),
     Fn1_R = Table.ReplaceValue(

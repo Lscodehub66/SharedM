@@ -2,7 +2,7 @@
 (optional TableName as table, optional _inputkey as nullable text) =>
     let
         Key = Text.Upper(Text.Trim(_inputkey ?? "")),
-        Numtext = Number.From(Text.Select(Key,{"0".."9"})),
+        Numtext = Number.From(Text.Select(Key, {"0".."9"})),
         Source = TableName ?? (fx("Wstbl")("DMI")),
         #"Filtered Rows" = Table.SelectRows(Source, each ([货币] = "CNH" or [货币] = "USD")),
         #"Extracted Year" = Table.AddColumn(#"Filtered Rows", "兑付日.YearNum", each Date.Year([兑付日]), type number),
@@ -12,6 +12,6 @@
             Table.Buffer(Table.Sort(Custom1, {{"ISIN", Order.Descending}, {"发行规模(亿)", Order.Descending}})), {"ISIN"}
         ),
         Custom2 = fx("OutstandingUSD")(#"Sorted Rows", {"余额亿美元"}),
-          Output = Table.AddColumn( Custom2 , "兑付日.月", each  Number.ToText(Date.Month([兑付日]), "00月"), type text)
+        Output = Table.AddColumn(Custom2, "兑付日.月", each Number.ToText(Date.Month([兑付日]), "00月"), type text)
     in
         Output

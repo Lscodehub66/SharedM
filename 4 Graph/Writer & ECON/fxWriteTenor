@@ -9,7 +9,9 @@
             Table.RemoveColumns(ChangedType, NewCol, MissingField.Ignore),
             "期限",
             each
-                if [年期] = "0.5" then "6个月" else if Text.Contains([期限备注], "天") then
+                if [年期] = "0.5" then
+                    "6个月"
+                else if Text.Contains([期限备注], "天") then
                     [期限备注]
                 else if Text.Contains([年期], "P") then
                     "永续(前" & Text.AfterDelimiter([年期], "NC") & "年不可赎回)"

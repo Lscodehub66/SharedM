@@ -4,11 +4,11 @@ let
     _PK = "信用主体",
     Name = "m" & Text.AfterDelimiter(_input, "w"),
     HD = fx("ForReviewHD")(_input),
-   Sourceold = Load("Filtered_Add"),
+    Sourceold = Load("Filtered_Add"),
     Source = CWB("Filtered_Add"),
-        Filtered = Table.SelectRows(  Source, each not List.Contains({"n/a", "已收录"}, Record.Field(_, Name))),
+    Filtered = fx("ForReviewSelect")(Source, Name),
     Replaced = Table.ReplaceValue(
-       Filtered,
+        Filtered,
         each [债券简称],
         each
             if List.Contains({null, "", "--"}, [债券简称]) and not List.Contains({null, "", "--"}, [信用主体]) then
@@ -22,9 +22,8 @@ let
     Function = Table.AddColumn(
         Table.RemoveColumns(BlankToInput, {"信用主体简称"}, MissingField.Ignore), "信用主体简称", each fx("SNBankCorp")([债券简称])
     ),
-
-    SCol = Table.SelectColumns(  Function , HD, MissingField.UseNull),
-    SelfJoined = fx("SelfJoin_R")(   SCol, CWB("ForReview_" & _input), {_PK}),
+    SCol = Table.SelectColumns(Function, HD, MissingField.UseNull),
+    SelfJoined = fx("SelfJoin_R")(SCol, CWB("ForReview_" & _input), {_PK}),
     Sorted = fx("SortNIndex")(SelfJoined)
     //SelfJoined
 in

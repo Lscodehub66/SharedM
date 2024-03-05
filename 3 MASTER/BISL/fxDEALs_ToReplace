@@ -1,14 +1,25 @@
-(TableName as table ) =>
-
-let
-    Source = TableName,
-    CN_Source = List.Buffer(Table.ColumnNames(Source)),
-Joined = fx("Data")(Table.Join(  Source, "Check", Load("TencentDEALs"), "Dummy.Check", JoinKind.LeftOuter)),
-    #"Replaced null" =  List.Accumulate({  "BISL下单量", "BISL分配量", "Date_Onboarded", "定价会时间"},  Joined, (x,y) =>  if List.Contains(CN_Source, y) then Table.ReplaceValue(
-       x, null, each Record.Field(_, "Dummy." & y), Replacer.ReplaceValue, {y}
-    ) else x ),
-     #"Replaced Blank" =  List.Accumulate({  "PROJECT_CN", "EXE", "Settlement", "BISL独家订单", "项目亮点"},   #"Replaced null", (x,y) =>   if List.Contains(CN_Source, y) then   Table.ReplaceValue(
-       x,"", each Record.Field(_, "Dummy." & y), Replacer.ReplaceValue, {y}
-    )else x)
- in
-    #"Replaced Blank"
+(TableName as table) =>
+    let
+        Source = TableName,
+        CN_Source = List.Buffer(Table.ColumnNames(Source)),
+        Joined = fx("Data")(Table.Join(Source, "Check", Load("TencentDEALs"), "Dummy.Check", JoinKind.LeftOuter)),
+        #"Replaced null" = List.Accumulate(
+            {"BISL下单量", "BISL分配量", "Date_Onboarded", "定价会时间"},
+            Joined,
+            (x, y) =>
+                if List.Contains(CN_Source, y) then
+                    Table.ReplaceValue(x, null, each Record.Field(_, "Dummy." & y), Replacer.ReplaceValue, {y})
+                else
+                    x
+        ),
+        #"Replaced Blank" = List.Accumulate(
+            {"PROJECT_CN", "EXE", "Settlement", "BISL独家订单", "项目亮点"},
+            #"Replaced null",
+            (x, y) =>
+                if List.Contains(CN_Source, y) then
+                    Table.ReplaceValue(x, "", each Record.Field(_, "Dummy." & y), Replacer.ReplaceValue, {y})
+                else
+                    x
+        )
+    in
+        #"Replaced Blank"
