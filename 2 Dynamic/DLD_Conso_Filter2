@@ -87,16 +87,11 @@ let
         "mCredit"
     },
     #"Filtered Rows" = Table.SelectRows(credit, each List.Contains({"", "*", "**"}, [Filter_Credit])),
-    // 只显示database没有的isin
-    #">>>ShowAll" =
-        if fx("Parameter")("ShowAll") = "OFF" then
-            Table.SelectRows(#"Filtered Rows", each [mIssue] <> "已收录")
-        else
-            #"Filtered Rows",
+   
     Revised = fx(
         "SelfJoin_R"
     )(
-        #">>>ShowAll", Table.SelectColumns(CWB("DLD_Conso_Filter"), _HD, MissingField.Ignore), {"ISIN"}
+           #"Filtered Rows", Table.SelectColumns(CWB("DLD_Conso_Filter"), _HD, MissingField.Ignore), {"ISIN"}
     ),
     Stamped = Table.AddColumn(
         Table.RemoveColumns(Revised, {"Timestamp"}, MissingField.Ignore),

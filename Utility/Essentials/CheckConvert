@@ -1,0 +1,16 @@
+let
+    txtsource = let FD = fx("ControlWB.Syndtxt_Folder"), fn = fx("FdFiles")(FD), output = List.Buffer(fn[Name]) in output,
+    ToCheck =
+        let
+            FDPath = fx("ControlWB.Syndinput_Folder"),
+            Source = fx("FdFiles")(FDPath),
+            #"Filtered Rows" = Table.SelectRows(Source, each Text.Contains([Extension], "doc")),
+            #"Extracted Text Before Delimiter" = Table.TransformColumns(
+                #"Filtered Rows", {{"Name", each Text.BeforeDelimiter(_, ".doc") & ".txt", type text}}
+            )[Name]
+        in
+            #"Extracted Text Before Delimiter",
+    Custom1 = List.ContainsAll(txtsource, ToCheck),
+    Output = if Custom1 = true then "TRUE" else "FALSE"
+in
+       Output 
