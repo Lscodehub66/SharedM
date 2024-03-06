@@ -2,7 +2,8 @@ let
     Source = CWB("mBISL"),
     mBISL = fx("mBISLCount")(Source),
     Source2 = CWB("mEXE"),
-    Added = fx("AddBOCOMOrder")(Source2),
+    Added0 = fx("AddSFCRole")(Source2),
+    Added = fx("AddBOCOMOrder")(Added0),
     KeysTagged = Table.AddKey(Added, {"Check"}, true),
     mEXE_Joined = fx("Merge")(mBISL, KeysTagged, "Check", "Check", {"Y"}, {""})
 in

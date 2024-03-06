@@ -1,0 +1,79 @@
+let
+    Source = Load("合规_MergeDIR"),
+    ABDelimiter =
+        if Table.HasColumns(Source, "主体简称") then
+            Table.RenameColumns(Source, {{"主体简称", "Short Name"}})
+        else
+            Table.AddColumn(Source, "Short Name", each Text.BeforeDelimiter([#"信用主体(备证行)"], "("), type text),
+    #"Added Col1" = Table.AddColumn(
+        ABDelimiter, "Project Team", each Text.Replace(Text.Remove([COVERAGE], "组"), "FI", "FI&C"), type text
+    ),
+    Renamed = Table.RenameColumns(
+        #"Added Col1",
+        {{"发行人", "KYC Entity Name"}, {"KYC Status", "KYC Entity Status"}, {"EXE", "Signer Initials"}},
+        MissingField.Ignore
+    ),
+    #"Grouped Rows" = Table.Group(
+        Renamed,
+        {"TextCheck", "Short Name", "定价日"},
+        {
+            {"Count", each Table.RowCount(_), Int64.Type},
+            {"PROJECT_NAMES", each Text.Combine(List.Distinct([PROJECT_NAME]), "; "), type text},
+            {"Custom", each _, type table}
+        }
+    ),
+    Distincted = Table.TransformColumns(
+        #"Grouped Rows",
+        {
+            {
+                "Custom",
+                each
+                    Table.Distinct(
+                        Table.RemoveColumns(
+                            _,
+                            {
+                                "Index",
+                                "序号",
+                                "假设KYC到期日",
+                                "信用主体(备证行)",
+                                "Project Name",
+                                "PROJECT_NAME",
+                                "Approved by RO",
+                                "Worldcheck",
+                                "DD Form",
+                                "DD Risk",
+                                "Record Keeping",
+                                "Completed",
+                                "Timestamp",
+                                "PRJ对账号",
+                                "ISIN",
+                                "多发行体"
+                            },
+                            MissingField.Ignore
+                        )
+                    ),
+                type table
+            }
+        }
+    ),
+    #"Grouped Rows1" = Table.Group(
+        Distincted,
+        {"PROJECT_NAMES"},
+        {{"Count", each List.Count(List.Distinct([TextCheck])), Int64.Type}, {"Custom", each _, type table}}
+    ),
+    #"Added Col2" = Table.AddColumn(
+        #"Grouped Rows1",
+        "Custom1",
+        each
+            if [Count] > 1 then
+                Table.AddColumn(
+                    [Custom], "KYC PROJECT NAME", each [PROJECT_NAMES] & "(" & [Short Name] & ")", type text
+                )
+            else
+                Table.AddColumn([Custom], "KYC PROJECT NAME", each [PROJECT_NAMES], type text),
+        type table
+    ),
+    #"Removed Other Columns" = fx("Exp")(Table.SelectColumns(#"Added Col2", {"Custom1"}), "Custom1"),
+    Exp = fx("Exp")(#"Removed Other Columns", "Custom")
+in
+    Exp

@@ -12,23 +12,8 @@ let
         each if [多发行体] > 1 then [PROJECT_NAME] & "(" & [Short Name] & ")" else [PROJECT_NAME],
         type text
     ),
-    #"Added Col" = Table.AddColumn(
-        Replaced1,
-        "中介人角色",
-        each
-            if [新规角色] = "n/a" then
-                "n/a"
-            else if Text.Contains([新规角色], "OC") then
-                "Overall Coordinator"
-            else
-                "Capital Market Intermediaries",
-        type text
-    ),
-    #"Added Col1" = Table.AddColumn(
-        #"Added Col", "Project Team", each Text.Replace(Text.Remove([COVERAGE], "组"), "FI", "FI&C"), type text
-    ),
     Renamed = Table.RenameColumns(
-        #"Added Col1",
+        Replaced1,
         {{"发行人", "KYC Entity Name"}, {"KYC Status", "KYC Entity Status"}, {"EXE", "Signer Initials"}},
         MissingField.Ignore
     ),

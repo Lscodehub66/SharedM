@@ -1,0 +1,24 @@
+(TableName as table) =>
+    let
+        Source = TableName,
+        NewCol = {"中介人角色", "Project Team"},
+        RefCol = {"新规角色", "COVERAGE"},
+        Prep = Table.RemoveColumns(Source, NewCol, MissingField.Ignore),
+        #"Added Col" = Table.AddColumn(
+            Prep,
+            "中介人角色",
+            each
+                if [新规角色] = "n/a" then
+                    "n/a"
+                else if Text.Contains([新规角色], "OC") then
+                    "Overall Coordinator"
+                else
+                    "Capital Market Intermediaries",
+            type text
+        ),
+        #"Added Col1" = Table.AddColumn(
+            #"Added Col", "Project Team", each Text.Replace(Text.Remove([COVERAGE], "组"), "FI", "FI&C"), type text
+        ),
+        Output = if not Table.HasColumns(Source, RefCol) then Source else #"Added Col1"
+    in
+        Output
