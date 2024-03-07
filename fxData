@@ -232,6 +232,12 @@
         },
         Text_NoNA = {"增发判定", "修改.增发判定", "主题债券", "品种主题", "备证行全称", "期数"},
         Text1 = {
+            "Signer Initials",
+            "Project Team",
+            "Short Name",
+            "KYC Entity Name",
+            "KYC Entity Status",
+            "中介人角色",
             "地区覆盖",
             "DB.ColumnName",
             "OTHER_ROLE",

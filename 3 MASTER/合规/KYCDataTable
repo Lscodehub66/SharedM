@@ -1,20 +1,35 @@
+// let LoadCode = Load("KYCDataTable","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
-    Source = Load("合规_MergeDIR"),
-    ABDelimiter =
-        if Table.HasColumns(Source, "主体简称") then
-            Table.RenameColumns(Source, {{"主体简称", "Short Name"}})
-        else
-            Table.AddColumn(Source, "Short Name", each Text.BeforeDelimiter([#"信用主体(备证行)"], "("), type text),
-    #"Added Col1" = Table.AddColumn(
-        ABDelimiter, "Project Team", each Text.Replace(Text.Remove([COVERAGE], "组"), "FI", "FI&C"), type text
+    Source = CWB("Directory"),
+    Filtered = Table.SelectRows(fx("Data")(Source), each [IS_KYC_DONE] <> "Y" and [Year.Num] > 2021),
+    Renamed = Table.RenameColumns(Filtered, {{"EXE", "Signer Initials"}}, MissingField.Ignore),
+    ACheck = Table.AddColumn(Renamed, "TextCheck", each Text.Select([KYC Entity Name], {"A".."Z", "0".."9"})),
+    MergedQ1 = fx(
+        "Merge"
+    )(
+        ACheck,
+        Load("KYC_Master_TF"),
+        "TextCheck",
+        "TextCheck",
+        {"KYC expiry date", "KYC Status"},
+        {"KYC expiry date", "KYC Entity Status"}
     ),
-    Renamed = Table.RenameColumns(
-        #"Added Col1",
-        {{"发行人", "KYC Entity Name"}, {"KYC Status", "KYC Entity Status"}, {"EXE", "Signer Initials"}},
-        MissingField.Ignore
+    #"Replaced Status" = Table.TransformColumns(
+        MergedQ1,
+        {
+            {
+                "KYC Entity Status",
+                each
+                    if not Text.Contains(_ ?? "", "Suspend") and not Text.Contains(_ ?? "", "Existing") then
+                        "New KYC Entity"
+                    else
+                        _,
+                type text
+            }
+        }
     ),
     #"Grouped Rows" = Table.Group(
-        Renamed,
+        #"Replaced Status",
         {"TextCheck", "Short Name", "定价日"},
         {
             {"Count", each Table.RowCount(_), Int64.Type},
@@ -22,43 +37,20 @@ let
             {"Custom", each _, type table}
         }
     ),
+    #"Split Column by Delimiter" = fx("KYCProjectName")(#"Grouped Rows"),
     Distincted = Table.TransformColumns(
-        #"Grouped Rows",
+        #"Split Column by Delimiter",
         {
             {
                 "Custom",
-                each
-                    Table.Distinct(
-                        Table.RemoveColumns(
-                            _,
-                            {
-                                "Index",
-                                "序号",
-                                "假设KYC到期日",
-                                "信用主体(备证行)",
-                                "Project Name",
-                                "PROJECT_NAME",
-                                "Approved by RO",
-                                "Worldcheck",
-                                "DD Form",
-                                "DD Risk",
-                                "Record Keeping",
-                                "Completed",
-                                "Timestamp",
-                                "PRJ对账号",
-                                "ISIN",
-                                "多发行体"
-                            },
-                            MissingField.Ignore
-                        )
-                    ),
+                each Table.Distinct(Table.SelectColumns(_, Get("Header_S_ToDo"), MissingField.Ignore)),
                 type table
             }
         }
     ),
     #"Grouped Rows1" = Table.Group(
         Distincted,
-        {"PROJECT_NAMES"},
+        {"PROJECT_NAMES", "定价日"},
         {{"Count", each List.Count(List.Distinct([TextCheck])), Int64.Type}, {"Custom", each _, type table}}
     ),
     #"Added Col2" = Table.AddColumn(
@@ -66,14 +58,40 @@ let
         "Custom1",
         each
             if [Count] > 1 then
-                Table.AddColumn(
-                    [Custom], "KYC PROJECT NAME", each [PROJECT_NAMES] & "(" & [Short Name] & ")", type text
-                )
+                Table.AddColumn([Custom], "Project Name", each [PROJECT_NAMES] & "(" & [Short Name] & ")", type text)
             else
-                Table.AddColumn([Custom], "KYC PROJECT NAME", each [PROJECT_NAMES], type text),
+                Table.AddColumn([Custom], "Project Name", each [PROJECT_NAMES], type text),
         type table
     ),
-    #"Removed Other Columns" = fx("Exp")(Table.SelectColumns(#"Added Col2", {"Custom1"}), "Custom1"),
-    Exp = fx("Exp")(#"Removed Other Columns", "Custom")
+    RCol = Table.TransformColumns(
+        #"Added Col2",
+        {{"Custom1", each Table.RemoveColumns(_, {"PROJECT_NAMES", "Count"}, MissingField.Ignore), type table}}
+    ),
+    #"Removed Other Columns" = fx("Exp")(Table.SelectColumns(RCol, {"Custom1"}), "Custom1"),
+    Exp = fx("Exp")(#"Removed Other Columns", "Custom"),
+    Combined = fx(
+        "Combine"
+    )(
+        {
+            Exp,
+            #table(
+                {"PRJ对账号", "Project Name", "定价日", "KYC Deadline"},
+                {
+                    {
+                        99999,
+                        "[DCM填写]",
+                        DateTime.Date(DateTime.FixedLocalNow()),
+                        Date.AddMonths(DateTime.Date(DateTime.FixedLocalNow()), 2)
+                    }
+                }
+            )
+        },
+        {null},
+        {0}
+    ),
+    RemoveWaitlist = Table.Distinct(Combined, {"KYC Entity Name"}),
+    SCol1 = Table.SelectColumns(RemoveWaitlist, Get("Header_S_ToDo"), MissingField.UseNull),
+    Sorted = fx("Sort")(SCol1, {"KYC Deadline"}),
+    Presented = fx("PresentNoData")(Sorted)
 in
-    Exp
+    Presented

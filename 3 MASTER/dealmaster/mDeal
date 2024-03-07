@@ -7,15 +7,12 @@ let
     //
     #"DimDate Joined" = fx("DateFromRecord")({KeysTagged, "定价日"}),
     //
-    mStats = CWB("mStats"),
-    mBond = Load("mISIN+Coverage+SBLC"),
-    mBOCOM = Load("mBOCOM"),
-    #">>>Key" = Table.Keys(mStats){0}[Columns],
-    #">>>Key1" = Table.Keys(mBond){0}[Columns],
-    #">>>Key2" = Table.Keys(mBOCOM){0}[Columns],
+    mStats = Table.AddKey(Table.Buffer(CWB("mStats")), {"Check"}, true),
+    mBond.Coverage.SBLC = Table.AddKey(Table.Buffer(Load("mISIN+Coverage+SBLC")), {"ISIN"}, true),
+    mBOCOM = Table.AddKey(Table.Buffer(Load("mBOCOM")), {"Check"}, true),
     //
     Merged = List.Accumulate(
-        {{mStats, "Check"}, {mBOCOM, "Check"}, {mBond, "ISIN"}},
+        {{mStats, "Check"}, {mBOCOM, "Check"}, {mBond.Coverage.SBLC, "ISIN"}},
         #"DimDate Joined",
         (x, y) => fx("Merge")(x, y{0}, y{1}, y{1}, {""}, {""})
     ),

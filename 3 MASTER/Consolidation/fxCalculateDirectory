@@ -40,10 +40,16 @@
             let
                 Source = CWB("QRC_Compliance"),
                 Output = Table.RenameColumns(
-                    Table.SelectColumns(Source, {"PRJ对账号", "发行人"}, MissingField.UseNull), {{"发行人", "修改.发行人"}}
-                )
+                    Table.SelectColumns(
+                        Source,
+                        {"PRJ对账号", "发行人", "发行人名称中文", "上会审批日", "Mandated Date", "是否书面委任", "KYC Deadline", "团队成员"},
+                        MissingField.UseNull
+                    ),
+                    {{"发行人", "修改.发行人"}}
+                ),
+                Duped = Table.DuplicateColumn(Output, "修改.发行人", "KYC Entity Name")
             in
-                Output,
+                Duped,
         //
         #"Merged 21Fee" = fx(
             "Merge"
@@ -51,7 +57,7 @@
             ExeTime, CWB("QRC_Income"), "PRJ对账号", "PRJ对账号", {"承销费.原币", "承销费.美元", "QRC汇率因子"}, {""}
         ),
         #"Revised 19Fee" = fx("DB_Revise")(#"Merged 21Fee", #"ToRevise:Fee19", "COMPARER"),
-        #"Revised Issuer" = fx("DB_Revise")(#"Revised 19Fee", #"ToRevise:Issuer", "PRJ对账号"),
+        #"Revised Issuer" = fx("DB_Revise")(#"Revised 19Fee", #"ToRevise:Issuer", "PRJ对账号", "RCol"),
         CN_Base = List.Buffer(CWB("BaseDirectory_CN")),
         CN_CWB = List.Buffer(CWB("Directory", "CN")),
         Reordered = Table.ReorderColumns(

@@ -1,6 +1,6 @@
 //fxDB_Revise(Source,CWB("ToRevise"),"Check")
 //ToRevised 字段名以"修改."开头+原字段， 两个表的唯一识别码字段名一致
-(TableName as table, RevisedTableToMerge as table, MergeKey as text) =>
+(TableName as table, RevisedTableToMerge as table, MergeKey as text, optional _inputkey as nullable text) =>
     let
         Source = TableName,
         Merged = fx("Merge")(Source, RevisedTableToMerge, MergeKey, MergeKey, {""}),
@@ -45,6 +45,10 @@
                         {Text.AfterDelimiter(y, ".")}
                     ) otherwise x
         ),
-        Output = Table.SelectColumns(补齐空白记录, Table.ColumnNames(Source))
+        Output =
+            if _inputkey = "RCol" then
+                fx("RCol")(fx("RCol")(补齐空白记录, "修改."), "补齐.")
+            else
+                Table.SelectColumns(补齐空白记录, Table.ColumnNames(Source))
     in
         Output

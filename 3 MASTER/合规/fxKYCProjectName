@@ -1,0 +1,34 @@
+(TableName as table) =>
+    let
+        Source = TableName,
+        #"Split Column by Delimiter" = Table.SplitColumn(
+            Source,
+            "PROJECT_NAMES",
+            Splitter.SplitTextByDelimiter("; ", QuoteStyle.Csv),
+            {"PROJECT_NAMES.1", "PROJECT_NAMES.2"}
+        ),
+        #"Trimmed Text" = Table.TransformColumns(
+            #"Split Column by Delimiter",
+            {
+                {"PROJECT_NAMES.1", each Text.Split(_, " "), type list},
+                {"PROJECT_NAMES.2", each if _ = null then {null} else Text.Split(_, " "), type list}
+            }
+        ),
+        #"Added Custom" = Table.AddColumn(
+            #"Trimmed Text",
+            "Dummy1",
+            each Text.Combine(List.RemoveItems([PROJECT_NAMES.2], [PROJECT_NAMES.1]), " "),
+            type text
+        ),
+        #"Added Custom1" = Table.AddColumn(
+            #"Added Custom",
+            "PROJECT_NAMES",
+            each
+                if [Dummy1] = "" then
+                    Text.Combine([PROJECT_NAMES.1], " ")
+                else
+                    Text.Combine([PROJECT_NAMES.1], " ") & " & " & [Dummy1]
+        ),
+        SCol = Table.SelectColumns(#"Added Custom1", Table.ColumnNames(Source))
+    in
+        SCol

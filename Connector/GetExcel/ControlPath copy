@@ -37,7 +37,7 @@
             银行 = "Team Folder\Execution Team\DataHub\DataLake\银行指标数据.xlsx",
             YY = "Team Folder\Execution Team\DataHub\DataLake\YY.xlsx",
             BBGFX = "Team Folder\Execution Team\DataHub\DataLake\BBGFX.xlsx",
-            ESG = "Team Folder\Execution Team\Rating & Advisory\7. ESG\Pitch book\ESG Deal List.xlsx"
+            ESG = "Team Folder\Execution Team\Rating & Advisory\5. ESG\Pitch book\ESG Deal List.xlsx"
         ],
         //Global
         GlobalOnlyRecord = [

@@ -2,8 +2,8 @@
 let
     Source = Load("合规_MergeDIR"),
     ABDelimiter =
-        if Table.HasColumns(Source, "主体简称") then
-            Table.RenameColumns(Source, {{"主体简称", "Short Name"}})
+        if Table.HasColumns(Source, "Short Name") then
+            Table.RenameColumns(Source, {{"Short Name", "Short Name"}})
         else
             Table.AddColumn(Source, "Short Name", each Text.BeforeDelimiter([#"信用主体(备证行)"], "("), type text),
     Replaced1 = Table.AddColumn(

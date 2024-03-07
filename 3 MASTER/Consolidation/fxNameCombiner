@@ -2,7 +2,7 @@
     let
         Source = TableName,
         RefCol = {"信用主体", "通过分行", "增发判定", "货币", "结构", "票息", "年期", "兑付日", "品种主题", "PROJECT_CODE", "期数", "信用主体简称"},
-        NewCol = {"信用主体(备证行)", "PROJECT_NAME", "交易简称", "债券简称"},
+        NewCol = {"Short Name", "信用主体(备证行)", "PROJECT_NAME", "交易简称", "债券简称"},
         GNG = "Go",
         // Prep
         NulltoBlank = Table.ReplaceValue(
@@ -67,21 +67,30 @@
             Replacer.ReplaceValue,
             {"通过分行"}
         ),
-        NCEntity = Table.AddColumn(
+        #"Added ClientName" = Table.AddColumn(
             RevalidateBranch,
-            "信用主体(备证行)",
+            "Short Name",
             each
                 if Text.Contains([通过分行], "分行") and Text.Length([信用主体简称]) = 4 then
-                    Text.Range([信用主体简称], 0, 1) & Text.Range([信用主体简称], 2, 1) & [通过分行] & [DummySNTap]
-                else if [通过分行] <> "" then
-                    [信用主体简称] & [通过分行] & [DummySNTap]
+                    Text.Range([信用主体简称], 0, 1) & Text.Range([信用主体简称], 2, 1) & [通过分行]
                 else
-                    [信用主体简称] & "(" & Text.BeforeDelimiter([备证行], "(") & ")" & [DummySNTap]
+                    [信用主体简称] & [通过分行],
+            type text
         ),
-        TFEntity = fx("Replace")(NCEntity, {"信用主体(备证行)"}, "分行简称"),
+        TFEntity = fx("Replace")(#"Added ClientName", {"Short Name"}, "分行简称"),
+        NCEntity = Table.AddColumn(
+            TFEntity,
+            "信用主体(备证行)",
+            each
+                if List.Contains({null, "", "--"}, [备证行]) then
+                    [Short Name] & [DummySNTap]
+                else
+                    [Short Name] & "(" & Text.BeforeDelimiter([备证行], "(") & ")" & [DummySNTap],
+            type text
+        ),
         //交易简称命名
         SecEntity = Table.AddColumn(
-            TFEntity,
+            NCEntity,
             "交易简称",
             each
                 if (Text.Contains([结构], "备证") or Text.Contains([结构], "SBLC")) and Text.Contains([#"信用主体(备证行)"], "*")

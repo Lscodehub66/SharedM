@@ -519,12 +519,11 @@ let
                 "Project Team",
                 "中介人角色",
                 "IS_KYC_DONE",
-                "信用主体(备证行)",
+                "Short Name",
                 "发行人成立地"
             },
             Header_DirectoryToTombsWriter = {"定价日", "年M月", "首次违约日"} & {"备证行", "信用主体简称", "通过分行", "角色"},
             Header_S_ToDo = {
-                "PRJ对账号",
                 "Signer Initials",
                 "Project Name",
                 "定价日",
@@ -533,9 +532,9 @@ let
                 "Mandated Date",
                 "Short Name",
                 "KYC Entity Name",
-                "发行人成立地",
                 "KYC expiry date",
-                "KYC Entity Status"
+                "KYC Entity Status",
+                "KYC Deadline"
             },
             Header_FI = {
                 "Index",
@@ -817,7 +816,7 @@ let
             Header_Maturity2024_SOE = List.Transform(
                 Header_Maturity2024, each if List.Contains({"合计美元规模分类", "余额美元规模分类"}, _) then _ & "SOE" else _
             ),
-            Header_MergeRemoval = {"Timestamp", "Updator", "曾用名", "主体备注", "Index", "公司类型", "上市类型", "系"},
+            Header_MergeRemoval = {"Timestamp", "Updator", "曾用名", "主体备注", "Index", "公司类型", "上市类型"},
             Header_Sync_KYC = {"KYC对账号", "发行人", "KYC Status", "KYC expiry date", "信用主体"},
             Header_deal_master = {
                 "Index",

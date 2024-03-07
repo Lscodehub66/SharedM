@@ -37,7 +37,7 @@
             ],
             ESG = [
                 Folder = "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\",
-                File = "Rating & Advisory\7. ESG\Pitch book\ESG Deal List.xlsx"
+                File = "Rating & Advisory\5. ESG\Pitch book\ESG Deal List.xlsx"
             ],
             台账21 = [Folder = "\\itd-m09-fs02\dcm$\【QRC】DCM项目情况表\", File = "DCM2021年台账.xlsx"],
             台账22 = [Folder = "\\itd-m09-fs02\dcm$\【QRC】DCM项目情况表\", File = "DCM2022年台账.xlsx"],
