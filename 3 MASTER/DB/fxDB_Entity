@@ -10,17 +10,24 @@
                 )
             else
                 Source,
+        Entity_市级 =
+            if List.ContainsAll(CN_Source, {"级别", "区县"}) then
+                Table.ReplaceValue(
+                    Entity_省级, each [区县], each if [级别] = "市级" then "" else [区县], Replacer.ReplaceValue, {"区县"}
+                )
+            else
+                Entity_省级,
         Entity_级别 =
             if Table.HasColumns(Source, "级别") then
                 Table.ReplaceValue(
-                    Entity_省级,
+                    Entity_市级,
                     "",
                     each if [板块] = "地方平台" then "【】" else if [中资属性] <> "地方国企" then "--" else "",
                     Replacer.ReplaceValue,
                     {"级别"}
                 )
             else
-                Entity_省级,
+                Entity_市级,
         Entity_系 =
             if Table.HasColumns(Source, "系") then
                 Table.ReplaceValue(

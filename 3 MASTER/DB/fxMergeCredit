@@ -1,0 +1,10 @@
+(TableName as table, optional _SCol as list) =>
+    let
+        Source = TableName,
+        DBCredit = CWB("mCredit"),
+        inputSCol = if _SCol = null then {"Y"} else _SCol,
+        #"Transformed FormerName" = fx("FormerName")(Source, "信用主体"),
+        mCoverage_Joined = fx("Merge")(#"Transformed FormerName", DBCredit, "Dummy.信用主体", "信用主体", inputSCol, {""}),
+        RCol = fx("RCol")(mCoverage_Joined)
+    in
+        RCol

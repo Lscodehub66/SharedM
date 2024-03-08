@@ -13,7 +13,7 @@
         Targettbl = TargetTableName,
         //Definitions
         DBExcList = {"Timestamp", "Updator", "Index"},
-        CrExcList = {"曾用名", "主体备注", "公司类型", "上市类型", "系"},
+        CrExcList = {"曾用名", "主体备注", "公司类型", "上市类型"},
         ExcList = DBExcList & CrExcList,
         OutputList = if OptionalOutputList = {null} or OptionalOutputList = null then {""} else OptionalOutputList,
         DistinctCriteria =

@@ -1,7 +1,7 @@
 // let LoadCode = Load("Sync_KYC","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
+// Set CurrentWorkbook NamedRanged as QueryName_Load；SharedM should have 1 corresponding file in parameter folder as QueryName_Load
 let
     CWB_Directory = CWB("Directory"),
-    CWB_mCredit = CWB("mCredit"),
     //
     KYC_SyncHeader = Get("Header_KYC_Sync"),
     //
@@ -27,8 +27,8 @@ let
     Renamed = Table.RenameColumns(Replaced, {{"PROJECT_NAME", "KYC对账号"}}),
     SCol = Table.SelectColumns(Renamed, KYC_SyncHeader, MissingField.UseNull),
     TF = Table.TransformColumns(SCol, {{"KYC Status", each "需与QRC确认Excisting"}}),
-    Combined = fx("Combine")({KYC_SCol, TF}, {"信用主体"}),
-    MergedQ = fx("Merge")(Combined, CWB_mCredit, "信用主体", "信用主体", {"信用主体简称"}, {"信用主体简称"}),
+    Combined = fx("Combine")({KYC_SCol, TF}, {null}, {0}),
+    MergedQ = fx("MergeCredit")(Combined, {"信用主体简称"}),
     Sorted1 = Table.Sort(MergedQ, {{"KYC对账号", Order.Descending}}),
     Replaced1 = fx(
         "Replacer"
