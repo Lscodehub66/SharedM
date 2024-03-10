@@ -1,37 +1,78 @@
 // fxAddMultiCount
-(TableName as table, optional PRJNAMEColName as nullable text) =>
+(TableName as table) =>
     let
         Source = TableName,
-        Referenced = {"定价日", "PROJECT_NAME", "货币", "Check", "发行品种", "发行人"},
-        ToAdd = {"多笔", "多币种", "多品种", "多发行体"},
-        Prep = Table.RemoveColumns(Source, ToAdd, MissingField.Ignore),
-        #"Added Custom" = Table.AddColumn(
-            Prep,
-            "DummyComp",
-            each
-                if PRJNAMEColName = null then
-                    Date.ToText([定价日], "yyMMdd") & Text.Upper(Text.Remove([PROJECT_NAME], " "))
-                else
-                    Date.ToText([定价日], "yyMMdd") & Text.Upper(Text.Remove(Record.Field(_, PRJNAMEColName), " "))
-        ),
+        KeyCol = {"COMPARER"},
+        RefCol = {"Check", "货币", "发行品种", "发行人", "角色"},
+        NewCol = {"多笔", "多币种", "多品种", "多发行体", "多角色"},
+        Zipped = List.Zip({RefCol, NewCol}),
+        Prep = if not Table.HasColumns(Source, KeyCol) then fx("AddCOMPARER")(Source) else Source,
         Added = List.Accumulate(
-            {{"Check", "多笔"}, {"货币", "多币种"}, {"发行品种", "多品种"}, {"发行人", "多发行体"}},
-            #"Added Custom",
+            Zipped,
+            Prep,
             (x, y) =>
-                Table.Join(
-                    x,
-                    {"DummyComp"},
-                    Table.RenameColumns(
-                        Table.Group(
-                            x,
-                            {"DummyComp"},
-                            {{y{1}, each Table.RowCount(List.Distinct(Table.Column(_, y{0}))), Int64.Type}}
-                        ),
-                        {{"DummyComp", "Dummy" & y{0}}}
+                let
+                    Grouped = Table.Group(
+                        x,
+                        KeyCol,
+                        {
+                            {y{1}, each List.Count(List.Distinct(Record.Field(_, y{0}))), Int64.Type},
+                            {"Custom", each _, type table}
+                        }
                     ),
-                    {"Dummy" & y{0}}
-                )
+                    Exped = fx("Exp")(Grouped, "Custom")
+                in
+                    Exped
         ),
-        RCol = if Table.HasColumns(Source, Referenced) then fx("RCol")(Added) else Source
+        Added2 = List.Accumulate(
+            {{"通过分行", "多分行", "分行"}, {"备证行", "多备证行", "银行"}},
+            Added,
+            (x, y) =>
+                let
+                    #"Removed Columns" = Table.RemoveColumns(x, {y{1}}, MissingField.Ignore),
+                    ACol = Table.AddColumn(
+                        #"Removed Columns",
+                        y{1},
+                        each
+                            if
+                                Text.Contains(Record.Field(_, y{0}), "(")
+                                or List.Contains({"【】", "--", null}, Record.Field(_, y{0}))
+                            then
+                                ""
+                            else
+                                Record.Field(_, y{0}),
+                        type text
+                    ),
+                    Custom1 = Table.Group(
+                        ACol,
+                        KeyCol,
+                        {
+                            {
+                                y{1},
+                                each
+                                    if Text.Combine(List.Distinct(Table.Column(_, y{1}))) = "" then
+                                        ""
+                                    else if List.Count(List.Distinct(Table.Column(_, y{1}))) = 1 then
+                                        Text.Combine(List.Distinct(Table.Column(_, y{1})))
+                                    else
+                                        Text.Combine(
+                                            List.Transform(
+                                                List.Distinct(Table.Column(_, y{1})),
+                                                each Text.BeforeDelimiter(_, y{2})
+                                            ),
+                                            "/"
+                                        )
+                                            & y{2},
+                                type text
+                            },
+                            {"Custom", each _, type table}
+                        }
+                    ),
+                    Exped2 = fx("Exp")(Custom1, "Custom")
+                in
+                    Exped2
+        ),
+        TF = Table.TransformColumns(Added2, {{"多备证行", each if _ <> "" then _ & "备证" else _, type text}}),
+        RCol = if Table.HasColumns(Source, RefCol) then TF else Source
     in
         RCol

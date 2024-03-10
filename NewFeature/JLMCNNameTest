@@ -7,7 +7,7 @@ in
 
 // SharedM
 let
-    Source = Folder.Files(if GPS = "Remote" then "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM" else "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\SharedM"),
+    Source = Folder.Files(if GPS = "Remote" then "C:\Users\ktkt2\OneDrive - The University of Hong Kong\DataHub\SharedM" else "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\SharedM"),
     Filtered = Table.SelectRows(Source, each not Text.Contains([Folder Path], ".git") and not Text.Contains([Name],"git") and [Name] <> ""),
     Merged = Table.AddColumn(Filtered, "Path", each Text.Combine({[Folder Path], [Name]}, ""), type text),
     Extracted = Table.TransformColumns(Merged, {{"Folder Path", each Text.AfterDelimiter(_, "SharedM\"), type text} ,{"Name", each Text.BeforeDelimiter(_, "."), type text}}),

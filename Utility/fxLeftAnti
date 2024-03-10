@@ -1,0 +1,10 @@
+(Table1 as table, Table2 as table, Key1 as any, optional Key2 as any) =>
+    // = fx("LeftAnti")( #"Merged Queries1",Load("ISIN修改信用主体", "CSV"),"ISIN")
+    let
+        HD1 = if Value.Type(Key1) = type text then {Key1} else Key1,
+        HD2 = if Key2 = null then HD1 else if Value.Type(Key2) = type text then {Key2} else Key2,
+        DataHD = HD1{0} & ".Data",
+        Source = Table.NestedJoin(Table1, HD1, Table2, HD2, DataHD, JoinKind.LeftAnti),
+        RCol = Table.RemoveColumns(Source, DataHD)
+    in
+        RCol

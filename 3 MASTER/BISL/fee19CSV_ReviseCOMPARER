@@ -1,0 +1,7 @@
+let
+    Source = Load("Fee19", "CSVDATE"),
+    Renamed = Table.RenameColumns(Source, {{"COMPARER", "YYMMDD.PROJECT_NAME"}}),
+    Merged = fx("Merge")(Renamed, CWB("Directory"), "YYMMDD.PROJECT_NAME", "COMPARER1", {"COMPARER"}, {"COMPARER"}),
+    Custom1 = Table.SelectColumns(Merged, Table.ColumnNames(Source))
+in
+    Custom1

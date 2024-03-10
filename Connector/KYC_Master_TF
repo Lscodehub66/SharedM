@@ -2,19 +2,11 @@
 let
     Source = try CWB("KYC_Master") otherwise fx("Wstbl")("KYC", "MASTER"),
     //
-    TFtbl_QRC_ClientName = Table.Buffer(Get("TFtbl_QRC_ClientName")),
-    CleanedName = fx("Replace")(Source, {"项目名称（集团全称）"}, "主体"),
-    TF = Table.TransformColumns(
-        CleanedName, {{"项目名称（集团全称）", each fx("Clean")(_, TFtbl_QRC_ClientName[From], TFtbl_QRC_ClientName[To])}}
-    ),
-    ChangedType = Table.TransformColumnTypes(
-        Table.RemoveColumns(TF, {"Approved by RO", "发行人名称中文"}, MissingField.Ignore), {{"序号", type text}}
-    ),
-    AddedCustom = Table.AddColumn(ChangedType, "CLIENT对账号", each Text.Select([序号], {"0".."9"})),
+    AddedCustom = Table.AddColumn(Source, "CLIENT对账号", each Text.Select([序号], {"0".."9"})),
     ChangedType2 = Table.TransformColumnTypes(AddedCustom, {{"CLIENT对账号", Int64.Type}}),
     Add1000 = Table.TransformColumns(ChangedType2, {{"CLIENT对账号", each _ + 1000, type number}}),
     AddedCustom2 = Table.AddColumn(
-        Add1000, "KYC对账号", each Number.ToText([CLIENT对账号]) & Text.Select([序号], {"a".."b"}), type text
+        Add1000, "KYC对账号", each Number.ToText([CLIENT对账号]) & Text.Select([序号], {"a".."z"}), type text
     ),
     ChangedType3 = Table.TransformColumnTypes(AddedCustom2, {{"KYC expiry date", type date}}),
     ErrorsReplaced = Table.ReplaceErrorValues(ChangedType3, {{"KYC expiry date", null}}),
@@ -24,7 +16,32 @@ let
     ACheck = Table.AddColumn(
         fx("Data")(ConditionalCol), "TextCheck", each Text.Select([#"发行人名称英文*"], {"A".."Z", "0".."9"})
     ),
-    Renamed = Table.RenameColumns(ACheck, fx("Rename.KYC"), MissingField.Ignore)
+    Cleaned = fx("Replace")(ACheck, {"项目名称（集团全称）"}, "主体"),
+    Revised =
+        let
+            TFtbl_QRC_ClientName = fx(
+                "tblFromRows"
+            )(
+                {
+                    {"中国诚通香港有限公司", "中国诚通控股集团有限公司"},
+                    {"广东交通集团", "广东省交通集团有限公司"},
+                    {"中国水务集团", "中国水务集团有限公司"},
+                    {"衢州市交通投资集团有限公司", "衢州市衢通发展集团有限公司"},
+                    {"河南省铁路建设投资集团", "河南省铁路建设投资集团有限公司"},
+                    {"中航国际租赁有限公司", "中航国际融资租赁有限公司"},
+                    {"长沙先导投资控股有限公司", "长沙先导投资控股集团有限公司"},
+                    {"上饶城市建设投资开发集团有限公司", "上饶市城市建设投资开发集团有限公司"}
+                },
+                {"项目名称（集团全称）", "修改.项目名称（集团全称）"}
+            ),
+            Fn = fx("DB_Revise")(Cleaned, TFtbl_QRC_ClientName, "项目名称（集团全称）")
+        in
+            Fn,
+    ChangedType = Table.TransformColumnTypes(
+        Table.RemoveColumns(Revised, {"Approved by RO", "发行人名称中文"}, MissingField.Ignore), {{"序号", type text}}
+    ),
+    Renamed = Table.RenameColumns(ChangedType, fx("Rename.KYC"), MissingField.Ignore),
     // Rename_Pair   {"发行人名称英文*", "发行人"}, {"项目名称（集团全称）", "信用主体"}
+    MergedQ = fx("MergeCredit")(Renamed, {"信用主体简称"})
 in
-    Renamed
+    MergedQ

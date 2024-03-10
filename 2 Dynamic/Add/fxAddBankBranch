@@ -1,27 +1,26 @@
-//Example
-//Table.AddColumn(SelectedCol, "通过分行", each if Text.Contains([信用主体],"银行") and fxSNBranch([发行人]) = "" then "【总行】" else if Text.Contains([信用主体],"银行") then  fxSNBranch([发行人]) & "分行" else "")
-//Function
-(TableName as table, optional ColName as nullable text) =>
+(TableName as table, optional _input as list) =>
+    // = fx("AddBankBranch")(Source, {"发行人","通过分行"})
     let
         Source = TableName,
         DummyCol = {"Text1", "Text2", "Text3"},
-        NewCol = {"通过分行"},
+        NewCol = if _input = null then "通过分行" else _input{1},
+        ColName = if _input = null then "发行人" else _input{0},
         //
-        Prep = Table.RemoveColumns(Source, DummyCol & NewCol, MissingField.Ignore),
+        Prep = Table.RemoveColumns(Source, DummyCol & {NewCol}, MissingField.Ignore),
         PrepText = Table.AddColumn(
             Prep,
             "Text1",
             each
                 if
-                    not Text.Contains((Record.Field(_, (ColName ?? "发行人")) ?? ""), "银行")
-                    and not Text.Contains((Record.Field(_, (ColName ?? "发行人")) ?? ""), "BANK")
+                    not Text.Contains((Record.Field(_, ColName) ?? ""), "银行")
+                    and not Text.Contains((Record.Field(_, ColName) ?? ""), "BANK")
                 then
                     ""
                 else
                     fx(
                         "Clean"
                     )(
-                        Text.Upper((Record.Field(_, (ColName ?? "发行人")) ?? "")),
+                        Text.Upper((Record.Field(_, ColName) ?? "")),
                         {"MACAO", " ", ",", ".", "CHINA", "NY", "THE"},
                         {"MACAU"}
                     ),
@@ -75,7 +74,7 @@
         ),
         AddedSuffix = Table.AddColumn(
             #"Extracted Text Between Delimiters",
-            NewCol{0},
+            NewCol,
             each if [Text3] <> "" and not Text.Contains([Text3], "【") then [Text3] & "分行" else [Text3],
             type text
         ),

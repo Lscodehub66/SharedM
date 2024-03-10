@@ -115,11 +115,10 @@
                 CN_RNSource, each Text.StartsWith(_, "S_") or Text.StartsWith(_, "Spd_") or Text.StartsWith(_, "I_")
             ),
         Num1 = {"最终账簿(亿)", "建账峰值(亿)", "收窄Num", "超额认购倍数"} & List.Select(CN_RNSource, each Text.StartsWith(_, "V_")),
-        Num0 = {"FEE", "Relevance", "Year.Num", "兑付日.YearNum", "金额 (MM USD)"}
+        Num0 = {"FEE", "Relevance", "Year.Num", "兑付日.YearNum", "金额 (MM USD)", "补齐.承销费.原币", "承销费.其他"}
             & List.Select(CN_RNSource, each Text.StartsWith(_, "CT_") or Text.StartsWith(_, "承销费")),
         Num = {
             "IPT_YIELD",
-            "承销费.其他",
             "定价YIELD_Num",
             "IPT_SPD",
             "WPIR",

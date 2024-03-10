@@ -6,7 +6,7 @@ let
         上周_YYW = fx("YYW")(Date.AddDays(M1, -10)),
         Path_YYYYMMDD = Date.ToText(M1, "yyyyMMdd"),
         _SpdTenor = try Load("_SpdTenor") otherwise "3",
-        Remote = "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\",
+        Remote = "C:\Users\ktkt2\OneDrive - The University of Hong Kong\DataHub\",
         Global = "\\itd-m09-fs02\dcm$\",
         GPS = try
             if

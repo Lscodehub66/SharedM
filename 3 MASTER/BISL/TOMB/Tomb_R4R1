@@ -2,23 +2,15 @@
 //let LoadCode = Load("Tomb_R4R1","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 let
     Source = Load("Tomb_R2R3"),
-    MergeSource = CWB("Directory"),
     //**
-    Header_DirectoryToTombsWriter = Get("Header_DirectoryToTombsWriter"),
-    MergedQ = fx(
-        "Merge"
-    )(
-        Source, CWB("Directory"), "COMPARER", "COMPARER", Header_DirectoryToTombsWriter, null, {"COMPARER"}
-    ),
-    // { "定价日", "年M月", "首次违约日" } & { "备证行", "信用主体简称", "通过分行", "角色" }
     AddedR1 = Table.AddColumn(
-        MergedQ,
+        Source,
         "P1",
         each
-            if [备证行] <> "--" then
-                [信用主体简称] & "#(lf)" & "(" & [备证行] & "备证)"
-            else if Text.Contains([通过分行], "分行") then
-                [信用主体简称] & "#(lf)" & [通过分行]
+            if [多备证行] <> "" then
+                [信用主体简称] & "#(lf)" & "(" & [多备证行] & ")"
+            else if Text.Contains([多分行], "分行") then
+                [信用主体简称] & "#(lf)" & [多分行]
             else
                 [信用主体简称]
     ),

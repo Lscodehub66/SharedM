@@ -1,0 +1,12 @@
+(TableName as table, _inputref as text, optional _inputnew as nullable text) =>
+    // = fx("TextCheck")(Source, "发行人")
+    let
+        Source = TableName,
+        NewCol = if _inputnew = null then {"TextCheck"} else {_inputnew},
+        Prep = Table.RemoveColumns(Source, NewCol, MissingField.Ignore),
+        ACheck = Table.AddColumn(
+            Prep, NewCol{0}, each Text.Select(Record.Field(_, _inputref), {"A".."Z", "0".."9"}), type text
+        ),
+        Output = if not Table.HasColumns(Source, _inputref) then Source else ACheck
+    in
+        Output

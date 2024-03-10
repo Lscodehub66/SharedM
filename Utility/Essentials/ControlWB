@@ -19,7 +19,7 @@ let
         if Record.Field(Record, "GPS") = "Global" then
             "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\Weekly\"
         else
-            "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\Weekly\",
+            "C:\Users\ktkt2\OneDrive - The University of Hong Kong\DataHub\Weekly\",
     pptfolder = weeklyfolder & Mondaytext & "\",
     pptfolder0 = weeklyfolder & yyyyMMdd0 & "\",
     pptfile = "Markets - Weekly Update - " & Mondaytext & ".pptx",
@@ -28,23 +28,23 @@ let
         if Record.Field(Record, "GPS") = "Global" then
             "\\itd-m09-fs02\dcm$\0 DCM Base\4 Markets\Data\5. Weekly List.xlsx"
         else
-            "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\DataLake\Backup\5. Weekly List.xlsx",
+            "C:\Users\ktkt2\OneDrive - The University of Hong Kong\DataHub\DataLake\Backup\5. Weekly List.xlsx",
     GetDM =
         if Record.Field(Record, "GPS") = "Global" then
             "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\DEALs MASTER.xlsm"
         else
-            "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\DEALs MASTER.xlsm",
+            "C:\Users\ktkt2\OneDrive - The University of Hong Kong\DataHub\DEALs MASTER.xlsm",
     GetBaseWeekly =
         if Record.Field(Record, "GPS") = "Global" then
             "\\itd-m09-fs02\dcm$\0 DCM Base\4 Markets\Markets - Weekly Update.pptx"
         else
-            "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\DataLake\Backup\Markets - Weekly Update.pptx",
+            "C:\Users\ktkt2\OneDrive - The University of Hong Kong\DataHub\DataLake\Backup\Markets - Weekly Update.pptx",
     GetSyndinput_Folder = pptfolder & "ss & Input",
     GetSyndFolder =
         if Record.Field(Record, "GPS") = "Global" then
             "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\Weekly\Ad Hoc\Syndicate"
         else
-            "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\Weekly\Ad Hoc\Syndicate",
+            "C:\Users\ktkt2\OneDrive - The University of Hong Kong\DataHub\Weekly\Ad Hoc\Syndicate",
     WBRecord = [
         BasePPT_Path = GetBaseWeekly,
         OldPPT_Folder = pptfolder0,

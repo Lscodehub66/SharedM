@@ -1,4 +1,4 @@
-// let Name = "fx",Path  = if (try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Global" ) = "Remote" then "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM\" else "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\SharedM\",  EVA = Expression.Evaluate ( Text.FromBinary ( Binary.Buffer ( File.Contents ( Path&Name ) ) ) ,#shared )in    EVA//
+// let Name = "fx",Path  = if (try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Global" ) = "Remote" then "C:\Users\ktkt2\OneDrive - The University of Hong Kong\DataHub\SharedM\" else "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\SharedM\",  EVA = Expression.Evaluate ( Text.FromBinary ( Binary.Buffer ( File.Contents ( Path&Name ) ) ) ,#shared )in    EVA//
 //
 (NameInput as text) =>
     let
@@ -17,7 +17,7 @@
         //
         FolderPath =
             if GPS = "Remote" then
-                "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM"
+                "C:\Users\ktkt2\OneDrive - The University of Hong Kong\DataHub\SharedM"
             else
                 "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\SharedM",
         Path = FolderPath & (if Text.End(FolderPath, 1) <> "\" then "\" else ""),

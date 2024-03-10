@@ -1,6 +1,6 @@
 (_input as text) =>
     let
-        _rootremote = "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\",
+        _rootremote = "C:\Users\ktkt2\OneDrive - The University of Hong Kong\DataHub\",
         _folderone = "DataLake\",
         _rootglobal = "\\itd-m09-fs02\dcm$\",
         filekey = if _input = "DMI" then "美元债一级" else Text.Upper(_input ?? ""),

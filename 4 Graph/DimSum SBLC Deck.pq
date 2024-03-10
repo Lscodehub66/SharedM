@@ -1,5 +1,5 @@
 // Load
-let GPS  = try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Global",  FilePath = if GPS = "Remote" then "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM\Load" else "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\SharedM\Load",  LoadCode = Text.FromBinary ( Binary.Buffer ( File.Contents ( FilePath ) ) ), EVA = Expression.Evaluate ( LoadCode, #shared ) in EVA
+let GPS  = try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Global",  FilePath = if GPS = "Remote" then "C:\Users\ktkt2\OneDrive - The University of Hong Kong\DataHub\SharedM\Load" else "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\SharedM\Load",  LoadCode = Text.FromBinary ( Binary.Buffer ( File.Contents ( FilePath ) ) ), EVA = Expression.Evaluate ( LoadCode, #shared ) in EVA
 
 // deal_master
 let
@@ -11,7 +11,7 @@ in
     Filtered
 
 // CWB
-let GPS      = try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Global", Path = if GPS = "Remote" then "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM\CWB" else "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\SharedM\CWB",  LoadCode = Text.FromBinary ( Binary.Buffer ( File.Contents ( Path ) ) ),EVA = Expression.Evaluate ( LoadCode, #shared ) in EVA
+let GPS      = try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Global", Path = if GPS = "Remote" then "C:\Users\ktkt2\OneDrive - The University of Hong Kong\DataHub\SharedM\CWB" else "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\SharedM\CWB",  LoadCode = Text.FromBinary ( Binary.Buffer ( File.Contents ( Path ) ) ),EVA = Expression.Evaluate ( LoadCode, #shared ) in EVA
 
 // OVRDMonday
 null meta [IsParameterQuery=true, List={"2023/03/20", "2023/03/27", "2023/04/03", "2023/04/10", "2023/04/17", "2023/04/24", "2023/05/01", "2023/05/08", "2023/05/15", "2023/05/22", "2023/05/29", "2023/06/05", "2023/06/12", "2023/06/19", "2023/06/26", "2023/07/03", "2023/07/10", "2023/07/17", "2023/07/24", "2023/07/31", "2023/08/07", "2023/08/14", "2023/08/21", "2023/08/28", "2023/09/04", "2023/09/11", "2023/09/18", "2023/09/25", "2023/10/02", "2023/10/09", "2023/10/16", "2023/10/23"}, DefaultValue=..., Type="Text", IsParameterQueryRequired=false]
@@ -54,7 +54,7 @@ in
     Custom1
 
     // Load
-let GPS  = try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Global",  FilePath = if GPS = "Remote" then "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM\Load" else "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\SharedM\Load",  LoadCode = Text.FromBinary ( Binary.Buffer ( File.Contents ( FilePath ) ) ), EVA = Expression.Evaluate ( LoadCode, #shared ) in EVA
+let GPS  = try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Global",  FilePath = if GPS = "Remote" then "C:\Users\ktkt2\OneDrive - The University of Hong Kong\DataHub\SharedM\Load" else "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\SharedM\Load",  LoadCode = Text.FromBinary ( Binary.Buffer ( File.Contents ( FilePath ) ) ), EVA = Expression.Evaluate ( LoadCode, #shared ) in EVA
 
 // DimSum_Pie
 //  let LoadCode = Load("USDCNH_Pie","Code"), EVA = Expression.Evaluate(LoadCode, #shared) in EVA
@@ -76,7 +76,7 @@ in
 
 
     // Load
-let GPS  = try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Global",  FilePath = if GPS = "Remote" then "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM\Load" else "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\SharedM\Load",  LoadCode = Text.FromBinary ( Binary.Buffer ( File.Contents ( FilePath ) ) ), EVA = Expression.Evaluate ( LoadCode, #shared ) in EVA
+let GPS  = try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Global",  FilePath = if GPS = "Remote" then "C:\Users\ktkt2\OneDrive - The University of Hong Kong\DataHub\SharedM\Load" else "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\SharedM\Load",  LoadCode = Text.FromBinary ( Binary.Buffer ( File.Contents ( FilePath ) ) ), EVA = Expression.Evaluate ( LoadCode, #shared ) in EVA
 
 // SBLC_Pie_Size
 let
@@ -95,7 +95,7 @@ in
 
 
     // Load
-let GPS  = try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Global",  FilePath = if GPS = "Remote" then "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM\Load" else "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\SharedM\Load",  LoadCode = Text.FromBinary ( Binary.Buffer ( File.Contents ( FilePath ) ) ), EVA = Expression.Evaluate ( LoadCode, #shared ) in EVA
+let GPS  = try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Global",  FilePath = if GPS = "Remote" then "C:\Users\ktkt2\OneDrive - The University of Hong Kong\DataHub\SharedM\Load" else "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\SharedM\Load",  LoadCode = Text.FromBinary ( Binary.Buffer ( File.Contents ( FilePath ) ) ), EVA = Expression.Evaluate ( LoadCode, #shared ) in EVA
 
 // SBLC_Pie_Count
 let
@@ -124,7 +124,7 @@ in
     Filtered
 
 // CWB
-let GPS      = try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Global", Path = if GPS = "Remote" then "C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM\CWB" else "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\SharedM\CWB",  LoadCode = Text.FromBinary ( Binary.Buffer ( File.Contents ( Path ) ) ),EVA = Expression.Evaluate ( LoadCode, #shared ) in EVA
+let GPS      = try Excel.CurrentWorkbook(){[ Name = "GPS" ]}[Content][Column1]{0} otherwise "Global", Path = if GPS = "Remote" then "C:\Users\ktkt2\OneDrive - The University of Hong Kong\DataHub\SharedM\CWB" else "\\itd-m09-fs02\dcm$\Team Folder\Execution Team\DataHub\SharedM\CWB",  LoadCode = Text.FromBinary ( Binary.Buffer ( File.Contents ( Path ) ) ),EVA = Expression.Evaluate ( LoadCode, #shared ) in EVA
 
 // OVRDMonday
 null meta [IsParameterQuery=true, List={"2023/03/20", "2023/03/27", "2023/04/03", "2023/04/10", "2023/04/17", "2023/04/24", "2023/05/01", "2023/05/08", "2023/05/15", "2023/05/22", "2023/05/29", "2023/06/05", "2023/06/12", "2023/06/19", "2023/06/26", "2023/07/03", "2023/07/10", "2023/07/17", "2023/07/24", "2023/07/31", "2023/08/07", "2023/08/14", "2023/08/21", "2023/08/28", "2023/09/04", "2023/09/11", "2023/09/18", "2023/09/25", "2023/10/02", "2023/10/09", "2023/10/16", "2023/10/23"}, DefaultValue=..., Type="Text", IsParameterQueryRequired=false]

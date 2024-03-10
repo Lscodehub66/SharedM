@@ -56,7 +56,8 @@
                 )
             else
                 #"Fill in Original",
-        BISL_对帐号 = Load("fxPRJSync")(#"Revalidated FRN", "台账序号", "定价日", "PRJ对账号"),
+        #"Revalidated BankBranch" = fx("RevalidateBankBranch")(#"Revalidated FRN"),
+        BISL_对帐号 = Load("fxPRJSync")(#"Revalidated BankBranch", "台账序号", "定价日", "PRJ对账号"),
         #"Invoked Entity Manager" =
             if List.Contains(HD, "板块二级") and MorW = "M" then
                 fx("DB_Entity")(BISL_对帐号)

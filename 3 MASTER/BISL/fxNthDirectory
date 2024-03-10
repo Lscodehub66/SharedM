@@ -1,0 +1,41 @@
+(TableName as table, _inputhd as list, _newcol as text) =>
+    let
+        //=fx("NthDirectory")(Source, { "YYMMDD", "信用主体简称"},"第N次担任")
+        Source = Table.Buffer(TableName),
+        groupedhd = _inputhd{1},
+        counthd = _newcol & ".Count",
+        SelectedCol = Table.SelectColumns(Source, _inputhd),
+        RemovedDupe = Table.Distinct(SelectedCol, _inputhd),
+        Sorted = Table.Buffer(Table.Sort(RemovedDupe, {{_inputhd{0}, Order.Ascending}})),
+        InstanceGp1 = Table.Group(
+            Sorted, {groupedhd}, {{counthd, each Table.RowCount(_), Int64.Type}, {"Data", each _, type table}}
+        ),
+        Replaced = Table.ReplaceValue(
+            InstanceGp1,
+            each Record.Field(_, counthd),
+            each
+                if List.Contains({null, "--", "", "【】"}, Record.Field(_, groupedhd)) then
+                    null
+                else
+                    Record.Field(_, counthd),
+            Replacer.ReplaceValue,
+            {counthd}
+        ),
+        IGCustom1 = Table.AddColumn(
+            Replaced,
+            "Custom",
+            each
+                if Record.Field(_, counthd) <> null then
+                    Table.AddIndexColumn([Data], _newcol, 1)
+                else
+                    Table.AddColumn([Data], _newcol, each null, Int64.Type),
+            type table
+        ),
+        IGRemoved1 = Table.SelectColumns(IGCustom1, {"Custom", counthd}),
+        IGExpanded1 = Table.ExpandTableColumn(IGRemoved1, "Custom", Table.ColumnNames(IGRemoved1[Custom]{0})),
+        List2 = List.Transform(_inputhd, each _ & "Dummy"),
+        #"Renamed Columns" = Table.RenameColumns(IGExpanded1, List.Zip({_inputhd, List2})),
+        Custom2 = Table.Join(Source, _inputhd, #"Renamed Columns", List2, JoinKind.LeftOuter),
+        RCol = fx("RCol")(Custom2)
+    in
+        RCol

@@ -1,0 +1,25 @@
+(TableName as table) =>
+    let
+        Source = TableName,
+        RefCol = {"发行人"},
+        ReplaceCol = {"通过分行"},
+        NewCol = {"Dummy." & ReplaceCol{0}},
+        ACol = fx("AddBankBranch")(Source, RefCol & NewCol),
+        ReplacedBranch = Table.ReplaceValue(
+            ACol,
+            "",
+            each
+                if not List.Contains({"【总行】", "", "--", null}, Record.Field(_, NewCol)) then
+                    Record.Field(_, NewCol)
+                else
+                    "",
+            Replacer.ReplaceValue,
+            ReplaceCol
+        ),
+        Output =
+            if Table.HasColumns(Source, RefCol & ReplaceCol) then
+                Table.RemoveColumns(ReplacedBranch, NewCol)
+            else
+                Source
+    in
+        Output

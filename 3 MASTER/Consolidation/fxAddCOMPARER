@@ -1,0 +1,12 @@
+(TableName as table) =>
+    let
+        Source = TableName,
+        RefCol = {"YYMMDD", "PROJECT_CODE"},
+        NewCol = {"COMPARER"},
+        Prep = Table.RemoveColumns(Source, NewCol, MissingField.Ignore),
+        Added = Table.AddColumn(
+            Prep, NewCol{0}, each Text.From([YYMMDD]) & Text.Upper(Text.Remove([PROJECT_CODE], " ")), type text
+        ),
+        Output = if Table.HasColumns(Source, RefCol) then Added else Source
+    in
+        Output

@@ -1,6 +1,6 @@
 let
     Source2 = Excel.Workbook(
-        File.Contents("C:\Users\ktkt2\OneDrive\EXE Team\DataHub\SharedM\Zss\DEALs MASTER.xlsm"), null, true
+        File.Contents("C:\Users\ktkt2\OneDrive - The University of Hong Kong\DataHub\SharedM\Zss\DEALs MASTER.xlsm"), null, true
     ),
     Table = fx("Data")(Source2{[Item = "mIndice", Kind = "Table"]}[Data]),
     _CurrentDate = Date.From(Monday),

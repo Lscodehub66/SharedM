@@ -1,35 +1,35 @@
 // let LoadCode = Load("Sync_KYC","Code"), EVA = Expression.Evaluate(LoadCode ,#shared) in EVA
 // Set CurrentWorkbook NamedRanged as QueryName_Load；SharedM should have 1 corresponding file in parameter folder as QueryName_Load
 let
-    CWB_Directory = CWB("Directory"),
     //
     KYC_SyncHeader = Get("Header_KYC_Sync"),
-    //
-    KYC_Load = Load("KYC_Master_TF"),
-    KYC_SCol = Table.SelectColumns(KYC_Load, KYC_SyncHeader, MissingField.Ignore),
+    KYC_Master_TF = Table.Buffer(Load("KYC_Master_TF")),
     // ***KYC_TBC_LEGACY***
-    Filtered = Table.SelectRows(
-        CWB_Directory, each [定价日] < Date.From("2021/09/01") and [定价日] > Date.From("2021/01/01")
-    ),
-    LeftAntiMerged = Table.NestedJoin(Filtered, {"信用主体"}, KYC_Load, {"信用主体"}, "Data", JoinKind.LeftAnti),
-    Distincted = Table.Distinct(
-        Table.Buffer(Table.Sort(Filtered, {{"信用主体", Order.Ascending}, {"定价日", Order.Ascending}})), {"信用主体"}
-    ),
-    Sorted = fx("SortNIndex")(Distincted, "定价日", "信用主体", "货币", "年期", "Y"),
-    // ***KYC_TBC_LEGACY***
-    Replaced = Table.ReplaceValue(
-        Sorted,
-        each [PROJECT_NAME],
-        each Number.ToText([Index], "0000") & "【" & [PROJECT_NAME] & "】",
-        Replacer.ReplaceValue,
-        {"PROJECT_NAME"}
-    ),
-    Renamed = Table.RenameColumns(Replaced, {{"PROJECT_NAME", "KYC对账号"}}),
-    SCol = Table.SelectColumns(Renamed, KYC_SyncHeader, MissingField.UseNull),
-    TF = Table.TransformColumns(SCol, {{"KYC Status", each "需与QRC确认Excisting"}}),
-    Combined = fx("Combine")({KYC_SCol, TF}, {null}, {0}),
-    MergedQ = fx("MergeCredit")(Combined, {"信用主体简称"}),
-    Sorted1 = Table.Sort(MergedQ, {{"KYC对账号", Order.Descending}}),
+    TBC =
+        let
+            Filtered = Table.SelectRows(
+                CWB("Directory"), each [定价日] < #date(2021, 9, 1) and [定价日] > #date(2021, 1, 1)
+            ),
+            ACheck = fx("TextCheck")(Filtered, "发行人"),
+            LeftAntiMerged = fx("LeftAnti")(ACheck, KYC_Master_TF, "信用主体简称"),
+            Distincted = Table.Distinct(
+                Table.Sort(LeftAntiMerged, {{"信用主体", Order.Ascending}, {"定价日", Order.Ascending}}), {"TextCheck"}
+            ),
+            Sorted = fx("SortNIndex")(Distincted, "定价日", "信用主体", "货币", "年期", "Y"),
+            Replaced = Table.ReplaceValue(
+                Sorted,
+                each [PROJECT_NAME],
+                each Number.ToText([Index], "0000") & "【" & [PROJECT_NAME] & "】",
+                Replacer.ReplaceValue,
+                {"PROJECT_NAME"}
+            ),
+            Renamed = Table.RenameColumns(Replaced, {{"PROJECT_NAME", "KYC对账号"}}),
+            SCol = Table.SelectColumns(Renamed, KYC_SyncHeader, MissingField.UseNull),
+            TF1 = Table.TransformColumns(SCol, {{"KYC Status", each "需与QRC确认Excisting"}})
+        in
+            TF1,
+    Combined = fx("Combine")({KYC_Master_TF, TBC}, null, KYC_SyncHeader),
+    Sorted1 = Table.Sort(Combined, {{"KYC对账号", Order.Descending}}),
     Replaced1 = fx(
         "Replacer"
     )(

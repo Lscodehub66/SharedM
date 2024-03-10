@@ -44,6 +44,15 @@
             each if Text.Contains([板块], "金融") then "【】" else "--",
             Replacer.ReplaceValue,
             {"板块二级", "板块三级"}
-        )
+        ),
+        #"tbl PastName" =
+            let
+                source = CWB("mPastName"),
+                cn_source = Table.ColumnNames(source),
+                SCol = Table.SelectColumns(source, List.Select(cn_source, each Text.StartsWith(_, "修改"))),
+                Dupe = Table.DuplicateColumn(SCol, "修改.曾用名", "信用主体")
+            in
+                Dupe,
+        Revised = fx("DB_Revise")(Entity_FI, #"tbl PastName", "信用主体")
     in
-        Entity_FI
+        Revised

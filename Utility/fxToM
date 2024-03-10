@@ -1,5 +1,6 @@
-(Input) =>
+(_inputtbllist as any, optional _inputkey as nullable text) =>
     let
+        Input = if _inputkey = "CN" then Table.ColumnNames(_inputtbllist) else _inputtbllist,
         List_MCode = "{""" & Text.Combine(List.Transform(Input, each Text.From(_)), """, """) & """}",
         //
         tbl_CN = Table.ColumnNames(Input),
