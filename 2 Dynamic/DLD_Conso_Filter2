@@ -87,11 +87,10 @@ let
         "mCredit"
     },
     #"Filtered Rows" = Table.SelectRows(credit, each List.Contains({"", "*", "**"}, [Filter_Credit])),
-   
     Revised = fx(
         "SelfJoin_R"
     )(
-           #"Filtered Rows", Table.SelectColumns(CWB("DLD_Conso_Filter"), _HD, MissingField.Ignore), {"ISIN"}
+        #"Filtered Rows", Table.SelectColumns(CWB("DLD_Conso_Filter"), _HD, MissingField.Ignore), {"ISIN"}
     ),
     Stamped = Table.AddColumn(
         Table.RemoveColumns(Revised, {"Timestamp"}, MissingField.Ignore),
