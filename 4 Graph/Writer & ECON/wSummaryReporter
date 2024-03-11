@@ -1,10 +1,7 @@
 let
-    Source2 = CWB("Writer_Dealtbl"),
-    WriteNewIssue = Table.Buffer(fx("DealReporter")(Source2, "Custom")),
+    Source2 = Table.Buffer(Load("wReporterReviewed")),
     #"Grouped Rows" = Table.Group(
-        WriteNewIssue,
-        {"新发总结板块", "货币细分"},
-        {{"Count", each Table.RowCount(_), Int64.Type}, {"Custom", each _, type table}}
+        Source2, {"新发总结板块", "货币细分"}, {{"Count", each Table.RowCount(_), Int64.Type}, {"Custom", each _, type table}}
     ),
     #"Sorted Rows1" = Table.Sort(#"Grouped Rows", {{"Count", Order.Descending}}),
     #"Grouped Rows1" = Table.Group(#"Sorted Rows1", {"新发总结板块"}, {{"Custom", each _, type table}}),

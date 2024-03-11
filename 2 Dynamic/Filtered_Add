@@ -21,7 +21,6 @@ let
     Added = List.Accumulate(
         {
             "BISLROLE",
-            "Reopen",
             "BnD",
             "SBLC",
             "Exchange",
@@ -55,15 +54,16 @@ let
     ),
     // DM = {"mIssue", "mStats", "mBISL", "mEXE", "mCredit","债券备注"},
     #"Operational Columns" = fx("NewOrInDB")(Replaced2),
+    #"Added IsTap" = fx("AddReopen")(#"Operational Columns"),
     HD2 = {"Index", "债券简称", "删除及隐藏", "mIssue", "mBond", "mStats", "mBISL", "mEXE", "mChart", "mCredit"},
     //  & {"Filter_Credit", "Filter_Bond", "Filter_Exch", "IS_FIMTN"}
     Reordered = fx(
         "1st"
     )(
         try
-            Table.ReorderColumns(#"Operational Columns", CWB("Filtered_Add", "CN"), MissingField.Ignore)
+            Table.ReorderColumns(#"Added IsTap", CWB("Filtered_Add", "CN"), MissingField.Ignore)
         otherwise
-            #"Operational Columns",
+            #"Added IsTap",
         HD2
     ),
     Checked = fx("CheckNDupe")(Reordered),

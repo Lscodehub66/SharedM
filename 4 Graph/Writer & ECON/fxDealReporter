@@ -5,6 +5,9 @@
         Prep = Table.RemoveColumns(Source, NewCols, MissingField.Ignore),
         //
         Added = fx("AddNIMSector")(Prep),
+        Replaced5 = List.Accumulate(
+            {"【", "】"}, Added, (x, y) => Table.ReplaceValue(x, y, "", Replacer.ReplaceText, {"新发总结板块"})
+        ),
         FnDupeCount = Table.RenameColumns(
             fx("DupeCount")(Added, "信用主体简称"), {"Dupe.Count", "多笔"}, MissingField.UseNull
         ),
@@ -24,6 +27,8 @@
             each
                 if Text.Contains([增发判定], "增发") then
                     ""
+                else if Text.Contains([期限], "年(前") then
+                    Text.Replace([期限], "年(前", "年期(前")
                 else if Text.Contains([期限], "年") and not Text.Contains([期限], "永续") then
                     [期限] & "期"
                 else

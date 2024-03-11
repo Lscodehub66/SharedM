@@ -1,27 +1,28 @@
 (TableName as table, _collist as list) =>
+    // fx("NumInputText")(Source, {"票息","IPG","FPG","定价"})
     let
         Source = TableName,
+        List = List.Intersect({_collist, Table.ColumnNames(Source)}),
         #"Transformed MannualInput" = List.Accumulate(
-            _collist,
+            List,
             Source,
             (x, y) =>
-                if Table.HasColumns(Source, y) then
-                    Table.TransformColumns(
-                        x,
+                Table.TransformColumns(
+                    x,
+                    {
                         {
-                            {
-                                y,
-                                each
-                                    if Text.StartsWith(_ ?? "", "0.") and not Text.Contains(_ ?? "", "%") then
-                                        Number.ToText(Number.From(_) * 100, "0.000") & "%"
-                                    else
-                                        _,
-                                type text
-                            }
+                            y,
+                            each
+                                if Text.StartsWith(_ ?? "", "0.") and not Text.Contains(_ ?? "", "%") then
+                                    Number.ToText(Number.From(_) * 100, "0.000") & "%"
+                                else
+                                    _,
+                            type text
                         }
-                    )
-                else
-                    x
-        )
+                    }
+                )
+        ),
+        Replaced = fx("Replace")(#"Transformed MannualInput", List, "数字文字"),
+        Output = if List.IsEmpty(List) then Source else Replaced
     in
-        #"Transformed MannualInput"
+        Output

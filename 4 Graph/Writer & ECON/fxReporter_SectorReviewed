@@ -1,6 +1,6 @@
 (TableName as table) =>
     let
-        CWBSource = Table.Buffer(CWB("Reporter_Sector", "1")),
+        CWBSource = Table.Buffer(CWB("Reporter_Sector")),
         Joined = fx("Merge")(TableName, CWBSource, "信用主体及评级", "信用主体及评级", {"新发总结板块"}, {"Dummy新发"}),
         #"Replaced Value" =
             if Table.HasColumns(TableName, "新发总结板块") then
@@ -17,6 +17,7 @@
                 )
             else
                 Joined,
-        #"Removed Columns" = Table.RemoveColumns(#"Replaced Value", {"Dummy新发"})
+        #"Removed Columns" = Table.RemoveColumns(#"Replaced Value", {"Dummy新发"}),
+        Output = try #"Removed Columns" otherwise TableName
     in
-        try #"Removed Columns" otherwise TableName
+        fx("Data")(Output, 1)

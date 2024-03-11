@@ -5,6 +5,7 @@ let
     HD = {
         "BOCOM_DEAL?",
         "Index",
+        "ISIN",
         "定价日",
         "信用主体简称",
         "主体评级",

@@ -64,6 +64,8 @@
                             and not Text.EndsWith(_, "据")
                             and not Text.EndsWith(_, "股")
                             and not Text.EndsWith(_, "证")
+                            and not Text.EndsWith(_, "(LAC)")
+                            and not Text.EndsWith(_, "工具")
                             and _ <> ""
                         then
                             _ & "债券"

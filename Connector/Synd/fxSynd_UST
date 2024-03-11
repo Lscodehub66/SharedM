@@ -23,7 +23,17 @@
                 and not Text.StartsWith([Column1], "美国国债收益率")
                 and not Text.Contains([Column1], "[RG龚")
         ),
-        Custom2 = fx("RemoveStartEnd")(#"Filtered Rows", "Column1", {{"Start", "-"}, {"End", "。"}}),
+        List = List.Buffer(List.Transform({"1".."9"}, each _ & ".")),
+        TF = List.Accumulate(
+            List,
+            #"Filtered Rows",
+            (x, y) =>
+                Table.TransformColumns(
+                    x, {{"Column1", each if Text.StartsWith(_, y) then Text.AfterDelimiter(_, y) else _, type text}}
+                )
+        ),
+        #"Trimmed Text1" = Table.TransformColumns(TF, {{"Column1", Text.Trim, type text}}),
+        Custom2 = fx("RemoveStartEnd")(#"Trimmed Text1", "Column1", {{"Start", "-"}, {"End", "。"}}),
         Custom3 = Table.ReplaceValue(Custom2, "• ", "", Replacer.ReplaceText, {"Column1"}),
         #"Grouped Rows" = Table.Group(
             Custom3, {"DummySection"}, {{"Description", each Text.Combine([Column1], "#(lf)"), type text}}

@@ -1,0 +1,20 @@
+(TableName as table) =>
+    let
+        Source = TableName,
+        RefCol = {"债券简称", "PROJECT_CODE", "PROJECT_CN"},
+        NewCol = {"简称"},
+        Prep = Table.RemoveColumns(Source, NewCol, MissingField.Ignore),
+        ACol = Table.AddColumn(Prep, "简称", each Text.BeforeDelimiter([债券简称], " ") & [PROJECT_CODE], type text),
+        tbl = Table.Buffer(Table.SelectRows(ACol, each not List.Contains({null, "--", ""}, [PROJECT_CN]))),
+        Merged = fx("Merge")(ACol, tbl, "简称", "简称", {"PROJECT_CN"}, {"Dummy.PROJECT_CN"}),
+        Replaced = Table.ReplaceValue(
+            Merged,
+            "",
+            each if not List.Contains({null, "", "--"}, [Dummy.PROJECT_CN]) then [Dummy.PROJECT_CN] else "",
+            Replacer.ReplaceValue,
+            {"PROJECT_CN"}
+        ),
+        SCol = Table.SelectColumns(Replaced, Table.ColumnNames(Source)),
+        Output = if not Table.HasColumns(Source, RefCol) then Source else SCol
+    in
+        Output

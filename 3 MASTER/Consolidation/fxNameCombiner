@@ -1,8 +1,8 @@
 (TableName as table) =>
     let
         Source = TableName,
-        RefCol = {"信用主体", "通过分行", "增发判定", "货币", "结构", "票息", "年期", "兑付日", "品种主题", "PROJECT_CODE", "期数", "信用主体简称"},
-        NewCol = {"Short Name", "信用主体(备证行)", "PROJECT_NAME", "交易简称", "债券简称"},
+        RefCol = {"信用主体", "通过分行", "增发判定", "货币", "结构", "票息", "年期", "兑付日", "品种主题", "信用主体简称"},
+        NewCol = {"Short Name", "信用主体(备证行)", "交易简称", "债券简称"},
         GNG = "Go",
         // Prep
         NulltoBlank = Table.ReplaceValue(
@@ -31,30 +31,10 @@
                 }
             )
         ),
-        RemovedCol = Table.RemoveColumns(NulltoBlank, List.Distinct(NewCol), MissingField.Ignore),
-        //PROJECT_NAME合成
-        Code_project = Table.AddColumn(
-            RemovedCol,
-            "PrjCode",
-            each if not List.Contains({"", null, " ", "--"}, [PROJECT_CODE]) then [PROJECT_CODE] else "",
-            type text
-        ),
-        Vol_project = Table.AddColumn(
-            Code_project, "PrjVol", each if not List.Contains({"", null, " ", "--"}, [期数]) then " " & [期数] else "",
-            type text
-        ),
-        Tap_project = Table.AddColumn(
-            Vol_project, "PrjTap", each if Text.Contains(([增发判定] ?? ""), "增发") then " Tap" else "", type text
-        ),
-        Combined_project = Table.CombineColumns(
-            Tap_project,
-            {"PrjCode", "PrjVol", "PrjTap"},
-            Combiner.CombineTextByDelimiter("", QuoteStyle.None),
-            "PROJECT_NAME"
-        ),
+        Prep = Table.RemoveColumns(NulltoBlank, List.Distinct(NewCol), MissingField.Ignore),
         //信用主体(备证行) 合成
         Tap_ShortName = Table.AddColumn(
-            Combined_project, "DummySNTap", each if Text.Contains(([增发判定] ?? ""), "增发") then "*" else "", type text
+            Prep, "DummySNTap", each if Text.Contains(([增发判定] ?? ""), "增发") then "*" else "", type text
         ),
         RevalidateBranch = Table.ReplaceValue(
             Tap_ShortName,
@@ -136,8 +116,6 @@
             if GNG = "NoGo" then
                 Table.SelectColumns(Source, List.Distinct(Table.ColumnNames(Source) & NewCol), MissingField.UseNull)
             else
-                Table.ReplaceValue(
-                    TFSecName, "  ", " ", Replacer.ReplaceValue, {"PROJECT_NAME", "交易简称", "信用主体(备证行)"}
-                )
+                Table.ReplaceValue(TFSecName, "  ", " ", Replacer.ReplaceValue, {"交易简称", "信用主体(备证行)"})
     in
         DoubleSpace

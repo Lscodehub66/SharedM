@@ -3,18 +3,19 @@
         Source = TableName,
         NewCol = {"增发判定", "ISIN_TEMP"},
         Prep = Table.RemoveColumns(Source, NewCol, MissingField.Ignore),
+        Merged = fx("Merge")(Prep, CWB("mBond"), "ISIN", "ISIN", {"定价日"}, {"定价日.DB"}),
         增发 = Table.AddColumn(
-            Prep,
+            Merged,
             "增发判定",
             each
                 if [发行方式] = "增发" then
                     "增发"
+                else if [mIssue] = "新增" and [mBond] = "已收录" then
+                    "【增发】" & "*增发定价间隔" & Text.From(Duration.Days([定价日] - [定价日.DB])) & "日*"
                 else if [起息日期] = null then
                     ""
                 else if [定价日] > [起息日期] then
                     "增发"
-                else if [mIssue] = "新增" and [mBond] = "已收录" then
-                    "【增发】"
                 else
                     "",
             type text

@@ -33,6 +33,7 @@ let
             fx("WriteCCYSize"),
             fx("WriteTheme"),
             fx("WriteRole"),
+            fx("ProjectName"),
             fx("NameCombiner"),
             fx("CheckNDupe"),
             fx("SortNIndex"),

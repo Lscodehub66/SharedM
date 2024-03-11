@@ -1,0 +1,32 @@
+(TableName as table) =>
+    let
+        Source = TableName,
+        RefCol = {"增发判定", "PROJECT_CODE", "期数", "PROJECT_CN"},
+        NewCol = {"IS_TAP", "PROJECT_NAME", "PROJECT"},
+        Prep = Table.RemoveColumns(Source, NewCol, MissingField.Ignore),
+        #"Added Col1" = Table.AddColumn(
+            Prep, "IS_TAP", each if Text.Contains(([增发判定] ?? ""), "增发") then "Tap" else "", type text
+        ),
+        #"Combined Project Name" = Table.AddColumn(
+            #"Added Col1",
+            "PROJECT_NAME",
+            each
+                if List.Contains({null, "", "--", " "}, [PROJECT_CODE]) then
+                    ""
+                else
+                    Text.Combine(List.RemoveItems({[PROJECT_CODE], [期数], [IS_TAP]}, {null, "", "--", " "}), " "),
+            type text
+        ),
+        #"Combined Project" = Table.AddColumn(
+            #"Combined Project Name",
+            "PROJECT",
+            each
+                if List.Contains({null, "", "--", " "}, [PROJECT_CN]) then
+                    [PROJECT_NAME]
+                else
+                    Text.Combine(List.RemoveItems({[PROJECT_NAME], [PROJECT_CN]}, {null, "", "--", " "}), " "),
+            type text
+        ),
+        Output = if not Table.HasColumns(Source, RefCol) then Source else #"Combined Project"
+    in
+        Output

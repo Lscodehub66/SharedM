@@ -21,7 +21,7 @@
             MissingField.Ignore
         ),
         CN_RNSource = List.Buffer(Table.ColumnNames(Renamed)),
-        Revalidated = Table.ReplaceValue(
+        #"Revalidated FRN" = Table.ReplaceValue(
             Renamed,
             each [计息基准],
             each if not Text.Contains([利率类型], "浮") and not List.Contains({null, "", "--"}, [计息基准]) then "" else [
@@ -30,7 +30,11 @@
             Replacer.ReplaceValue,
             {"计息基准"}
         ),
-        Output_Junction = Revalidated,
+        #"Revalidated Date" = Table.TransformColumns(
+            #"Revalidated FRN",
+            {{"定价日", each if Date.DayOfWeek(_, Day.Monday) = 5 then Date.AddDays(_, -1) else _, type date}}
+        ),
+        Output_Junction = #"Revalidated FRN",
         // Clean
         Replace_blank = Table.ReplaceValue(Output_Junction, "", each [信用主体], Replacer.ReplaceValue, {"债券简称"}),
         Clean_TF = Table.TransformColumns(

@@ -16,6 +16,14 @@
                     not Text.Contains(Record.Field(_, (InitialCol ?? "IPG")), "【")
                     and not Text.Contains(Record.Field(_, (PricedCol ?? "定价")), "【")
                     and Text.Contains(Record.Field(_, (InitialCol ?? "IPG")), "%")
+                    and Text.Contains(Record.Field(_, (InitialCol ?? "IPG")), "-")
+                    and Text.Contains(Record.Field(_, (PricedCol ?? "定价")), "%")
+                then
+                    Text.BetweenDelimiters(Record.Field(_, (InitialCol ?? "IPG")), "-", "%")
+                else if
+                    not Text.Contains(Record.Field(_, (InitialCol ?? "IPG")), "【")
+                    and not Text.Contains(Record.Field(_, (PricedCol ?? "定价")), "【")
+                    and Text.Contains(Record.Field(_, (InitialCol ?? "IPG")), "%")
                     and Text.Contains(Record.Field(_, (PricedCol ?? "定价")), "%")
                 then
                     Text.BeforeDelimiter(Record.Field(_, (InitialCol ?? "IPG")), "%")

@@ -3,7 +3,10 @@ let
     p = "ForReview_",
     wIssue = CWB(p & "wIssue", "1"),
     //
-    RemovedCol = Table.RemoveColumns(wIssue, Get("Header_MergeRemoval"), MissingField.Ignore),
+    TF1 = Table.TransformColumns(
+        wIssue, {{"增发判定", each if Text.Contains(_, "*") then Text.BeforeDelimiter(_, "*") else _, type text}}
+    ),
+    RemovedCol = Table.RemoveColumns(TF1, Get("Header_MergeRemoval"), MissingField.Ignore),
     Filtered = Table.SelectRows(
         RemovedCol, each ([定价日] <> null) and [ISIN] <> null and [删除及隐藏] <> "删除" and [删除及隐藏] <> "【删除】"
     ),

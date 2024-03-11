@@ -1,0 +1,8 @@
+let
+    Source2 = CWB("Writer_Dealtbl"),
+    WriteNewIssue = Table.Buffer(fx("DealReporter")(Source2, "Custom")),
+    #"Sorted Rows" = Table.Sort(WriteNewIssue, {{"定价日", Order.Descending}}),
+    Self = fx("Reporter_SectorReviewed")(#"Sorted Rows"),
+    #"Changed Type" = Table.TransformColumnTypes(Self, {{"新发总结板块", type text}})
+in
+    #"Changed Type"

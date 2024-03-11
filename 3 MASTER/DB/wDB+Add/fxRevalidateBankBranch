@@ -16,10 +16,9 @@
             Replacer.ReplaceValue,
             ReplaceCol
         ),
-        Output =
-            if Table.HasColumns(Source, RefCol & ReplaceCol) then
-                Table.RemoveColumns(ReplacedBranch, NewCol)
-            else
-                Source
+        TF = Table.TransformColumns(
+            ReplacedBranch, {{ReplaceCol{0}, each if Text.Contains(_, "总行") then "" else _, type text}}
+        ),
+        Output = if Table.HasColumns(Source, RefCol & ReplaceCol) then Table.RemoveColumns(TF, NewCol) else Source
     in
         Output

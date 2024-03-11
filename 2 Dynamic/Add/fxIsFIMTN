@@ -73,6 +73,8 @@
         SCol =
             if SelectCNNum1 = 1 then
                 Table.SelectColumns(Filtered, CN_Input & {"IS_FIMTN"}, MissingField.UseNull)
+            else if OneAsNoY_ZeroAsOnlyY = 1 then
+                Table.RemoveColumns(Filtered, {"IS_FIMTN"})
             else
                 Filtered
     in

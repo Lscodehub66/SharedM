@@ -1,0 +1,29 @@
+(TableName as table) =>
+    let
+        Source = TableName,
+        RefCol = {"IPG", "FPG", "定价"},
+        NewCol = {"收窄基点"},
+        Prep = Table.RemoveColumns(Source, NewCol, MissingField.Ignore),
+        Replaced = Table.ReplaceValue(
+            Prep,
+            each [定价],
+            each
+                if
+                    not List.Contains({null, "", "--"}, [IPG])
+                    and not Text.Contains([FPG], "-")
+                    and (List.Contains({null, "", "--"}, [定价]) or Text.EndsWith([定价], "a"))
+                then
+                    [FPG]
+                else
+                    [定价],
+            Replacer.ReplaceValue,
+            {"定价"}
+        ),
+        Added = List.Accumulate({"SpdTighten", "PtTighten"}, Replaced, (x, y) => fx("Add" & y)(x)),
+        Output =
+            if not Table.HasColumns(Source, RefCol) then
+                Source
+            else
+                Table.SelectColumns(Added, Table.ColumnNames(Source))
+    in
+        Output
